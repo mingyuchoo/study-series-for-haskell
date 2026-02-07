@@ -1,0 +1,24 @@
+<h1>
+  $maybe _ <- mPost
+    포스트 수정
+  $nothing
+    새 포스트 작성
+
+<form method=post>
+  <div>
+    <label for="title">제목
+    $maybe p <- mPost
+      <input type=text name=title id=title required value=#{postTitle p}>
+    $nothing
+      <input type=text name=title id=title required>
+  <div>
+    <label for="content">내용
+    $maybe p <- mPost
+      <textarea name=content id=content required>#{postContent p}
+    $nothing
+      <textarea name=content id=content required>
+  <button .btn type=submit>
+    $maybe _ <- mPost
+      수정 완료
+    $nothing
+      포스트 작성

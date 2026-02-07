@@ -1,0 +1,91 @@
+cabal-version:      3.0
+name:               demo-haskell
+version:            0.1.0.0
+synopsis:           Blog web application with Yesod
+license:            MIT
+build-type:         Simple
+
+-- [REQ-F001] 프로젝트 초기 설정
+-- [REQ-T001] library/test-suite 분리
+
+library
+  hs-source-dirs:   src
+  default-language: GHC2021
+  ghc-options:      -Wall
+
+  exposed-modules:
+    Foundation
+    Import
+    Model
+    Settings
+    Application
+    Handler.Home
+    Handler.Auth
+    Handler.Post
+    Handler.ApiPost
+    Handler.Comment
+    Handler.ApiComment
+    Service.AuthService
+    Service.PostService
+    Service.CommentService
+
+  build-depends:
+      base                >= 4.17 && < 5
+    , aeson               >= 2.0
+    , bcrypt              >= 0.0.11
+    , bytestring
+    , containers
+    , http-types
+    , monad-logger
+    , persistent          >= 2.14
+    , persistent-sqlite   >= 2.13
+    , resourcet
+    , shakespeare         >= 2.0
+    , template-haskell
+    , text                >= 2.0
+    , time
+    , warp                >= 3.3
+    , yesod               >= 1.6
+    , yesod-core          >= 1.6
+    , yesod-form          >= 1.7
+    , yesod-persistent    >= 1.6
+
+executable demo-haskell
+  main-is:          Main.hs
+  hs-source-dirs:   app
+  default-language: GHC2021
+  ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
+
+  build-depends:
+      base                >= 4.17 && < 5
+    , demo-haskell
+
+test-suite demo-haskell-test
+  type:             exitcode-stdio-1.0
+  main-is:          Spec.hs
+  hs-source-dirs:   test
+  default-language: GHC2021
+  ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
+
+  other-modules:
+    TestFoundation
+    Unit.AuthServiceSpec
+    Unit.ApiPostHelperSpec
+    Unit.ApiCommentHelperSpec
+    Integration.PostServiceSpec
+    Integration.CommentServiceSpec
+    Integration.ApiHandlerSpec
+
+  build-depends:
+      base                >= 4.17 && < 5
+    , demo-haskell
+    , hspec               >= 2.0
+    , yesod-test          >= 1.6
+    , aeson
+    , bytestring
+    , monad-logger
+    , persistent
+    , persistent-sqlite
+    , text
+    , time
+    , yesod-core

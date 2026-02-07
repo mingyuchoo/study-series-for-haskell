@@ -1,0 +1,10 @@
+# Cabal build artifacts
+dist-newstyle/
+
+# SQLite database files
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+
+# Yesod session key (secret)
+config/client_session_key.aes

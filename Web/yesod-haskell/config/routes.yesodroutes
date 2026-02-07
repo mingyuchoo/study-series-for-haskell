@@ -1,0 +1,26 @@
+-- [REQ-F001] 홈
+/                              HomeR           GET
+
+-- [REQ-F002] 인증
+/auth/register                 RegisterR       GET POST
+/auth/login                    LoginR          GET POST
+/auth/logout                   LogoutR         POST
+
+-- [REQ-F003] 포스트 (HTML)
+/posts                         PostListR       GET
+/posts/new                     PostNewR        GET POST
+/posts/detail/#PostId          PostDetailR     GET
+/posts/edit/#PostId            PostEditR       GET POST
+/posts/delete/#PostId          PostDeleteR     POST
+
+-- [REQ-F004] 댓글 (HTML)
+/posts/detail/#PostId/comments CommentCreateR  POST
+/comments/delete/#CommentId    CommentDeleteR  POST
+
+-- [REQ-F003] 포스트 API
+/api/posts                     ApiPostListR    GET POST
+/api/posts/#PostId             ApiPostDetailR  GET PUT DELETE
+
+-- [REQ-F004] 댓글 API
+/api/posts/#PostId/comments    ApiCommentListR GET POST
+/api/comments/#CommentId       ApiCommentDeleteR DELETE

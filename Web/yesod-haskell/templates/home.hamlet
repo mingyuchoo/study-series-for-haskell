@@ -1,0 +1,19 @@
+<h1>최신 포스트
+
+$if null postsWithAuthors
+  <p>아직 작성된 포스트가 없습니다.
+  <a .btn href=@{PostNewR}>첫 포스트 작성하기
+
+$else
+  $forall (Entity postId post, mAuthor) <- postsWithAuthors
+    <article>
+      <h2>
+        <a href=@{PostDetailR postId}>#{postTitle post}
+      <p .meta>
+        $maybe author <- mAuthor
+          #{userName author}
+        $nothing
+          알 수 없는 사용자
+        \ · #{show (postCreatedAt post)}
+      <p>#{postContent post}
+  <a .btn href=@{PostListR}>전체 포스트 보기

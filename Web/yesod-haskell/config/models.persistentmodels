@@ -1,0 +1,25 @@
+-- [REQ-F002] 사용자 엔티티
+User
+    name Text
+    email Text
+    passwordHash Text
+    createdAt UTCTime
+    UniqueEmail email
+    deriving Show Eq
+
+-- [REQ-F003] 포스트 엔티티
+Post
+    title Text
+    content Text
+    authorId UserId
+    createdAt UTCTime
+    updatedAt UTCTime
+    deriving Show Eq
+
+-- [REQ-F004] 댓글 엔티티
+Comment
+    content Text
+    postId PostId
+    authorId UserId
+    createdAt UTCTime
+    deriving Show Eq
