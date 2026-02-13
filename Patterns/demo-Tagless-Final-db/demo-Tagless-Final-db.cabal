@@ -45,7 +45,7 @@ library
     , containers
     , flow
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable demo-Tagless-Final-db-exe
   main-is: Main.hs
@@ -67,7 +67,7 @@ executable demo-Tagless-Final-db-exe
     , demo-Tagless-Final-db
     , flow
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite demo-Tagless-Final-db-test
   type: exitcode-stdio-1.0
@@ -93,4 +93,4 @@ test-suite demo-Tagless-Final-db-test
     , flow
     , hspec
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024

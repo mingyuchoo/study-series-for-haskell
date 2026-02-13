@@ -47,7 +47,7 @@ library
     , mtl
     , parallel
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable demo-Tagless-Final-todo-exe
   main-is: Main.hs
@@ -71,7 +71,7 @@ executable demo-Tagless-Final-todo-exe
     , mtl
     , parallel
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite demo-Tagless-Final-todo-test
   type: exitcode-stdio-1.0
@@ -99,4 +99,4 @@ test-suite demo-Tagless-Final-todo-test
     , mtl
     , parallel
     , text
-  default-language: GHC2021
+  default-language: GHC2024

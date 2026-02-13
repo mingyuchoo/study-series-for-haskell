@@ -54,7 +54,7 @@ library
     , transformers
     , wai
     , warp
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable demo-GADT-shopping-exe
   main-is: Main.hs
@@ -83,7 +83,7 @@ executable demo-GADT-shopping-exe
     , transformers
     , wai
     , warp
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite demo-GADT-shopping-test
   type: exitcode-stdio-1.0
@@ -116,4 +116,4 @@ test-suite demo-GADT-shopping-test
     , transformers
     , wai
     , warp
-  default-language: GHC2021
+  default-language: GHC2024

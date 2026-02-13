@@ -76,7 +76,7 @@ library
     , vector
     , vty
     , yaml
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable tto-exe
   main-is: Main.hs
@@ -118,7 +118,7 @@ executable tto-exe
     , vector
     , vty
     , yaml
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite tto-test
   type: exitcode-stdio-1.0
@@ -171,4 +171,4 @@ test-suite tto-test
     , vector
     , vty
     , yaml
-  default-language: GHC2021
+  default-language: GHC2024

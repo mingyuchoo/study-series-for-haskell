@@ -73,7 +73,7 @@ library
     , stm
     , text
     , threepenny-gui
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable ThreepennyAddress-exe
   main-is: Main.hs
@@ -109,7 +109,7 @@ executable ThreepennyAddress-exe
     , stm
     , text
     , threepenny-gui
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite ThreepennyAddress-test
   type: exitcode-stdio-1.0
@@ -148,4 +148,4 @@ test-suite ThreepennyAddress-test
     , stm
     , text
     , threepenny-gui
-  default-language: GHC2021
+  default-language: GHC2024

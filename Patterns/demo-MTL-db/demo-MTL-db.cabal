@@ -46,7 +46,7 @@ library
     , flow
     , mtl
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable demo-MTL-db-exe
   main-is: Main.hs
@@ -69,7 +69,7 @@ executable demo-MTL-db-exe
     , flow
     , mtl
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite demo-MTL-db-test
   type: exitcode-stdio-1.0
@@ -96,4 +96,4 @@ test-suite demo-MTL-db-test
     , hspec
     , mtl
     , parallel
-  default-language: GHC2021
+  default-language: GHC2024

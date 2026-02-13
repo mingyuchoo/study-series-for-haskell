@@ -54,7 +54,7 @@ library
     , optparse-applicative
     , parallel
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable file-finder-exe
   main-is: Main.hs
@@ -85,7 +85,7 @@ executable file-finder-exe
     , optparse-applicative
     , parallel
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite file-finder-test
   type: exitcode-stdio-1.0
@@ -121,4 +121,4 @@ test-suite file-finder-test
     , parallel
     , temporary
     , text
-  default-language: GHC2021
+  default-language: GHC2024

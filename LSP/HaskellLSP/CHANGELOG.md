@@ -139,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Author**: Mingyu Choo (mingyuchoo@gmail.com)
 - **License**: BSD-3-Clause
 - **Repository**: https://github.com/mingyuchoo/HaskellLSP
-- **Language**: Haskell with GHC2021 standard
+- **Language**: Haskell with GHC2024 standard
 - **Build System**: Stack with LTS 24.21
 
 ---

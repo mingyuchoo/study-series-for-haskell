@@ -48,7 +48,7 @@ library
     , parallel
     , polysemy
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable demo-Polysemy-todo-exe
   main-is: Main.hs
@@ -73,7 +73,7 @@ executable demo-Polysemy-todo-exe
     , parallel
     , polysemy
     , text
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite demo-Polysemy-todo-test
   type: exitcode-stdio-1.0
@@ -102,4 +102,4 @@ test-suite demo-Polysemy-todo-test
     , parallel
     , polysemy
     , text
-  default-language: GHC2021
+  default-language: GHC2024

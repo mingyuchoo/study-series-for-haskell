@@ -73,7 +73,7 @@ library
     , stm
     , text
     , time
-  default-language: GHC2021
+  default-language: GHC2024
 
 executable HaskellLSP-exe
   main-is: Main.hs
@@ -113,7 +113,7 @@ executable HaskellLSP-exe
     , stm
     , text
     , time
-  default-language: GHC2021
+  default-language: GHC2024
 
 test-suite HaskellLSP-test
   type: exitcode-stdio-1.0
@@ -165,4 +165,4 @@ test-suite HaskellLSP-test
     , stm
     , text
     , time
-  default-language: GHC2021
+  default-language: GHC2024

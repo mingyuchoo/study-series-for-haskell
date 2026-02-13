@@ -37,7 +37,7 @@ ghc-options:
 - -O2
 - -haddock
 
-language: GHC2021
+language: GHC2024
 
 library:
   source-dirs: src
