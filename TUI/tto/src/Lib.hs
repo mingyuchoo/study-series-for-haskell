@@ -26,7 +26,6 @@ module Lib
     , todoId
     , todoIndirectObject
     , todoList
-    , todoObject
     , todoStatus
     , todoStatusChangedAt
     , todoSubject

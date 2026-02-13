@@ -6,9 +6,9 @@ cabal-version: 2.2
 
 name:           tto
 version:        0.1.0.0
-synopsis:       Short description of your package
-description:    Please see the README on GitHub at <https://github.com/mingyuchoo/tto#readme>
-category:       Web
+synopsis:       A TUI todo manager with i18n and configurable keybindings
+description:    Terminal-based todo manager built with Brick, SQLite, and Tagless Final pattern
+category:       Application
 homepage:       https://github.com/mingyuchoo/tto#readme
 bug-reports:    https://github.com/mingyuchoo/tto/issues
 author:         Mingyu Choo
@@ -128,7 +128,10 @@ test-suite tto-test
       ConfigSpec
       DBSpec
       I18nSpec
+      TodoServiceSpec
+      TodoStatusSpec
       UI.AttributesSpec
+      UI.DrawSpec
       UI.EventsSpec
       UI.TypesSpec
       Paths_tto

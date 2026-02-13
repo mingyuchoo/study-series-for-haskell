@@ -27,7 +27,6 @@ module UI.Types
     , todoId
     , todoIndirectObject
     , todoList
-    , todoObject
     , todoStatus
     , todoStatusChangedAt
     , todoSubject
@@ -66,7 +65,6 @@ data Todo = Todo { _todoId              :: !DB.TodoId
                  , _todoStatus          :: !String
                  , _todoCreatedAt       :: !String
                  , _todoSubject         :: !(Maybe String)
-                 , _todoObject          :: !(Maybe String)
                  , _todoIndirectObject  :: !(Maybe String)
                  , _todoDirectObject    :: !(Maybe String)
                  , _todoStatusChangedAt :: !(Maybe String)
@@ -102,7 +100,6 @@ fromTodoRow row = Todo
     , _todoStatus = DB.todoStatus row
     , _todoCreatedAt = DB.todoCreatedAt row
     , _todoSubject = DB.todoSubject row
-    , _todoObject = DB.todoObject row
     , _todoIndirectObject = DB.todoIndirectObject row
     , _todoDirectObject = DB.todoDirectObject row
     , _todoStatusChangedAt = DB.todoStatusChangedAt row

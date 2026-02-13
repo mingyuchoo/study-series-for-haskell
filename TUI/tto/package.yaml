@@ -5,9 +5,9 @@ license:             BSD-3-Clause
 author:              Mingyu Choo
 maintainer:          mingyuchoo@gmail.com
 copyright:           Mingyu Choo 2025
-synopsis:            Short description of your package
-category:            Web
-description:         Please see the README on GitHub at <https://github.com/mingyuchoo/tto#readme>
+synopsis:            A TUI todo manager with i18n and configurable keybindings
+category:            Application
+description:         Terminal-based todo manager built with Brick, SQLite, and Tagless Final pattern
 
 extra-source-files:
 - README.md

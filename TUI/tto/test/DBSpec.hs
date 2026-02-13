@@ -12,13 +12,13 @@ spec :: Spec
 spec = do
   describe "TodoRow" <| do
     it "TodoRow는 Eq 인스턴스를 가져야 함" <| do
-      let row1 = TodoRow 1 "Test" "registered" "2024-01-01" Nothing Nothing Nothing Nothing Nothing
-          row2 = TodoRow 1 "Test" "registered" "2024-01-01" Nothing Nothing Nothing Nothing Nothing
+      let row1 = TodoRow 1 "Test" "registered" "2024-01-01" Nothing Nothing Nothing Nothing
+          row2 = TodoRow 1 "Test" "registered" "2024-01-01" Nothing Nothing Nothing Nothing
       row1 `shouldBe` row2
 
     it "다른 TodoRow는 같지 않아야 함" <| do
-      let row1 = TodoRow 1 "Test1" "registered" "2024-01-01" Nothing Nothing Nothing Nothing Nothing
-          row2 = TodoRow 2 "Test2" "registered" "2024-01-01" Nothing Nothing Nothing Nothing Nothing
+      let row1 = TodoRow 1 "Test1" "registered" "2024-01-01" Nothing Nothing Nothing Nothing
+          row2 = TodoRow 2 "Test2" "registered" "2024-01-01" Nothing Nothing Nothing Nothing
       row1 `shouldNotBe` row2
 
   describe "initDB" <| do

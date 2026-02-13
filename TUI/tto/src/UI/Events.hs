@@ -20,6 +20,7 @@ import           Brick.Widgets.List     (handleListEvent, listElementsL,
 
 import qualified Config
 
+import           Control.Exception      (SomeException, try)
 import           Control.Monad          (when)
 import           Control.Monad.IO.Class (liftIO)
 
@@ -85,19 +86,24 @@ cycleStatusForward = do
 transitionStatus :: App.AppEnv -> DB.TodoId -> String -> EventM Name AppState ()
 transitionStatus env tid currentStatus = do
     -- Tagless Final을 통한 상태 전환
-    liftIO <| App.runAppM env (TodoService.cycleStatusForward tid currentStatus)
-
-    -- DB에서 업데이트된 데이터 가져오기
-    updatedRows <- liftIO <| App.runAppM env TodoService.loadAllTodos
-    case TodoService.findTodoById tid updatedRows of
-        Just row ->
-            modify <|
-                todoList %~ listModify
-                    (\t -> t
-                        { _todoStatus = DB.todoStatus row
-                        , _todoStatusChangedAt = DB.todoStatusChangedAt row
-                        })
-        Nothing -> pure ()
+    result <- safeIO <| App.runAppM env (TodoService.cycleStatusForward tid currentStatus)
+    case result of
+        Left _err -> pure ()
+        Right () -> do
+            -- DB에서 업데이트된 데이터 가져오기
+            rowsResult <- safeIO <| App.runAppM env TodoService.loadAllTodos
+            case rowsResult of
+                Left _err -> pure ()
+                Right updatedRows ->
+                    case TodoService.findTodoById tid updatedRows of
+                        Just row ->
+                            modify <|
+                                todoList %~ listModify
+                                    (\t -> t
+                                        { _todoStatus = DB.todoStatus row
+                                        , _todoStatusChangedAt = DB.todoStatusChangedAt row
+                                        })
+                        Nothing -> pure ()
 
 -- | Todo 삭제 (Tagless Final 사용)
 deleteSelectedTodo :: EventM Name AppState ()
@@ -114,8 +120,10 @@ deleteSelectedTodo = do
 -- | DB에서 Todo 삭제 (Tagless Final 사용)
 deleteTodoFromDB :: App.AppEnv -> DB.TodoId -> Int -> EventM Name AppState ()
 deleteTodoFromDB env tid idx = do
-    liftIO <| App.runAppM env (TodoService.deleteTodoById tid)
-    modify <| todoList %~ listRemove idx
+    result <- safeIO <| App.runAppM env (TodoService.deleteTodoById tid)
+    case result of
+        Left _err -> pure ()
+        Right ()  -> modify <| todoList %~ listRemove idx
 
 -- | 리스트에서 선택된 항목 편집 모드로 전환
 enterEditModeFromList :: EventM Name AppState ()
@@ -170,19 +178,22 @@ saveNewTodo = do
 -- | Todo 생성 및 삽입 (Tagless Final 사용)
 createAndInsertTodo :: App.AppEnv -> String -> Maybe String -> Maybe String -> Maybe String -> EventM Name AppState ()
 createAndInsertTodo env action subject indirectObj directObj = do
-    newTodoRow <- liftIO <| App.runAppM env <| do
+    result <- safeIO <| App.runAppM env <| do
         tid <- TodoService.createNewTodo action subject indirectObj directObj
         rows <- TodoService.loadAllTodos
         pure <| TodoService.findTodoById tid rows
 
-    case newTodoRow of
-        Just row -> do
-            let newTodo = fromTodoRow row
-            modify <|
-                (todoList %~ listInsert 0 newTodo)
-                . (mode .~ ViewMode)
-            clearEditors
-        Nothing -> modify <| mode .~ ViewMode
+    case result of
+        Left _err -> modify <| mode .~ ViewMode
+        Right newTodoRow ->
+            case newTodoRow of
+                Just row -> do
+                    let newTodo = fromTodoRow row
+                    modify <|
+                        (todoList %~ listInsert 0 newTodo)
+                        . (mode .~ ViewMode)
+                    clearEditors
+                Nothing -> modify <| mode .~ ViewMode
 
 -- | InputMode 키 처리
 handleInputModeKey :: V.Key -> [V.Modifier] -> EventM Name AppState ()
@@ -242,16 +253,18 @@ updateTodoInDB env tid action subject indirectObj directObj = do
             case todos Vec.!? idx of
                 Nothing      -> pure ()
                 Just oldTodo -> do
-                    liftIO <| App.runAppM env <|
+                    result <- safeIO <| App.runAppM env <|
                         TodoService.updateTodoById tid action subject indirectObj directObj
-
-                    let updatedTodo = oldTodo
-                            { _todoAction = action
-                            , _todoSubject = subject
-                            , _todoIndirectObject = indirectObj
-                            , _todoDirectObject = directObj
-                            }
-                    modify <| todoList %~ listModify (const updatedTodo)
+                    case result of
+                        Left _err -> pure ()
+                        Right () -> do
+                            let updatedTodo = oldTodo
+                                    { _todoAction = action
+                                    , _todoSubject = subject
+                                    , _todoIndirectObject = indirectObj
+                                    , _todoDirectObject = directObj
+                                    }
+                            modify <| todoList %~ listModify (const updatedTodo)
 
 -- | EditMode 키 처리
 handleEditModeKey :: V.Key -> [V.Modifier] -> EventM Name AppState ()
@@ -303,3 +316,7 @@ clearEditorsAndReturnToView :: EventM Name AppState ()
 clearEditorsAndReturnToView = do
     modify <| mode .~ ViewMode
     clearEditors
+
+-- | IO 작업을 안전하게 실행하여 예외를 Either로 반환 (Effectful)
+safeIO :: IO a -> EventM Name AppState (Either SomeException a)
+safeIO = liftIO . try

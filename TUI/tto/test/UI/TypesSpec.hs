@@ -50,7 +50,7 @@ spec = do
 
   describe "Todo" <| do
     let sampleTodo = Todo 1 "Test action" "registered" "2024-01-01 10:00"
-                          (Just "Subject") (Just "Object")
+                          (Just "Subject")
                           (Just "Indirect") (Just "Direct") Nothing
 
     it "Todo는 Eq 인스턴스를 가져야 함" <| do
@@ -70,9 +70,6 @@ spec = do
 
     it "todoSubject 렌즈가 올바르게 동작해야 함" <| do
       sampleTodo ^. todoSubject `shouldBe` Just "Subject"
-
-    it "todoObject 렌즈가 올바르게 동작해야 함" <| do
-      sampleTodo ^. todoObject `shouldBe` Just "Object"
 
     it "todoIndirectObject 렌즈가 올바르게 동작해야 함" <| do
       sampleTodo ^. todoIndirectObject `shouldBe` Just "Indirect"
@@ -94,7 +91,7 @@ spec = do
   describe "fromTodoRow" <| do
     it "DB.TodoRow를 UI.Todo로 변환해야 함" <| do
       let dbRow = DB.TodoRow 1 "Action" "registered" "2024-01-01"
-                             (Just "Sub") (Just "Obj")
+                             (Just "Sub")
                              (Just "Ind") (Just "Dir") Nothing
           uiTodo = fromTodoRow dbRow
       uiTodo ^. todoId `shouldBe` 1
@@ -102,14 +99,13 @@ spec = do
       uiTodo ^. todoStatus `shouldBe` "registered"
       uiTodo ^. todoCreatedAt `shouldBe` "2024-01-01"
       uiTodo ^. todoSubject `shouldBe` Just "Sub"
-      uiTodo ^. todoObject `shouldBe` Just "Obj"
       uiTodo ^. todoIndirectObject `shouldBe` Just "Ind"
       uiTodo ^. todoDirectObject `shouldBe` Just "Dir"
       uiTodo ^. todoStatusChangedAt `shouldBe` Nothing
 
     it "완료된 TodoRow를 변환해야 함" <| do
       let dbRow = DB.TodoRow 2 "Done" "completed" "2024-01-01"
-                             Nothing Nothing Nothing Nothing
+                             Nothing Nothing Nothing
                              (Just "2024-01-02")
           uiTodo = fromTodoRow dbRow
       uiTodo ^. todoStatus `shouldBe` "completed"

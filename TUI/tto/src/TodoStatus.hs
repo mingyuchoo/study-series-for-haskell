@@ -23,6 +23,7 @@ module TodoStatus
     , isInProgress
     , isRegistered
     , registered
+    , resetToRegistered
     , startProgress
     , statusToString
     , stringToStatus
@@ -57,9 +58,13 @@ startProgress StatusRegistered = StatusInProgress
 cancel :: TodoStatus 'InProgress -> TodoStatus 'Cancelled
 cancel StatusInProgress = StatusCancelled
 
--- | Transition from InProgress to Completed
-complete :: TodoStatus 'InProgress -> TodoStatus 'Completed
-complete StatusInProgress = StatusCompleted
+-- | Transition from Cancelled to Completed
+complete :: TodoStatus 'Cancelled -> TodoStatus 'Completed
+complete StatusCancelled = StatusCompleted
+
+-- | Transition from Completed to Registered (cycle reset)
+resetToRegistered :: TodoStatus 'Completed -> TodoStatus 'Registered
+resetToRegistered StatusCompleted = StatusRegistered
 
 -- | Existential wrapper for any status (for storage)
 data AnyStatus where AnyStatus :: TodoStatus a -> AnyStatus

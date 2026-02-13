@@ -28,6 +28,7 @@ module I18n
     , UIMessages (..)
     , defaultMessages
     , loadMessages
+    , stringToLanguage
     ) where
 
 import           Data.Aeson       (FromJSON)
@@ -39,10 +40,19 @@ import           Flow             ((<|))
 import           GHC.Generics     (Generic)
 
 import           System.Directory (doesFileExist)
+import           System.FilePath  ((</>))
 
 -- | Supported languages (Pure)
 data Language = English | Korean
      deriving (Eq, Generic, Show)
+
+-- | Parse language from string (Pure)
+stringToLanguage :: String -> Language
+stringToLanguage "en"      = English
+stringToLanguage "english" = English
+stringToLanguage "ko"      = Korean
+stringToLanguage "korean"  = Korean
+stringToLanguage _         = Korean
 
 -- | UI messages structure (Pure)
 data UIMessages = UIMessages { header            :: !String
@@ -76,8 +86,10 @@ data FieldLabels = FieldLabels { id_label              :: !String
 instance FromJSON FieldLabels
 
 -- | Status messages (Pure)
-data StatusMessages = StatusMessages { completed   :: !String
+data StatusMessages = StatusMessages { registered  :: !String
                                      , in_progress :: !String
+                                     , cancelled   :: !String
+                                     , completed   :: !String
                                      }
      deriving (Generic, Show)
 
@@ -182,8 +194,10 @@ defaultMessages =
           },
       status =
         StatusMessages
-          { completed = "✓ Completed",
-            in_progress = "○ In Progress"
+          { registered = "□ Registered",
+            in_progress = "○ In Progress",
+            cancelled = "✗ Cancelled",
+            completed = "✓ Completed"
           },
       list =
         ListMessages
@@ -228,12 +242,13 @@ defaultMessages =
           }
     }
 
--- | Load messages from file (Effectful)
-loadMessages :: Language -> IO I18nMessages
-loadMessages lang = do
-  let path = case lang of
-        English -> "config/messages-en.yaml"
-        Korean  -> "config/messages-ko.yaml"
+-- | Load messages from config directory (Effectful)
+loadMessages :: FilePath -> Language -> IO I18nMessages
+loadMessages configDir lang = do
+  let filename = case lang of
+        English -> "messages-en.yaml"
+        Korean  -> "messages-ko.yaml"
+      path = configDir </> filename
   exists <- doesFileExist path
   if exists
     then loadFromFile path

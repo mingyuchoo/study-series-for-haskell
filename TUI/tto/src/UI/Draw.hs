@@ -3,6 +3,9 @@
 -- | UI rendering functions (Pure)
 module UI.Draw
     ( drawUI
+    , stringWidth
+    , truncateToWidth
+    , truncateWithEllipsis
     ) where
 
 import           Brick                (Widget, attrName, hBox, padAll,
@@ -65,19 +68,26 @@ drawTodo msgs selected todo = withAttr selectAttr todoWidget
             paddingWidth = max 0 (availableForMain - stringWidth truncatedMain)
         Brick.render<| hBox [statusIcon, str truncatedMain, str (replicate paddingWidth ' '), withAttr (attrName "timestamp")<| str timestampText]
 
+-- | CJK/전각 문자의 표시 너비를 계산 (Pure)
+charWidth :: Char -> Int
+charWidth c
+    | c >= '\x1100' && c <= '\x11FF' = 2
+    | c >= '\x3000' && c <= '\x303F' = 2
+    | c >= '\x3130' && c <= '\x318F' = 2
+    | c >= '\xAC00' && c <= '\xD7AF' = 2
+    | c >= '\xFF00' && c <= '\xFFEF' = 2
+    | c >= '\x4E00' && c <= '\x9FFF' = 2
+    | otherwise = 1
+
 stringWidth :: String -> Int
-stringWidth = sum . map cw where
-    cw c | c >= '\x1100' && c <= '\x11FF' = 2 | c >= '\x3000' && c <= '\x303F' = 2 | c >= '\x3130' && c <= '\x318F' = 2
-         | c >= '\xAC00' && c <= '\xD7AF' = 2 | c >= '\xFF00' && c <= '\xFFEF' = 2 | c >= '\x4E00' && c <= '\x9FFF' = 2 | otherwise = 1
+stringWidth = sum . map charWidth
 
 truncateWithEllipsis :: Int -> String -> String
 truncateWithEllipsis maxW text | stringWidth text <= maxW = text | maxW <= 3 = "..." | otherwise = truncateToWidth (maxW - 3) text <> "..."
 
 truncateToWidth :: Int -> String -> String
 truncateToWidth maxW = go 0 where
-    go _ [] = []; go w (c:cs) | w + cw c > maxW = [] | otherwise = c : go (w + cw c) cs
-    cw c | c >= '\x1100' && c <= '\x11FF' = 2 | c >= '\x3000' && c <= '\x303F' = 2 | c >= '\x3130' && c <= '\x318F' = 2
-         | c >= '\xAC00' && c <= '\xD7AF' = 2 | c >= '\xFF00' && c <= '\xFFEF' = 2 | c >= '\x4E00' && c <= '\x9FFF' = 2 | otherwise = 1
+    go _ [] = []; go w (c:cs) | w + charWidth c > maxW = [] | otherwise = c : go (w + charWidth c) cs
 
 drawDetailView :: AppState -> Widget Name
 drawDetailView s = let msgs = s ^. i18nMessages; uiMsgs = I18n.ui msgs in case s ^. mode of
@@ -114,7 +124,7 @@ emptyDetailView uiMsgs msg = borderWithLabel (str <| I18n.detail_title uiMsgs)<|
 drawTodoDetail :: I18n.I18nMessages -> I18n.UIMessages -> Todo -> Widget Name
 drawTodoDetail msgs uiMsgs todo =
     let fieldMsgs = I18n.fields msgs; statusMsgs = I18n.status msgs; status = todo ^. todoStatus
-        statusText = case status of "registered" -> "Registered"; "in_progress" -> I18n.in_progress statusMsgs; "cancelled" -> "Cancelled"; "completed" -> I18n.completed statusMsgs; _ -> "Unknown"
+        statusText = case status of "registered" -> I18n.registered statusMsgs; "in_progress" -> I18n.in_progress statusMsgs; "cancelled" -> I18n.cancelled statusMsgs; "completed" -> I18n.completed statusMsgs; _ -> "Unknown"
         statusAttr = attrName <| case status of "registered" -> "registered"; "in_progress" -> "in_progress"; "cancelled" -> "cancelled"; "completed" -> "completed"; _ -> "normal"
         showDetailField _ Nothing = str ""; showDetailField lbl (Just val) = hBox [withAttr (attrName "detailLabel") <| str (lbl <> ": "), str val]
         statusChangedInfo = case todo ^. todoStatusChangedAt of Just t -> hBox [withAttr (attrName "detailLabel") <| str (I18n.status_changed_label fieldMsgs <> ": "), withAttr (attrName "timestamp") <| str t]; Nothing -> str ""
@@ -131,7 +141,7 @@ drawTodoDetail msgs uiMsgs todo =
 drawTodoDetailWithEditors :: AppState -> I18n.I18nMessages -> Todo -> String -> Widget Name
 drawTodoDetailWithEditors s msgs todo title =
     let fieldMsgs = I18n.fields msgs; statusMsgs = I18n.status msgs; status = todo ^. todoStatus
-        statusText = case status of "registered" -> "Registered"; "in_progress" -> I18n.in_progress statusMsgs; "cancelled" -> "Cancelled"; "completed" -> I18n.completed statusMsgs; _ -> "Unknown"
+        statusText = case status of "registered" -> I18n.registered statusMsgs; "in_progress" -> I18n.in_progress statusMsgs; "cancelled" -> I18n.cancelled statusMsgs; "completed" -> I18n.completed statusMsgs; _ -> "Unknown"
         statusAttr = attrName <| case status of "registered" -> "registered"; "in_progress" -> "in_progress"; "cancelled" -> "cancelled"; "completed" -> "completed"; _ -> "normal"
         statusChangedInfo = case todo ^. todoStatusChangedAt of Just t -> hBox [withAttr (attrName "detailLabel") <| str (I18n.status_changed_label fieldMsgs <> ": "), withAttr (attrName "timestamp") <| str t]; Nothing -> str ""
     in borderWithLabel (str title)<| padAll 1<| vLimit 8<| vBox
