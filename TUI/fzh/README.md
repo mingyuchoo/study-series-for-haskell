@@ -3,7 +3,7 @@
 ## How to create a project
 
 ```bash
-stack new <project-name> mingyuchoo/cli
+stack new <project-name> mingyuchoo/tui
 ```
 
 ## How to build
@@ -29,4 +29,5 @@ ghcid --command "stack ghci test/Spec.hs"
 ```bash
 stack run
 ```
+
 You can also use `Makefile` for these works.

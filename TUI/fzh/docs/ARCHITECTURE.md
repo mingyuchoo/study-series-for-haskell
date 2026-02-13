@@ -41,19 +41,24 @@
 ## 모듈 상세 설명
 
 ### 1. Main (app/Main.hs)
+
 애플리케이션의 진입점으로, 다음 역할을 수행합니다:
+
 - 입력 소스 결정 (stdin 파이프 또는 파일 시스템 재귀 탐색)
 - 키바인딩 설정 로드
 - Brick TUI 실행
 - 선택된 아이템 출력
 
 ### 2. Lib (src/Lib.hs)
+
 Brick 앱의 핵심 정의를 담당합니다:
+
 - `App` 타입 정의 (드로잉, 이벤트 핸들링, 속성 맵)
 - 하위 모듈들의 re-export
 - `buildVtyFromTty` 함수 제공
 
 ### 3. Types (src/Types.hs)
+
 애플리케이션의 핵심 데이터 타입을 정의합니다:
 
 | 타입 | 설명 |
@@ -63,33 +68,43 @@ Brick 앱의 핵심 정의를 담당합니다:
 | `AppState` | 앱 상태 (아이템, 필터 결과, 검색어, 설정) |
 
 ### 4. Config (src/Config.hs)
+
 설정 파일 관리를 담당합니다:
+
 - `KeyBindingStyle`: Emacs/Vim 키바인딩 스타일
 - `KeyBindingConfig`: 키바인딩 설정 레코드
 - YAML 파일 파싱 (`~/.config/fzh/keybindings.yaml`)
 
 ### 5. Event (src/Event.hs)
+
 사용자 입력 이벤트를 처리합니다:
+
 - Emacs 스타일: `C-p/C-n` 이동, `C-g` 종료, `C-u` 삭제
 - Vim 스타일: `C-k/C-j` 이동, `C-c` 종료, `C-u` 삭제
 - 검색어 입력/삭제 처리
 - 리스트 네비게이션
 
 ### 6. Fuzzy (src/Fuzzy.hs)
+
 퍼지 매칭 알고리즘을 구현합니다:
+
 - `fuzzyMatchScore`: 쿼리와 텍스트 간 매칭 점수 계산
 - `filterItems`: 아이템 필터링 및 점수순 정렬
 - 경로 깊이 기반 정렬 (얕은 경로 우선)
 
 ### 7. UI (src/UI.hs)
+
 화면 렌더링을 담당합니다:
+
 - `renderSearchBox`: 검색 입력 박스
 - `renderResultList`: 필터링된 결과 리스트
 - `renderInfo`: 아이템 개수 정보
 - `renderKeyBindingHelp`: 키바인딩 도움말
 
 ### 8. Vty (src/Vty.hs)
+
 터미널 I/O를 처리합니다:
+
 - `/dev/tty` 직접 접근으로 파이프 입력 지원
 - 커스텀 Vty 인스턴스 생성
 
