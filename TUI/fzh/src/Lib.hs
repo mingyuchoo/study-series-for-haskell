@@ -16,6 +16,8 @@ import           Config             (KeyBindingConfig (..),
 
 import           Event              (handleEvent, loadSelectedFile)
 
+import qualified Graphics.Vty.Attributes as V
+
 import           Types
 
 import           UI                 (drawUI)
@@ -38,6 +40,14 @@ app = App
 mkAttrMap :: AppState -> AttrMap
 mkAttrMap st = attrMap (configDefaultAttr cfg)
   [ (listSelectedAttr, configSelectedAttr cfg)
+  -- 구문 강조 색상
+  , (attrName "syntax.keyword", fg V.brightBlue)
+  , (attrName "syntax.string", fg V.yellow)
+  , (attrName "syntax.comment", fg V.brightBlack)
+  , (attrName "syntax.function", fg V.brightGreen)
+  , (attrName "syntax.type", fg V.brightCyan)
+  , (attrName "syntax.number", fg V.cyan)
+  , (attrName "syntax.lineNumber", fg V.brightBlack)
   ]
   where
     cfg = stConfig st
