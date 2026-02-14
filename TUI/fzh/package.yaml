@@ -5,9 +5,9 @@ license:             BSD-3-Clause
 author:              Mingyu Choo
 maintainer:          mingyuchoo@gmail.com
 copyright:           Mingyu Choo 2025
-synopsis:            Short description of your package
-category:            Web
-description:         Please see the README on GitHub at <https://github.com/mingyuchoo/fzh#readme>
+synopsis:            Haskell로 작성된 퍼지 파인더 TUI 애플리케이션
+category:            Tools
+description:         Brick 라이브러리 기반의 터미널 퍼지 파인더. fzf와 유사한 기능을 제공하며 Emacs/Vim 키바인딩을 지원합니다.
 
 extra-source-files:
 - README.md
@@ -61,6 +61,7 @@ library:
     - Event
     - UI
     - Vty
+    - FileSearch
 
 executables:
   fzh-exe:

@@ -2,6 +2,7 @@
 
 module UI
     ( drawUI
+    , formatInfoText
     ) where
 import           Brick
 import           Brick.Widgets.Border
@@ -53,14 +54,24 @@ renderResultList cfg st =
     -- | 개별 아이템 렌더링 (Pure)
     drawItem _ item = txt ("  " <> item)
 
+-- | 정보 텍스트 생성 (Pure)
+-- 아이템 개수와 선택 위치를 포맷팅
+formatInfoText :: Int -> Maybe Int -> T.Text
+formatInfoText total Nothing = "Items: " <> T.pack (show total)
+formatInfoText total (Just idx) =
+  "Items: " <> T.pack (show total) <> " | Position: " <> T.pack (show (idx + 1)) <> "/" <> T.pack (show total)
+
 -- | 정보 표시줄 렌더링 (Pure)
--- 현재 표시된 아이템 개수 표시
+-- 현재 표시된 아이템 개수 및 선택 위치 표시
 renderInfo :: AppConfig -> AppState -> Widget Name
 renderInfo cfg st =
   hLimit (configMaxWidth cfg) <|
   border <|
   padLeftRight 1 <|
-  txt <| "Items: " <> T.pack (show <| Vec.length <| listElements <| stFilteredList st)
+  txt <| formatInfoText totalItems selectedIdx
+  where
+    totalItems = Vec.length <| listElements <| stFilteredList st
+    selectedIdx = fst <$> listSelectedElement (stFilteredList st)
 
 -- | 파일 미리보기 렌더링 (Pure)
 -- 선택된 파일의 내용을 오른쪽에 표시

@@ -6,30 +6,16 @@ import           Brick.Widgets.List (listSelectedElement)
 
 import           Config             (loadKeyBindingConfig)
 
-import           Control.Monad      (forM)
-
 import qualified Data.Text          as T
+
+import           FileSearch         (listFilesRecursive)
 
 import           Flow               ((<|))
 
 import           Lib                (AppState (..), app, buildVtyFromTty,
                                      configWithKeyBinding, initialState)
 
-import           System.Directory   (doesDirectoryExist, listDirectory)
-import           System.FilePath    ((</>))
 import           System.IO          (hIsTerminalDevice, stdin)
-
--- 재귀적으로 디렉터리 내 모든 파일 검색
-listFilesRecursive :: FilePath -> IO [FilePath]
-listFilesRecursive dir = do
-  entries <- listDirectory dir
-  paths <- forM entries <| \entry -> do
-    let path = dir </> entry
-    isDir <- doesDirectoryExist path
-    if isDir
-      then listFilesRecursive path
-      else return [path]
-  return <| concat paths
 
 -- 입력 소스 결정: stdin이 파이프면 stdin, 아니면 현재 디렉터리부터 재귀적으로 파일 목록
 getInputItems :: IO [T.Text]

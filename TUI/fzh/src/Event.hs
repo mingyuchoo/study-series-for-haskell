@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Event
-    ( handleEvent
+    ( formatFileError
+    , handleEvent
     , loadSelectedFile
     ) where
 import           Brick
@@ -10,7 +11,7 @@ import           Brick.Widgets.List
 
 import           Config                 (KeyBindingStyle (..))
 
-import           Control.Exception      (SomeException, catch)
+import           Control.Exception      (IOException, catch)
 import           Control.Monad.IO.Class (liftIO)
 
 import qualified Data.Text              as T
@@ -21,6 +22,8 @@ import           Flow                   ((<|))
 import           Fuzzy                  (filterItems)
 
 import qualified Graphics.Vty           as V
+
+import           System.IO.Error        (isDoesNotExistError, isPermissionError)
 
 import           Types
 
@@ -116,11 +119,19 @@ loadSelectedFile = do
       content <- liftIO <| loadFileContent (T.unpack filePath)
       modify <| \s -> s { stFileContent = Just content }
 
+-- | IOException을 사용자 친화적인 메시지로 변환 (Pure)
+-- 파일 없음, 권한 없음, 기타 에러를 구분하여 한국어 메시지 반환
+formatFileError :: IOException -> T.Text
+formatFileError e
+  | isDoesNotExistError e = "파일이 존재하지 않습니다"
+  | isPermissionError e   = "파일 읽기 권한이 없습니다"
+  | otherwise             = "파일 읽기 오류: " <> T.pack (show e)
+
 -- | 파일 내용을 읽어오는 헬퍼 함수 (Effect)
 -- 파일 읽기 실패 시 에러 메시지 반환
 loadFileContent :: FilePath -> IO T.Text
 loadFileContent path =
   (TIO.readFile path `catch` handleError)
   where
-    handleError :: SomeException -> IO T.Text
-    handleError e = return <| T.pack <| "Error reading file: " <> show e
+    handleError :: IOException -> IO T.Text
+    handleError = return . formatFileError
