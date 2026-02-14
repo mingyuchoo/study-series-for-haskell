@@ -3,6 +3,7 @@
 module UI
     ( drawUI
     , formatInfoText
+    , renderWarningUI
     ) where
 import           Brick
 import           Brick.Widgets.Border
@@ -90,3 +91,18 @@ renderKeyBindingHelp cfg =
   case configKeyBinding cfg of
     Emacs -> txt "ESC/C-g: Quit | Enter: Select | ↑↓/C-p/C-n: Navigate | C-u: Clear"
     Vim   -> txt "ESC/C-c: Quit | Enter: Select | ↑↓/C-k/C-j: Navigate | C-u: Clear"
+
+-- | 터미널 크기 경고 UI 렌더링 (Pure)
+-- 터미널이 최소 크기 미만일 때 표시
+renderWarningUI :: AppState -> Widget Name
+renderWarningUI st =
+  let (w, h) = stTerminalSize st
+      warning = vCenter <| hCenter <| vBox
+        [ txt "⚠️  터미널 크기가 너무 작습니다"
+        , txt ""
+        , txt <| "현재: " <> T.pack (show w) <> "x" <> T.pack (show h)
+        , txt "최소: 80x24"
+        , txt ""
+        , txt "터미널 크기를 조정해주세요"
+        ]
+  in border warning
