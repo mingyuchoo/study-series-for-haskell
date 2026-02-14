@@ -41,7 +41,8 @@ main = do
       -- 키바인딩 설정 로드
       kbConfig <- loadKeyBindingConfig
       let cfg = configWithKeyBinding kbConfig
-          initialSt = initialState items cfg
+          -- TODO: Task 6에서 실제 터미널 크기를 획득하도록 수정 예정
+          initialSt = initialState items cfg (80, 24)
       -- /dev/tty를 사용하여 TUI 실행
       initialVty <- buildVtyFromTty
       finalState <- customMain initialVty buildVtyFromTty Nothing app initialSt

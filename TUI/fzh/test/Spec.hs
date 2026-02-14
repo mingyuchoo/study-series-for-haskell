@@ -57,9 +57,16 @@ spec = do
         context "initialState 함수" <| do
             it "초기 상태를 올바르게 생성해야 함" <| do
                 let items = ["item1", "item2"]
-                let state = initialState items defaultConfig
+                let state = initialState items defaultConfig (80, 24)
                 Vec.length (stItems state) `shouldBe` 2
                 stSearchQuery state `shouldBe` ""
+
+            it "터미널 크기를 포함한 초기 상태를 올바르게 생성해야 함" <| do
+                let items = ["file1.txt", "file2.txt"]
+                let cfg = defaultConfig
+                let termSize = (100, 30)
+                let state = initialState items cfg termSize
+                stTerminalSize state `shouldBe` (100, 30)
 
         context "configWithKeyBinding 함수" <| do
             it "키바인딩 설정을 올바르게 적용해야 함" <| do

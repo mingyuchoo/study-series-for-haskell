@@ -42,7 +42,7 @@ data AppConfig = AppConfig { configMaxWidth     :: !Int
                            }
 
 -- | 앱의 현재 상태를 담는 레코드 타입
--- 아이템 목록, 필터링 결과, 검색어, 설정 포함
+-- 아이템 목록, 필터링 결과, 검색어, 설정, 터미널 크기 포함
 data AppState = AppState { stItems        :: !(Vec.Vector T.Text)
                            -- ^ 전체 아이템
                          , stFilteredList :: !(List Name T.Text)
@@ -53,6 +53,8 @@ data AppState = AppState { stItems        :: !(Vec.Vector T.Text)
                            -- ^ 앱 설정
                          , stFileContent  :: !(Maybe T.Text)
                            -- ^ 선택된 파일의 내용
+                         , stTerminalSize :: !(Int, Int)
+                           -- ^ 터미널 크기 (width, height)
                          }
 
 -- | 기본 앱 설정값 (Pure)
@@ -72,10 +74,10 @@ configWithKeyBinding kbConfig = defaultConfig
   { configKeyBinding = bindingStyle kbConfig
   }
 
--- | 아이템 목록과 설정으로 초기 상태 생성 (Pure)
+-- | 아이템 목록, 설정, 터미널 크기로 초기 상태 생성 (Pure)
 -- 검색어는 빈 문자열로 초기화
-initialState :: [T.Text] -> AppConfig -> AppState
-initialState items cfg =
+initialState :: [T.Text] -> AppConfig -> (Int, Int) -> AppState
+initialState items cfg termSize =
   let itemVec = Vec.fromList items
   in AppState
        { stItems        = itemVec
@@ -83,6 +85,7 @@ initialState items cfg =
        , stSearchQuery  = ""
        , stConfig       = cfg
        , stFileContent  = Nothing
+       , stTerminalSize = termSize
        }
 
 -- | 터미널이 최소 크기 이상인지 확인 (Pure)
