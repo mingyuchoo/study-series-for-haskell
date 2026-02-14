@@ -24,3 +24,10 @@ spec = do
 
     it "returns Nothing for files without extensions" $ do
       detectLanguage "README" `shouldBe` Nothing
+
+  describe "renderPlainText" $ do
+    it "creates a widget from text lines" $ do
+      let lines = ["line 1", "line 2", "line 3"]
+      let widget = renderPlainText lines
+      -- Widget이 생성되는지만 확인 (타입 체크)
+      widget `seq` True `shouldBe` True
