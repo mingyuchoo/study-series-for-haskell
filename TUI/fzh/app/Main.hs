@@ -12,6 +12,8 @@ import           FileSearch         (listFilesRecursive)
 
 import           Flow               ((<|))
 
+import qualified Graphics.Vty       as V
+
 import           Lib                (AppState (..), app, buildVtyFromTty,
                                      configWithKeyBinding, initialState)
 
@@ -38,13 +40,19 @@ main = do
   if null items
     then putStrLn "No input provided"
     else do
+      -- /dev/tty를 사용하여 초기 Vty 생성
+      initialVty <- buildVtyFromTty
+
+      -- 현재 터미널 크기 획득
+      let output = V.outputIface initialVty
+      (termWidth, termHeight) <- V.displayBounds output
+
       -- 키바인딩 설정 로드
       kbConfig <- loadKeyBindingConfig
       let cfg = configWithKeyBinding kbConfig
-          -- TODO: Task 6에서 실제 터미널 크기를 획득하도록 수정 예정
-          initialSt = initialState items cfg (80, 24)
-      -- /dev/tty를 사용하여 TUI 실행
-      initialVty <- buildVtyFromTty
+          initialSt = initialState items cfg (termWidth, termHeight)
+
+      -- TUI 실행
       finalState <- customMain initialVty buildVtyFromTty Nothing app initialSt
 
       -- 선택된 아이템 출력
