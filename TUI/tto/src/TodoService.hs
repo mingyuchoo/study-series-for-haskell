@@ -22,7 +22,7 @@ module TodoService
 
 import qualified DB
 
-import           Data.List (find)
+import           Data.List  (find)
 
 import           Effects
 
