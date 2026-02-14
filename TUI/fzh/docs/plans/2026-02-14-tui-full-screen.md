@@ -645,21 +645,46 @@ stack test
 
 **Step 6: 문서화**
 
-체크리스트 작성:
-
-```markdown
 ## 검증 완료
 
-- [x] 터미널 전체 영역 사용 확인
-- [x] 40:60 비율 정확도 확인
-- [x] 리사이즈 시 즉각 반응 확인
-- [x] 80x24 미만에서 경고 표시 확인
-- [x] 경고 후에도 80x24 이상으로 키우면 정상 동작
-- [x] 기존 키바인딩 모두 정상 동작 (Emacs/Vim)
-- [x] 퍼지 검색 정상 동작
-- [x] 파일 미리보기 정상 동작
-- [x] stdin 파이프 정상 동작
-```
+### 자동 테스트
+- [x] 단위 테스트 전체 통과 (36 examples, 0 failures)
+  - Types 모듈: isTerminalSizeSufficient, resultListWidth, previewWidth, contentHeight
+  - Fuzzy 모듈: fuzzyMatchScore, filterItems
+  - FileSearch 모듈: shouldExclude, listFilesRecursive
+  - Event 모듈: formatFileError
+  - UI 모듈: formatInfoText
+- [x] 빌드 성공 (stack build)
+
+### 수동 테스트 (비대화형 환경에서는 수행 불가)
+
+다음 테스트들은 실제 터미널 환경에서 수행해야 합니다:
+
+1. **터미널 크기별 테스트**
+   - [ ] 최소 크기 (80x24): 정상 UI 표시 확인
+   - [ ] 중간 크기 (120x40): 전체 화면 사용 확인
+   - [ ] 큰 크기 (200x50): 40:60 비율 유지 확인
+   - [ ] 최소 미만 (60x20): 경고 메시지 표시 확인
+
+2. **동적 리사이즈 테스트**
+   - [ ] 앱 실행 중 터미널 크기 조정 시 즉각 반응 확인
+   - [ ] 작은 크기 ↔ 큰 크기 변경 시 UI 전환 확인
+   - [ ] 경고 상태에서 크기 확대 시 정상 UI로 복귀 확인
+
+3. **비율 정확도 테스트**
+   - [ ] 다양한 너비에서 결과:미리보기 = 40:60 육안 확인
+
+4. **기능 회귀 테스트**
+   - [ ] 퍼지 검색 정상 동작 (필터링, 대소문자 무시)
+   - [ ] Emacs 키바인딩 (Ctrl+p/n/g/k)
+   - [ ] Vim 키바인딩 (Ctrl+k/j/c)
+   - [ ] 파일 미리보기 표시
+   - [ ] stdin 파이프 입력 (find . | stack run)
+
+5. **경계 조건 테스트**
+   - [ ] 빈 목록에서 정상 동작
+   - [ ] 매우 긴 파일명 처리
+   - [ ] 바이너리 파일 미리보기 처리
 
 **Step 7: 최종 커밋**
 
