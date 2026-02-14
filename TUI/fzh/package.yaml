@@ -64,6 +64,7 @@ library:
     - UI
     - Vty
     - FileSearch
+    - SyntaxHighlight
 
 executables:
   fzh-exe:

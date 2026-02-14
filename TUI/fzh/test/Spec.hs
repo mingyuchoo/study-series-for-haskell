@@ -15,6 +15,7 @@ import           Config        (KeyBindingConfig(..), KeyBindingStyle(..))
 import           FileSearch    (listFilesRecursive, shouldExclude)
 import           Event         (formatFileError)
 import           UI            (formatInfoText)
+import qualified SyntaxHighlightSpec
 
 import           Control.Exception (IOException)
 import           System.Directory (createDirectoryIfMissing, removeDirectoryRecursive,
@@ -188,3 +189,5 @@ spec = do
 
             it "마지막 아이템 선택 시" <| do
                 formatInfoText 5 (Just 4) `shouldBe` "Items: 5 | Position: 5/5"
+
+    SyntaxHighlightSpec.spec
