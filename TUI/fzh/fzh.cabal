@@ -64,6 +64,8 @@ library
     , microlens-th
     , mtl
     , parallel
+    , skylighting >=0.14
+    , skylighting-core >=0.14
     , text
     , time
     , unix
@@ -105,6 +107,8 @@ executable fzh-exe
     , microlens-th
     , mtl
     , parallel
+    , skylighting >=0.14
+    , skylighting-core >=0.14
     , text
     , time
     , unix
@@ -150,6 +154,8 @@ test-suite fzh-test
     , microlens-th
     , mtl
     , parallel
+    , skylighting >=0.14
+    , skylighting-core >=0.14
     , text
     , time
     , unix

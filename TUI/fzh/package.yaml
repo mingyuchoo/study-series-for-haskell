@@ -25,12 +25,14 @@ dependencies:
 - microlens-th
 - mtl
 - parallel
+- skylighting >= 0.14
+- skylighting-core >= 0.14
 - text
 - time
+- unix
 - vector
 - vty
 - vty-unix
-- unix
 - yaml
 
 default-extensions:
