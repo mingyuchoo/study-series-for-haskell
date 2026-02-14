@@ -103,4 +103,8 @@ previewWidth termWidth = termWidth - resultListWidth termWidth
 -- | 컨텐츠 영역 높이 계산 (Pure)
 -- 전체 높이 - 고정 요소들(검색 3줄 + 정보 3줄 + 도움말 2줄)
 contentHeight :: Int -> Int
-contentHeight termHeight = termHeight - 3 - 3 - 2
+contentHeight termHeight = termHeight - searchBoxHeight - infoBoxHeight - helpBoxHeight
+  where
+    searchBoxHeight = 3
+    infoBoxHeight   = 3
+    helpBoxHeight   = 2
