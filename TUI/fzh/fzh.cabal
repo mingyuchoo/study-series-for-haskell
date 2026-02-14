@@ -35,6 +35,7 @@ library
       UI
       Vty
       FileSearch
+      SyntaxHighlight
   other-modules:
       Paths_fzh
   autogen-modules:
@@ -122,6 +123,7 @@ test-suite fzh-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      SyntaxHighlightSpec
       Paths_fzh
   autogen-modules:
       Paths_fzh
