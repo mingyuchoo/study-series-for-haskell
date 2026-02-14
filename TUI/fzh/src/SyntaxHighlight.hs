@@ -4,6 +4,7 @@ module SyntaxHighlight
     ( detectLanguage
     , renderHighlightedContent
     , renderPlainText
+    , limitLines
     ) where
 
 import           Brick
@@ -19,6 +20,10 @@ detectLanguage :: FilePath -> Maybe Syntax
 detectLanguage path =
   let ext = T.pack $ takeExtension path
   in lookupSyntax ext defaultSyntaxMap
+
+-- | 내용을 처음 100줄로 제한
+limitLines :: T.Text -> [T.Text]
+limitLines content = take 100 $ T.lines content
 
 -- | 일반 텍스트를 라인 번호와 함께 렌더링
 renderPlainText :: [T.Text] -> Widget Name
