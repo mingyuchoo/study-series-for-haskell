@@ -7,22 +7,22 @@ module Lib
     , buildVtyFromTty
     ) where
 import           Brick
-import           Brick.Widgets.List (listSelectedAttr)
+import           Brick.Widgets.List      (listSelectedAttr)
 
-import           Config             (KeyBindingConfig (..),
-                                     KeyBindingStyle (..),
-                                     defaultKeyBindingConfig,
-                                     loadKeyBindingConfig)
+import           Config                  (KeyBindingConfig (..),
+                                          KeyBindingStyle (..),
+                                          defaultKeyBindingConfig,
+                                          loadKeyBindingConfig)
 
-import           Event              (handleEvent, loadSelectedFile)
+import           Event                   (handleEvent, loadSelectedFile)
 
 import qualified Graphics.Vty.Attributes as V
 
 import           Types
 
-import           UI                 (drawUI)
+import           UI                      (drawUI)
 
-import           Vty                (buildVtyFromTty)
+import           Vty                     (buildVtyFromTty)
 
 -- | Brick 앱 정의 (Pure)
 -- 드로잉, 커서, 이벤트 핸들링, 시작 이벤트, 속성 맵 설정

@@ -2,18 +2,22 @@
 
 module SyntaxHighlight
     ( detectLanguage
+    , limitLines
     , renderHighlightedContent
     , renderPlainText
-    , limitLines
     ) where
 
 import           Brick
-import qualified Data.Text          as T
-import           Skylighting
-import           System.FilePath    (takeExtension)
-import           Text.Printf        (printf)
 
-import           Types              (Name)
+import qualified Data.Text       as T
+
+import           Skylighting
+
+import           System.FilePath (takeExtension)
+
+import           Text.Printf     (printf)
+
+import           Types           (Name)
 
 -- | 파일 확장자로 언어 감지
 detectLanguage :: FilePath -> Maybe Syntax
@@ -27,19 +31,19 @@ limitLines content = take 100 $ T.lines content
 
 -- | 토큰 타입을 속성 이름으로 매핑
 tokenAttr :: TokenType -> AttrName
-tokenAttr KeywordTok        = attrName "syntax.keyword"
-tokenAttr DataTypeTok       = attrName "syntax.type"
-tokenAttr DecValTok         = attrName "syntax.number"
-tokenAttr BaseNTok          = attrName "syntax.number"
-tokenAttr FloatTok          = attrName "syntax.number"
-tokenAttr ConstantTok       = attrName "syntax.number"
-tokenAttr CharTok           = attrName "syntax.string"
-tokenAttr StringTok         = attrName "syntax.string"
-tokenAttr CommentTok        = attrName "syntax.comment"
-tokenAttr OtherTok          = attrName "syntax.function"
-tokenAttr FunctionTok       = attrName "syntax.function"
-tokenAttr VariableTok       = attrName "syntax.function"
-tokenAttr _                 = attrName "default"
+tokenAttr KeywordTok  = attrName "syntax.keyword"
+tokenAttr DataTypeTok = attrName "syntax.type"
+tokenAttr DecValTok   = attrName "syntax.number"
+tokenAttr BaseNTok    = attrName "syntax.number"
+tokenAttr FloatTok    = attrName "syntax.number"
+tokenAttr ConstantTok = attrName "syntax.number"
+tokenAttr CharTok     = attrName "syntax.string"
+tokenAttr StringTok   = attrName "syntax.string"
+tokenAttr CommentTok  = attrName "syntax.comment"
+tokenAttr OtherTok    = attrName "syntax.function"
+tokenAttr FunctionTok = attrName "syntax.function"
+tokenAttr VariableTok = attrName "syntax.function"
+tokenAttr _           = attrName "default"
 
 -- | 일반 텍스트를 라인 번호와 함께 렌더링
 renderPlainText :: [T.Text] -> Widget Name
