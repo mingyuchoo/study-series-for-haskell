@@ -7,11 +7,11 @@ module Types
     , configWithKeyBinding
     , defaultConfig
     , initialState
-    -- 터미널 크기 및 레이아웃 헬퍼 함수
-    , isTerminalSizeSufficient
-    , resultListWidth
-    , previewWidth
+      -- 터미널 크기 및 레이아웃 헬퍼 함수
     , contentHeight
+    , isTerminalSizeSufficient
+    , previewWidth
+    , resultListWidth
     ) where
 import           Brick              (on)
 import           Brick.Widgets.List (List, list)
