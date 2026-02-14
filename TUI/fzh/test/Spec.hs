@@ -8,7 +8,9 @@ import qualified Data.Vector   as Vec
 import           Flow          ((<|))
 import           Fuzzy         (filterItems, fuzzyMatchScore)
 import           Types         (AppConfig(..), AppState(..),
-                               configWithKeyBinding, defaultConfig, initialState)
+                               configWithKeyBinding, defaultConfig, initialState,
+                               isTerminalSizeSufficient, resultListWidth,
+                               previewWidth, contentHeight)
 import           Config        (KeyBindingConfig(..), KeyBindingStyle(..))
 import           FileSearch    (listFilesRecursive, shouldExclude)
 import           Event         (formatFileError)
@@ -64,6 +66,51 @@ spec = do
                 let kbConfig = KeyBindingConfig { bindingStyle = Vim }
                 let config = configWithKeyBinding kbConfig
                 configKeyBinding config `shouldBe` Vim
+
+        context "isTerminalSizeSufficient 함수" <| do
+            it "최소 크기(80x24)를 충족하면 True를 반환해야 함" <| do
+                isTerminalSizeSufficient (80, 24) `shouldBe` True
+
+            it "최소 너비(80) 미만이면 False를 반환해야 함" <| do
+                isTerminalSizeSufficient (79, 24) `shouldBe` False
+
+            it "최소 높이(24) 미만이면 False를 반환해야 함" <| do
+                isTerminalSizeSufficient (80, 23) `shouldBe` False
+
+            it "큰 크기(200x50)를 충족하면 True를 반환해야 함" <| do
+                isTerminalSizeSufficient (200, 50) `shouldBe` True
+
+        context "resultListWidth 함수" <| do
+            it "전체 너비의 40%를 반환해야 함" <| do
+                resultListWidth 100 `shouldBe` 40
+
+            it "작은 너비에서도 올바른 비율을 계산해야 함" <| do
+                resultListWidth 50 `shouldBe` 20
+
+            it "큰 너비에서도 올바른 비율을 계산해야 함" <| do
+                resultListWidth 200 `shouldBe` 80
+
+        context "previewWidth 함수" <| do
+            it "전체 너비의 60%를 반환해야 함" <| do
+                previewWidth 100 `shouldBe` 60
+
+            it "resultListWidth와 합쳐서 전체 너비가 되어야 함" <| do
+                let w = 100
+                resultListWidth w + previewWidth w `shouldBe` w
+
+            it "다양한 너비에서 합이 전체가 되어야 함" <| do
+                let w = 150
+                resultListWidth w + previewWidth w `shouldBe` w
+
+        context "contentHeight 함수" <| do
+            it "전체 높이에서 고정 요소들을 제외한 값을 반환해야 함" <| do
+                contentHeight 30 `shouldBe` 22  -- 30 - 3 - 3 - 2
+
+            it "최소 높이(24)에서 올바른 값을 반환해야 함" <| do
+                contentHeight 24 `shouldBe` 16  -- 24 - 3 - 3 - 2
+
+            it "큰 높이에서도 올바른 값을 반환해야 함" <| do
+                contentHeight 50 `shouldBe` 42  -- 50 - 3 - 3 - 2
 
     describe "FileSearch 모듈" <| do
         context "shouldExclude 함수" <| do

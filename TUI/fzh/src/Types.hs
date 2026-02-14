@@ -7,6 +7,11 @@ module Types
     , configWithKeyBinding
     , defaultConfig
     , initialState
+    -- 터미널 크기 및 레이아웃 헬퍼 함수
+    , isTerminalSizeSufficient
+    , resultListWidth
+    , previewWidth
+    , contentHeight
     ) where
 import           Brick              (on)
 import           Brick.Widgets.List (List, list)
@@ -79,3 +84,23 @@ initialState items cfg =
        , stConfig       = cfg
        , stFileContent  = Nothing
        }
+
+-- | 터미널이 최소 크기 이상인지 확인 (Pure)
+-- 최소 크기: 80x24
+isTerminalSizeSufficient :: (Int, Int) -> Bool
+isTerminalSizeSufficient (w, h) = w >= 80 && h >= 24
+
+-- | 결과 리스트 너비 계산 (Pure)
+-- 전체 너비의 40%
+resultListWidth :: Int -> Int
+resultListWidth termWidth = (termWidth * 2) `div` 5
+
+-- | 미리보기 너비 계산 (Pure)
+-- 전체 너비의 60% (= 전체 - 40%)
+previewWidth :: Int -> Int
+previewWidth termWidth = termWidth - resultListWidth termWidth
+
+-- | 컨텐츠 영역 높이 계산 (Pure)
+-- 전체 높이 - 고정 요소들(검색 3줄 + 정보 3줄 + 도움말 2줄)
+contentHeight :: Int -> Int
+contentHeight termHeight = termHeight - 3 - 3 - 2
