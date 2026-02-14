@@ -29,12 +29,17 @@ import           Types
 
 -- | 메인 이벤트 핸들러 (Effect)
 -- 키바인딩 스타일에 따라 Emacs 또는 Vim 핸들러로 분기
+-- 터미널 리사이즈 이벤트는 키바인딩과 무관하게 처리
 handleEvent :: BrickEvent Name e -> EventM Name AppState ()
 handleEvent (VtyEvent e) = do
   st <- get
-  case configKeyBinding (stConfig st) of
-    Emacs -> handleEmacsEvent e
-    Vim   -> handleVimEvent e
+  case e of
+    -- 터미널 리사이즈 처리
+    V.EvResize w h -> modify $ \s -> s { stTerminalSize = (w, h) }
+    -- 키 이벤트는 키바인딩 스타일에 따라 분기
+    _ -> case configKeyBinding (stConfig st) of
+           Emacs -> handleEmacsEvent e
+           Vim   -> handleVimEvent e
 handleEvent _ = pure ()
 
 -- | Emacs 스타일 키 이벤트 핸들러 (Effect)
