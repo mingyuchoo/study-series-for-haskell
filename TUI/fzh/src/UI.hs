@@ -17,6 +17,8 @@ import qualified Data.Vector          as Vec
 
 import           Flow                 ((<|))
 
+import           SyntaxHighlight      (renderHighlightedContent)
+
 import           Types                (AppConfig (..), AppState (..), Name,
                                        contentHeight, isTerminalSizeSufficient,
                                        previewWidth, resultListWidth)
@@ -102,7 +104,11 @@ renderFilePreview _cfg st =
   padLeftRight 1 <|
   case stFileContent st of
     Nothing      -> txt "No file selected"
-    Just content -> txtWrap content
+    Just content ->
+      case listSelectedElement (stFilteredList st) of
+        Nothing -> txt "No file selected"
+        Just (_, selectedPath) ->
+          renderHighlightedContent (T.unpack selectedPath) content
 
 -- | 키바인딩 도움말 렌더링 (Pure)
 -- 현재 키바인딩 스타일에 맞는 단축키 안내 표시
