@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=change-project-name-here
+ARG PROJECT_NAME=ThreepennyAddress
 FROM fpco/stack-build:lts-24.21
 WORKDIR /app
 
