@@ -17,12 +17,13 @@ module LSP.Diagnostics
     , classifySyntaxError
     ) where
 
-import Flow ((<|))
 import           Analysis.Parser               (ParseError (..),
                                                 ParsedModule (..), parseModule)
 
 import           Data.Text                     (Text)
 import qualified Data.Text                     as T
+
+import           Flow                          ((<|))
 
 import           GHC.Generics                  (Generic)
 

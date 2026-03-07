@@ -8,12 +8,13 @@ module Handlers.Configuration
     , parseConfigurationSettings
     ) where
 
-import Flow ((<|))
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 
 import           Data.Aeson             (Result (..), Value, fromJSON)
 import qualified Data.Aeson             as Aeson
 import qualified Data.Aeson.KeyMap      as KeyMap
+
+import           Flow                   ((<|))
 
 import           LSP.Types              (ServerConfig (..))
 

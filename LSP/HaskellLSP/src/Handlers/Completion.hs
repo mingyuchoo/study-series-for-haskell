@@ -13,16 +13,17 @@ module Handlers.Completion
     , normalizeModuleName
     ) where
 
-import Flow ((<|))
 import           Analysis.Parser             (Import (..), ParsedModule (..),
                                               SymbolInfo (..), parseModule,
                                               symbolsInScope)
 
-import           Control.Lens                ((^.), (&), (.~))
+import           Control.Lens                ((&), (.~), (^.))
 import           Control.Monad.IO.Class      (liftIO)
 
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
+
+import           Flow                        ((<|))
 
 import           LSP.State                   (getDocumentContent)
 import           LSP.Types                   (ServerConfig)

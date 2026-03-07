@@ -3,16 +3,20 @@ import {
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
-    TransportKind
+    TransportKind,
+    ErrorAction,
+    CloseAction
 } from 'vscode-languageclient/node';
 import { getExtensionConfig, validateConfig, getServerInitializationOptions, ExtensionConfig } from './config';
 
 let client: LanguageClient | undefined;
+let extensionContext: vscode.ExtensionContext | undefined;
 let restartCount = 0;
 
 export function activate(context: vscode.ExtensionContext): void {
     console.log('Haskell LSP Extension is being activated');
-    
+    extensionContext = context;
+
     try {
         client = startLanguageServer(context);
         
@@ -154,14 +158,14 @@ Current configured path: ${config.serverPath}`;
                     });
                 }
                 
-                return { action: vscode.ErrorAction.Continue };
+                return { action: ErrorAction.Continue };
             },
             closed: () => {
                 console.log('LSP server connection closed');
                 
                 if (restartCount < config.maxRestartCount) {
-                    restartCount<>;
-                    console.log(`Attempting to restart LSP server (attempt ${restartCount}/${maxRestartCount})`);
+                    restartCount++;
+                    console.log(`Attempting to restart LSP server (attempt ${restartCount}/${config.maxRestartCount})`);
                     
                     // Show status bar message during restart
                     vscode.window.setStatusBarMessage(
@@ -180,7 +184,7 @@ Current configured path: ${config.serverPath}`;
                         }
                     }, delay);
                     
-                    return { action: vscode.CloseAction.DoNotRestart };
+                    return { action: CloseAction.DoNotRestart };
                 } else {
                     const message = `Haskell LSP server has crashed ${config.maxRestartCount} times. Please check the server logs and restart manually.`;
                     console.error(message);
@@ -205,7 +209,7 @@ Current configured path: ${config.serverPath}`;
                         }
                     });
                     
-                    return { action: vscode.CloseAction.DoNotRestart };
+                    return { action: CloseAction.DoNotRestart };
                 }
             }
         }
@@ -294,7 +298,7 @@ function handleConfigurationChange(event: vscode.ConfigurationChangeEvent): void
             'Restart Later'
         ).then(selection => {
             if (selection === 'Restart Now') {
-                restartLanguageServer(vscode.extensions.getExtension('haskell-lsp.haskell-lsp-extension')?.extensionContext!);
+                restartLanguageServer(extensionContext!);
             }
         });
     } else if (client) {

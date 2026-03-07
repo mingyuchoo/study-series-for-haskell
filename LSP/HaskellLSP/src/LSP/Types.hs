@@ -34,16 +34,17 @@ module LSP.Types
     , parseJsonRpcMessage
     ) where
 
-import Flow ((<|))
-import           Data.Aeson                  (FromJSON, ToJSON, Value, decode,
-                                              encode)
-import           Data.ByteString.Lazy        (ByteString)
-import qualified Data.ByteString.Lazy        as LBS
-import qualified Data.ByteString.Lazy.Char8  as L8
-import           Data.List                   (isPrefixOf)
-import           Data.Text                   (Text)
+import           Data.Aeson                 (FromJSON, ToJSON, Value, decode,
+                                             encode)
+import           Data.ByteString.Lazy       (ByteString)
+import qualified Data.ByteString.Lazy       as LBS
+import qualified Data.ByteString.Lazy.Char8 as L8
+import           Data.List                  (isPrefixOf)
+import           Data.Text                  (Text)
 
-import           GHC.Generics                (Generic)
+import           Flow                       ((<|))
+
+import           GHC.Generics               (Generic)
 
 -- | Request ID for JSON-RPC messages
 type RequestId = Value

@@ -6,24 +6,26 @@ module LSP.Server
     ( runLspServer
     ) where
 
-import Flow ((<|))
-import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.IO.Class        (liftIO)
 
-import           Handlers.Completion         (handleCompletion)
-import           Handlers.Definition         (handleDefinition,
-                                              handleDocumentSymbol)
-import           Handlers.DocumentSync       (handleDidChange, handleDidClose,
-                                              handleDidOpen)
-import           Handlers.Hover              (handleHover)
+import           Flow                          ((<|))
 
-import           LSP.Types                   (ServerConfig, defaultServerConfig)
+import           Handlers.Completion           (handleCompletion)
+import           Handlers.Definition           (handleDefinition,
+                                                handleDocumentSymbol)
+import           Handlers.DocumentSync         (handleDidChange, handleDidClose,
+                                                handleDidOpen)
+import           Handlers.Hover                (handleHover)
+
+import           LSP.Types                     (ServerConfig,
+                                                defaultServerConfig)
 
 import           Language.LSP.Protocol.Message
 import           Language.LSP.Protocol.Types
 import           Language.LSP.Server
 
-import           System.IO                   (BufferMode (..), hSetBuffering,
-                                              stdin, stdout)
+import           System.IO                     (BufferMode (..), hSetBuffering,
+                                                stdin, stdout)
 
 -- | Main LSP server entry point
 -- Implements stdio communication setup and configures server options and handlers

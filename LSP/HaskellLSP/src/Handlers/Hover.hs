@@ -7,7 +7,6 @@ module Handlers.Hover
     , handleHover
     ) where
 
-import Flow ((<|))
 import           Analysis.Parser             (SymbolInfo (..), parseModule,
                                               resolveSymbol)
 
@@ -15,6 +14,8 @@ import           Control.Monad.IO.Class      (liftIO)
 
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
+
+import           Flow                        ((<|))
 
 import           LSP.State                   (getDocumentContent)
 import           LSP.Types                   (ServerConfig)

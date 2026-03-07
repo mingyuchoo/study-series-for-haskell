@@ -7,13 +7,15 @@ module Handlers.DocumentSync
     , handleDidOpen
     ) where
 
-import Flow ((<|))
 import           Analysis.Parser               (parseModule)
 import qualified Analysis.Parser
 
 import           Control.Monad.IO.Class        (liftIO)
 
 import           Data.Text                     (Text)
+
+import           Flow                          ((<|))
+
 import           LSP.Diagnostics               (analyzeDiagnostics)
 import qualified LSP.Diagnostics               as Diag
 import           LSP.State                     (getDocumentContent)

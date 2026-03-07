@@ -15,10 +15,11 @@ module Analysis.Parser
     , symbolsInScope
     ) where
 
-import Flow ((<|))
 import           Data.Char                   (isAlpha, isAlphaNum)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
+
+import           Flow                        ((<|))
 
 import           GHC.Generics                (Generic)
 

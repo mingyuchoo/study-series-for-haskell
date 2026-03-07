@@ -21,7 +21,6 @@ module LSP.Error
     , withLogging
     ) where
 
-import Flow ((<|))
 import           Control.Concurrent     (threadDelay)
 import           Control.Exception      (SomeException, catch, try)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
@@ -30,6 +29,8 @@ import           Data.Text              (Text)
 import qualified Data.Text              as T
 import           Data.Time              (defaultTimeLocale, formatTime,
                                          getCurrentTime)
+
+import           Flow                   ((<|))
 
 import           LSP.Types              (ErrorRecovery (..), ErrorSeverity (..),
                                          LogLevel (..), ResponseError,
