@@ -34,18 +34,10 @@ library
       Paths_demo_Free_Monad_db
   hs-source-dirs:
       src
-  default-extensions:
-      DataKinds
-      ExplicitForAll
-      StandaloneKindSignatures
-      TypeApplications
   ghc-options: -Wall -O2 -haddock
   build-depends:
       base >=4.18 && <5
-    , containers
-    , flow
     , free
-    , parallel
   default-language: GHC2024
 
 executable demo-Free-Monad-db-exe
@@ -56,19 +48,11 @@ executable demo-Free-Monad-db-exe
       Paths_demo_Free_Monad_db
   hs-source-dirs:
       app
-  default-extensions:
-      DataKinds
-      ExplicitForAll
-      StandaloneKindSignatures
-      TypeApplications
   ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.18 && <5
-    , containers
     , demo-Free-Monad-db
-    , flow
     , free
-    , parallel
   default-language: GHC2024
 
 test-suite demo-Free-Monad-db-test
@@ -80,20 +64,13 @@ test-suite demo-Free-Monad-db-test
       Paths_demo_Free_Monad_db
   hs-source-dirs:
       test
-  default-extensions:
-      DataKinds
-      ExplicitForAll
-      StandaloneKindSignatures
-      TypeApplications
   ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.18 && <5
-    , containers
     , demo-Free-Monad-db
     , doctest
     , doctest-discover
-    , flow
     , free
     , hspec
-    , parallel
+    , silently
   default-language: GHC2024

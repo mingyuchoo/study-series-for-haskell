@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=servant-t02-todolist
+ARG PROJECT_NAME=demo-Free-Monad-db
 FROM fpco/stack-build:lts
 WORKDIR /app
 

@@ -3,6 +3,7 @@
 
 import Test.Hspec
 import Lib
+import System.IO.Silently (capture_)
 
 main :: IO ()
 main = hspec spec
@@ -16,6 +17,19 @@ spec = do
             it "should parse floating-point numbers" $ do
                 read "2.5" `shouldBe` (2.5 :: Float)
     describe "Given Lib" $ do
-        context "when use `someFunc` function" $ do
-            it "should be succeeded" $ do
-              someFunc
+        context "when use `runApp` with `program`" $ do
+            it "should output log messages and user query result" $ do
+                output <- capture_ someFunc
+                output `shouldContain` "[FreeLog] Starting Free Monad app..."
+                output `shouldContain` "Querying DB..."
+                output `shouldContain` "[FreeLog] Got user: User_99"
+        context "when use `logMsg`" $ do
+            it "should output the given message" $ do
+                output <- capture_ $ runApp (logMsg "hello")
+                output `shouldContain` "[FreeLog] hello"
+        context "when use `getUser`" $ do
+            it "should return formatted user name" $ do
+                output <- capture_ $ runApp $ do
+                    user <- getUser 42
+                    logMsg user
+                output `shouldContain` "[FreeLog] User_42"

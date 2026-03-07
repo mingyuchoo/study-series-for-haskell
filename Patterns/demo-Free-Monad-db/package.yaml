@@ -15,16 +15,7 @@ extra-source-files:
 
 dependencies:
   - base >= 4.18 && < 5
-  - containers
-  - flow
-  - parallel
   - free
-
-default-extensions:
-  - DataKinds
-  - ExplicitForAll
-  - StandaloneKindSignatures
-  - TypeApplications
 
 ghc-options:
   - -Wall
@@ -62,3 +53,4 @@ tests:
       - hspec
       - doctest
       - doctest-discover
+      - silently

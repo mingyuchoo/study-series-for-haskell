@@ -1,8 +1,11 @@
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
-
 module Lib
   ( someFunc,
+    App,
+    AppF (..),
+    logMsg,
+    getUser,
+    program,
+    runApp,
   )
 where
 
