@@ -11,7 +11,7 @@ module Handlers.Definition
     , resolveDefinitionLocation
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser             (Import (..), ParsedModule (..),
                                               SymbolInfo (..), parseModule,
                                               resolveSymbol)
@@ -23,7 +23,8 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
-import           LSP.Types                   (ServerState (..))
+import           LSP.State                   (getDocumentContent)
+import           LSP.Types                   (ServerConfig)
 
 import qualified Language.LSP.Protocol.Lens  as L
 import           Language.LSP.Protocol.Types
@@ -32,7 +33,7 @@ import           Language.LSP.Server
 
 -- | Handle textDocument/definition request
 -- Resolves symbol definition location and handles local bindings and imports
-handleDefinition :: DefinitionParams -> LspM ServerState (Maybe Location)
+handleDefinition :: DefinitionParams -> LspM ServerConfig (Maybe Location)
 handleDefinition (DefinitionParams textDoc position _workDoneToken _partialResultToken) = do
   let uri = textDoc ^. L.uri
   liftIO <| putStrLn <| "Definition request at position: " <> show position <> " in " <> show uri
@@ -74,7 +75,7 @@ handleDefinition (DefinitionParams textDoc position _workDoneToken _partialResul
 
 -- | Handle textDocument/documentSymbol request
 -- Returns all top-level declarations and includes symbol hierarchy
-handleDocumentSymbol :: DocumentSymbolParams -> LspM ServerState [DocumentSymbol]
+handleDocumentSymbol :: DocumentSymbolParams -> LspM ServerConfig [DocumentSymbol]
 handleDocumentSymbol (DocumentSymbolParams _workDoneToken _partialResultToken textDoc) = do
   let uri = textDoc ^. L.uri
   liftIO <| putStrLn <| "Document symbol request for: " <> show uri
@@ -101,55 +102,9 @@ handleDocumentSymbol (DocumentSymbolParams _workDoneToken _partialResultToken te
 
           return documentSymbols
 
--- | Get document content from server state
--- TODO: Implement proper state management to retrieve document content
--- For now, this is a placeholder that returns sample content
-getDocumentContent :: Uri -> LspM ServerState (Maybe Text)
-getDocumentContent _uri = do
-  -- TODO: Look up document in server state
-  -- For now, return sample Haskell content for testing
-  let sampleContent = T.unlines
-        [ "module Sample where"
-        , ""
-        , "import Data.List (sort, filter)"
-        , "import qualified Data.Map as Map"
-        , ""
-        , "-- | A sample function that adds two integers"
-        , "add :: Int -> Int -> Int"
-        , "add x y = x + y"
-        , ""
-        , "-- | A sample function that uses local bindings"
-        , "processNumbers :: [Int] -> [Int]"
-        , "processNumbers xs = map helper xs"
-        , "  where"
-        , "    helper n = n * 2 + 1"
-        , ""
-        , "-- | A sample data type"
-        , "data Person = Person"
-        , "  { personName :: String"
-        , "  , personAge :: Int"
-        , "  } deriving (Show, Eq)"
-        , ""
-        , "-- | A sample type alias"
-        , "type UserId = Int"
-        , ""
-        , "-- | A sample class"
-        , "class Eq a => Ord a where"
-        , "  compare :: a -> a -> Ordering"
-        , ""
-        , "-- | Sample function using imported functions"
-        , "sortAndFilter :: [Int] -> [Int]"
-        , "sortAndFilter xs = filter (> 0) (sort xs)"
-        , ""
-        , "-- | Sample function using qualified imports"
-        , "processMap :: Map.Map String Int -> [String]"
-        , "processMap m = Map.keys m"
-        ]
-  return (Just sampleContent)
-
 -- | Resolve definition location for a symbol
 -- Handles local bindings and imports with source available
-resolveDefinitionLocation :: ParsedModule -> SymbolInfo -> Uri -> LspM ServerState (Maybe Location)
+resolveDefinitionLocation :: ParsedModule -> SymbolInfo -> Uri -> LspM ServerConfig (Maybe Location)
 resolveDefinitionLocation parsedModule symbolInfo currentUri = do
   let symbolName = symName symbolInfo
   liftIO <| putStrLn <| "Resolving definition for symbol: " <> T.unpack symbolName
@@ -181,7 +136,7 @@ findLocalBinding parsedModule symbolName =
 
 -- | Find imported symbol definition location
 -- Handles imports with source available
-findImportedSymbol :: ParsedModule -> Text -> Uri -> LspM ServerState (Maybe Location)
+findImportedSymbol :: ParsedModule -> Text -> Uri -> LspM ServerConfig (Maybe Location)
 findImportedSymbol parsedModule symbolName _currentUri = do
   let imports = pmImports parsedModule
   liftIO <| putStrLn <| "Searching through " <> show (length imports) <> " imports"

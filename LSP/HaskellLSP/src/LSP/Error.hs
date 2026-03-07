@@ -21,7 +21,7 @@ module LSP.Error
     , withLogging
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Control.Concurrent     (threadDelay)
 import           Control.Exception      (SomeException, catch, try)
 import           Control.Monad.IO.Class (MonadIO, liftIO)

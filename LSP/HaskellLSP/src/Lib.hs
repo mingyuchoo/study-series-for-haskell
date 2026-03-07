@@ -2,7 +2,6 @@ module Lib
     ( cliMain
     ) where
 
-import Flow ((<|), (|>))
 import           LSP.Server  (runLspServer)
 
 import           System.Exit (ExitCode (..), exitWith)
@@ -10,4 +9,8 @@ import           System.Exit (ExitCode (..), exitWith)
 cliMain :: IO ()
 cliMain = do
   exitCode <- runLspServer
-  exitWith (ExitFailure exitCode)
+  exitWith <| case exitCode of
+    0 -> ExitSuccess
+    n -> ExitFailure n
+  where
+    (<|) = ($)

@@ -1,112 +1,112 @@
 # Haskell LSP Extension
 
-A comprehensive Language Server Protocol (LSP) implementation for Haskell, consisting of:
+Haskell을 위한 Language Server Protocol (LSP) 구현 프로젝트로, 다음 두 가지로 구성됩니다:
 
-1. **Haskell LSP Server** - A language server written in Haskell using the `lsp` library
-2. **VSCode Extension** - A TypeScript-based VSCode extension that manages the server lifecycle
+1. **Haskell LSP Server** - `lsp` 라이브러리를 사용한 Haskell 언어 서버
+2. **VSCode Extension** - 서버 라이프사이클을 관리하는 TypeScript 기반 VSCode 확장
 
-## Features
+## 주요 기능
 
-### Language Server Features
-- **Document Synchronization**: Real-time document tracking with incremental updates
-- **Diagnostics**: Syntax and type error reporting
-- **Code Completion**: Intelligent completion with type signatures
-  - Function completion with type information
-  - Module-qualified completion (e.g., `Data.List.`)
-  - Context-aware suggestions
-- **Hover Information**: Type information and documentation
-  - Function type signatures
-  - Type definitions and kinds
-  - Operator fixity information
-- **Go to Definition**: Navigate to symbol definitions
-- **Document Symbols**: Outline view of declarations
-- **Configuration Management**: Hot-reload configuration changes
+### 언어 서버 기능
+- **문서 동기화**: LSP VFS(Virtual File System) 기반 실시간 문서 추적
+- **진단(Diagnostics)**: 파서 기반 구문 오류 감지 및 제어 문자 검출
+- **코드 완성**: 타입 시그니처를 포함한 지능형 코드 완성
+  - 함수 완성 (타입 정보 포함)
+  - 모듈 한정 완성 (예: `Data.List.`)
+  - 컨텍스트 인식 제안
+- **Hover 정보**: 타입 정보 및 문서 표시
+  - 함수 타입 시그니처
+  - 타입 정의 및 kind 정보
+  - 연산자 고정성(fixity) 정보
+- **정의로 이동(Go to Definition)**: 심볼 정의 위치로 이동
+- **문서 심볼(Document Symbols)**: 선언문 개요 보기
+- **설정 관리**: 실행 중 설정 변경 지원
 
-### VSCode Extension Features
-- **Server Lifecycle Management**: Automatic start/stop/restart
-- **Crash Recovery**: Automatic restart with exponential backoff
-- **Configuration Synchronization**: Real-time settings updates
-- **Error Handling**: User-friendly error messages and recovery options
+### VSCode 확장 기능
+- **서버 라이프사이클 관리**: 자동 시작/중지/재시작
+- **충돌 복구**: 지수 백오프를 통한 자동 재시작
+- **설정 동기화**: 실시간 설정 업데이트
+- **오류 처리**: 사용자 친화적 오류 메시지 및 복구 옵션
 
-## Installation
+## 설치
 
-### Quick Start
+### 빠른 시작
 
-1. **Build everything**:
+1. **전체 빌드**:
    ```bash
    make build-all
    ```
 
-2. **Install the VSCode extension**:
+2. **VSCode 확장 설치**:
    ```bash
    make install-extension
    ```
 
-3. **Open a Haskell project in VSCode** and the extension will automatically start the LSP server.
+3. **VSCode에서 Haskell 프로젝트를 열면** 확장이 자동으로 LSP 서버를 시작합니다.
 
-### Manual Installation
+### 수동 설치
 
-#### Building the LSP Server
+#### LSP 서버 빌드
 
 ```bash
-# Build the Haskell LSP server
+# Haskell LSP 서버 빌드
 stack build
 
-# Run tests
+# 테스트 실행
 stack test
 
-# Install locally
+# 로컬 설치
 stack install
 ```
 
-#### Building the VSCode Extension
+#### VSCode 확장 빌드
 
 ```bash
-# Navigate to extension directory
+# 확장 디렉토리로 이동
 cd vscode-extension
 
-# Install dependencies
+# 의존성 설치
 npm install
 
-# Compile TypeScript
+# TypeScript 컴파일
 npm run compile
 
-# Package the extension
+# 확장 패키징
 npm run package
 
-# Install in VSCode
+# VSCode에 설치
 code --install-extension *.vsix
 ```
 
-## Usage
+## 사용법
 
-### Running the LSP Server
+### LSP 서버 실행
 
-The LSP server can be run standalone for testing or integration with other editors:
+LSP 서버를 독립 실행하여 테스트하거나 다른 에디터와 통합할 수 있습니다:
 
 ```bash
-# Run the server (communicates via stdin/stdout)
+# 서버 실행 (stdin/stdout 통신)
 stack run
 
-# Or run the installed executable
+# 설치된 실행 파일 실행
 haskell-lsp-server
 
-# With logging
+# 로깅과 함께 실행
 haskell-lsp-server --log-level debug
 ```
 
-### VSCode Extension
+### VSCode 확장
 
-Once installed, the extension automatically:
+설치 후 확장은 자동으로:
 
-1. **Activates** when you open a Haskell file (`.hs` or `.lhs`)
-2. **Starts** the LSP server process
-3. **Provides** language features like completion, hover, diagnostics
-4. **Manages** server lifecycle (restart on crash, shutdown on deactivate)
+1. Haskell 파일(`.hs` 또는 `.lhs`) 열 때 **활성화**
+2. LSP 서버 프로세스 **시작**
+3. 완성, hover, 진단 등 언어 기능 **제공**
+4. 서버 라이프사이클 **관리** (충돌 시 재시작, 비활성화 시 종료)
 
-### Configuration
+### 설정
 
-Configure the extension through VSCode settings:
+VSCode 설정에서 확장을 구성할 수 있습니다:
 
 ```json
 {
@@ -117,188 +117,160 @@ Configure the extension through VSCode settings:
 }
 ```
 
-#### Configuration Options
+#### 설정 옵션
 
-- **`haskellLsp.serverPath`**: Path to the LSP server executable
-- **`haskellLsp.logLevel`**: Server log level (`debug`, `info`, `warning`, `error`)
-- **`haskellLsp.maxRestartCount`**: Maximum automatic restart attempts
-- **`haskellLsp.enableVerboseLogging`**: Enable detailed logging
+- **`haskellLsp.serverPath`**: LSP 서버 실행 파일 경로
+- **`haskellLsp.logLevel`**: 서버 로그 레벨 (`debug`, `info`, `warning`, `error`)
+- **`haskellLsp.maxRestartCount`**: 최대 자동 재시작 횟수
+- **`haskellLsp.enableVerboseLogging`**: 상세 로깅 활성화
 
-## Development
+## 개발
 
-### Project Structure
+### 프로젝트 구조
 
 ```
-├── src/                    # Haskell LSP server source
-│   ├── LSP/               # Core LSP functionality
-│   ├── Handlers/          # Request/notification handlers
-│   └── Analysis/          # Code analysis and parsing
-├── app/                   # Server executable entry point
-├── test/                  # Test suite
-├── vscode-extension/      # VSCode extension
-│   ├── src/              # TypeScript source
-│   └── package.json      # Extension manifest
-└── docker/               # Docker configuration
+├── src/                    # Haskell LSP 서버 소스
+│   ├── LSP/               # 핵심 LSP 기능
+│   │   ├── Server.hs      # 서버 진입점 및 핸들러 등록
+│   │   ├── Types.hs       # 핵심 데이터 타입 및 설정
+│   │   ├── Diagnostics.hs # 오류 감지 및 보고
+│   │   ├── State.hs       # VFS 기반 문서 상태 관리
+│   │   └── Error.hs       # 오류 분류 및 복구
+│   ├── Handlers/          # 요청/알림 핸들러
+│   │   ├── DocumentSync.hs    # 문서 동기화 (열기/변경/닫기)
+│   │   ├── Hover.hs           # Hover 정보
+│   │   ├── Completion.hs      # 코드 완성
+│   │   ├── Definition.hs      # 정의로 이동
+│   │   ├── DocumentSymbol.hs  # 문서 심볼
+│   │   └── Configuration.hs   # 설정 변경 처리
+│   ├── Analysis/          # 코드 분석 및 파싱
+│   │   ├── Parser.hs     # Haskell 코드 파서
+│   │   └── Highlighter.hs # 구문 강조
+│   └── Lib.hs            # CLI 진입점
+├── app/                   # 서버 실행 파일 진입점
+├── test/                  # 테스트 스위트
+├── vscode-extension/      # VSCode 확장
+│   ├── src/              # TypeScript 소스
+│   └── package.json      # 확장 매니페스트
+└── docker/               # Docker 설정
 ```
 
-### Building and Testing
+### 아키텍처
 
-#### Haskell Server
+#### LSP 서버 (Haskell)
 
-```bash
-# Fast build during development
-stack build --fast
+서버는 `lsp` 라이브러리의 `ServerDefinition`을 사용하여 LSP 프로토콜을 구현합니다:
 
-# Build with optimizations
-make build
+- **LSP.Server**: `staticHandlers`에 모든 핸들러를 등록하여 실제 LSP 기능을 제공
+- **LSP.State**: LSP 라이브러리의 내장 VFS를 통한 문서 콘텐츠 관리
+- **LSP.Types**: `ServerConfig`, `LspMessage`, JSON-RPC 프로토콜 헬퍼
+- **LSP.Diagnostics**: 파서 오류 및 제어 문자 감지 기반 진단 엔진
+- **Handlers.***: 각 LSP 메서드별 핸들러 (`LspM ServerConfig` 모나드에서 실행)
+- **Analysis.Parser**: 정규식 기반 Haskell 코드 파서
 
-# Run tests
-stack test
+#### VSCode 확장 (TypeScript)
 
-# Watch mode for tests
-make watch-test
+- **extension.ts**: 확장 진입점
+- **config.ts**: 설정 관리
+- Language Client 설정 및 서버 라이프사이클 관리
 
-# Interactive development
-make ghcid
-
-# Format code
-make format
-```
-
-#### VSCode Extension
-
-```bash
-cd vscode-extension
-
-# Install dependencies
-npm install
-
-# Compile TypeScript
-npm run compile
-
-# Watch mode
-npm run watch
-
-# Run linter
-npm run lint
-
-# Package extension
-npm run package
-```
-
-### Testing the Integration
-
-1. **Build both components**:
-   ```bash
-   make build-all
-   ```
-
-2. **Install the extension**:
-   ```bash
-   make install-extension
-   ```
-
-3. **Open a Haskell project** in VSCode
-
-4. **Test features**:
-   - Type some Haskell code and check for syntax highlighting
-   - Hover over functions to see type information
-   - Use Ctrl+Space for code completion
-   - Use F12 for go-to-definition
-
-### Debugging
-
-#### Server Debugging
-
-```bash
-# Run server with debug logging
-stack run -- --log-level debug
-
-# Check server output in VSCode
-# View > Output > Select "Haskell LSP"
-```
-
-#### Extension Debugging
-
-1. Open the extension source in VSCode
-2. Press F5 to launch Extension Development Host
-3. Open a Haskell project in the new window
-4. Check Debug Console for extension logs
-
-## Architecture
-
-### LSP Server (Haskell)
-
-- **LSP.Server**: Main server entry point and handler registration
-- **LSP.Types**: Core data types and configuration
-- **Handlers.***: Individual LSP request/notification handlers
-- **Analysis.Parser**: Haskell code parsing and analysis
-- **LSP.Diagnostics**: Error detection and reporting
-
-### VSCode Extension (TypeScript)
-
-- **extension.ts**: Main extension entry point
-- **config.ts**: Configuration management
-- Language client setup and server lifecycle management
-
-### Communication Flow
+#### 통신 흐름
 
 ```
 VSCode Extension ←→ Language Client ←→ LSP Server
      (TypeScript)      (JSON-RPC)      (Haskell)
 ```
 
-## Troubleshooting
+### 빌드 및 테스트
 
-### Common Issues
+#### Haskell 서버
+
+```bash
+# 개발 중 빠른 빌드
+stack build --fast
+
+# 최적화 빌드
+make build
+
+# 테스트 실행
+stack test
+
+# 테스트 감시 모드
+make watch-test
+
+# 대화형 개발
+make ghcid
+
+# 코드 포매팅
+make format
+```
+
+#### VSCode 확장
+
+```bash
+cd vscode-extension
+
+# 의존성 설치
+npm install
+
+# TypeScript 컴파일
+npm run compile
+
+# 감시 모드
+npm run watch
+
+# 린터 실행
+npm run lint
+
+# 확장 패키징
+npm run package
+```
+
+## 문제 해결
+
+### 자주 발생하는 문제
 
 #### "Server executable not found"
 
-1. Ensure the server is built: `stack build`
-2. Check the server path in settings
-3. Try using an absolute path
-4. Verify executable permissions
+1. 서버가 빌드되었는지 확인: `stack build`
+2. 설정에서 서버 경로 확인
+3. 절대 경로 사용 시도
+4. 실행 파일 권한 확인
 
-#### Server crashes repeatedly
+#### 서버가 반복적으로 충돌
 
-1. Check VSCode Output panel (View > Output > "Haskell LSP")
-2. Enable verbose logging in settings
-3. Verify your Haskell project is valid
-4. Try restarting VSCode
+1. VSCode 출력 패널 확인 (보기 > 출력 > "Haskell LSP")
+2. 설정에서 상세 로깅 활성화
+3. Haskell 프로젝트가 유효한지 확인
+4. VSCode 재시작 시도
 
-#### No language features working
+#### 언어 기능이 작동하지 않음
 
-1. Ensure the extension is activated (check status bar)
-2. Verify file is recognized as Haskell (`.hs` or `.lhs`)
-3. Check for conflicting Haskell extensions
-4. Restart the LSP server: Ctrl+Shift+P > "Haskell LSP: Restart Server"
+1. 확장이 활성화되었는지 확인 (상태 표시줄 확인)
+2. 파일이 Haskell로 인식되는지 확인 (`.hs` 또는 `.lhs`)
+3. 충돌하는 Haskell 확장이 있는지 확인
+4. LSP 서버 재시작: Ctrl+Shift+P > "Haskell LSP: Restart Server"
 
-### Getting Help
+## 기여하기
 
-1. Check the [troubleshooting guide](vscode-extension/README.md#troubleshooting)
-2. Enable verbose logging and check output panels
-3. Report issues with detailed logs and reproduction steps
+기여를 환영합니다! 다음 절차를 따라주세요:
 
-## Contributing
+1. 리포지토리 포크
+2. 기능 브랜치 생성
+3. 변경 사항 구현
+4. 새 기능에 대한 테스트 추가
+5. 모든 테스트 통과 확인: `make test`
+6. Pull Request 제출
 
-Contributions are welcome! Please:
+### 개발 지침
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass: `make test`
-6. Submit a pull request
+- 기존 코드 스타일을 따르세요 (Haskell은 `make format` 사용)
+- 새 기능에는 테스트를 추가하세요
+- 필요에 따라 문서를 업데이트하세요
+- 서버와 확장 컴포넌트 모두 테스트하세요
 
-### Development Guidelines
+## 감사의 글
 
-- Follow existing code style (use `make format` for Haskell)
-- Add tests for new features
-- Update documentation as needed
-- Test both server and extension components
-
-## Acknowledgments
-
-- Built using the [lsp](https://hackage.haskell.org/package/lsp) Haskell library
-- VSCode extension based on [vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient)
-- Inspired by other LSP implementations in the Haskell ecosystem
+- [lsp](https://hackage.haskell.org/package/lsp) Haskell 라이브러리 사용
+- [vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient) 기반 VSCode 확장
+- Haskell 생태계의 다른 LSP 구현에서 영감을 받음

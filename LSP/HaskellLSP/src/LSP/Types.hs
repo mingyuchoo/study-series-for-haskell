@@ -26,17 +26,6 @@ module LSP.Types
     , LogLevel (..)
     , ServerConfig (..)
     , defaultServerConfig
-      -- * Document State
-    , Declaration (..)
-    , DocumentState (..)
-    , Export (..)
-    , Import (..)
-    , ParsedModule (..)
-    , Position (..)
-    , Range (..)
-    , ServerState (..)
-    , SymbolKind (..)
-    , initialServerState
       -- * Protocol Helpers
     , decodeLspMessage
     , encodeLspMessage
@@ -45,20 +34,16 @@ module LSP.Types
     , parseJsonRpcMessage
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Data.Aeson                  (FromJSON, ToJSON, Value, decode,
                                               encode)
 import           Data.ByteString.Lazy        (ByteString)
 import qualified Data.ByteString.Lazy        as LBS
 import qualified Data.ByteString.Lazy.Char8  as L8
-import           Data.Int                    (Int32)
 import           Data.List                   (isPrefixOf)
-import           Data.Map                    (Map)
 import           Data.Text                   (Text)
 
 import           GHC.Generics                (Generic)
-
-import           Language.LSP.Protocol.Types (Diagnostic, Uri)
 
 -- | Request ID for JSON-RPC messages
 type RequestId = Value
@@ -185,59 +170,6 @@ defaultServerConfig = ServerConfig
   , configMaxWorkers = 4
   }
 
--- | State of a single document
-data DocumentState = DocumentState { docContent :: Text
-                                   , docVersion :: Int32
-                                   , docParsed  :: Maybe ParsedModule
-                                   }
-     deriving (Eq, Generic, Show)
-
--- | Placeholder for parsed module representation
-data ParsedModule = ParsedModule { pmSource       :: Text
-                                 , pmDeclarations :: [Declaration]
-                                 , pmImports      :: [Import]
-                                 , pmExports      :: Maybe [Export]
-                                 }
-     deriving (Eq, Generic, Show)
-
--- | Placeholder for declaration representation
-data Declaration = Declaration { declName     :: Text
-                               , declType     :: Maybe Text
-                               , declKind     :: SymbolKind
-                               , declRange    :: Range
-                               , declChildren :: [Declaration]
-                               }
-     deriving (Eq, Generic, Show)
-
--- | Placeholder for import representation
-data Import = Import { importModule    :: Text
-                     , importQualified :: Bool
-                     , importAs        :: Maybe Text
-                     }
-     deriving (Eq, Generic, Show)
-
--- | Placeholder for export representation
-data Export = Export { exportName :: Text
-                     , exportType :: Maybe Text
-                     }
-     deriving (Eq, Generic, Show)
-
--- | Symbol kinds for declarations
-data SymbolKind = SkFunction | SkType | SkClass | SkInstance | SkVariable
-     deriving (Eq, Generic, Show)
-
--- | Position in a document
-data Position = Position { posLine      :: Int32
-                         , posCharacter :: Int32
-                         }
-     deriving (Eq, Generic, Ord, Show)
-
--- | Range in a document
-data Range = Range { rangeStart :: Position
-                   , rangeEnd   :: Position
-                   }
-     deriving (Eq, Generic, Show)
-
 -- | Error classification for recovery strategies
 data ErrorSeverity = Recoverable -- ^ Error that can be handled and processing can continue
                    | Fatal -- ^ Error that requires server shutdown
@@ -250,21 +182,6 @@ data ErrorRecovery = ErrorRecovery { maxRetries     :: Int
                                      -- ^ milliseconds
                                    , fallbackAction :: IO ()
                                    }
-
--- | Overall server state
-data ServerState = ServerState { stateDocuments   :: Map Uri DocumentState
-                               , stateConfig      :: ServerConfig
-                               , stateDiagnostics :: Map Uri [Diagnostic]
-                               }
-     deriving (Generic, Show)
-
--- | Initial server state
-initialServerState :: ServerConfig -> ServerState
-initialServerState config = ServerState
-  { stateDocuments = mempty
-  , stateConfig = config
-  , stateDiagnostics = mempty
-  }
 
 -- | JSON-RPC Protocol Helpers
 

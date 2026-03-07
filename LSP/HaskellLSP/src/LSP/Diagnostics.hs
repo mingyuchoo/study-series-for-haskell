@@ -17,7 +17,7 @@ module LSP.Diagnostics
     , classifySyntaxError
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser               (ParseError (..),
                                                 ParsedModule (..), parseModule)
 
@@ -44,91 +44,40 @@ data DiagnosticInfo = DiagnosticInfo { diagRange    :: Range
      deriving (Eq, Generic, Show)
 
 -- | Analyze document and produce diagnostics
--- This function detects syntax errors and other issues in Haskell source code
 analyzeDiagnostics :: ParsedModule -> [DiagnosticInfo]
 analyzeDiagnostics parsedModule =
   let sourceText = pmSource parsedModule
-      syntaxErrors = detectSyntaxErrors sourceText
-      -- Future: Add other diagnostic types (type errors, warnings, etc.)
-  in syntaxErrors
+  in detectSyntaxErrors sourceText
 
 -- | Detect syntax errors in Haskell source code
--- Returns a list of diagnostic information for syntax errors with positions
 detectSyntaxErrors :: Text -> [DiagnosticInfo]
 detectSyntaxErrors sourceText =
   case parseModule sourceText of
     Left parseError -> [parseErrorToDiagnostic parseError]
     Right _parsedModule ->
-      -- If parsing succeeded, check for other syntax issues
+      -- Parsing succeeded; only check for control characters
       let linesOfCode = T.lines sourceText
           numberedLines = zip [0..] linesOfCode
-          syntaxIssues = concatMap checkLineSyntax numberedLines
-      in syntaxIssues
+      in concatMap checkInvalidChars numberedLines
 
 -- | Convert ParseError to DiagnosticInfo
 parseErrorToDiagnostic :: ParseError -> DiagnosticInfo
 parseErrorToDiagnostic parseError =
   let range = case parseErrorRange parseError of
         Just r  -> r
-        Nothing -> Range (Position 0 0) (Position 0 1) -- Default to first character
-      severity = DiagnosticSeverity_Error
-      message = parseErrorMessage parseError
-      code = Just "parse-error"
-      source = "haskell-lsp"
-  in DiagnosticInfo range severity message code source
+        Nothing -> Range (Position 0 0) (Position 0 1)
+  in DiagnosticInfo range DiagnosticSeverity_Error
+       (parseErrorMessage parseError) (Just "parse-error") "haskell-lsp"
 
--- | Check individual line for syntax issues
-checkLineSyntax :: (Int, Text) -> [DiagnosticInfo]
-checkLineSyntax (lineNum, line) =
-  checkUnmatchedParens lineNum line
-  <> checkInvalidChars lineNum line
-  <> checkIncompleteStrings lineNum line
-
--- | Check for unmatched parentheses
-checkUnmatchedParens :: Int -> Text -> [DiagnosticInfo]
-checkUnmatchedParens lineNum line =
-  let openParens = T.count "(" line
-      closeParens = T.count ")" line
-      openBrackets = T.count "[" line
-      closeBrackets = T.count "]" line
-      openBraces = T.count "{" line
-      closeBraces = T.count "}" line
-
-      parenIssues = if openParens > closeParens
-                   then [createDiagnostic lineNum line "Unmatched opening parenthesis" "unmatched-paren"]
-                   else if closeParens > openParens
-                   then [createDiagnostic lineNum line "Unmatched closing parenthesis" "unmatched-paren"]
-                   else []
-
-      bracketIssues = if openBrackets > closeBrackets
-                     then [createDiagnostic lineNum line "Unmatched opening bracket" "unmatched-bracket"]
-                     else if closeBrackets > openBrackets
-                     then [createDiagnostic lineNum line "Unmatched closing bracket" "unmatched-bracket"]
-                     else []
-
-      braceIssues = if openBraces > closeBraces
-                   then [createDiagnostic lineNum line "Unmatched opening brace" "unmatched-brace"]
-                   else if closeBraces > openBraces
-                   then [createDiagnostic lineNum line "Unmatched closing brace" "unmatched-brace"]
-                   else []
-  in parenIssues <> bracketIssues <> braceIssues
-
--- | Check for invalid characters
-checkInvalidChars :: Int -> Text -> [DiagnosticInfo]
-checkInvalidChars lineNum line =
-  let invalidChars = T.filter (\c -> c `elem` ("\0\1\2\3\4\5\6\7\8\11\12\14\15\16\17\18\19\20\21\22\23\24\25\26\27\28\29\30\31" :: String)) line
-  in if T.null invalidChars
-     then []
-     else [createDiagnostic lineNum line "Invalid control characters found" "invalid-chars"]
-
--- | Check for incomplete strings
-checkIncompleteStrings :: Int -> Text -> [DiagnosticInfo]
-checkIncompleteStrings lineNum line =
-  let quoteCount = T.count "\"" line
-      -- Simple check: odd number of quotes suggests incomplete string
-  in if odd quoteCount && not (T.isSuffixOf "\\" line)
-     then [createDiagnostic lineNum line "Incomplete string literal" "incomplete-string"]
+-- | Check for invalid control characters
+checkInvalidChars :: (Int, Text) -> [DiagnosticInfo]
+checkInvalidChars (lineNum, line) =
+  let hasInvalidChars = T.any isControlChar line
+  in if hasInvalidChars
+     then [createDiagnostic lineNum line "Invalid control characters found" "invalid-chars"]
      else []
+  where
+    isControlChar c = c < ' ' && c /= '\t' && c /= '\n' && c /= '\r'
 
 -- | Create a diagnostic for a specific line
 createDiagnostic :: Int -> Text -> Text -> Text -> DiagnosticInfo
@@ -136,9 +85,7 @@ createDiagnostic lineNum line message code =
   let range = Range
         (Position (fromIntegral lineNum) 0)
         (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
-      severity = DiagnosticSeverity_Error
-      source = "haskell-lsp"
-  in DiagnosticInfo range severity message (Just code) source
+  in DiagnosticInfo range DiagnosticSeverity_Error message (Just code) "haskell-lsp"
 
 -- | Classify syntax error type for better error reporting
 classifySyntaxError :: Text -> Text
@@ -154,7 +101,7 @@ toLspDiagnostic :: DiagnosticInfo -> Diagnostic
 toLspDiagnostic diagInfo = Diagnostic
   { _range = diagRange diagInfo
   , _severity = Just (diagSeverity diagInfo)
-  , _code = Nothing  -- For now, skip the code field to avoid type issues
+  , _code = Nothing
   , _codeDescription = Nothing
   , _source = Just (diagSource diagInfo)
   , _message = diagMessage diagInfo

@@ -6,9 +6,9 @@ cabal-version: 2.2
 
 name:           HaskellLSP
 version:        0.1.0.0
-synopsis:       Short description of your package
+synopsis:       Haskell Language Server Protocol implementation
 description:    Please see the README on GitHub at <https://github.com/mingyuchoo/HaskellLSP#readme>
-category:       Web
+category:       Development
 homepage:       https://github.com/mingyuchoo/HaskellLSP#readme
 bug-reports:    https://github.com/mingyuchoo/HaskellLSP/issues
 author:         Mingyu Choo
@@ -37,6 +37,7 @@ library
       LSP.Diagnostics
       LSP.Error
       LSP.Server
+      LSP.State
       LSP.Types
   other-modules:
       Paths_HaskellLSP

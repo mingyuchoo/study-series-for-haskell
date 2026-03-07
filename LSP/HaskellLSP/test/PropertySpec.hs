@@ -4,7 +4,7 @@ module PropertySpec
     ( spec
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser
 
 import           Data.Text                      (Text)

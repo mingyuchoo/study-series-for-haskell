@@ -2,7 +2,7 @@ module DefinitionSpec
     ( spec
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser     (ParsedModule (..))
 
 import           Handlers.Definition

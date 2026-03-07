@@ -2,6 +2,7 @@
 -- {-# OPTIONS_GHC -F -pgmF hspec-discover   #-}
 
 import Test.Hspec
+import Flow ((<|))
 import Lib
 import LSP.Types
 import LSP.Error

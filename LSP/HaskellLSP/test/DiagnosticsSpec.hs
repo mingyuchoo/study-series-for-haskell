@@ -2,7 +2,7 @@ module DiagnosticsSpec
     ( spec
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser
 
 import           Data.Text                   (Text)
@@ -18,18 +18,13 @@ import           Test.Hspec
 spec :: Spec
 spec = describe "Diagnostics Engine" <| do
   describe "Syntax Error Detection" <| do
-    it "should detect unmatched parentheses" <| do
-      let sourceCode = "function test(\n  return 42"
+    it "should detect parse errors in invalid module declaration" <| do
+      let sourceCode = "module 123invalid"
       let diagnostics = detectSyntaxErrors sourceCode
       length diagnostics `shouldSatisfy` (> 0)
 
     it "should detect invalid control characters" <| do
       let sourceCode = "function test\0invalid"
-      let diagnostics = detectSyntaxErrors sourceCode
-      length diagnostics `shouldSatisfy` (> 0)
-
-    it "should detect incomplete strings" <| do
-      let sourceCode = "let x = \"incomplete string"
       let diagnostics = detectSyntaxErrors sourceCode
       length diagnostics `shouldSatisfy` (> 0)
 

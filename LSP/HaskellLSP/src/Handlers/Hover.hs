@@ -7,7 +7,7 @@ module Handlers.Hover
     , handleHover
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser             (SymbolInfo (..), parseModule,
                                               resolveSymbol)
 
@@ -16,7 +16,8 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
-import           LSP.Types                   (ServerState (..))
+import           LSP.State                   (getDocumentContent)
+import           LSP.Types                   (ServerConfig)
 
 import           Language.LSP.Protocol.Types
 import           Language.LSP.Server
@@ -24,7 +25,7 @@ import           Language.LSP.Server
 
 -- | Handle textDocument/hover request
 -- Resolves symbol at hover position and formats hover content with type information
-handleHover :: HoverParams -> LspM ServerState (Maybe Hover)
+handleHover :: HoverParams -> LspM ServerConfig (Maybe Hover)
 handleHover (HoverParams (TextDocumentIdentifier uri) position _workDoneToken) = do
   liftIO <| putStrLn <| "Hover request at position: " <> show position <> " in " <> show uri
 
@@ -66,35 +67,6 @@ handleHover (HoverParams (TextDocumentIdentifier uri) position _workDoneToken) =
                         , _range = Nothing  -- We could provide the symbol range here
                         }
                   return (Just hover)
-
--- | Get document content from server state
--- TODO: Implement proper state management to retrieve document content
--- For now, this is a placeholder that returns sample content
-getDocumentContent :: Uri -> LspM ServerState (Maybe Text)
-getDocumentContent _uri = do
-  -- TODO: Look up document in server state
-  -- For now, return sample Haskell content for testing
-  let sampleContent = T.unlines
-        [ "module Sample where"
-        , ""
-        , "-- | A sample function that adds two integers"
-        , "add :: Int -> Int -> Int"
-        , "add x y = x + y"
-        , ""
-        , "-- | A sample data type"
-        , "data Person = Person"
-        , "  { name :: String"
-        , "  , age :: Int"
-        , "  }"
-        , ""
-        , "-- | A sample type alias"
-        , "type UserId = Int"
-        , ""
-        , "-- | A sample class"
-        , "class Eq a => Ord a where"
-        , "  compare :: a -> a -> Ordering"
-        ]
-  return (Just sampleContent)
 
 -- | Format hover content based on symbol information
 -- Returns formatted markdown content for different symbol kinds

@@ -15,7 +15,7 @@ module Analysis.Parser
     , symbolsInScope
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Data.Char                   (isAlpha, isAlphaNum)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T

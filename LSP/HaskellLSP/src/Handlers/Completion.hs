@@ -13,7 +13,7 @@ module Handlers.Completion
     , normalizeModuleName
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser             (Import (..), ParsedModule (..),
                                               SymbolInfo (..), parseModule,
                                               symbolsInScope)
@@ -24,7 +24,8 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
-import           LSP.Types                   (ServerState (..))
+import           LSP.State                   (getDocumentContent)
+import           LSP.Types                   (ServerConfig)
 
 import qualified Language.LSP.Protocol.Lens  as L
 import           Language.LSP.Protocol.Types hiding (CompletionContext)
@@ -43,7 +44,7 @@ data CompletionContext = CompletionContext { ccPosition :: Position
 
 -- | Handle textDocument/completion request
 -- Determines completion context (identifier, module qualifier) and generates completion items
-handleCompletion :: CompletionParams -> LspM ServerState [CompletionItem]
+handleCompletion :: CompletionParams -> LspM ServerConfig [CompletionItem]
 handleCompletion (CompletionParams textDoc position _workDoneToken _partialResultToken context) = do
   let uri = textDoc ^. L.uri
   liftIO <| putStrLn <| "Completion request at position: " <> show position <> " in " <> show uri
@@ -73,47 +74,6 @@ handleCompletion (CompletionParams textDoc position _workDoneToken _partialResul
           liftIO <| putStrLn <| "Generated " <> show (length completionItems) <> " completion items"
 
           return completionItems
-
--- | Get document content from server state
--- TODO: Implement proper state management to retrieve document content
--- For now, this is a placeholder that returns sample content
-getDocumentContent :: Uri -> LspM ServerState (Maybe Text)
-getDocumentContent _uri = do
-  -- TODO: Look up document in server state
-  -- For now, return sample Haskell content for testing
-  let sampleContent = T.unlines
-        [ "module Sample where"
-        , ""
-        , "import Data.List"
-        , "import qualified Data.Map as Map"
-        , "import Control.Monad (when, unless)"
-        , ""
-        , "-- | A sample function that adds two integers"
-        , "add :: Int -> Int -> Int"
-        , "add x y = x + y"
-        , ""
-        , "-- | A sample function that multiplies two integers"
-        , "multiply :: Int -> Int -> Int"
-        , "multiply x y = x * y"
-        , ""
-        , "-- | A sample data type"
-        , "data Person = Person"
-        , "  { name :: String"
-        , "  , age :: Int"
-        , "  }"
-        , ""
-        , "-- | A sample type alias"
-        , "type UserId = Int"
-        , ""
-        , "-- | A sample class"
-        , "class Eq a => Ord a where"
-        , "  compare :: a -> a -> Ordering"
-        , ""
-        , "-- | Sample function using qualified imports"
-        , "processMap :: Map.Map String Int -> [String]"
-        , "processMap m = Map.keys m"
-        ]
-  return (Just sampleContent)
 
 -- | Determine completion context from document content and position
 determineCompletionContext :: Text -> Position -> Maybe LSP.CompletionContext -> CompletionContext
@@ -179,7 +139,7 @@ extractModuleQualifier reversedText =
                     c == '_' || c == '.'
 
 -- | Generate completion items based on parsed module and completion context
-getCompletions :: ParsedModule -> CompletionContext -> LspM ServerState [CompletionItem]
+getCompletions :: ParsedModule -> CompletionContext -> LspM ServerConfig [CompletionItem]
 getCompletions parsedModule completionContext = do
   liftIO <| putStrLn <| "Getting completions for context: " <> show completionContext
 
@@ -204,7 +164,7 @@ getCompletions parsedModule completionContext = do
 
 -- | Get completions for module exports
 -- Filters completions by module exports and handles qualified imports
-getModuleCompletions :: Text -> LspM ServerState [CompletionItem]
+getModuleCompletions :: Text -> LspM ServerConfig [CompletionItem]
 getModuleCompletions moduleName = do
   liftIO <| putStrLn <| "Getting completions for module: " <> T.unpack moduleName
 

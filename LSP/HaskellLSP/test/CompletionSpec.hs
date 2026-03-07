@@ -4,7 +4,7 @@ module CompletionSpec
     ( spec
     ) where
 
-import Flow ((<|), (|>))
+import Flow ((<|))
 import           Analysis.Parser             (parseModule)
 
 import           Control.Lens                ((^.))

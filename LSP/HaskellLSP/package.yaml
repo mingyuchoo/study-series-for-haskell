@@ -5,8 +5,8 @@ license:             BSD-3-Clause
 author:              Mingyu Choo
 maintainer:          mingyuchoo@gmail.com
 copyright:           2026 Mingyu Choo
-synopsis:            Short description of your package
-category:            Web
+synopsis:            Haskell Language Server Protocol implementation
+category:            Development
 description:         Please see the README on GitHub at <https://github.com/mingyuchoo/HaskellLSP#readme>
 
 extra-source-files:
