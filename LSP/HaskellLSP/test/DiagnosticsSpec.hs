@@ -5,13 +5,11 @@ module DiagnosticsSpec
 import Flow ((<|))
 import           Analysis.Parser
 
-import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
 import           LSP.Diagnostics
 
-import           Language.LSP.Protocol.Types (DiagnosticSeverity (..),
-                                              Position (..), Range (..))
+import           Language.LSP.Protocol.Types (Position (..), Range (..))
 
 import           Test.Hspec
 
@@ -43,10 +41,10 @@ spec = describe "Diagnostics Engine" <| do
             , diagCode = Just "test-code"
             , diagSource = "test-source"
             }
-      let lspDiag = toLspDiagnostic diagInfo
+      let _lspDiag = toLspDiagnostic diagInfo
       -- Just check that the conversion doesn't crash
       -- Field access would require importing the correct accessors
-      True `shouldBe` True
+      _lspDiag `seq` True `shouldBe` True
 
   describe "Parse Error Handling" <| do
     it "should handle parse errors gracefully" <| do

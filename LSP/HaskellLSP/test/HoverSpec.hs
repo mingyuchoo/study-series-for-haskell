@@ -7,7 +7,6 @@ module HoverSpec
 import Flow ((<|))
 import           Analysis.Parser
 
-import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
 import           Handlers.Hover

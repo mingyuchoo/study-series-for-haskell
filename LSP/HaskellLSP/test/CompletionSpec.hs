@@ -5,11 +5,9 @@ module CompletionSpec
     ) where
 
 import Flow ((<|))
-import           Analysis.Parser             (parseModule)
 
 import           Control.Lens                ((^.))
 
-import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 
 import           Handlers.Completion
@@ -26,22 +24,22 @@ spec = describe "Completion Handler" <| do
     it "should extract prefix from cursor position" <| do
       let content = "add"
           position = Position 0 3
-          context = determineCompletionContext content position Nothing
-      ccPrefix context `shouldBe` "add"
+          ctx = determineCompletionContext content position Nothing
+      ccPrefix ctx `shouldBe` "add"
 
     it "should detect module qualifier" <| do
       let content = "Data.List.so"
           position = Position 0 12
-          context = determineCompletionContext content position Nothing
-      ccModule context `shouldBe` Just "Data.List"
-      ccPrefix context `shouldBe` "so"
+          ctx = determineCompletionContext content position Nothing
+      ccModule ctx `shouldBe` Just "Data.List"
+      ccPrefix ctx `shouldBe` "so"
 
     it "should handle empty prefix" <| do
       let content = "Data.Map."
           position = Position 0 9
-          context = determineCompletionContext content position Nothing
-      ccModule context `shouldBe` Just "Data.Map"
-      ccPrefix context `shouldBe` ""
+          ctx = determineCompletionContext content position Nothing
+      ccModule ctx `shouldBe` Just "Data.Map"
+      ccPrefix ctx `shouldBe` ""
 
   describe "getModuleCompletions" <| do
     it "should return Data.List completions" <| do
@@ -63,7 +61,9 @@ spec = describe "Completion Handler" <| do
                   ]
           filtered = filterCompletionsByPrefix "s" items
       length filtered `shouldBe` 1
-      ((head filtered) ^. L.label) `shouldBe` "sort"
+      case filtered of
+        (x:_) -> (x ^. L.label) `shouldBe` "sort"
+        []    -> expectationFailure "Expected at least one filtered item"
 
     it "should return all items for empty prefix" <| do
       let items = [ createCompletionItem "sort" Nothing CompletionItemKind_Function
