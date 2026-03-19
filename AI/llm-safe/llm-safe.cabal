@@ -1,0 +1,80 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.38.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           llm-safe
+version:        0.1.0.0
+synopsis:       LLM 비결정성 관리 — Haskell 타입 안전성으로 LLM 응답을 격리·검증
+description:    LLM 응답의 비결정성을 타입으로 격리하고,
+                검증된 결과만 결정적 영역으로 넘기는 아키텍처.
+                비결정적 결과(LlmResponse)는 반드시 검증 관문(verify, verifyWith,
+                verifyByConsensus)을 통과해야 Verified 타입을 얻을 수 있다.
+category:       AI
+homepage:       https://github.com/mingyuchoo/haskell-study-series#readme
+bug-reports:    https://github.com/mingyuchoo/haskell-study-series/issues
+author:         mingyuchoo
+maintainer:     mingyuchoo@example.com
+copyright:      2025 mingyuchoo
+license:        MIT
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/mingyuchoo/haskell-study-series
+
+library
+  exposed-modules:
+      LlmSafe
+      LlmSafe.Types
+      LlmSafe.Client
+      LlmSafe.Verify
+      LlmSafe.Pipeline
+  other-modules:
+      Paths_llm_safe
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers >=0.6
+    , mtl >=2.2
+    , text >=1.2
+    , time >=1.12
+  default-language: Haskell2010
+
+executable llm-safe-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_llm_safe
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers >=0.6
+    , llm-safe
+    , mtl >=2.2
+    , text >=1.2
+    , time >=1.12
+  default-language: Haskell2010
+
+test-suite llm-safe-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_llm_safe
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck >=2.14
+    , base >=4.7 && <5
+    , containers >=0.6
+    , hspec >=2.8
+    , llm-safe
+    , mtl >=2.2
+    , text >=1.2
+    , time >=1.12
+  default-language: Haskell2010
