@@ -32,4 +32,4 @@ executable app
     , monomer
     , text
     , text-show
-  default-language: GHC2024
+  default-language: Haskell2010

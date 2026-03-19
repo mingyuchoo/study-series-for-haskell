@@ -6,30 +6,22 @@
 --   LLM의 비결정적 응답을 결정적 영역으로 넘기려면
 --   반드시 이 관문을 통과해야 한다.
 module LlmSafe.Verify
-  ( -- * 단순 검증
-    verify
-  , verifyConfidence
+    ( -- * 단순 검증
+      verify
+    , verifyConfidence
+      -- * 구조적 검증 (파싱 + 검증)
+    , verifyWith
+      -- * 합의 기반 검증
+    , verifyByConsensus
+      -- * 유틸리티 파서
+    , parseIntFromText
+    ) where
 
-    -- * 구조적 검증 (파싱 + 검증)
-  , verifyWith
+import           Data.List     (group, maximumBy, sort)
+import           Data.Ord      (comparing)
 
-    -- * 합의 기반 검증
-  , verifyByConsensus
-
-    -- * 유틸리티 파서
-  , parseIntFromText
-  ) where
-
-import Data.List (group, maximumBy, sort)
-import Data.Ord (comparing)
-
-import LlmSafe.Types
-  ( Confidence (..)
-  , LlmError (..)
-  , LlmResponse (..)
-  , Verified
-  , mkVerified
-  )
+import           LlmSafe.Types (Confidence (..), LlmError (..),
+                                LlmResponse (..), Verified, mkVerified)
 
 -- | 단순 검증: 술어(predicate) 함수로 검증.
 --
@@ -139,4 +131,4 @@ parseIntFromText :: String -> Either String Int
 parseIntFromText s =
   case reads (filter (`elem` ['0' .. '9']) s) of
     [(n, "")] -> Right n
-    _ -> Left $ "정수를 파싱할 수 없음: " <> s
+    _         -> Left $ "정수를 파싱할 수 없음: " <> s

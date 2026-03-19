@@ -1,11 +1,9 @@
-module Main (main) where
+module Main
+    ( main
+    ) where
 
-import LlmSafe
-  ( classifyPopulation
-  , consensusPipeline
-  , defaultConfig
-  , populationPipeline
-  )
+import           LlmSafe (classifyPopulation, consensusPipeline, defaultConfig,
+                          populationPipeline)
 
 -- | LLM 비결정성 관리 데모.
 --
@@ -14,7 +12,7 @@ import LlmSafe
 main :: IO ()
 main = do
   putStrLn "╔══════════════════════════════════════════════════╗"
-  putStrLn "║  LLM 비결정성 관리 — Haskell 타입 안전성 데모   ║"
+  putStrLn "║   LLM 비결정성 관리 — Haskell 타입 안전성 데모   ║"
   putStrLn "╚══════════════════════════════════════════════════╝"
   putStrLn ""
 

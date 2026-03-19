@@ -7,21 +7,16 @@
 --
 --   실제 HTTP 클라이언트 연동 시 이 모듈만 교체하면 된다.
 module LlmSafe.Client
-  ( -- * LLM 호출 (비결정적 영역)
-    callLlm
-  , callLlmWithRetry
-  , callLlmN
+    ( -- * LLM 호출 (비결정적 영역)
+      callLlm
+    , callLlmN
+    , callLlmWithRetry
+      -- * 모의(Mock) 클라이언트
+    , mockCallLlm
+    ) where
 
-    -- * 모의(Mock) 클라이언트
-  , mockCallLlm
-  ) where
-
-import LlmSafe.Types
-  ( Confidence (..)
-  , LlmConfig (..)
-  , LlmError (..)
-  , LlmResponse (..)
-  )
+import           LlmSafe.Types (Confidence (..), LlmConfig (..), LlmError (..),
+                                LlmResponse (..))
 
 -- | LLM API 호출.
 --

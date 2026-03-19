@@ -14,23 +14,18 @@
 --   함수의 반환값이 'Right'이면,
 --   그 안의 값은 검증을 통과한 결정적 결과이다.
 module LlmSafe.Pipeline
-  ( -- * 결정적 영역 (Verified 값만 받는 순수 함수)
-    classifyPopulation
-  , formatAnswer
+    ( -- * 결정적 영역 (Verified 값만 받는 순수 함수)
+      classifyPopulation
+    , formatAnswer
+      -- * 파이프라인 예시
+    , consensusPipeline
+    , populationPipeline
+    ) where
 
-    -- * 파이프라인 예시
-  , populationPipeline
-  , consensusPipeline
-  ) where
-
-import LlmSafe.Client (callLlm, callLlmN)
-import LlmSafe.Types
-  ( LlmConfig (..)
-  , LlmError
-  , Verified
-  , unVerified
-  )
-import LlmSafe.Verify (parseIntFromText, verifyByConsensus, verifyWith)
+import           LlmSafe.Client (callLlm, callLlmN)
+import           LlmSafe.Types  (LlmConfig (..), LlmError, Verified, unVerified)
+import           LlmSafe.Verify (parseIntFromText, verifyByConsensus,
+                                 verifyWith)
 
 --------------------------------------------------------------------------------
 -- 결정적 영역: Verified 값만 받는 순수 함수들
@@ -108,4 +103,4 @@ consensusPipeline config n cityName = do
 
   case verified of
     Left err -> pure $ Left err
-    Right v -> pure $ Right (classifyPopulation v)
+    Right v  -> pure $ Right (classifyPopulation v)

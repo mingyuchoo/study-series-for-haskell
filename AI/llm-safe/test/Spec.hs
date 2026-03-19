@@ -1,25 +1,18 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Main (main) where
+module Main
+    ( main
+    ) where
 
-import Test.Hspec
-import Test.QuickCheck
+import           LlmSafe.Client   (mockCallLlm)
+import           LlmSafe.Pipeline (classifyPopulation, formatAnswer)
+import           LlmSafe.Types    (Confidence (..), LlmError (..), mkVerified,
+                                   unVerified)
+import           LlmSafe.Verify   (parseIntFromText, verify, verifyByConsensus,
+                                   verifyConfidence, verifyWith)
 
-import LlmSafe.Client (mockCallLlm)
-import LlmSafe.Pipeline (classifyPopulation, formatAnswer)
-import LlmSafe.Types
-  ( Confidence (..)
-  , LlmError (..)
-  , mkVerified
-  , unVerified
-  )
-import LlmSafe.Verify
-  ( parseIntFromText
-  , verify
-  , verifyByConsensus
-  , verifyConfidence
-  , verifyWith
-  )
+import           Test.Hspec
+import           Test.QuickCheck
 
 main :: IO ()
 main = hspec $ do
@@ -146,14 +139,14 @@ main = hspec $ do
 -- | 헬퍼: Left가 ParseError인지 확인
 isParseError :: Either LlmError a -> Bool
 isParseError (Left (ParseError _)) = True
-isParseError _ = False
+isParseError _                     = False
 
 -- | 헬퍼: Left가 ConsensusNotReached인지 확인
 isConsensusNotReached :: Either LlmError a -> Bool
 isConsensusNotReached (Left (ConsensusNotReached _)) = True
-isConsensusNotReached _ = False
+isConsensusNotReached _                              = False
 
 -- | 헬퍼: Either가 Left인지 확인
 isLeft :: Either a b -> Bool
-isLeft (Left _) = True
+isLeft (Left _)  = True
 isLeft (Right _) = False
