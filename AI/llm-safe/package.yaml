@@ -21,6 +21,11 @@ dependencies:
   - containers >= 0.6
   - mtl >= 2.2
   - time >= 1.12
+  - http-client >= 0.7
+  - http-client-tls >= 0.3
+  - aeson >= 2.0
+  - bytestring >= 0.11
+  - http-types >= 0.12
 
 ghc-options:
   - -Wall
@@ -50,6 +55,10 @@ executables:
       - -with-rtsopts=-N
     dependencies:
       - llm-safe
+      - dotenv >= 0.11
+      - brick >= 2.1
+      - vty >= 6.0
+      - vty-crossplatform >= 0.4
 
 tests:
   llm-safe-test:

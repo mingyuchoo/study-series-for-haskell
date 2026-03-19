@@ -21,6 +21,8 @@ module LlmSafe.Types
     , defaultConfig
     ) where
 
+import           System.Environment (lookupEnv)
+
 -- | LLM의 원시 응답. 아직 검증되지 않은 비결정적 결과.
 --
 --   이 타입의 값은 'Verified'를 요구하는 결정적 함수에
@@ -79,19 +81,48 @@ data LlmError = VerificationFailed String
 
 -- | LLM 호출 설정.
 data LlmConfig = LlmConfig { configModelId       :: String
-                             -- ^ 사용할 모델 ID
+                             -- ^ 사용할 모델 배포 이름
                            , configMaxRetries    :: Int
                              -- ^ 최대 재시도 횟수
                            , configMinConfidence :: Confidence
                              -- ^ 최소 요구 신뢰도
+                           , configEndpoint      :: String
+                             -- ^ Azure OpenAI 엔드포인트 URL
+                           , configApiKey        :: String
+                             -- ^ Azure OpenAI API 키
+                           , configApiVersion    :: String
+                             -- ^ Azure OpenAI API 버전
                            }
      deriving stock (Eq, Show)
 
--- | 기본 설정.
-defaultConfig :: LlmConfig
-defaultConfig =
-  LlmConfig
-    { configModelId = "claude-sonnet-4-20250514"
-    , configMaxRetries = 3
+-- | 기본 설정 (Azure OpenAI).
+--
+--   다음 환경 변수에서 값을 읽는다:
+--
+--   * @AZURE_OPENAI_ENDPOINT@    — Azure OpenAI 리소스 엔드포인트 URL
+--   * @AZURE_OPENAI_API_KEY@     — API 인증 키
+--   * @AZURE_OPENAI_DEPLOYMENT@  — 배포 모델 이름 (기본값: @gpt-5-mini@)
+--   * @AZURE_OPENAI_API_VERSION@ — API 버전 (기본값: @2024-12-01-preview@)
+defaultConfig :: IO LlmConfig
+defaultConfig = do
+  endpoint   <- require "AZURE_OPENAI_ENDPOINT"
+  apiKey     <- require "AZURE_OPENAI_API_KEY"
+  model      <- getWithDefault "AZURE_OPENAI_DEPLOYMENT"  "gpt-5-mini"
+  apiVersion <- getWithDefault "AZURE_OPENAI_API_VERSION" "2024-12-01-preview"
+  pure LlmConfig
+    { configModelId       = model
+    , configMaxRetries    = 3
     , configMinConfidence = Medium
+    , configEndpoint      = endpoint
+    , configApiKey        = apiKey
+    , configApiVersion    = apiVersion
     }
+ where
+  require name = do
+    mval <- lookupEnv name
+    case mval of
+      Just v  -> pure v
+      Nothing -> ioError $ userError $ "환경 변수가 설정되지 않았습니다: " <> name
+  getWithDefault name def = do
+    mval <- lookupEnv name
+    pure $ maybe def id mval

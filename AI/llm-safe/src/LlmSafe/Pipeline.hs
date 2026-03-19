@@ -61,42 +61,38 @@ formatAnswer v = "[검증됨] " <> unVerified v
 
 -- | 도시 인구를 LLM에게 물어보고, 검증 후 결정적 처리를 수행하는 파이프라인.
 --
---   타입 시그니처만으로 비결정성의 흐름이 보인다:
---
---   @
---   LlmConfig → String → IO (Either LlmError String)
---   @
-populationPipeline :: LlmConfig -> String -> IO (Either LlmError String)
-populationPipeline config cityName = do
+--   'logger'를 통해 각 단계의 진행 상황을 출력한다.
+populationPipeline :: LlmConfig -> (String -> IO ()) -> String -> IO (Either LlmError String)
+populationPipeline config logger cityName = do
   -- [1단계] 비결정적 영역: LLM 호출
-  putStrLn "=== 1단계: LLM 호출 (비결정적) ==="
-  response <- callLlm config ("'" <> cityName <> "'의 인구를 만 단위 정수로만 답하세요.")
+  logger "=== 1단계: LLM 호출 (비결정적) ==="
+  response <- callLlm config logger ("'" <> cityName <> "'의 인구를 만 단위 정수로만 답하세요.")
 
   -- [2단계] 경계: 검증 관문
-  putStrLn "=== 2단계: 검증 관문 (비결정적 → 결정적) ==="
+  logger "=== 2단계: 검증 관문 (비결정적 → 결정적) ==="
   let verified = verifyWith parseIntFromText (> 0) response
 
   case verified of
     Left err -> do
-      putStrLn $ "검증 실패: " <> show err
+      logger $ "검증 실패: " <> show err
       pure $ Left err
     Right v -> do
       -- [3단계] 결정적 영역: 순수 함수 적용
-      putStrLn "=== 3단계: 결정적 처리 ==="
+      logger "=== 3단계: 결정적 처리 ==="
       let result = classifyPopulation v
-      putStrLn $ "결과: " <> result
+      logger $ "결과: " <> result
       pure $ Right result
 
 -- | 합의 기반 파이프라인: N번 호출하여 다수결로 결정.
 --
 --   Self-consistency 기법으로 비결정성을 줄인다.
-consensusPipeline :: LlmConfig -> Int -> String -> IO (Either LlmError String)
-consensusPipeline config n cityName = do
-  putStrLn $ "=== 합의 기반 파이프라인 (" <> show n <> "회 호출) ==="
+consensusPipeline :: LlmConfig -> (String -> IO ()) -> Int -> String -> IO (Either LlmError String)
+consensusPipeline config logger n cityName = do
+  logger $ "=== 합의 기반 파이프라인 (" <> show n <> "회 호출) ==="
   let prompt = "'" <> cityName <> "'의 인구를 만 단위 정수로만 답하세요."
 
   -- N번 독립적으로 호출 (각각 비결정적)
-  responses <- callLlmN config n prompt
+  responses <- callLlmN config logger n prompt
 
   -- 합의로 비결정성을 줄인다
   let verified = verifyByConsensus parseIntFromText responses
