@@ -22,7 +22,7 @@ import qualified Graphics.Vty.CrossPlatform as VtyCross
 
 import           LlmSafe                    (consensusPipeline, defaultConfig,
                                              populationPipeline)
-import           LlmSafe.Types              (LlmConfig, LlmError)
+import           LlmSafe.Types              (LlmConfig, LlmError (..))
 
 -- ---------------------------------------------------------------------------
 -- 타입 정의
@@ -108,19 +108,19 @@ drawUI st = [ui]
       B.padAll 1 $
       B.vBox
         [ B.hBox
+            [ B.str "파이프라인 : "
+            , modeBtn SingleCall    "단일 호출(1회)"
+            , B.str "    "
+            , modeBtn ConsensusCall "합의 기반(3회)"
+            ]
+        , B.str " "
+        , B.hBox
             [ B.str "도시명     : "
             , B.hLimit 40 $
                 Edit.renderEditor
                   (B.str . unlines)
                   (_focused st == CityInputField)
                   (_cityEdit st)
-            ]
-        , B.str " "
-        , B.hBox
-            [ B.str "파이프라인 : "
-            , modeBtn SingleCall    "단일 호출(1회)"
-            , B.str "    "
-            , modeBtn ConsensusCall "합의 기반(3회)"
             ]
         ]
 
@@ -180,7 +180,7 @@ handleEvent ev = case ev of
   B.AppEvent (Done result) -> do
     let line = case result of
                  Right s -> "✓ 완료: " <> s
-                 Left  e -> "✗ 실패: " <> show e
+                 Left  e -> "✗ 실패: " <> renderError e
     B.modify $ \st -> st
       { _running = False
       , _logs    = _logs st ++ [line, replicate 50 '─']
@@ -259,6 +259,13 @@ runPipeline = do
 showMode :: PipelineMode -> String
 showMode SingleCall    = "단일 호출(1회)"
 showMode ConsensusCall = "합의 기반(3회)"
+
+renderError :: LlmError -> String
+renderError (VerificationFailed msg) = "검증 실패: " <> msg
+renderError (ConsensusNotReached msg) = "합의 실패: " <> msg
+renderError (ParseError msg) = "파싱 오류: " <> msg
+renderError (RetryExhausted n) = "재시도 초과: " <> show n <> "회"
+renderError (LowConfidence c) = "신뢰도 부족: " <> show c
 
 -- ---------------------------------------------------------------------------
 -- 진입점
