@@ -1,0 +1,65 @@
+name: llm-safe
+version: 0.1.0.0
+github: "mingyuchoo/haskell-study-series"
+license: MIT
+author: "mingyuchoo"
+maintainer: "mingyuchoo@example.com"
+copyright: "2025 mingyuchoo"
+
+synopsis: LLM 비결정성 관리 — Haskell 타입 안전성으로 LLM 응답을 격리·검증
+category: AI
+
+description: |
+  LLM 응답의 비결정성을 타입으로 격리하고,
+  검증된 결과만 결정적 영역으로 넘기는 아키텍처.
+  비결정적 결과(LlmResponse)는 반드시 검증 관문(verify, verifyWith,
+  verifyByConsensus)을 통과해야 Verified 타입을 얻을 수 있다.
+
+dependencies:
+  - base >= 4.7 && < 5
+  - text >= 1.2
+  - containers >= 0.6
+  - mtl >= 2.2
+  - time >= 1.12
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - LlmSafe
+    - LlmSafe.Types
+    - LlmSafe.Client
+    - LlmSafe.Verify
+    - LlmSafe.Pipeline
+
+executables:
+  llm-safe-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - llm-safe
+
+tests:
+  llm-safe-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - llm-safe
+      - hspec >= 2.8
+      - QuickCheck >= 2.14
