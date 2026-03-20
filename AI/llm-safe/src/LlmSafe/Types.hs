@@ -16,6 +16,7 @@ module LlmSafe.Types
     , unVerified
       -- * 에러 타입
     , LlmError (..)
+    , renderLlmError
       -- * LLM 설정
     , LlmConfig (..)
     , defaultConfig
@@ -79,19 +80,32 @@ data LlmError = VerificationFailed String
               -- ^ 신뢰도가 요구 수준 미달
      deriving stock (Eq, Show)
 
+-- | 'LlmError'를 사람이 읽을 수 있는 한국어 문자열로 변환한다.
+--
+--   'show'를 사용하면 한국어가 유니코드 이스케이프로 깨지므로,
+--   이 함수를 사용해 내부 메시지를 직접 꺼낸다.
+renderLlmError :: LlmError -> String
+renderLlmError (VerificationFailed msg) = "검증 실패: " <> msg
+renderLlmError (ConsensusNotReached msg) = "합의 실패: " <> msg
+renderLlmError (ParseError msg) = "파싱 오류: " <> msg
+renderLlmError (RetryExhausted n) = "재시도 초과: " <> show n <> "회"
+renderLlmError (LowConfidence c) = "신뢰도 부족: " <> show c
+
 -- | LLM 호출 설정.
-data LlmConfig = LlmConfig { configModelId       :: String
+data LlmConfig = LlmConfig { configModelId        :: String
                              -- ^ 사용할 모델 배포 이름
-                           , configMaxRetries    :: Int
+                           , configMaxRetries     :: Int
                              -- ^ 최대 재시도 횟수
-                           , configMinConfidence :: Confidence
+                           , configMinConfidence  :: Confidence
                              -- ^ 최소 요구 신뢰도
-                           , configEndpoint      :: String
+                           , configEndpoint       :: String
                              -- ^ Azure OpenAI 엔드포인트 URL
-                           , configApiKey        :: String
+                           , configApiKey         :: String
                              -- ^ Azure OpenAI API 키
-                           , configApiVersion    :: String
+                           , configApiVersion     :: String
                              -- ^ Azure OpenAI API 버전
+                           , configConsensusCount :: Int
+                             -- ^ 합의 기반 파이프라인 호출 횟수
                            }
      deriving stock (Eq, Show)
 
@@ -103,19 +117,22 @@ data LlmConfig = LlmConfig { configModelId       :: String
 --   * @AZURE_OPENAI_API_KEY@     — API 인증 키
 --   * @AZURE_OPENAI_DEPLOYMENT@  — 배포 모델 이름 (기본값: @gpt-5-mini@)
 --   * @AZURE_OPENAI_API_VERSION@ — API 버전 (기본값: @2024-12-01-preview@)
+--   * @LLM_CONSENSUS_COUNT@      — 합의 기반 호출 횟수 (기본값: @3@)
 defaultConfig :: IO LlmConfig
 defaultConfig = do
-  endpoint   <- require "AZURE_OPENAI_ENDPOINT"
-  apiKey     <- require "AZURE_OPENAI_API_KEY"
-  model      <- getWithDefault "AZURE_OPENAI_DEPLOYMENT"  "gpt-5-mini"
-  apiVersion <- getWithDefault "AZURE_OPENAI_API_VERSION" "2024-12-01-preview"
+  endpoint       <- require "AZURE_OPENAI_ENDPOINT"
+  apiKey         <- require "AZURE_OPENAI_API_KEY"
+  model          <- getWithDefault "AZURE_OPENAI_DEPLOYMENT"  "gpt-5-mini"
+  apiVersion     <- getWithDefault "AZURE_OPENAI_API_VERSION" "2024-12-01-preview"
+  consensusCount <- getIntWithDefault "LLM_CONSENSUS_COUNT" 3
   pure LlmConfig
-    { configModelId       = model
-    , configMaxRetries    = 3
-    , configMinConfidence = Medium
-    , configEndpoint      = endpoint
-    , configApiKey        = apiKey
-    , configApiVersion    = apiVersion
+    { configModelId        = model
+    , configMaxRetries     = 3
+    , configMinConfidence  = Medium
+    , configEndpoint       = endpoint
+    , configApiKey         = apiKey
+    , configApiVersion     = apiVersion
+    , configConsensusCount = consensusCount
     }
  where
   require name = do
@@ -126,3 +143,6 @@ defaultConfig = do
   getWithDefault name def = do
     mval <- lookupEnv name
     pure $ maybe def id mval
+  getIntWithDefault name def = do
+    mval <- lookupEnv name
+    pure $ maybe def read mval

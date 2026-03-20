@@ -14,6 +14,8 @@ module LlmSafe.Client
     , mockCallLlm
     ) where
 
+import           Control.Concurrent.Async  (mapConcurrently)
+
 import           Data.Aeson                (Value (..), object, (.=))
 import qualified Data.Aeson                as Aeson
 import qualified Data.Aeson.KeyMap         as KM
@@ -138,11 +140,17 @@ callLlmWithRetry config logger prompt = go (configMaxRetries config)
         go (n - 1)
       else pure $ Right response
 
--- | N번 독립적으로 LLM을 호출하여 응답 목록을 수집한다.
+-- | N개의 에이전트를 병렬로 실행하여 응답 목록을 수집한다.
 --
+--   각 에이전트는 독립적으로 LLM을 호출하며, 'mapConcurrently'로 동시 실행된다.
 --   합의 기반 검증('LlmSafe.Verify.verifyByConsensus')의 입력으로 사용된다.
 callLlmN :: LlmConfig -> (String -> IO ()) -> Int -> String -> IO [LlmResponse String]
-callLlmN config logger n prompt = sequence [callLlm config logger prompt | _ <- [1 .. n]]
+callLlmN config logger n prompt =
+  mapConcurrently runAgent [1 .. n]
+  where
+    runAgent i =
+      let agentLogger msg = logger $ "[에이전트 " <> show i <> "/" <> show n <> "] " <> msg
+      in  callLlm config agentLogger prompt
 
 -- | 모의 LLM 호출. 테스트용으로 순수한 응답을 생성한다.
 mockCallLlm :: Confidence -> String -> String -> LlmResponse String

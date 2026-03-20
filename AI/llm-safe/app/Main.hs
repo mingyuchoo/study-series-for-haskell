@@ -22,7 +22,7 @@ import qualified Graphics.Vty.CrossPlatform as VtyCross
 
 import           LlmSafe                    (consensusPipeline, defaultConfig,
                                              populationPipeline)
-import           LlmSafe.Types              (LlmConfig, LlmError (..))
+import           LlmSafe.Types              (LlmConfig (..), LlmError, renderLlmError)
 
 -- ---------------------------------------------------------------------------
 -- 타입 정의
@@ -111,7 +111,7 @@ drawUI st = [ui]
             [ B.str "파이프라인 : "
             , modeBtn SingleCall    "단일 호출(1회)"
             , B.str "    "
-            , modeBtn ConsensusCall "합의 기반(3회)"
+            , modeBtn ConsensusCall ("합의 기반(" <> show (configConsensusCount (_llmConfig st)) <> "회)")
             ]
         , B.str " "
         , B.hBox
@@ -180,7 +180,7 @@ handleEvent ev = case ev of
   B.AppEvent (Done result) -> do
     let line = case result of
                  Right s -> "✓ 완료: " <> s
-                 Left  e -> "✗ 실패: " <> renderError e
+                 Left  e -> "✗ 실패: " <> renderLlmError e
     B.modify $ \st -> st
       { _running = False
       , _logs    = _logs st ++ [line, replicate 50 '─']
@@ -247,25 +247,18 @@ runPipeline = do
     { _running = True
     , _logs    = _logs s ++
         [ replicate 50 '─'
-        , "▶ 도시: " <> cityName <> "  모드: " <> showMode mode
+        , "▶ 도시: " <> cityName <> "  모드: " <> showMode cfg mode
         ]
     }
   liftIO $ void $ forkIO $ do
     result <- case mode of
       SingleCall    -> populationPipeline cfg logger cityName
-      ConsensusCall -> consensusPipeline  cfg logger 3 cityName
+      ConsensusCall -> consensusPipeline  cfg logger (configConsensusCount cfg) cityName
     BChan.writeBChan ch (Done result)
 
-showMode :: PipelineMode -> String
-showMode SingleCall    = "단일 호출(1회)"
-showMode ConsensusCall = "합의 기반(3회)"
-
-renderError :: LlmError -> String
-renderError (VerificationFailed msg) = "검증 실패: " <> msg
-renderError (ConsensusNotReached msg) = "합의 실패: " <> msg
-renderError (ParseError msg) = "파싱 오류: " <> msg
-renderError (RetryExhausted n) = "재시도 초과: " <> show n <> "회"
-renderError (LowConfidence c) = "신뢰도 부족: " <> show c
+showMode :: LlmConfig -> PipelineMode -> String
+showMode _   SingleCall    = "단일 호출(1회)"
+showMode cfg ConsensusCall = "합의 기반(" <> show (configConsensusCount cfg) <> "회)"
 
 -- ---------------------------------------------------------------------------
 -- 진입점
