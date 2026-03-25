@@ -208,8 +208,8 @@ handleEvent ev = case ev of
     when (_focused st == LogViewport) $
       B.modify $ \s -> s
         { _pipeMode = case _pipeMode s of
-            SingleCall          -> ConsensusCall
-            ConsensusCall       -> DistributionAnalysis
+            SingleCall           -> ConsensusCall
+            ConsensusCall        -> DistributionAnalysis
             DistributionAnalysis -> SingleCall
         }
 
