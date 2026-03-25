@@ -85,11 +85,11 @@ data LlmError = VerificationFailed String
 --   'show'를 사용하면 한국어가 유니코드 이스케이프로 깨지므로,
 --   이 함수를 사용해 내부 메시지를 직접 꺼낸다.
 renderLlmError :: LlmError -> String
-renderLlmError (VerificationFailed msg) = "검증 실패: " <> msg
+renderLlmError (VerificationFailed msg)  = "검증 실패: " <> msg
 renderLlmError (ConsensusNotReached msg) = "합의 실패: " <> msg
-renderLlmError (ParseError msg) = "파싱 오류: " <> msg
-renderLlmError (RetryExhausted n) = "재시도 초과: " <> show n <> "회"
-renderLlmError (LowConfidence c) = "신뢰도 부족: " <> show c
+renderLlmError (ParseError msg)          = "파싱 오류: " <> msg
+renderLlmError (RetryExhausted n)        = "재시도 초과: " <> show n <> "회"
+renderLlmError (LowConfidence c)         = "신뢰도 부족: " <> show c
 
 -- | LLM 호출 설정.
 data LlmConfig = LlmConfig { configModelId        :: String

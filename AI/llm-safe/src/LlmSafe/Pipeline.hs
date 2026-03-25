@@ -18,16 +18,16 @@ module LlmSafe.Pipeline
       classifyPopulation
     , formatAnswer
       -- * 파이프라인 (실제 LLM 호출)
-    , populationPipeline
     , consensusPipeline
+    , populationPipeline
       -- * 파이프라인 (주입 가능한 호출 함수 — 테스트용)
-    , populationPipelineWith
     , consensusPipelineWith
+    , populationPipelineWith
     ) where
 
 import           LlmSafe.Client (callLlm, callLlmN)
-import           LlmSafe.Types  (LlmConfig (..), LlmError, LlmResponse, Verified,
-                                 renderLlmError, unVerified)
+import           LlmSafe.Types  (LlmConfig (..), LlmError, LlmResponse,
+                                 Verified, renderLlmError, unVerified)
 import           LlmSafe.Verify (parseIntFromText, verifyByConsensus,
                                  verifyWith)
 
