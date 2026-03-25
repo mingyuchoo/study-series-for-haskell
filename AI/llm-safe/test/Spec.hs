@@ -5,7 +5,6 @@ module Main
     ) where
 
 import           Control.Exception  (SomeException, try)
-import           System.Environment (setEnv, unsetEnv)
 
 import           LlmSafe.Client     (mockCallLlm)
 import           LlmSafe.Pipeline   (classifyPopulation, consensusPipelineWith,
@@ -14,8 +13,11 @@ import           LlmSafe.Types      (Confidence (..), LlmConfig (..),
                                      LlmError (..), LlmResponse (..),
                                      defaultConfig, mkVerified, renderLlmError,
                                      unVerified)
-import           LlmSafe.Verify     (parseIntFromText, verify, verifyByConsensus,
-                                     verifyConfidence, verifyWith)
+import           LlmSafe.Verify     (parseIntFromText, verify,
+                                     verifyByConsensus, verifyConfidence,
+                                     verifyWith)
+
+import           System.Environment (setEnv, unsetEnv)
 
 import           Test.Hspec
 import           Test.QuickCheck

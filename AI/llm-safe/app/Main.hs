@@ -22,7 +22,8 @@ import qualified Graphics.Vty.CrossPlatform as VtyCross
 
 import           LlmSafe                    (consensusPipeline, defaultConfig,
                                              populationPipeline)
-import           LlmSafe.Types              (LlmConfig (..), LlmError, renderLlmError)
+import           LlmSafe.Types              (LlmConfig (..), LlmError,
+                                             renderLlmError)
 
 -- ---------------------------------------------------------------------------
 -- 타입 정의
