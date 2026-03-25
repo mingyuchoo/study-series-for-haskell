@@ -21,6 +21,7 @@ import qualified Graphics.Vty               as Vty
 import qualified Graphics.Vty.CrossPlatform as VtyCross
 
 import           LlmSafe                    (consensusPipeline, defaultConfig,
+                                             distributionAnalysisPipeline,
                                              populationPipeline)
 import           LlmSafe.Types              (LlmConfig (..), LlmError,
                                              renderLlmError)
@@ -34,7 +35,7 @@ data Name = CityInputField | LogViewport
      deriving (Eq, Ord, Show)
 
 -- | 파이프라인 모드
-data PipelineMode = SingleCall | ConsensusCall
+data PipelineMode = SingleCall | ConsensusCall | DistributionAnalysis
      deriving (Eq, Show)
 
 -- | 커스텀 이벤트 (백그라운드 스레드 → TUI)
@@ -110,9 +111,11 @@ drawUI st = [ui]
       B.vBox
         [ B.hBox
             [ B.str "파이프라인 : "
-            , modeBtn SingleCall    "단일 호출(1회)"
+            , modeBtn SingleCall          "단일 호출(1회)"
             , B.str "    "
-            , modeBtn ConsensusCall ("합의 기반(" <> show (configConsensusCount (_llmConfig st)) <> "회)")
+            , modeBtn ConsensusCall       ("합의 기반(" <> show (configConsensusCount (_llmConfig st)) <> "회)")
+            , B.str "    "
+            , modeBtn DistributionAnalysis ("분포 분석(" <> show (configConsensusCount (_llmConfig st)) <> "회)")
             ]
         , B.str " "
         , B.hBox
@@ -204,9 +207,10 @@ handleEvent ev = case ev of
     st <- B.get
     when (_focused st == LogViewport) $
       B.modify $ \s -> s
-        { _pipeMode = if _pipeMode s == SingleCall
-                        then ConsensusCall
-                        else SingleCall
+        { _pipeMode = case _pipeMode s of
+            SingleCall          -> ConsensusCall
+            ConsensusCall       -> DistributionAnalysis
+            DistributionAnalysis -> SingleCall
         }
 
   -- Enter: 파이프라인 실행 (입력창 + 미실행 중)
@@ -253,13 +257,15 @@ runPipeline = do
     }
   liftIO $ void $ forkIO $ do
     result <- case mode of
-      SingleCall    -> populationPipeline cfg logger cityName
-      ConsensusCall -> consensusPipeline  cfg logger (configConsensusCount cfg) cityName
+      SingleCall           -> populationPipeline          cfg logger cityName
+      ConsensusCall        -> consensusPipeline            cfg logger (configConsensusCount cfg) cityName
+      DistributionAnalysis -> distributionAnalysisPipeline cfg logger (configConsensusCount cfg) cityName
     BChan.writeBChan ch (Done result)
 
 showMode :: LlmConfig -> PipelineMode -> String
-showMode _   SingleCall    = "단일 호출(1회)"
-showMode cfg ConsensusCall = "합의 기반(" <> show (configConsensusCount cfg) <> "회)"
+showMode _   SingleCall           = "단일 호출(1회)"
+showMode cfg ConsensusCall        = "합의 기반(" <> show (configConsensusCount cfg) <> "회)"
+showMode cfg DistributionAnalysis = "분포 분석(" <> show (configConsensusCount cfg) <> "회)"
 
 -- ---------------------------------------------------------------------------
 -- 진입점

@@ -8,6 +8,7 @@ import           Control.Exception  (SomeException, try)
 
 import           LlmSafe.Client     (mockCallLlm)
 import           LlmSafe.Pipeline   (classifyPopulation, consensusPipelineWith,
+                                     distributionAnalysisPipelineWith,
                                      formatAnswer, populationPipelineWith)
 import           LlmSafe.Types      (Confidence (..), LlmConfig (..),
                                      LlmError (..), LlmResponse (..),
@@ -265,6 +266,38 @@ main = hspec $ do
       it "빈 응답 목록이면 Left를 반환한다" $ do
         let callFn _ _ = pure []
         result <- consensusPipelineWith callFn noLog 3 "서울"
+        result `shouldSatisfy` isLeft
+
+    describe "distributionAnalysisPipelineWith" $ do
+      let noLog = const (pure ())
+
+      it "분석 LLM이 유효한 정수를 반환하면 Right 결과를 반환한다" $ do
+        let callFn _ _ = pure (replicate 3 (mockCallLlm High "m" "950"))
+            analysisFn _ = pure (mockCallLlm High "m" "950")
+        result <- distributionAnalysisPipelineWith callFn analysisFn noLog 3 "서울"
+        result `shouldBe` Right "중도시 (인구 950만)"
+
+      it "분석 LLM이 다양한 형식을 정규화한 결과를 반환한다" $ do
+        let responses = [ mockCallLlm High "m" "950"
+                        , mockCallLlm High "m" "약 950만"
+                        , mockCallLlm High "m" "9500000"
+                        ]
+            callFn _ _ = pure responses
+            -- 형식이 달라도 LLM이 950으로 정규화한다고 가정
+            analysisFn _ = pure (mockCallLlm High "m" "950")
+        result <- distributionAnalysisPipelineWith callFn analysisFn noLog 3 "서울"
+        result `shouldBe` Right "중도시 (인구 950만)"
+
+      it "분석 LLM이 파싱 불가 응답을 반환하면 Left ParseError를 반환한다" $ do
+        let callFn _ _ = pure (replicate 3 (mockCallLlm High "m" "950"))
+            analysisFn _ = pure (mockCallLlm High "m" "파싱불가응답")
+        result <- distributionAnalysisPipelineWith callFn analysisFn noLog 3 "서울"
+        result `shouldSatisfy` isParseError
+
+      it "분석 LLM이 0 이하를 반환하면 Left VerificationFailed를 반환한다" $ do
+        let callFn _ _ = pure (replicate 3 (mockCallLlm High "m" "950"))
+            analysisFn _ = pure (mockCallLlm High "m" "0")
+        result <- distributionAnalysisPipelineWith callFn analysisFn noLog 3 "서울"
         result `shouldSatisfy` isLeft
 
   -- =========================================================================
