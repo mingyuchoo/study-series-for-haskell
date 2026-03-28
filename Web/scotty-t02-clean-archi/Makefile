@@ -42,7 +42,7 @@ watch-coverage: setup
 ghcid: setup
 	ghcid --command "stack ghci test/Spec.hs"
 
-run: setup
+run: build
 	time stack exec $(PROJECT_NAME)-exe
 
 release: setup

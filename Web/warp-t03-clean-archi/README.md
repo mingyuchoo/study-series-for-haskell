@@ -34,12 +34,19 @@ This project follows Clean Architecture patterns with clear separation of concer
 - `PUT /api/users/{id}` - Update user
 - `DELETE /api/users/{id}` - Delete user
 
+### Static File Routes
+
+- `GET /` - Serves `www/index.html`
+- `GET /styles.css` - Serves `www/styles.css`
+- `GET /script.js` - Serves `www/script.js`
+
 ### Web Interface
 
-- User creation form
-- User list with edit/delete actions
-- Real-time updates
-- Responsive design
+- User creation form with name input
+- User list table with edit/delete actions
+- Inline edit form for updating users
+- Toast-style success/error notifications
+- Responsive 2-column grid layout
 
 ## Prerequisites
 
@@ -94,16 +101,24 @@ You can also use the provided `Makefile` for common tasks:
 make all
 
 # Individual commands
+make clean
+make setup
+make format
 make build
 make test
 make run
 make coverage
 make watch-test
+make watch-coverage
+make ghcid
+make install
 
 # Docker operations
 make docker-build
 make docker-run
 make docker-compose-up
+make docker-compose-down
+make docker-compose-logs
 ```
 
 ## Docker Deployment
@@ -136,19 +151,34 @@ make docker-compose-down
 ## Project Structure
 
 ```
-├── app/                    # Application entry point
-│   └── Main.hs
-├── src/                    # Source code
-│   ├── Domain/             # Business entities
-│   ├── Application/        # Use cases
-│   ├── Infrastructure/     # External concerns
-│   ├── Adapters/          # Interface implementations
-│   └── Lib.hs            # Main application runner
-├── test/                   # Test files
-├── www/                    # Web frontend assets
-├── docker/                 # Docker configuration
-├── data/                   # SQLite database storage
-└── Makefile               # Build automation
+├── app/
+│   └── Main.hs                              # Application entry point
+├── src/
+│   ├── Domain/
+│   │   └── UserModel.hs                     # User entity with JSON serialization
+│   ├── Application/
+│   │   └── UserService.hs                   # Use case interfaces (CRUD)
+│   ├── Infrastructure/
+│   │   ├── Config/
+│   │   │   └── AppConfig.hs                 # Port and DB path configuration
+│   │   └── Database/
+│   │       └── Connection.hs                # SQLite connection and table init
+│   ├── Adapters/
+│   │   ├── Repository/
+│   │   │   └── UserRepositoryAdapter.hs     # SQLite repository implementation
+│   │   └── Web/
+│   │       └── UserWebAdapter.hs            # WAI web interface with routing
+│   └── Lib.hs                               # Application orchestration
+├── test/
+│   └── Spec.hs                              # Test suite (hspec)
+├── www/                                     # Web frontend assets
+│   ├── index.html
+│   ├── styles.css
+│   └── script.js
+├── docker/
+│   ├── Dockerfile                           # Multi-stage Docker build
+│   └── docker-compose.yaml
+└── Makefile                                 # Build automation
 ```
 
 ## Dependencies
@@ -156,9 +186,11 @@ make docker-compose-down
 Key Haskell packages used:
 - `warp` - HTTP server
 - `wai` - Web Application Interface
+- `http-types` - HTTP status codes and method constants
 - `sqlite-simple` - SQLite database bindings
 - `aeson` - JSON parsing/encoding
-- `flow` - Function composition utilities
+- `flow` - Function composition utilities (`<|` operator)
+- `bytestring` / `text` - String handling
 
 ## Development
 

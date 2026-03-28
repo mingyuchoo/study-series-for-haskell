@@ -40,7 +40,7 @@ library
     , http-types
     , scotty
     , text
-  default-language: GHC2024
+  default-language: Haskell2010
 
 executable scotty-t01-shortener-exe
   main-is: Main.hs
@@ -59,7 +59,7 @@ executable scotty-t01-shortener-exe
     , scotty
     , scotty-t01-shortener
     , text
-  default-language: GHC2024
+  default-language: Haskell2010
 
 test-suite scotty-t01-shortener-test
   type: exitcode-stdio-1.0
@@ -81,4 +81,4 @@ test-suite scotty-t01-shortener-test
     , scotty
     , scotty-t01-shortener
     , text
-  default-language: GHC2024
+  default-language: Haskell2010

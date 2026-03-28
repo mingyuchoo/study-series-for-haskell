@@ -4,10 +4,11 @@ Haskell Yesod 웹 프레임워크 기반 블로그 애플리케이션입니다.
 
 ## 기술 스택
 
-- **언어**: Haskell (GHC 9.12.2)
+- **언어**: Haskell (GHC 9.12.2, GHC2024 언어 표준)
 - **웹 프레임워크**: Yesod
 - **템플릿**: Shakespeare (Hamlet, Cassius, Julius)
-- **ORM**: Persistent + SQLite3
+- **ORM**: Persistent + SQLite3 (`blog.sqlite3`)
+- **세션**: 클라이언트 사이드 세션 (AES 암호화, `config/client_session_key.aes`)
 - **빌드**: Cabal 3.16
 
 ## 주요 기능
@@ -37,6 +38,7 @@ src/
     ├── AuthService.hs   # 인증 비즈니스 로직
     ├── PostService.hs   # 포스트 비즈니스 로직
     └── CommentService.hs # 댓글 비즈니스 로직
+cabal.project                # Cabal 프로젝트 설정
 config/
 ├── models.persistentmodels  # DB 스키마
 └── routes.yesodroutes       # 라우트 정의
@@ -77,6 +79,8 @@ cabal run demo-haskell
 ```
 
 서버가 시작되면 http://localhost:3000 에서 접속할 수 있습니다.
+
+> **참고**: 최초 실행 시 `blog.sqlite3` 파일과 `config/client_session_key.aes` 세션 키가 자동 생성됩니다.
 
 ## 테스트
 
