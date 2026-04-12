@@ -23,7 +23,32 @@ spec = do
       save_input defaultKeyBindings `shouldBe` ["Enter"]
       cancel_input defaultKeyBindings `shouldBe` ["Esc"]
 
-  -- keyToString은 Config 모듈에서 export되지 않으므로 테스트 제외
+  describe "keyToString" <| do
+    it "일반 문자를 문자열로 변환해야 함" <| do
+      keyToString (V.KChar 'a') `shouldBe` "a"
+      keyToString (V.KChar 'z') `shouldBe` "z"
+
+    it "공백 키를 Space로 변환해야 함" <| do
+      keyToString (V.KChar ' ') `shouldBe` "Space"
+
+    it "Enter 키를 변환해야 함" <| do
+      keyToString V.KEnter `shouldBe` "Enter"
+
+    it "Esc 키를 변환해야 함" <| do
+      keyToString V.KEsc `shouldBe` "Esc"
+
+    it "방향키를 변환해야 함" <| do
+      keyToString V.KUp `shouldBe` "Up"
+      keyToString V.KDown `shouldBe` "Down"
+      keyToString V.KLeft `shouldBe` "Left"
+      keyToString V.KRight `shouldBe` "Right"
+
+    it "Backspace 키를 변환해야 함" <| do
+      keyToString V.KBS `shouldBe` "Backspace"
+
+    it "Function 키를 변환해야 함" <| do
+      keyToString (V.KFun 1) `shouldBe` "F1"
+      keyToString (V.KFun 12) `shouldBe` "F12"
 
   describe "matchesKey" <| do
     it "quit 키를 매칭해야 함" <| do

@@ -9,19 +9,15 @@ import           Control.Monad     (forM)
 import           System.Directory  (doesDirectoryExist, listDirectory)
 import           System.FilePath   (takeFileName, (</>))
 
--- | 제외할 디렉토리/파일 패턴 목록
+-- | 제외할 디렉토리/파일 패턴 목록 (숨김 파일 제외)
+-- 숨김 파일/디렉토리(.으로 시작)는 별도 조건으로 처리
 excludePatterns :: [String]
 excludePatterns =
-  [ ".git"
-  , ".stack-work"
-  , "node_modules"
+  [ "node_modules"
   , "dist"
   , "dist-newstyle"
   , "build"
-  , ".cabal-sandbox"
   , "target"
-  , ".idea"
-  , ".vscode"
   ]
 
 -- | 파일 또는 디렉토리 이름이 제외 패턴에 해당하는지 확인 (Pure)
@@ -29,7 +25,11 @@ excludePatterns =
 shouldExclude :: FilePath -> Bool
 shouldExclude path =
   let name = takeFileName path
-  in name `elem` excludePatterns || (take 1 name == "." && name `notElem` [".", ".."])
+  in name `elem` excludePatterns || isHidden name
+  where
+    isHidden name = case name of
+      '.':_ -> name `notElem` [".", ".."]
+      _     -> False
 
 -- | 재귀적으로 디렉토리 내 모든 파일 검색 (Effect)
 -- 제외 패턴에 해당하는 디렉토리는 건너뛰고, 에러 발생 시 해당 경로만 건너뜀

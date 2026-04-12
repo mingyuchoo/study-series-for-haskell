@@ -98,10 +98,10 @@ make docker-compose-logs
 # 전체 Todo 조회
 curl http://localhost:8000/api/todos
 
-# 새 Todo 생성 (priority: Medium, status: Todo가 기본값)
+# 새 Todo 생성 (status: Todo가 기본값)
 curl -X POST http://localhost:8000/api/todos \
   -H "Content-Type: application/json" \
-  -d '{"newTodoTitle": "장보기"}'
+  -d '{"newTodoTitle": "장보기", "newTodoPriority": "Medium"}'
 
 # 특정 Todo 조회
 curl http://localhost:8000/api/todos/1

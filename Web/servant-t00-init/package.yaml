@@ -63,5 +63,7 @@ tests:
     dependencies:
       - servant-t00-init
       - hspec
+      - hspec-wai
+      - hspec-wai-json
       - doctest
       - doctest-discover

@@ -14,6 +14,7 @@ module UI.Types
     , appEnv
     , directObjectEditor
     , editingIndex
+    , errorMessage
     , focusedField
     , fromTodoRow
     , i18nMessages
@@ -84,6 +85,7 @@ data AppState = AppState { _todoList             :: !(List Name Todo)
                          , _appEnv               :: !App.AppEnv
                          , _editingIndex         :: !(Maybe Int)
                          , _i18nMessages         :: !I18n.I18nMessages
+                         , _errorMessage         :: !(Maybe String)
                          }
 
 makeLenses ''AppState

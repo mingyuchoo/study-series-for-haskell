@@ -15,11 +15,13 @@ fuzzyMatchScore :: T.Text -> T.Text -> Maybe Int
 fuzzyMatchScore query text = go (T.toLower query) (T.toLower text) 0
   where
     -- | 재귀적으로 문자를 비교하며 갭(건너뛴 문자 수) 계산 (Pure)
-    go q t gaps
-      | T.null q  = Just gaps   -- 모든 쿼리 문자 매칭 완료
-      | T.null t  = Nothing     -- 텍스트 끝났는데 쿼리 남음
-      | T.head q == T.head t = go (T.tail q) (T.tail t) gaps
-      | otherwise = go q (T.tail t) (gaps + 1)
+    -- T.uncons를 사용하여 head/tail 이중 순회를 방지
+    go q t gaps = case (T.uncons q, T.uncons t) of
+      (Nothing, _)                       -> Just gaps
+      (_, Nothing)                       -> Nothing
+      (Just (qc, qr), Just (tc, tr))
+        | qc == tc  -> go qr tr gaps
+        | otherwise -> go q tr (gaps + 1)
 
 -- | 파일 경로의 깊이(슬래시 개수) 계산 (Pure)
 -- 정렬 시 얕은 경로 우선을 위해 사용
@@ -31,13 +33,9 @@ pathDepth t = T.count "/" t + T.count "\\" t
 filterItems :: T.Text -> Vec.Vector T.Text -> Vec.Vector T.Text
 filterItems query items
   | T.null query = items
-  | otherwise    = Vec.fromList . map fst3 . sortOn snd3 <| scored
+  | otherwise    = Vec.fromList . map snd . sortOn fst <| scored
   where
-    scored = [ (item, (score, pathDepth item), ())
+    scored = [ ((score, pathDepth item), item)
              | item <- Vec.toList items
              , Just score <- [fuzzyMatchScore query item]
              ]
-    -- | 3-튜플에서 첫 번째 요소 추출 (Pure)
-    fst3 (a, _, _) = a
-    -- | 3-튜플에서 두 번째 요소 추출 (Pure)
-    snd3 (_, b, _) = b

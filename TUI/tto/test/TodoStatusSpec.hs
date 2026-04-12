@@ -102,6 +102,27 @@ spec = do
         Just s  -> isCompleted s `shouldBe` False
         Nothing -> expectationFailure "파싱 실패"
 
+  describe "AnyStatus 패턴 매칭" <| do
+    it "AnyStatus로 래핑된 상태를 올바르게 식별해야 함" <| do
+      case stringToStatus "registered" of
+        Just (AnyStatus StatusRegistered) -> pure ()
+        _ -> expectationFailure "Registered 상태 매칭 실패"
+
+    it "AnyStatus로 래핑된 InProgress를 올바르게 식별해야 함" <| do
+      case stringToStatus "in_progress" of
+        Just (AnyStatus StatusInProgress) -> pure ()
+        _ -> expectationFailure "InProgress 상태 매칭 실패"
+
+    it "AnyStatus로 래핑된 Cancelled를 올바르게 식별해야 함" <| do
+      case stringToStatus "cancelled" of
+        Just (AnyStatus StatusCancelled) -> pure ()
+        _ -> expectationFailure "Cancelled 상태 매칭 실패"
+
+    it "AnyStatus로 래핑된 Completed를 올바르게 식별해야 함" <| do
+      case stringToStatus "completed" of
+        Just (AnyStatus StatusCompleted) -> pure ()
+        _ -> expectationFailure "Completed 상태 매칭 실패"
+
   describe "상태 전환 일관성" <| do
     it "statusToString과 stringToStatus가 역함수 관계여야 함" <| do
       fmap show (stringToStatus (statusToString StatusRegistered)) `shouldBe` Just "Registered"

@@ -122,17 +122,17 @@ spec = do
     describe "Application.UseCases.TodoUseCases" <| do
         context "when creating a new todo" <| do
             it "should validate the todo before creation" <| do
-                let invalidTodo = NewTodo (pack "")
+                let invalidTodo = NewTodo (pack "") Medium
                 result <- runSQLiteRepo <| createNewTodo invalidTodo
                 result `shouldSatisfy` isLeft
 
             it "should accept valid todos" <| do
-                let validTodo = NewTodo (pack "Test Todo")
+                let validTodo = NewTodo (pack "Test Todo") Medium
                 -- This is just a validation test, not actually inserting into DB
                 validateTodoTitle (newTodoTitle validTodo) `shouldSatisfy` isRight
                 
             it "should return validation errors with appropriate messages" <| do
-                let emptyTitleTodo = NewTodo (pack "")
+                let emptyTitleTodo = NewTodo (pack "") Medium
                 result <- runSQLiteRepo <| createNewTodo emptyTitleTodo
                 case result of
                     Left (ValidationError msg) -> msg `shouldBe` "TodoTitle cannot be empty"

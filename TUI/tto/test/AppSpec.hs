@@ -49,9 +49,10 @@ spec = do
       conn <- open ":memory:"
       DB.initDB conn
       let env = AppEnv conn I18n.defaultMessages Config.defaultKeyBindings
-      tid <- runAppM env <| TodoService.createNewTodo "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
-      tid `shouldSatisfy` (> 0)
+      maybeTid <- runAppM env <| TodoService.createNewTodo "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
+      maybeTid `shouldSatisfy` (/= Nothing)
 
+      let Just tid = maybeTid
       todos <- runAppM env TodoService.loadAllTodos
       let createdTodo = head <| filter (\t -> DB.todoId t == tid) todos
       DB.todoAction createdTodo `shouldBe` "Action"

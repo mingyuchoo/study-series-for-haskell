@@ -37,3 +37,12 @@ spec = do
 
     it "이미 정리된 문자열은 그대로 반환해야 함" <| do
       trim "hello world" `shouldBe` "hello world"
+
+    it "한글 문자열의 공백도 처리해야 함" <| do
+      trim "  안녕  하세요  " `shouldBe` "안녕 하세요"
+
+    it "유니코드와 공백이 섞인 복합 문자열을 처리해야 함" <| do
+      trim "  hello  세계  world  " `shouldBe` "hello 세계 world"
+
+    it "단일 공백은 빈 문자열을 반환해야 함" <| do
+      trim " " `shouldBe` ""

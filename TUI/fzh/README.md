@@ -117,11 +117,8 @@ binding_style: emacs
 
 성능 향상을 위해 다음 디렉토리들은 자동으로 검색에서 제외됩니다:
 
-- `.git`, `.stack-work`, `node_modules`
-- `dist`, `dist-newstyle`, `build`
-- `.cabal-sandbox`, `target`
-- `.idea`, `.vscode`
-- 모든 숨김 파일/디렉토리 (`.`으로 시작)
+- `node_modules`, `dist`, `dist-newstyle`, `build`, `target`
+- 모든 숨김 파일/디렉토리 (`.`으로 시작하는 파일 - `.git`, `.stack-work`, `.idea`, `.vscode` 등 포함)
 
 ## 개발
 

@@ -101,6 +101,18 @@ make ghcid       # ghcid 실행
 { "userId": 1, "userName": "Alice" }
 ```
 
+### 응답 형식
+
+생성(`POST`) 및 수정(`PUT`) 엔드포인트는 `Either ValidationError [User]` 타입을 반환합니다. Aeson의 기본 직렬화에 의해 다음과 같은 JSON 형식으로 응답됩니다:
+
+```json
+// 성공 시
+{ "Right": [{ "userId": 1, "userName": "Alice" }] }
+
+// 유효성 검증 실패 시
+{ "Left": { "errorMessage": "Username must be at least 3 characters long" } }
+```
+
 ### 유효성 검증
 
 사용자 이름(`userName`)에 대해 다음 규칙이 적용됩니다:

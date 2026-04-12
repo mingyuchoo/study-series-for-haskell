@@ -186,7 +186,7 @@ const handleFormSubmit = async (event) => {
     // No need to map to enum constructor names (TodoStatus, DoingStatus, DoneStatus)
     
     const payload = isCreate 
-      ? { newTodoName: todoTitle, newTodoPriority: todoPriority }
+      ? { newTodoTitle: todoTitle, newTodoPriority: todoPriority }
       : { todoId: parseInt(todoId, 10), todoTitle, priority: todoPriority, status: todoStatus };
     
     const response = await fetch(endpoint, {

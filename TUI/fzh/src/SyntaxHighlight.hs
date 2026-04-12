@@ -17,7 +17,7 @@ import           System.FilePath (takeExtension)
 
 import           Text.Printf     (printf)
 
-import           Types           (Name)
+import           Types           (Name, maxPreviewLines)
 
 -- | 파일 확장자로 언어 감지
 detectLanguage :: FilePath -> Maybe Syntax
@@ -25,9 +25,9 @@ detectLanguage path =
   let ext = T.pack $ takeExtension path
   in lookupSyntax ext defaultSyntaxMap
 
--- | 내용을 처음 100줄로 제한
+-- | 내용을 미리보기 최대 줄 수로 제한
 limitLines :: T.Text -> [T.Text]
-limitLines content = take 100 $ T.lines content
+limitLines content = take maxPreviewLines $ T.lines content
 
 -- | 토큰 타입을 속성 이름으로 매핑
 tokenAttr :: TokenType -> AttrName

@@ -10,6 +10,7 @@ module Infrastructure.Repository.RedisUrlRepository
 import           Control.Monad.IO.Class          (MonadIO, liftIO)
 
 import           Data.Aeson                      (decode, encode)
+import           Data.Maybe                      (fromMaybe)
 import qualified Data.ByteString.Lazy            as LBS
 import           Data.Map                        (Map)
 import qualified Data.Map                        as M
@@ -27,6 +28,7 @@ import           Domain.Entity.Url               (TempUrl (..), Url (..), UrlId,
                                                   generateShortUrl,
                                                   mkUrlWithMetadata)
 import           Domain.Repository.UrlRepository (UrlRepository (..))
+import           System.Environment              (lookupEnv)
 
 newtype RedisUrlRepo a = RedisUrlRepo { runRepo :: Connection -> IO a }
 
@@ -99,8 +101,8 @@ instance UrlRepository RedisUrlRepo where
 
 createRedisConnection :: IO Connection
 createRedisConnection = do
-    -- Connect to Redis - use service name in Docker, localhost otherwise
-    connect defaultConnectInfo { connectHost = "redis" }
+    host <- fromMaybe "localhost" <$> lookupEnv "REDIS_HOST"
+    connect defaultConnectInfo { connectHost = host }
 
 runRedisUrlRepo :: RedisUrlRepo a -> Connection -> IO a
 runRedisUrlRepo = runRepo

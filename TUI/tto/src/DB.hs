@@ -158,41 +158,34 @@ updateTodoWithFields conn tid text subj indObj dirObj =
 deleteTodo :: Connection -> TodoId -> IO ()
 deleteTodo conn tid = execute conn "DELETE FROM todos WHERE id = ?" (Only tid)
 
--- | Transition todo from Registered to InProgress (Effectful)
+-- | 상태 전이 공통 함수 (Effectful)
+transitionStatus :: Connection -> TodoId -> TodoStatus.TodoStatus from -> TodoStatus.TodoStatus to -> IO ()
+transitionStatus conn tid _fromStatus toStatus = do
+    timeStr <- formatCurrentTime
+    execute conn
+        "UPDATE todos SET status = ?, status_changed_at = ? WHERE id = ? AND status = ?"
+        (TodoStatus.statusToString toStatus, timeStr, tid,
+         TodoStatus.statusToString _fromStatus)
+
+-- | Transition: Registered -> InProgress (Effectful)
 transitionToInProgress :: Connection -> TodoId -> IO ()
-transitionToInProgress conn tid = do
-    timeStr <- formatCurrentTime
-    execute conn
-        "UPDATE todos SET status = ?, status_changed_at = ? WHERE id = ? AND status = ?"
-        (TodoStatus.statusToString TodoStatus.StatusInProgress, timeStr, tid,
-         TodoStatus.statusToString TodoStatus.registered)
+transitionToInProgress conn tid =
+    transitionStatus conn tid TodoStatus.StatusRegistered TodoStatus.StatusInProgress
 
--- | Transition todo from InProgress to Cancelled (Effectful)
+-- | Transition: InProgress -> Cancelled (Effectful)
 transitionToCancelled :: Connection -> TodoId -> IO ()
-transitionToCancelled conn tid = do
-    timeStr <- formatCurrentTime
-    execute conn
-        "UPDATE todos SET status = ?, status_changed_at = ? WHERE id = ? AND status = ?"
-        (TodoStatus.statusToString TodoStatus.StatusCancelled, timeStr, tid,
-         TodoStatus.statusToString TodoStatus.StatusInProgress)
+transitionToCancelled conn tid =
+    transitionStatus conn tid TodoStatus.StatusInProgress TodoStatus.StatusCancelled
 
--- | Transition todo from Cancelled to Completed (Effectful)
+-- | Transition: Cancelled -> Completed (Effectful)
 transitionToCompleted :: Connection -> TodoId -> IO ()
-transitionToCompleted conn tid = do
-    timeStr <- formatCurrentTime
-    execute conn
-        "UPDATE todos SET status = ?, status_changed_at = ? WHERE id = ? AND status = ?"
-        (TodoStatus.statusToString TodoStatus.StatusCompleted, timeStr, tid,
-         TodoStatus.statusToString TodoStatus.StatusCancelled)
+transitionToCompleted conn tid =
+    transitionStatus conn tid TodoStatus.StatusCancelled TodoStatus.StatusCompleted
 
--- | Transition todo from Completed to Registered (Effectful)
+-- | Transition: Completed -> Registered (Effectful)
 transitionToRegistered :: Connection -> TodoId -> IO ()
-transitionToRegistered conn tid = do
-    timeStr <- formatCurrentTime
-    execute conn
-        "UPDATE todos SET status = ?, status_changed_at = ? WHERE id = ? AND status = ?"
-        (TodoStatus.statusToString TodoStatus.registered, timeStr, tid,
-         TodoStatus.statusToString TodoStatus.StatusCompleted)
+transitionToRegistered conn tid =
+    transitionStatus conn tid TodoStatus.StatusCompleted TodoStatus.StatusRegistered
 
 -- | Helper function to format current time (Effectful)
 formatCurrentTime :: IO String

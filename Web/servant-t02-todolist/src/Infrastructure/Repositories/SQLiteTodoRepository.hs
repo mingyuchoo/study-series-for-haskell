@@ -35,7 +35,7 @@ import           Database.SQLite.Simple             (Connection, Only (Only),
                                                      query, query_)
 
 import           Domain.Repositories.Entities.Todo  (validateTodoTitle)
-import           Domain.Repositories.TodoRepository (NewTodo (newTodoTitle),
+import           Domain.Repositories.TodoRepository (NewTodo (newTodoPriority, newTodoTitle),
                                                      Todo (Todo, priority, status, todoTitle),
                                                      TodoRepository (..),
                                                      ValidationError (..))
@@ -103,8 +103,7 @@ insertTodo newTodo =
     insertTodoInDb :: NewTodo -> IO [Todo]
     insertTodoInDb todo = withConn <| \conn -> do
       currentTime <- getCurrentTime
-      -- Use Medium as the default priority and TodoStatus as the default status
-      execute conn "INSERT INTO haskell_todo (todoTitle, createdAt, priority, status) VALUES (?, ?, ?, ?)" (newTodoTitle todo, currentTime, ("Medium" :: String), ("Todo" :: String))
+      execute conn "INSERT INTO haskell_todo (todoTitle, createdAt, priority, status) VALUES (?, ?, ?, ?)" (newTodoTitle todo, currentTime, show (newTodoPriority todo), ("Todo" :: String))
       rowId <- lastInsertRowId conn
       query conn "SELECT todoId, todoTitle, createdAt, priority, status FROM haskell_todo WHERE todoId = ?" (Only rowId)
 

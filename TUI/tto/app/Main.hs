@@ -110,6 +110,7 @@ runApp configDir lang = do
                 , _appEnv = env
                 , _editingIndex = Nothing
                 , _i18nMessages = msgs
+                , _errorMessage = Nothing
                 }
 
         void <| defaultMain app initialState

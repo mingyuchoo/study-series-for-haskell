@@ -1,6 +1,6 @@
-cabal-version: 3.16
+cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.0.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -98,6 +98,8 @@ test-suite servant-t00-init-test
     , doctest-discover
     , flow
     , hspec
+    , hspec-wai
+    , hspec-wai-json
     , parallel
     , servant-server
     , servant-t00-init

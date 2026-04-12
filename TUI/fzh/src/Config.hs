@@ -28,9 +28,9 @@ data KeyBindingStyle = Emacs | Vim
      deriving (Eq, Generic, Show)
 
 -- | KeyBindingStyle의 JSON 파싱을 위한 타입클래스 인스턴스
--- 기본값으로 Emacs를 반환함
+-- 텍스트 값을 파싱하여 Vim 또는 Emacs로 변환
 instance FromJSON KeyBindingStyle where
-  parseJSON = withObject "KeyBindingStyle" <| \_ -> pure Emacs
+  parseJSON v = parseBindingStyle <$> parseJSON v
 
 -- | 텍스트를 KeyBindingStyle로 변환하는 함수 (Pure)
 -- "vim" 또는 "vi"는 Vim으로, 그 외는 Emacs로 변환

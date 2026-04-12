@@ -21,6 +21,7 @@ import           SyntaxHighlight      (renderHighlightedContent)
 
 import           Types                (AppConfig (..), AppState (..), Name,
                                        contentHeight, isTerminalSizeSufficient,
+                                       minTerminalHeight, minTerminalWidth,
                                        previewWidth, resultListWidth)
 
 -- | 메인 UI 렌더링 함수 (Pure)
@@ -127,7 +128,7 @@ renderWarningUI st =
         [ txt "⚠️  터미널 크기가 너무 작습니다"
         , txt ""
         , txt <| "현재: " <> T.pack (show w) <> "x" <> T.pack (show h)
-        , txt "최소: 80x24"
+        , txt <| "최소: " <> T.pack (show minTerminalWidth) <> "x" <> T.pack (show minTerminalHeight)
         , txt ""
         , txt "터미널 크기를 조정해주세요"
         ]

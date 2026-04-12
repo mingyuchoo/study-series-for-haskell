@@ -25,6 +25,7 @@ module Config
     , KeyBindings (..)
     , defaultKeyBindings
     , getFirstKey
+    , keyToString
     , loadKeyBindings
     , loadKeyBindingsWithMessages
     , matchesKey
@@ -122,16 +123,16 @@ loadKeyBindingsWithMessages path msgs = do
 keyToString :: V.Key -> String
 keyToString = \case
   V.KChar ' ' -> "Space"
-  V.KChar c -> [c]
-  V.KEnter -> "Enter"
-  V.KEsc -> "Esc"
-  V.KUp -> "Up"
-  V.KDown -> "Down"
-  V.KLeft -> "Left"
-  V.KRight -> "Right"
-  V.KBS -> "Backspace"
-  V.KFun n -> "F" <> show n
-  _ -> ""
+  V.KChar c   -> [c]
+  V.KEnter    -> "Enter"
+  V.KEsc      -> "Esc"
+  V.KUp       -> "Up"
+  V.KDown     -> "Down"
+  V.KLeft     -> "Left"
+  V.KRight    -> "Right"
+  V.KBS       -> "Backspace"
+  V.KFun n    -> "F" <> show n
+  _           -> ""
 
 -- | Convert Vty key with modifiers to string representation (Pure)
 keyWithModsToString :: V.Key -> [V.Modifier] -> String

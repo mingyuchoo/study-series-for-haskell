@@ -10,6 +10,9 @@ module Types
       -- 터미널 크기 및 레이아웃 헬퍼 함수
     , contentHeight
     , isTerminalSizeSufficient
+    , maxPreviewLines
+    , minTerminalHeight
+    , minTerminalWidth
     , previewWidth
     , resultListWidth
     ) where
@@ -88,10 +91,21 @@ initialState items cfg termSize =
        , stTerminalSize = termSize
        }
 
+-- | 최소 터미널 너비
+minTerminalWidth :: Int
+minTerminalWidth = 80
+
+-- | 최소 터미널 높이
+minTerminalHeight :: Int
+minTerminalHeight = 24
+
+-- | 미리보기 최대 줄 수
+maxPreviewLines :: Int
+maxPreviewLines = 100
+
 -- | 터미널이 최소 크기 이상인지 확인 (Pure)
--- 최소 크기: 80x24
 isTerminalSizeSufficient :: (Int, Int) -> Bool
-isTerminalSizeSufficient (w, h) = w >= 80 && h >= 24
+isTerminalSizeSufficient (w, h) = w >= minTerminalWidth && h >= minTerminalHeight
 
 -- | 결과 리스트 너비 계산 (Pure)
 -- 전체 너비의 40%

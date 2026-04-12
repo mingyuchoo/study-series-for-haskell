@@ -35,5 +35,6 @@ theMap =
       (attrName "focusedField", fg V.cyan `V.withStyle` V.bold),
       (attrName "normalField", fg V.white),
       (attrName "detailLabel", fg V.cyan `V.withStyle` V.bold),
-      (listSelectedAttr, V.black `on` V.cyan)
+      (listSelectedAttr, V.black `on` V.cyan),
+      (attrName "error", fg V.red `V.withStyle` V.bold)
     ]

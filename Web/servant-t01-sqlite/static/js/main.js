@@ -102,15 +102,15 @@ async function handleFormSubmit(event) {
     // Parse the response
     const data = await response.json();
     
-    // Check if there's a validation error
-    if (data && data.errorMessage) {
-      showMessage(`Validation error: ${data.errorMessage}`, 'error');
+    // Check if there's a validation error (Aeson serializes Either as {Left: ...} or {Right: ...})
+    if (data && data.Left) {
+      showMessage(`Validation error: ${data.Left.errorMessage}`, 'error');
       return;
     }
-    
+
     // Reset form
     resetForm();
-    
+
     // Reload users
     loadUsers();
     

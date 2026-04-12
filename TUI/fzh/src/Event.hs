@@ -42,39 +42,45 @@ handleEvent (VtyEvent e) = do
            Vim   -> handleVimEvent e
 handleEvent _ = pure ()
 
+-- | 공통 키 이벤트 핸들러 (Effect)
+-- 키바인딩 스타일과 무관한 공통 키 처리
+-- 처리된 경우 True, 아닌 경우 False 반환
+handleCommonEvent :: V.Event -> EventM Name AppState Bool
+handleCommonEvent = \case
+  V.EvKey V.KEsc []               -> halt >> pure True
+  V.EvKey V.KEnter []             -> halt >> pure True
+  V.EvKey V.KUp []                -> modify moveUp >> loadSelectedFile >> pure True
+  V.EvKey V.KDown []              -> modify moveDown >> loadSelectedFile >> pure True
+  V.EvKey (V.KChar 'u') [V.MCtrl] -> modify clearQuery >> loadSelectedFile >> pure True
+  V.EvKey (V.KChar c) []          -> modify (appendChar c) >> loadSelectedFile >> pure True
+  V.EvKey V.KBS []                -> modify deleteChar >> loadSelectedFile >> pure True
+  _                               -> pure False
+
 -- | Emacs 스타일 키 이벤트 핸들러 (Effect)
--- C-p/C-n으로 이동, C-g로 종료, C-u로 검색어 삭제
+-- C-p/C-n으로 이동, C-g로 종료, C-h로 문자 삭제
 handleEmacsEvent :: V.Event -> EventM Name AppState ()
-handleEmacsEvent = \case
-  V.EvKey V.KEsc []               -> halt
-  V.EvKey V.KEnter []             -> halt
-  V.EvKey V.KUp []                -> modify moveUp >> loadSelectedFile
-  V.EvKey V.KDown []              -> modify moveDown >> loadSelectedFile
-  V.EvKey (V.KChar 'p') [V.MCtrl] -> modify moveUp >> loadSelectedFile
-  V.EvKey (V.KChar 'n') [V.MCtrl] -> modify moveDown >> loadSelectedFile
-  V.EvKey (V.KChar 'g') [V.MCtrl] -> halt
-  V.EvKey (V.KChar 'u') [V.MCtrl] -> modify clearQuery >> loadSelectedFile
-  V.EvKey (V.KChar 'h') [V.MCtrl] -> modify deleteChar >> loadSelectedFile
-  V.EvKey (V.KChar c) []          -> modify (appendChar c) >> loadSelectedFile
-  V.EvKey V.KBS []                -> modify deleteChar >> loadSelectedFile
-  _                               -> pure ()
+handleEmacsEvent e = do
+  handled <- handleCommonEvent e
+  if handled then pure ()
+  else case e of
+    V.EvKey (V.KChar 'p') [V.MCtrl] -> modify moveUp >> loadSelectedFile
+    V.EvKey (V.KChar 'n') [V.MCtrl] -> modify moveDown >> loadSelectedFile
+    V.EvKey (V.KChar 'g') [V.MCtrl] -> halt
+    V.EvKey (V.KChar 'h') [V.MCtrl] -> modify deleteChar >> loadSelectedFile
+    _                               -> pure ()
 
 -- | Vim 스타일 키 이벤트 핸들러 (Effect)
 -- C-k/C-j로 이동, C-c로 종료, C-w로 문자 삭제
 handleVimEvent :: V.Event -> EventM Name AppState ()
-handleVimEvent = \case
-  V.EvKey V.KEsc []               -> halt
-  V.EvKey V.KEnter []             -> halt
-  V.EvKey V.KUp []                -> modify moveUp >> loadSelectedFile
-  V.EvKey V.KDown []              -> modify moveDown >> loadSelectedFile
-  V.EvKey (V.KChar 'k') [V.MCtrl] -> modify moveUp >> loadSelectedFile
-  V.EvKey (V.KChar 'j') [V.MCtrl] -> modify moveDown >> loadSelectedFile
-  V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
-  V.EvKey (V.KChar 'u') [V.MCtrl] -> modify clearQuery >> loadSelectedFile
-  V.EvKey (V.KChar 'w') [V.MCtrl] -> modify deleteChar >> loadSelectedFile
-  V.EvKey (V.KChar c) []          -> modify (appendChar c) >> loadSelectedFile
-  V.EvKey V.KBS []                -> modify deleteChar >> loadSelectedFile
-  _                               -> pure ()
+handleVimEvent e = do
+  handled <- handleCommonEvent e
+  if handled then pure ()
+  else case e of
+    V.EvKey (V.KChar 'k') [V.MCtrl] -> modify moveUp >> loadSelectedFile
+    V.EvKey (V.KChar 'j') [V.MCtrl] -> modify moveDown >> loadSelectedFile
+    V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
+    V.EvKey (V.KChar 'w') [V.MCtrl] -> modify deleteChar >> loadSelectedFile
+    _                               -> pure ()
 
 -- 상태 변경 함수들
 

@@ -14,7 +14,8 @@
 --
 -- Effects: NONE - All functions are pure
 module TodoStatus
-    ( TodoStatus (..)
+    ( AnyStatus (..)
+    , TodoStatus (..)
     , TodoStatusType (..)
     , cancel
     , complete

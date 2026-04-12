@@ -164,12 +164,14 @@ mkTodo todoId' title time prio stat = Todo
     }
 
 -- | Used for creating a new todo without specifying todoId
-newtype NewTodo = NewTodo { newTodoTitle :: Text }
-     deriving (Eq, Generic, Show)
+data NewTodo = NewTodo
+    { newTodoTitle    :: Text
+    , newTodoPriority :: Priority
+    } deriving (Eq, Generic, Show)
 
 -- | Helper function to create a new NewTodo
 mkNewTodo :: Text -> NewTodo
-mkNewTodo = NewTodo
+mkNewTodo title = NewTodo title Medium
 
 -- | Validation error response
 newtype ValidationError = ValidationError { errorMessage :: Text }
