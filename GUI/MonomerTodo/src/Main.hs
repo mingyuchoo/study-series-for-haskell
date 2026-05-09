@@ -6,15 +6,23 @@ module Main
     where
 
 import           Control.Lens
-import           Control.Monad          (when)
+import           Control.Monad          (filterM, when)
 import           Control.Monad.IO.Class
 
 import           Data.Default
+import           Data.Maybe             (fromMaybe, listToMaybe)
 import           Data.Text              (Text)
+import qualified Data.Text              as T
 
 import           Monomer
 import qualified Monomer.Lens           as L
 
+import           System.Directory       (createDirectoryIfMissing,
+                                         doesDirectoryExist,
+                                         getAppUserDataDirectory,
+                                         getCurrentDirectory)
+import           System.Environment     (getExecutablePath)
+import           System.FilePath        ((</>), takeDirectory)
 import           System.IO              (BufferMode (NoBuffering),
                                          hSetBuffering, stdout)
 
@@ -154,9 +162,11 @@ initialTodos = todos
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
+  dbPath <- resolveDatabasePath
+  assetsDir <- resolveAssetsDir
 
   -- SQLite 환경 설정
-  withSqliteEnv "todos.db" $ \env -> do
+  withSqliteEnv dbPath $ \env -> do
     -- 데이터베이스 초기화
     runAppM env initializeDb
 
@@ -170,18 +180,39 @@ main = do
       (TodoModel [] def TodoNone)
       (handleEvent env)
       buildUI
-      config
+      (config assetsDir)
   where
-    config =
+    config assetsDir =
       [ appWindowTitle "Todo list",
-        appWindowIcon "./assets/images/icon.png",
+        appWindowIcon (pathText $ assetsDir </> "images" </> "icon.png"),
         appTheme customDarkTheme,
-        appFontDef "Regular" "./assets/fonts/Roboto-Regular.ttf",
-        appFontDef "Medium" "./assets/fonts/Roboto-Medium.ttf",
-        appFontDef "Bold" "./assets/fonts/Roboto-Bold.ttf",
-        appFontDef "Remix" "./assets/fonts/remixicon.ttf",
+        appFontDef "Regular" (pathText $ assetsDir </> "fonts" </> "Roboto-Regular.ttf"),
+        appFontDef "Medium" (pathText $ assetsDir </> "fonts" </> "Roboto-Medium.ttf"),
+        appFontDef "Bold" (pathText $ assetsDir </> "fonts" </> "Roboto-Bold.ttf"),
+        appFontDef "Remix" (pathText $ assetsDir </> "fonts" </> "remixicon.ttf"),
         appInitEvent TodoInit
       ]
+
+pathText :: FilePath -> Text
+pathText = T.pack
+
+resolveDatabasePath :: IO FilePath
+resolveDatabasePath = do
+  dataDir <- getAppUserDataDirectory "MonomerTodo"
+  createDirectoryIfMissing True dataDir
+  return (dataDir </> "todos.db")
+
+resolveAssetsDir :: IO FilePath
+resolveAssetsDir = do
+  cwd <- getCurrentDirectory
+  exeDir <- takeDirectory <$> getExecutablePath
+  let candidates =
+        [ cwd </> "assets"
+        , exeDir </> "assets"
+        , exeDir </> ".." </> "assets"
+        ]
+  existing <- filterM doesDirectoryExist candidates
+  return . fromMaybe (cwd </> "assets") . listToMaybe $ existing
 
 -- 스타일 상수
 -- | 완료된 할일 배경색

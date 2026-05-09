@@ -35,6 +35,8 @@ executable app
   build-depends:
       base >=4.7 && <5
     , data-default
+    , directory
+    , filepath
     , lens
     , monomer
     , mtl
