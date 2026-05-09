@@ -94,7 +94,7 @@ executable fzh-exe
       OverloadedStrings
       TemplateHaskell
       TypeApplications
-  ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -O2 -haddock -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.18 && <5
     , brick
@@ -139,7 +139,7 @@ test-suite fzh-test
       OverloadedStrings
       TemplateHaskell
       TypeApplications
-  ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -O2 -haddock -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.18 && <5
     , brick

@@ -71,7 +71,6 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -dynamic
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
@@ -83,7 +82,6 @@ tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
-    - -dynamic
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
