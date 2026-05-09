@@ -25,6 +25,8 @@ dependencies:
 - diagrams-lib
 - diagrams-svg
 
+language: GHC2024
+
 ghc-options:
 - -Wall
 - -Wcompat
