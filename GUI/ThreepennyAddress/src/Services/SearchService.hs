@@ -15,9 +15,10 @@ class SearchService m where
 -- | Pure search function that filters contacts based on search term
 -- Searches across name, phone, and email fields with case-insensitive partial matching
 searchContacts :: Text -> [Contact] -> [Contact]
-searchContacts searchTerm contacts
-    | T.null (T.strip searchTerm) = contacts  -- Empty search returns all contacts
-    | otherwise = filter (matchesContact normalizedTerm) contacts
+searchContacts searchTerm contacts =
+    if T.null normalizedTerm
+        then contacts  -- Empty search returns all contacts
+        else filter (matchesContact normalizedTerm) contacts
   where
     normalizedTerm = T.toLower (T.strip searchTerm)
 
