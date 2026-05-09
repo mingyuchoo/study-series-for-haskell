@@ -1,78 +1,81 @@
-.PHONY: test coverage install update-stack-yaml
+.PHONY: all help check-system-deps setup deps build test coverage run ghci watch-test watch-build install clean distclean format
 
-# Extract project name from directory path
-PROJECT_NAME := $(shell basename $(CURDIR))
+STACK ?= stack
+PACKAGE := GiGtkApp
+EXECUTABLE := GiGtkApp-exe
+PKG_CONFIG_PACKAGES := gobject-introspection-1.0 gtk4
 
-all: clean setup build test run
+all: build test
 
-clean:
-	stack clean
+help:
+	@printf '%s\n' \
+	  'Targets:' \
+	  '  check-system-deps  Check GTK/GObject Introspection development packages' \
+	  '  setup        Install/select the compiler from stack.yaml' \
+	  '  deps         Build project dependencies' \
+	  '  build        Build the library and executable' \
+	  '  test         Run the test suite' \
+	  '  coverage     Run tests with coverage enabled' \
+	  '  run          Run the GTK application' \
+	  '  ghci         Open a Stack GHCi session' \
+	  '  watch-test   Re-run tests on file changes' \
+	  '  watch-build  Rebuild on file changes' \
+	  '  install      Install the executable into Stack local bin' \
+	  '  clean        Remove Stack build artifacts for this project' \
+	  '  distclean    Remove the local Stack work directory' \
+	  '  format       Run ./format.sh'
 
-update-stack-yaml:
-	@if [ "`uname`" = "Darwin" ]; then \
-	  sed -i '' 's/container-name: ".*"/container-name: "$(PROJECT_NAME)"/g' stack.yaml; \
-	  sed -i '' 's/ARG PROJECT_NAME=.*/ARG PROJECT_NAME=$(PROJECT_NAME)/g' docker/Dockerfile; \
-	else \
-	  sed -i 's/container-name: ".*"/container-name: "$(PROJECT_NAME)"/g' stack.yaml; \
-	  sed -i 's/ARG PROJECT_NAME=.*/ARG PROJECT_NAME=$(PROJECT_NAME)/g' docker/Dockerfile; \
+check-system-deps:
+	@missing=0; \
+	for package in $(PKG_CONFIG_PACKAGES); do \
+	  if ! pkg-config --exists "$$package"; then \
+	    printf 'Missing pkg-config package: %s\n' "$$package"; \
+	    missing=1; \
+	  fi; \
+	done; \
+	if [ "$$missing" -ne 0 ]; then \
+	  printf '\nInstall GTK/GObject Introspection development packages first:\n'; \
+	  printf '  Ubuntu/Debian: sudo apt-get install libgirepository1.0-dev libgtk-4-dev\n'; \
+	  printf '  Fedora:        sudo dnf install gobject-introspection-devel gtk4-devel\n'; \
+	  printf '  macOS:         brew install gtk4 gobject-introspection\n'; \
+	  exit 1; \
 	fi
 
-setup: update-stack-yaml
-	stack setup
-	stack test --only-dependencies
+setup:
+	$(STACK) setup
 
-build: setup
-	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
+deps: check-system-deps
+	$(STACK) build --only-dependencies --test --no-run-tests
 
-test: setup
-	stack test --fast
+build: check-system-deps
+	$(STACK) build --fast
 
-coverage: setup
-	stack test --coverage --fast --haddock
+test: check-system-deps
+	$(STACK) test --fast
 
-watch-test: setup
-	stack test --fast --file-watch --watch-all
+coverage: check-system-deps
+	$(STACK) test --coverage --fast
 
-watch-coverage: setup
-	stack test --coverage --fast --file-watch --watch-all --haddock
+run: check-system-deps
+	$(STACK) run $(EXECUTABLE)
 
-ghcid: setup
-	ghcid --command "stack ghci test/Spec.hs"
+ghci: check-system-deps
+	$(STACK) ghci $(PACKAGE):lib $(PACKAGE):exe:$(EXECUTABLE)
 
-run: setup
-	time stack exec $(PROJECT_NAME)-exe
+watch-test: check-system-deps
+	$(STACK) test --fast --file-watch --watch-all
 
-release: setup
-	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS" --docker
+watch-build: check-system-deps
+	$(STACK) build --fast --file-watch
 
-docker-build: release
-	# 멀티스테이지 Dockerfile 사용 (docker/Dockerfile)
-	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
+install: check-system-deps
+	$(STACK) install $(PACKAGE):exe:$(EXECUTABLE)
 
-docker-build-multi: 
-	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
+clean:
+	$(STACK) clean
 
-docker-run: docker-build
-	# 앱 포트 8000 노출 및 데이터 볼륨 마운트
-	mkdir -p ./data
-	docker run -it --rm \
-	  --name $(PROJECT_NAME)-app \
-	  -p 8000:8000 \
-	  -v $(PWD)/data:/app/data \
-	  $(PROJECT_NAME):latest
+distclean: clean
+	rm -rf .stack-work
 
-docker-run-multi: docker-build-multi
-	docker run -it --rm -p 8000:8000 $(PROJECT_NAME):latest
-
-docker-compose-up:
-	docker compose -f docker/docker-compose.yaml up --build -d
-
-docker-compose-down:
-	docker compose -f docker/docker-compose.yaml down --volumes
-
-docker-compose-logs:
-	docker compose -f docker/docker-compose.yaml logs -f
-
-install: release
-	mkdir -p $(HOME)/.local/bin
-	cp $(shell stack path --local-install-root)/bin/$(PROJECT_NAME)-exe $(HOME)/.local/bin/
+format:
+	./format.sh

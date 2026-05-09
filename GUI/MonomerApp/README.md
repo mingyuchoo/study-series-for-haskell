@@ -25,8 +25,7 @@ brew install sdl2
 brew install glew
 
 # For Ubuntu
-sudo apt-get install libsdl2-dev
-sudo apt-get install libglew-dev
+sudo apt-get install pkg-config libsdl2-dev libglew-dev
 
 # For Fedora
 sudo dnf install gcc-c++
