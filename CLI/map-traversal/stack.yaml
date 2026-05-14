@@ -1,5 +1,5 @@
 # https://www.stackage.org/lts-24.20
-resolver: lts-24.20
+resolver: lts-24.40
 
 packages:
 - .

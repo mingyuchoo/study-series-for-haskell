@@ -4,7 +4,7 @@ Servant 웹 프레임워크를 사용한 기본 REST API 프로젝트입니다.
 
 ## 기술 스택
 
-- **GHC2024** / **Stack** (resolver: lts-24.20)
+- **GHC2024** / **Stack** (resolver: lts-24.40)
 - **Servant** - 타입 레벨 Web API 프레임워크
 - **Warp** - 고성능 HTTP 서버
 - **Aeson** - JSON 직렬화/역직렬화
