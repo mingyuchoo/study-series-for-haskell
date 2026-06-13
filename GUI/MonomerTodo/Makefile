@@ -36,7 +36,7 @@ test:
 	$(STACK) test
 
 run:
-	$(STACK) exec $(APP_NAME)
+	$(STACK) run MonomerTodo:exe:$(APP_NAME)
 
 repl ghci:
 	$(STACK) repl --main-is MonomerTodo:exe:$(APP_NAME)
