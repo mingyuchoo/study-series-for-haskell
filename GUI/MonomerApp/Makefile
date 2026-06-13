@@ -80,7 +80,7 @@ distclean: clean
 	rm -rf .stack-work
 
 format:
-	./format.sh
+	./scripts/format.sh
 
 hpack:
 	$(HPACK)

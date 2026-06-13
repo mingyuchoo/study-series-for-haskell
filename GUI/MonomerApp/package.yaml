@@ -14,18 +14,24 @@ extra-source-files:
 default-extensions:
 - OverloadedStrings
 
-dependencies:
+library:
+  source-dirs:      src
+  dependencies:
   - base >= 4.7 && < 5
-  - data-default
   - lens
   - monomer
-  - text
   - text-show
+  ghc-options:
+  - -Wall
 
 executables:
   app:
-    source-dirs:      src
+    source-dirs:      app
     main:             Main.hs
+    dependencies:
+    - base >= 4.7 && < 5
+    - MonomerApp
     ghc-options:
+    - -Wall
     - -fwarn-incomplete-patterns
     - -threaded

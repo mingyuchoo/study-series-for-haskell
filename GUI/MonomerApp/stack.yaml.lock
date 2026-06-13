@@ -20,7 +20,7 @@ packages:
     hackage: monomer-1.6.0.1
 snapshots:
 - completed:
-    sha256: 08bd13ce621b41a8f5e51456b38d5b46d7783ce114a50ab604d6bbab0d002146
-    size: 720271
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/43.yaml
-  original: lts-24.20
+    sha256: 514c8048a143da1e6f2c18484467d2136033a0b94b6617fe333089817edbbc27
+    size: 729000
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/40.yaml
+  original: lts-24.40
