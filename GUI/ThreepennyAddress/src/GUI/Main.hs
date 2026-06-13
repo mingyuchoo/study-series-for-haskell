@@ -13,76 +13,20 @@ module GUI.Main
 
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
-import Control.Concurrent.STM (TVar, newTVarIO, readTVarIO, readTVar, writeTVar, atomically)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad (void, forM_, when)
+import Control.Concurrent.STM (newTVarIO, readTVarIO, writeTVar, atomically)
+import Control.Monad (void, forM_)
 import Data.Map qualified as Map
-import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Maybe (fromMaybe)
+import GUI.Components (createButton, createContactRow, formatErrors)
+import GUI.Shortcuts (KeyboardShortcut(..), handleKeyboardShortcut, parseKeyboardShortcut)
+import GUI.State (AppStateManager(..), FormMode(..), createAppStateManager, getAppState, setAppState, updateAppState)
+import Models.AddressBookState (AddressBookState(..), addressBookToContacts)
 import Models.AppState (AppState(..))
 import Models.Contact (ContactId(..), Contact(..))
 import Services.ContactService (addContact, updateContact, deleteContact)
 import Services.SearchService (searchContacts)
-import Services.ValidationService (ValidationError(..))
-import Services.ContactRepository (loadContactsFromFile, saveContactsToFile)
-
--- | Keyboard shortcuts supported by the application
-data KeyboardShortcut
-    = NewContact      -- ^ Ctrl+N: Open new contact form
-    | DeleteContact   -- ^ Delete key: Delete selected contact
-    | CancelOperation -- ^ Escape: Cancel current operation
-    | FocusSearch     -- ^ Ctrl+F: Focus search input
-    deriving (Show, Eq)
-
--- | Handle a keyboard shortcut and return the corresponding action name
-handleKeyboardShortcut :: KeyboardShortcut -> String
-handleKeyboardShortcut NewContact = "new-contact"
-handleKeyboardShortcut DeleteContact = "delete-contact"
-handleKeyboardShortcut CancelOperation = "cancel-operation"
-handleKeyboardShortcut FocusSearch = "focus-search"
-
--- | Parse keyboard event data into a KeyboardShortcut
--- Takes key code, ctrlKey flag, and returns Maybe KeyboardShortcut
-parseKeyboardShortcut :: Int -> Bool -> Maybe KeyboardShortcut
-parseKeyboardShortcut keyCode ctrlKey
-    | ctrlKey && keyCode == 78  = Just NewContact      -- Ctrl+N (N = 78)
-    | ctrlKey && keyCode == 70  = Just FocusSearch     -- Ctrl+F (F = 70)
-    | keyCode == 46             = Just DeleteContact   -- Delete key = 46
-    | keyCode == 27             = Just CancelOperation -- Escape = 27
-    | otherwise                 = Nothing
-
--- | Application state manager using TVar for thread-safe state management
-data AppStateManager = AppStateManager
-    { appStateTVar :: TVar AppState
-    }
-
--- | Create a new application state manager with initial empty state
-createAppStateManager :: IO AppStateManager
-createAppStateManager = do
-    let initialState = AppState
-            { contacts = Map.empty
-            , nextId = ContactId 1
-            , searchTerm = T.empty
-            }
-    tvar <- newTVarIO initialState
-    return $ AppStateManager tvar
-
--- | Update the application state using STM
-updateAppState :: AppStateManager -> (AppState -> AppState) -> IO ()
-updateAppState (AppStateManager tvar) updateFn = 
-    atomically $ do
-        currentState <- readTVar tvar
-        writeTVar tvar (updateFn currentState)
-
--- | Get the current application state
-getAppState :: AppStateManager -> IO AppState
-getAppState (AppStateManager tvar) = readTVarIO tvar
-
--- | Set the application state directly
-setAppState :: AppStateManager -> AppState -> IO ()
-setAppState (AppStateManager tvar) newState = 
-    atomically $ writeTVar tvar newState
+import Services.ContactRepository (loadAddressBookFromFile, saveAddressBookToFile)
 
 -- | Data file path
 contactsFilePath :: FilePath
@@ -104,30 +48,20 @@ startGUI' config = do
     putStrLn "Server starting on http://localhost:8023"
     Graphics.UI.Threepenny.Core.startGUI config setupGUI
 
--- | Form mode: Add or Edit
-data FormMode = AddMode | EditMode ContactId
-    deriving (Show, Eq)
-
-
 -- | Set up the main GUI application
 setupGUI :: Window -> UI ()
 setupGUI window = do
-    return window # set title "Address Book"
+    void $ return window # set title "Address Book"
     
     -- Create application state manager
     stateManager <- liftIO createAppStateManager
     
     -- Load existing contacts from file
-    loadResult <- liftIO $ loadContactsFromFile contactsFilePath
+    loadResult <- liftIO $ loadAddressBookFromFile contactsFilePath
     case loadResult of
-        Right contactList -> do
-            let contactMap = Map.fromList [(contactId c, c) | c <- contactList]
-            let maxId = if null contactList 
-                        then ContactId 1 
-                        else ContactId $ (\(ContactId i) -> i + 1) $ maximum $ map contactId contactList
+        Right addressBook -> do
             liftIO $ setAppState stateManager $ AppState
-                { contacts = contactMap
-                , nextId = maxId
+                { appAddressBook = addressBook
                 , searchTerm = T.empty
                 }
         Left _ -> return ()  -- Start with empty state on error
@@ -150,14 +84,14 @@ setupGUI window = do
                            # set (UI.attr "placeholder") "Enter name, phone, or email..."
                            # set UI.style [("width", "100%"), ("padding", "8px"), ("margin", "5px 0"), ("box-sizing", "border-box")]
     searchDiv <- UI.div # set UI.style [("margin-bottom", "20px")]
-    element searchDiv #+ [element searchLabel, UI.br, element searchInput]
+    void $ element searchDiv #+ [element searchLabel, UI.br, element searchInput]
     
     -- Create action buttons
     addButton <- createButton "Add Contact" "#4CAF50"
     editButton <- createButton "Edit Contact" "#2196F3"
     deleteButton <- createButton "Delete Contact" "#f44336"
     actionDiv <- UI.div # set UI.style [("margin-bottom", "20px")]
-    element actionDiv #+ [element addButton, element editButton, element deleteButton]
+    void $ element actionDiv #+ [element addButton, element editButton, element deleteButton]
     
     -- Create contact list section
     listHeader <- UI.h3 # set text "Contacts"
@@ -184,15 +118,15 @@ setupGUI window = do
                           # set UI.style [("border", "1px solid #ddd"), ("padding", "8px"), ("background-color", "#f2f2f2"), ("width", "100px")]
     
     tableHead <- mkElement "thead" # set UI.style []
-    element headerRow #+ [element selectHeader, element nameHeader, element phoneHeader, element emailHeader, element addressHeader, element actionsHeader]
-    element tableHead #+ [element headerRow]
-    element contactTable #+ [element tableHead, element contactTableBody]
+    void $ element headerRow #+ [element selectHeader, element nameHeader, element phoneHeader, element emailHeader, element addressHeader, element actionsHeader]
+    void $ element tableHead #+ [element headerRow]
+    void $ element contactTable #+ [element tableHead, element contactTableBody]
     
     emptyMessage <- UI.p # set text "No contacts found. Click 'Add Contact' to get started."
                         # set UI.style [("text-align", "center"), ("color", "#666"), ("font-style", "italic")]
     
     listDiv <- UI.div # set UI.style [("margin-bottom", "20px")]
-    element listDiv #+ [element listHeader, element contactTable, element emptyMessage]
+    void $ element listDiv #+ [element listHeader, element contactTable, element emptyMessage]
     
     -- Create error message display
     errorDiv <- UI.div # set UI.style [("display", "none"), ("color", "#f44336"), ("padding", "10px"), ("background-color", "#ffebee"), ("border-radius", "4px"), ("margin-bottom", "10px")]
@@ -214,10 +148,10 @@ setupGUI window = do
     saveButton <- createButton "Save" "#4CAF50"
     cancelButton <- createButton "Cancel" "#666"
     buttonDiv <- UI.div
-    element buttonDiv #+ [element saveButton, element cancelButton]
+    void $ element buttonDiv #+ [element saveButton, element cancelButton]
     
     formDiv <- UI.div # set UI.style [("display", "none"), ("border", "1px solid #ddd"), ("padding", "20px"), ("background-color", "#f9f9f9"), ("border-radius", "4px"), ("margin-bottom", "20px")]
-    element formDiv #+ 
+    void $ element formDiv #+
         [ element formHeader
         , element errorDiv
         , element nameLabel, UI.br, element nameInput
@@ -233,10 +167,10 @@ setupGUI window = do
     confirmYesButton <- createButton "Yes, Delete" "#f44336"
     confirmNoButton <- createButton "Cancel" "#666"
     confirmButtonDiv <- UI.div
-    element confirmButtonDiv #+ [element confirmYesButton, element confirmNoButton]
+    void $ element confirmButtonDiv #+ [element confirmYesButton, element confirmNoButton]
     
     confirmDiv <- UI.div # set UI.style [("display", "none"), ("border", "1px solid #ddd"), ("padding", "20px"), ("background-color", "#fff3e0"), ("border-radius", "4px"), ("margin-bottom", "20px")]
-    element confirmDiv #+ [element confirmHeader, element confirmMessage, element confirmButtonDiv]
+    void $ element confirmDiv #+ [element confirmHeader, element confirmMessage, element confirmButtonDiv]
     
     -- TVar to track selected contact and form mode
     selectedContactVar <- liftIO $ newTVarIO (Nothing :: Maybe ContactId)
@@ -248,14 +182,14 @@ setupGUI window = do
     let refreshContactList = do
             appState <- liftIO $ getAppState stateManager
             let term = searchTerm appState
-            let allContacts = Map.elems (contacts appState)
+            let allContacts = addressBookToContacts (appAddressBook appState)
             let filteredContacts = searchContacts term allContacts
             
             -- Clear existing rows
-            element contactTableBody # set children []
+            void $ element contactTableBody # set children []
             
             -- Show/hide empty message
-            if null filteredContacts
+            void $ if null filteredContacts
                 then element emptyMessage # set UI.style [("display", "block")]
                 else element emptyMessage # set UI.style [("display", "none")]
             
@@ -263,21 +197,21 @@ setupGUI window = do
             forM_ filteredContacts $ \contact -> do
                 selectedId <- liftIO $ readTVarIO selectedContactVar
                 let isSelected = selectedId == Just (contactId contact)
-                row <- createContactRow contact isSelected selectedContactVar refreshContactList
-                element contactTableBody #+ [element row]
+                contactRow <- createContactRow contact isSelected selectedContactVar refreshContactList
+                void $ element contactTableBody #+ [element contactRow]
     
     -- Helper function to clear form
     let clearForm = do
-            element nameInput # set UI.value ""
-            element phoneInput # set UI.value ""
-            element emailInput # set UI.value ""
-            element addressInput # set UI.value ""
-            element errorDiv # set UI.style [("display", "none")]
+            void $ element nameInput # set UI.value ""
+            void $ element phoneInput # set UI.value ""
+            void $ element emailInput # set UI.value ""
+            void $ element addressInput # set UI.value ""
+            void $ element errorDiv # set UI.style [("display", "none")]
     
     -- Helper function to show error
     let showError msg = do
-            element errorDiv # set text msg
-            element errorDiv # set UI.style [("display", "block")]
+            void $ element errorDiv # set text msg
+            void $ element errorDiv # set UI.style [("display", "block")]
     
     -- Helper function to hide error
     let hideError = element errorDiv # set UI.style [("display", "none")]
@@ -285,8 +219,7 @@ setupGUI window = do
     -- Helper function to save contacts to file
     let saveToFile = do
             appState <- liftIO $ getAppState stateManager
-            let contactList = Map.elems (contacts appState)
-            void $ liftIO $ saveContactsToFile contactsFilePath contactList
+            void $ liftIO $ saveAddressBookToFile contactsFilePath (appAddressBook appState)
     
     -- Search functionality
     on UI.valueChange searchInput $ \searchText -> do
@@ -308,7 +241,7 @@ setupGUI window = do
             Nothing -> return ()
             Just cid -> do
                 appState <- liftIO $ getAppState stateManager
-                case Map.lookup cid (contacts appState) of
+                case Map.lookup cid (addressContacts $ appAddressBook appState) of
                     Nothing -> return ()
                     Just contact -> do
                         liftIO $ atomically $ writeTVar formModeVar (EditMode cid)
@@ -347,19 +280,19 @@ setupGUI window = do
         let addressM = if T.null (T.strip addressVal) then Nothing else Just addressVal
         
         let contactData = case formMode of
-                AddMode -> Contact (nextId appState) nameVal phoneM emailM addressM
+                AddMode -> Contact (addressNextId $ appAddressBook appState) nameVal phoneM emailM addressM
                 EditMode cid -> Contact cid nameVal phoneM emailM addressM
         
         let result = case formMode of
-                AddMode -> addContact contactData appState
-                EditMode _ -> updateContact contactData appState
+                AddMode -> addContact contactData (appAddressBook appState)
+                EditMode _ -> updateContact contactData (appAddressBook appState)
         
         case result of
             Left errors -> do
                 let errorMsg = formatErrors errors
                 void $ showError errorMsg
-            Right newState -> do
-                liftIO $ setAppState stateManager newState
+            Right newAddressBook -> do
+                liftIO $ setAppState stateManager appState { appAddressBook = newAddressBook }
                 saveToFile
                 void clearForm
                 void $ element formDiv # set UI.style [("display", "none")]
@@ -377,8 +310,8 @@ setupGUI window = do
             Nothing -> return ()
             Just cid -> do
                 appState <- liftIO $ getAppState stateManager
-                let newState = deleteContact cid appState
-                liftIO $ setAppState stateManager newState
+                let newAddressBook = deleteContact cid (appAddressBook appState)
+                liftIO $ setAppState stateManager appState { appAddressBook = newAddressBook }
                 liftIO $ atomically $ writeTVar selectedContactVar Nothing
                 liftIO $ atomically $ writeTVar deleteTargetVar Nothing
                 saveToFile
@@ -466,7 +399,7 @@ setupGUI window = do
         \});"
     
     -- Assemble the layout
-    element container #+ 
+    void $ element container #+
         [ element header
         , element searchDiv
         , element actionDiv
@@ -480,82 +413,8 @@ setupGUI window = do
         , element shortcutSearchBtn
         ]
     
-    getBody window #+ [element container]
+    void $ getBody window #+ [element container]
     
     -- Initial contact list render
     refreshContactList
     return ()
-
--- | Create a styled button
-createButton :: String -> String -> UI Element
-createButton label bgColor = 
-    UI.button # set text label
-             # set UI.style 
-                 [ ("background-color", bgColor)
-                 , ("color", "white")
-                 , ("padding", "10px 20px")
-                 , ("border", "none")
-                 , ("border-radius", "4px")
-                 , ("cursor", "pointer")
-                 , ("margin-right", "10px")
-                 ]
-
--- | Create a contact row with selection and delete functionality
-createContactRow :: Contact -> Bool -> TVar (Maybe ContactId) -> UI () -> UI Element
-createContactRow contact isSelected selectedVar refreshList = do
-    let bgColor = if isSelected then "#e3f2fd" else "white"
-    
-    row <- UI.tr # set UI.style [("background-color", bgColor), ("cursor", "pointer")]
-    
-    -- Radio button for selection
-    radioBtn <- UI.input # set UI.type_ "radio"
-                        # set (UI.attr "name") "contact-select"
-    when isSelected $ void $ element radioBtn # set (UI.attr "checked") "checked"
-    
-    selectCell <- UI.td # set UI.style [("border", "1px solid #ddd"), ("padding", "8px"), ("text-align", "center")]
-    element selectCell #+ [element radioBtn]
-    
-    nameCell <- UI.td # set text (T.unpack $ contactName contact)
-                     # set UI.style [("border", "1px solid #ddd"), ("padding", "8px")]
-    phoneCell <- UI.td # set text (T.unpack $ fromMaybe "" $ contactPhone contact)
-                      # set UI.style [("border", "1px solid #ddd"), ("padding", "8px")]
-    emailCell <- UI.td # set text (T.unpack $ fromMaybe "" $ contactEmail contact)
-                      # set UI.style [("border", "1px solid #ddd"), ("padding", "8px")]
-    addressCell <- UI.td # set text (T.unpack $ fromMaybe "" $ contactAddress contact)
-                        # set UI.style [("border", "1px solid #ddd"), ("padding", "8px")]
-    
-    -- Delete button in row
-    deleteBtn <- UI.button # set text "×"
-                          # set UI.style 
-                              [ ("background-color", "#f44336")
-                              , ("color", "white")
-                              , ("border", "none")
-                              , ("border-radius", "4px")
-                              , ("cursor", "pointer")
-                              , ("padding", "5px 10px")
-                              , ("font-size", "14px")
-                              ]
-    actionsCell <- UI.td # set UI.style [("border", "1px solid #ddd"), ("padding", "8px"), ("text-align", "center")]
-    element actionsCell #+ [element deleteBtn]
-    
-    element row #+ [element selectCell, element nameCell, element phoneCell, element emailCell, element addressCell, element actionsCell]
-    
-    -- Row click handler for selection
-    on UI.click row $ \_ -> do
-        liftIO $ atomically $ writeTVar selectedVar (Just $ contactId contact)
-        refreshList
-    
-    -- Radio button click handler
-    on UI.click radioBtn $ \_ -> do
-        liftIO $ atomically $ writeTVar selectedVar (Just $ contactId contact)
-        refreshList
-    
-    return row
-
--- | Format validation errors for display
-formatErrors :: [ValidationError] -> String
-formatErrors errors = unlines $ map formatError errors
-  where
-    formatError EmptyName = "Name is required and cannot be empty."
-    formatError InvalidEmail = "Invalid email format."
-    formatError InvalidPhone = "Invalid phone number format. Use only digits, spaces, hyphens, and parentheses."

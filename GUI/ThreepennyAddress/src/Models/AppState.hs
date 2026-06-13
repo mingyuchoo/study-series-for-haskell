@@ -1,16 +1,23 @@
 module Models.AppState
     ( AppState(..)
+    , emptyAppState
     ) where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Map (Map)
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics (Generic)
-import Models.Contact (Contact, ContactId)
+import Models.AddressBookState (AddressBookState, emptyAddressBookState)
 
--- | Application state
+-- | UI-level application state.
 data AppState = AppState
-    { contacts   :: Map ContactId Contact
-    , nextId     :: ContactId
-    , searchTerm :: Text
+    { appAddressBook :: AddressBookState
+    , searchTerm     :: Text
     } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+
+-- | Empty UI-level application state.
+emptyAppState :: AppState
+emptyAppState = AppState
+    { appAddressBook = emptyAddressBookState
+    , searchTerm = T.empty
+    }

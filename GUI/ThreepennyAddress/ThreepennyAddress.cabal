@@ -30,8 +30,11 @@ library
       GUI
       GUI.Components
       GUI.Main
+      GUI.Shortcuts
+      GUI.State
       Lib
       Models
+      Models.AddressBookState
       Models.AppState
       Models.Contact
       Services

@@ -1,17 +1,25 @@
 module Services.ContactRepository
     ( ContactRepository(..)
     , FileContactRepository(..)
+    , loadAddressBookFromFile
+    , saveAddressBookToFile
     , loadContactsFromFile
     , saveContactsToFile
     ) where
 
 import Control.Exception (IOException, try)
-import Data.Aeson (eitherDecodeFileStrict, encodeFile)
-import Data.List (sortOn)
-import Models.AppState (AppState(..))
+import Data.Aeson (FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile)
+import GHC.Generics (Generic)
+import Models.AddressBookState (AddressBookState(..), addressBookFromContacts, addressBookToContacts)
 import Models.Contact (Contact(..), ContactId(..))
 import System.Directory (doesFileExist)
 import qualified Data.Map as Map
+
+-- | Persistence-only JSON shape.
+data ContactStore = ContactStore
+    { contacts :: Map.Map ContactId Contact
+    , nextId   :: ContactId
+    } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 -- | Interface for contact data persistence
 class ContactRepository m where
@@ -24,39 +32,48 @@ data FileContactRepository = FileContactRepository
     } deriving (Show, Eq)
 
 -- | Load contacts from JSON file
-loadContactsFromFile :: FilePath -> IO (Either String [Contact])
-loadContactsFromFile filePath = do
+loadAddressBookFromFile :: FilePath -> IO (Either String AddressBookState)
+loadAddressBookFromFile filePath = do
     fileExists <- doesFileExist filePath
     if not fileExists
-        then return $ Right []  -- Return empty list if file doesn't exist
+        then return $ Right $ addressBookFromContacts []
         else do
-            result <- try $ eitherDecodeFileStrict filePath
+            result <- try $ (eitherDecodeFileStrict filePath :: IO (Either String ContactStore))
             case result of
-                Left (ioErr :: IOException) -> 
+                Left (ioErr :: IOException) ->
                     return $ Left $ "IO Error reading file: " ++ show ioErr
-                Right (Left jsonErr) -> 
+                Right (Left jsonErr) ->
                     return $ Left $ "JSON parsing error: " ++ jsonErr
-                Right (Right appState) -> 
-                    return $ Right $ sortOn contactId $ Map.elems (contacts appState)
+                Right (Right contactStore) ->
+                    return $ Right $ AddressBookState
+                        { addressContacts = contacts contactStore
+                        , addressNextId = nextId contactStore
+                        }
+
+-- | Save address book state to JSON file.
+saveAddressBookToFile :: FilePath -> AddressBookState -> IO (Either String ())
+saveAddressBookToFile filePath addressBook = do
+    let contactStore = ContactStore
+            { contacts = addressContacts addressBook
+            , nextId = addressNextId addressBook
+            }
+    result <- try $ encodeFile filePath contactStore
+    case result of
+        Left (ioErr :: IOException) ->
+            return $ Left $ "IO Error writing file: " ++ show ioErr
+        Right () ->
+            return $ Right ()
+
+-- | Load contacts from JSON file.
+loadContactsFromFile :: FilePath -> IO (Either String [Contact])
+loadContactsFromFile filePath = do
+    result <- loadAddressBookFromFile filePath
+    return $ addressBookToContacts <$> result
 
 -- | Save contacts to JSON file
 saveContactsToFile :: FilePath -> [Contact] -> IO (Either String ())
-saveContactsToFile filePath contactList = do
-    let contactMap = Map.fromList [(contactId c, c) | c <- contactList]
-    let maxId = if null contactList 
-                then ContactId 1 
-                else ContactId $ (\(ContactId i) -> i + 1) $ maximum $ map contactId contactList
-    let appState = AppState
-            { contacts = contactMap
-            , nextId = maxId
-            , searchTerm = ""
-            }
-    result <- try $ encodeFile filePath appState
-    case result of
-        Left (ioErr :: IOException) -> 
-            return $ Left $ "IO Error writing file: " ++ show ioErr
-        Right () -> 
-            return $ Right ()
+saveContactsToFile filePath contactList =
+    saveAddressBookToFile filePath $ addressBookFromContacts contactList
 
 -- | Instance for IO monad
 instance ContactRepository IO where

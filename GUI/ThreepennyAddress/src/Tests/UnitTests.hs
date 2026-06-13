@@ -7,6 +7,7 @@ module Tests.UnitTests
 import Test.Hspec
 import Data.Aeson (decode, encode)
 import qualified Data.Map as Map
+import Models.AddressBookState (AddressBookState(..), addressBookFromContacts, emptyAddressBookState)
 import Models.Contact (Contact(..), ContactId(..))
 import Models.AppState (AppState(..))
 import Services.ValidationService (validateEmail, validatePhone, validateContactData, ValidationError(..))
@@ -127,15 +128,15 @@ searchTests = do
 -- | Contact service tests
 contactServiceTests :: Spec
 contactServiceTests = do
-  let emptyState = AppState Map.empty (ContactId 1) ""
+  let emptyState = emptyAddressBookState
       sampleContact = Contact (ContactId 0) "Test User" (Just "010-1234-5678") (Just "test@example.com") Nothing
       
   describe "addContact" $ do
     it "adds valid contact to empty state" $ do
       case addContact sampleContact emptyState of
         Right newState -> do
-          Map.size (contacts newState) `shouldBe` 1
-          nextId newState `shouldBe` ContactId 2
+          Map.size (addressContacts newState) `shouldBe` 1
+          addressNextId newState `shouldBe` ContactId 2
         Left _ -> expectationFailure "Should have succeeded"
         
     it "rejects invalid contact" $ do
@@ -145,12 +146,12 @@ contactServiceTests = do
         Right _ -> expectationFailure "Should have failed"
 
     it "stores the generated contact id in the inserted contact" $ do
-      let state = emptyState { nextId = ContactId 10 }
+      let state = emptyState { addressNextId = ContactId 10 }
       case addContact sampleContact state of
         Right newState -> do
-          Map.keys (contacts newState) `shouldBe` [ContactId 10]
-          fmap contactId (Map.lookup (ContactId 10) (contacts newState)) `shouldBe` Just (ContactId 10)
-          nextId newState `shouldBe` ContactId 11
+          Map.keys (addressContacts newState) `shouldBe` [ContactId 10]
+          fmap contactId (Map.lookup (ContactId 10) (addressContacts newState)) `shouldBe` Just (ContactId 10)
+          addressNextId newState `shouldBe` ContactId 11
         Left errors -> expectationFailure $ "Should have succeeded: " ++ show errors
         
   describe "updateContact" $ do
@@ -161,8 +162,8 @@ contactServiceTests = do
           let updatedContact = Contact (ContactId 1) "Updated Name" (Just "010-9999-9999") (Just "updated@example.com") Nothing
           case updateContact updatedContact stateWithContact of
             Right finalState -> do
-              Map.size (contacts finalState) `shouldBe` 1
-              let maybeContact = Map.lookup (ContactId 1) (contacts finalState)
+              Map.size (addressContacts finalState) `shouldBe` 1
+              let maybeContact = Map.lookup (ContactId 1) (addressContacts finalState)
               case maybeContact of
                 Just contact -> contactName contact `shouldBe` "Updated Name"
                 Nothing -> expectationFailure "Contact should exist"
@@ -173,7 +174,7 @@ contactServiceTests = do
       let updatedContact = Contact (ContactId 42) "Inserted Name" Nothing Nothing Nothing
       case updateContact updatedContact emptyState of
         Right finalState ->
-          Map.lookup (ContactId 42) (contacts finalState) `shouldBe` Just updatedContact
+          Map.lookup (ContactId 42) (addressContacts finalState) `shouldBe` Just updatedContact
         Left errors -> expectationFailure $ "Update should have succeeded: " ++ show errors
 
     it "rejects invalid updated contact" $ do
@@ -186,7 +187,7 @@ contactServiceTests = do
       case addContact sampleContact emptyState of
         Right stateWithContact -> do
           let finalState = deleteContact (ContactId 1) stateWithContact
-          Map.size (contacts finalState) `shouldBe` 0
+          Map.size (addressContacts finalState) `shouldBe` 0
         Left _ -> expectationFailure "Initial add should have succeeded"
 
     it "leaves state unchanged when deleting a missing contact" $ do
@@ -316,7 +317,8 @@ repositoryTests = do
 modelInstanceTests :: Spec
 modelInstanceTests = do
   let contact = Contact (ContactId 1) "Instance User" (Just "010-1111-2222") (Just "instance@example.com") (Just "Seoul")
-      appState = AppState (Map.singleton (ContactId 1) contact) (ContactId 2) "instance"
+      addressBook = AddressBookState (Map.singleton (ContactId 1) contact) (ContactId 2)
+      appState = AppState addressBook "instance"
 
   it "covers ContactId derived instances" $ do
     show (ContactId 1) `shouldBe` "ContactId 1"
@@ -333,6 +335,12 @@ modelInstanceTests = do
   it "round-trips Contact JSON" $ do
     decode (encode contact) `shouldBe` Just contact
 
+  it "round-trips AddressBookState JSON" $ do
+    decode (encode addressBook) `shouldBe` Just addressBook
+
+  it "builds AddressBookState from contacts" $ do
+    addressBookFromContacts [contact] `shouldBe` addressBook
+
   it "round-trips AppState JSON" $ do
     decode (encode appState) `shouldBe` Just appState
 
@@ -340,5 +348,6 @@ modelInstanceTests = do
     show appState `shouldContain` "Instance User"
     appState == appState `shouldBe` True
     appState == appState { searchTerm = "other" } `shouldBe` False
+    appAddressBook appState `shouldBe` addressBook
     searchTerm appState `shouldBe` "instance"
     decode (encode appState) `shouldBe` Just appState
