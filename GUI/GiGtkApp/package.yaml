@@ -24,6 +24,7 @@ dependencies:
 - gi-gtk
 - haskell-gi-base
 - text
+- time
 
 ghc-options:
 - -Wall
@@ -41,8 +42,7 @@ library:
   exposed-modules:
   - GiGtkApp.App
   - GiGtkApp.Config
-  - GiGtkApp.Domain.ButtonClick
-  - GiGtkApp.UI.Handlers
+  - GiGtkApp.Domain.Todo
   - GiGtkApp.UI.MainWindow
 
 executables:
