@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - gi-gtk
 - haskell-gi-base
+- text
 
 ghc-options:
 - -Wall
@@ -37,6 +38,12 @@ ghc-options:
 
 library:
   source-dirs: src
+  exposed-modules:
+  - GiGtkApp.App
+  - GiGtkApp.Config
+  - GiGtkApp.Domain.ButtonClick
+  - GiGtkApp.UI.Handlers
+  - GiGtkApp.UI.MainWindow
 
 executables:
   GiGtkApp-exe:

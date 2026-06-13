@@ -2,7 +2,7 @@ module Main
     ( main
     ) where
 
-import           Lib
+import           GiGtkApp.App
 
 main :: IO ()
-main = someFunc
+main = runApp

@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,7 +25,11 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      GiGtkApp.App
+      GiGtkApp.Config
+      GiGtkApp.Domain.ButtonClick
+      GiGtkApp.UI.Handlers
+      GiGtkApp.UI.MainWindow
   other-modules:
       Paths_GiGtkApp
   autogen-modules:
@@ -37,6 +41,7 @@ library
       base >=4.7 && <5
     , gi-gtk
     , haskell-gi-base
+    , text
   default-language: Haskell2010
 
 executable GiGtkApp-exe
@@ -53,6 +58,7 @@ executable GiGtkApp-exe
     , base >=4.7 && <5
     , gi-gtk
     , haskell-gi-base
+    , text
   default-language: Haskell2010
 
 test-suite GiGtkApp-test
@@ -70,4 +76,5 @@ test-suite GiGtkApp-test
     , base >=4.7 && <5
     , gi-gtk
     , haskell-gi-base
+    , text
   default-language: Haskell2010
