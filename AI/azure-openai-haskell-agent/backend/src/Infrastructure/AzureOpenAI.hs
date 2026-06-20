@@ -2,45 +2,48 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Infrastructure.AzureOpenAI
-    ( AzureOpenAIService (..)
-    ) where
+  ( AzureOpenAIService (..)
+  ) where
 
-import           Domain.Entities
-import           Domain.Ports
+import Domain.Entities
+import Domain.Ports
 
-import qualified Lib             as Azure
+import Lib qualified as Azure
 
 newtype AzureOpenAIService = AzureOpenAIService ()
 
 instance ChatService IO where
-    sendMessage config messages = do
-        let azureConfig = toAzureConfig config
-        let azureMessages = map toAzureMessage messages
-        let request = Azure.ChatRequest
-                { Azure.messages = azureMessages
-                , Azure.model = configDeployment config
-                , Azure.stream = False
-                , Azure.maxTokens = 4096
-                , Azure.temperature = 1.0
-                , Azure.topP = 1.0
-                }
-        Azure.createChatCompletion azureConfig request
+  sendMessage config messages = do
+    let azureConfig = toAzureConfig config
+    let azureMessages = map toAzureMessage messages
+    let request =
+          Azure.ChatRequest
+            { Azure.messages = azureMessages
+            , Azure.model = configDeployment config
+            , Azure.stream = False
+            , Azure.maxTokens = 4096
+            , Azure.temperature = 1.0
+            , Azure.topP = 1.0
+            }
+    Azure.createChatCompletion azureConfig request
 
-    streamMessage config messages callback = do
-        let azureConfig = toAzureConfig config
-        let azureMessages = map toAzureMessage messages
-        let request = Azure.ChatRequest
-                { Azure.messages = azureMessages
-                , Azure.model = configDeployment config
-                , Azure.stream = True
-                , Azure.maxTokens = 4096
-                , Azure.temperature = 1.0
-                , Azure.topP = 1.0
-                }
-        Azure.streamChatCompletion azureConfig request callback
+  streamMessage config messages callback = do
+    let azureConfig = toAzureConfig config
+    let azureMessages = map toAzureMessage messages
+    let request =
+          Azure.ChatRequest
+            { Azure.messages = azureMessages
+            , Azure.model = configDeployment config
+            , Azure.stream = True
+            , Azure.maxTokens = 4096
+            , Azure.temperature = 1.0
+            , Azure.topP = 1.0
+            }
+    Azure.streamChatCompletion azureConfig request callback
 
 toAzureConfig :: ChatConfig -> Azure.Config
-toAzureConfig config = Azure.Config
+toAzureConfig config =
+  Azure.Config
     { Azure.apiKey = configApiKey config
     , Azure.endpoint = configEndpoint config
     , Azure.deployment = configDeployment config
@@ -48,7 +51,8 @@ toAzureConfig config = Azure.Config
     }
 
 toAzureMessage :: ChatMessage -> Azure.Message
-toAzureMessage msg = Azure.Message
+toAzureMessage msg =
+  Azure.Message
     { Azure.role = toAzureRole (messageRole msg)
     , Azure.content = messageContent msg
     }
