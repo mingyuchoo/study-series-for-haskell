@@ -22,11 +22,11 @@ steps:
   #
   - module_header:
        # How many spaces use for indentation in the module header.
-       indent: 4
+       indent: 2
   
        # Should export lists be sorted?  Sorting is only performed within the
        # export section, as delineated by Haddock comments.
-       sort: true
+       sort: false
   
        # See `separate_lists` for the `imports` step.
        separate_lists: true
@@ -68,13 +68,13 @@ steps:
        # Possible values:
        # - "same_line" -- "{" and first field goes on the same line as the data constructor.
        # - "indent N" -- insert a new line and N spaces from the beginning of the data constructor
-       first_field: "same_line"
+       first_field: "indent 2"
   
        # How many spaces to insert between the column with "," and the beginning of the comment in the next line.
        field_comment: 2
   
        # How many spaces to insert before "deriving" clause. Deriving clauses are always on separate lines.
-       deriving: 5
+       deriving: 2
   
        # How many spaces to insert before "via" clause counted from indentation of deriving clause
        # Possible values:
@@ -83,7 +83,7 @@ steps:
        via: "indent 2"
   
        # Sort typeclass names in the "deriving" list alphabetically.
-       sort_deriving: true
+       sort_deriving: false
   
        # Whether or not to break enums onto several lines
        #
@@ -93,7 +93,7 @@ steps:
        # Whether or not to break single constructor data types before `=` sign
        #
        # Default: true
-       break_single_constructors: true
+       break_single_constructors: false
   
        # Whether or not to curry constraints on function.
        #
@@ -193,7 +193,7 @@ steps:
       #   >                                           init, last, length)
       #
       # Default: true
-      pad_module_names: true
+      pad_module_names: false
 
       # Long list align style takes effect when import is too long. This is
       # determined by 'columns' setting.
@@ -216,7 +216,7 @@ steps:
       #   >     )
       #
       # Default: inline
-      long_list_align: inline
+      long_list_align: multiline
 
       # Align empty list (importing instances)
       #
@@ -240,7 +240,7 @@ steps:
       #   Useful for 'file' and 'group' align settings.
       #
       # Default: 4
-      list_padding: 4
+      list_padding: 2
 
       # Separate lists option affects formatting of import list for type
       # or class. The only difference is single space between type and list
@@ -292,7 +292,7 @@ steps:
       #   > import qualified Data.Foo as F
       #
       # Default: false
-      post_qualify: false
+      post_qualify: true
 
       # Automatically group imports based on their module names, with
       # a blank line separating each group. Groups are ordered in
@@ -322,7 +322,7 @@ steps:
       #   > import Control.Monad.MonadError
       #
       # Default: false
-      group_imports: true
+      group_imports: false
 
       # A list of rules specifying how to group modules and how to
       # order the groups.
@@ -451,7 +451,7 @@ steps:
 # Set this to null to disable all line wrapping.
 #
 # Default: 80.
-columns: 80
+columns: 90
 
 # By default, line endings are converted according to the OS. You can override
 # preferred format here.
@@ -470,9 +470,13 @@ newline: lf
 # needs to be aware of these, so it can parse the file correctly.
 #
 # No language extensions are enabled by default.
-# language_extensions:
-  # - TemplateHaskell
-  # - QuasiQuotes
+#
+# 이 프로젝트는 cabal common-options 의 default-extensions 를 모든 모듈에 적용하므로,
+# stylish 가 파일을 올바로 파싱하도록 동일 확장을 명시한다(파일별 LANGUAGE 프라그마
+# 인 DataKinds/KindSignatures/TemplateHaskell 등은 각 파일에서 그대로 인식된다).
+language_extensions:
+  - OverloadedStrings
+  - DerivingStrategies
 
 # Attempt to find the cabal file in ancestors of the current directory, and
 # parse options (currently only language extensions) from that.
