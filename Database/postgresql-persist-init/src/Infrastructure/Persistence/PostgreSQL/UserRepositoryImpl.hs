@@ -38,7 +38,9 @@ import           Domain.Entities.User
 import           Domain.Repositories.UserRepository
 
 -- Define the database schema
-PTH.share [PTH.mkPersist PTH.sqlSettings, PTH.mkMigrate "migrateAll"] [PTH.persistLowerCase|
+PTH.share
+  [PTH.mkPersist PTH.sqlSettings, PTH.mkMigrate "migrateAll"]
+  [PTH.persistLowerCase|
   DBUser sql=users
     name Text
     email Text
@@ -81,11 +83,12 @@ runPostgreSQLUserRepository pgInfo (PostgreSQLUserRepository action) = runReader
 -- Domain to DB conversion
 domainUserToDB :: User -> DBUser
 domainUserToDB (User _ (UserName name) (UserEmail email) (UserAge age) (UserOccupation occupation)) =
-    DBUser name email age occupation
+  DBUser name email age occupation
 
 -- DB to Domain conversion
 dbUserToDomain :: Int64 -> DBUser -> User
-dbUserToDomain uid dbUser = User
+dbUserToDomain uid dbUser =
+  User
     { userId = Just (UserId uid)
     , userName = UserName (dBUserName dbUser)
     , userEmail = UserEmail (dBUserEmail dbUser)
@@ -99,34 +102,34 @@ entityToDomain (Entity key dbUser) = dbUserToDomain (fromSqlKey key) dbUser
 
 -- Repository implementation
 instance UserRepository PostgreSQLUserRepository where
-    findUserById (UserId uid) = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        maybeUser <- liftIO $ runAction pgInfo (get (toSqlKey uid))
-        return $ fmap (dbUserToDomain uid) maybeUser
+  findUserById (UserId uid) = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    maybeUser <- liftIO $ runAction pgInfo (get (toSqlKey uid))
+    return $ fmap (dbUserToDomain uid) maybeUser
 
-    findAllUsers = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        entities <- liftIO $ runAction pgInfo (selectList [] [])
-        return $ map entityToDomain entities
+  findAllUsers = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    entities <- liftIO $ runAction pgInfo (selectList [] [])
+    return $ map entityToDomain entities
 
-    saveUser user = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        uid <- liftIO $ runAction pgInfo (insert (domainUserToDB user))
-        return $ UserId (fromSqlKey uid)
+  saveUser user = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    uid <- liftIO $ runAction pgInfo (insert (domainUserToDB user))
+    return $ UserId (fromSqlKey uid)
 
-    updateUser (UserId uid) user = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        liftIO $ runAction pgInfo (replace (toSqlKey uid) (domainUserToDB user))
-        return True
+  updateUser (UserId uid) user = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    liftIO $ runAction pgInfo (replace (toSqlKey uid) (domainUserToDB user))
+    return True
 
-    deleteUser (UserId uid) = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        liftIO $ runAction pgInfo (delete (toSqlKey uid :: Key DBUser))
-        return True
+  deleteUser (UserId uid) = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    liftIO $ runAction pgInfo (delete (toSqlKey uid :: Key DBUser))
+    return True
 
-    findUserByEmail (UserEmail email) = PostgreSQLUserRepository $ do
-        pgInfo <- ask
-        entities <- liftIO $ runAction pgInfo (selectList [DBUserEmail ==. email] [])
-        return $ case entities of
-            []         -> Nothing
-            (entity:_) -> Just $ entityToDomain entity
+  findUserByEmail (UserEmail email) = PostgreSQLUserRepository $ do
+    pgInfo <- ask
+    entities <- liftIO $ runAction pgInfo (selectList [DBUserEmail ==. email] [])
+    return $ case entities of
+      []           -> Nothing
+      (entity : _) -> Just $ entityToDomain entity

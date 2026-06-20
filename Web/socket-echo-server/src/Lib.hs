@@ -1,10 +1,10 @@
 module Lib
-    ( someFunc
-    ) where
+  ( someFunc
+  ) where
 
-import           Network.Socket
+import Network.Socket
 
-import           System.IO
+import System.IO
 
 someFunc :: IO ()
 someFunc = do
@@ -15,13 +15,11 @@ someFunc = do
   putStrLn "Listening on port 8000..."
   mainLoop sock
 
-
 mainLoop :: Socket -> IO ()
 mainLoop sock = do
   (conn, _) <- accept sock
   handler conn
   mainLoop sock
-
 
 handler :: Socket -> IO ()
 handler conn = do

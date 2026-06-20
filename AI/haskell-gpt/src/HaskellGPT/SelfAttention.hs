@@ -1,48 +1,49 @@
 {-# LANGUAGE BangPatterns #-}
 
 module HaskellGPT.SelfAttention
-    ( SelfAttention (..)
-    , attention
-    , computeQKV
-    , newSelfAttention
-    , softmax
-    , softmaxBackward
-    ) where
+  ( SelfAttention (..)
+  , attention
+  , computeQKV
+  , newSelfAttention
+  , softmax
+  , softmaxBackward
+  ) where
 
-import           HaskellGPT.Adam       (Adam, initAdam, stepAdam)
-import           HaskellGPT.Types      (Layer (..), Matrix, xavierInit)
+import HaskellGPT.Adam (Adam, initAdam, stepAdam)
+import HaskellGPT.Types (Layer (..), Matrix, xavierInit)
 
-import           Numeric.LinearAlgebra (cols, scale, tr)
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (cols, scale, tr)
+import Numeric.LinearAlgebra qualified as LA
 
 -- | Self-Attention mechanism data structure
 -- Implements scaled dot-product attention: softmax(Q·K^T / sqrt(d_k))·V
-data SelfAttention = SelfAttention { saEmbeddingDim :: !Int
-                                     -- ^ Embedding dimension
-                                   , saWq :: !(Matrix Float)
-                                     -- ^ Query weight matrix (embedding_dim x embedding_dim)
-                                   , saWk :: !(Matrix Float)
-                                     -- ^ Key weight matrix (embedding_dim x embedding_dim)
-                                   , saWv :: !(Matrix Float)
-                                     -- ^ Value weight matrix (embedding_dim x embedding_dim)
-                                   , saCachedInput :: !(Maybe (Matrix Float))
-                                     -- ^ Cached input for backward pass
-                                   , saCachedQ :: !(Maybe (Matrix Float))
-                                     -- ^ Cached query matrix for backward pass
-                                   , saCachedK :: !(Maybe (Matrix Float))
-                                     -- ^ Cached key matrix for backward pass
-                                   , saCachedV :: !(Maybe (Matrix Float))
-                                     -- ^ Cached value matrix for backward pass
-                                   , saCachedAttnScores :: !(Maybe (Matrix Float))
-                                     -- ^ Cached attention scores for backward pass
-                                   , saOptimizerWq :: !Adam
-                                     -- ^ Optimizer for Wq
-                                   , saOptimizerWk :: !Adam
-                                     -- ^ Optimizer for Wk
-                                   , saOptimizerWv :: !Adam
-                                     -- ^ Optimizer for Wv
-                                   }
-     deriving (Show)
+data SelfAttention = SelfAttention
+  { saEmbeddingDim     :: !Int
+    -- ^ Embedding dimension
+  , saWq               :: !(Matrix Float)
+    -- ^ Query weight matrix (embedding_dim x embedding_dim)
+  , saWk               :: !(Matrix Float)
+    -- ^ Key weight matrix (embedding_dim x embedding_dim)
+  , saWv               :: !(Matrix Float)
+    -- ^ Value weight matrix (embedding_dim x embedding_dim)
+  , saCachedInput      :: !(Maybe (Matrix Float))
+    -- ^ Cached input for backward pass
+  , saCachedQ          :: !(Maybe (Matrix Float))
+    -- ^ Cached query matrix for backward pass
+  , saCachedK          :: !(Maybe (Matrix Float))
+    -- ^ Cached key matrix for backward pass
+  , saCachedV          :: !(Maybe (Matrix Float))
+    -- ^ Cached value matrix for backward pass
+  , saCachedAttnScores :: !(Maybe (Matrix Float))
+    -- ^ Cached attention scores for backward pass
+  , saOptimizerWq      :: !Adam
+    -- ^ Optimizer for Wq
+  , saOptimizerWk      :: !Adam
+    -- ^ Optimizer for Wk
+  , saOptimizerWv      :: !Adam
+    -- ^ Optimizer for Wv
+  }
+  deriving (Show)
 
 -- | Initialize self-attention with random weight initialization
 -- Creates weight matrices for query, key, and value projections
@@ -63,20 +64,21 @@ newSelfAttention embDim = do
   let optWk = initAdam (embDim, embDim)
   let optWv = initAdam (embDim, embDim)
 
-  return SelfAttention
-    { saEmbeddingDim = embDim
-    , saWq = wq
-    , saWk = wk
-    , saWv = wv
-    , saCachedInput = Nothing
-    , saCachedQ = Nothing
-    , saCachedK = Nothing
-    , saCachedV = Nothing
-    , saCachedAttnScores = Nothing
-    , saOptimizerWq = optWq
-    , saOptimizerWk = optWk
-    , saOptimizerWv = optWv
-    }
+  return
+    SelfAttention
+      { saEmbeddingDim = embDim
+      , saWq = wq
+      , saWk = wk
+      , saWv = wv
+      , saCachedInput = Nothing
+      , saCachedQ = Nothing
+      , saCachedK = Nothing
+      , saCachedV = Nothing
+      , saCachedAttnScores = Nothing
+      , saOptimizerWq = optWq
+      , saOptimizerWk = optWk
+      , saOptimizerWv = optWv
+      }
 
 -- | Compute query, key, and value matrices
 -- Q = input · Wq
@@ -95,7 +97,7 @@ computeQKV sa input =
   let q = input LA.<> saWq sa
       k = input LA.<> saWk sa
       v = input LA.<> saWv sa
-  in (q, k, v)
+   in (q, k, v)
 
 -- | Softmax function for attention score normalization
 -- Applies softmax to each row of the matrix
@@ -119,7 +121,7 @@ softmax m = LA.fromRows $ map softmaxRow (LA.toRows m)
           sumExp = sum exps
           -- Normalize
           normalized = map (/ sumExp) exps
-      in LA.fromList normalized
+       in LA.fromList normalized
 
 -- | Backward pass for softmax
 -- Computes gradient of softmax with respect to input
@@ -144,7 +146,7 @@ softmaxBackward softmaxOutput upstreamGrad =
           sumSG = sum $ zipWith (*) s g
           -- grad = s * (g - sum(s * g))
           grad = zipWith (\si gi -> si * (gi - sumSG)) s g
-      in LA.fromList grad
+       in LA.fromList grad
 
 -- | Attention function: softmax(Q·K^T / sqrt(d_k))·V
 -- Computes scaled dot-product attention
@@ -159,47 +161,52 @@ softmaxBackward softmaxOutput upstreamGrad =
 -- 128
 attention :: Matrix Float -> Matrix Float -> Matrix Float -> Matrix Float
 attention q k v =
-  let -- Compute Q·K^T
-      scores = q LA.<> tr k
+  let
+    -- Compute Q·K^T
+    scores = q LA.<> tr k
 
-      -- Scale by sqrt(d_k) for stability
-      dk = fromIntegral $ cols k
-      scaledScores = scale (1.0 / sqrt dk) scores
+    -- Scale by sqrt(d_k) for stability
+    dk = fromIntegral $ cols k
+    scaledScores = scale (1.0 / sqrt dk) scores
 
-      -- Apply softmax to get attention weights
-      attnWeights = softmax scaledScores
+    -- Apply softmax to get attention weights
+    attnWeights = softmax scaledScores
 
-      -- Multiply by V to get output
-      output = attnWeights LA.<> v
-  in output
+    -- Multiply by V to get output
+    output = attnWeights LA.<> v
+   in
+    output
 
 -- Layer instance for SelfAttention
 instance Layer SelfAttention where
   -- Forward pass: compute attention output
   forward sa input =
-    let -- Compute Q, K, V
-        (q, k, v) = computeQKV sa input
+    let
+      -- Compute Q, K, V
+      (q, k, v) = computeQKV sa input
 
-        -- Compute attention scores (before softmax)
-        scores = q LA.<> tr k
-        dk = fromIntegral $ cols k
-        scaledScores = scale (1.0 / sqrt dk) scores
+      -- Compute attention scores (before softmax)
+      scores = q LA.<> tr k
+      dk = fromIntegral $ cols k
+      scaledScores = scale (1.0 / sqrt dk) scores
 
-        -- Apply softmax
-        attnWeights = softmax scaledScores
+      -- Apply softmax
+      attnWeights = softmax scaledScores
 
-        -- Compute output
-        output = attnWeights LA.<> v
+      -- Compute output
+      output = attnWeights LA.<> v
 
-        -- Cache values for backward pass
-        sa' = sa
+      -- Cache values for backward pass
+      sa' =
+        sa
           { saCachedInput = Just input
           , saCachedQ = Just q
           , saCachedK = Just k
           , saCachedV = Just v
           , saCachedAttnScores = Just attnWeights
           }
-    in (sa', output)
+     in
+      (sa', output)
 
   -- Backward pass: compute gradients and update weights
   backward sa grads lr =
@@ -251,26 +258,26 @@ instance Layer SelfAttention where
             inputGrads = dInputFromQ + dInputFromK + dInputFromV
 
             -- Create updated self-attention layer
-            sa' = sa
-              { saWq = newWq
-              , saWk = newWk
-              , saWv = newWv
-              , saOptimizerWq = newOptWq
-              , saOptimizerWk = newOptWk
-              , saOptimizerWv = newOptWv
-              , saCachedInput = Nothing
-              , saCachedQ = Nothing
-              , saCachedK = Nothing
-              , saCachedV = Nothing
-              , saCachedAttnScores = Nothing
-              }
-        in (sa', inputGrads)
-
+            sa' =
+              sa
+                { saWq = newWq
+                , saWk = newWk
+                , saWv = newWv
+                , saOptimizerWq = newOptWq
+                , saOptimizerWk = newOptWk
+                , saOptimizerWv = newOptWv
+                , saCachedInput = Nothing
+                , saCachedQ = Nothing
+                , saCachedK = Nothing
+                , saCachedV = Nothing
+                , saCachedAttnScores = Nothing
+                }
+         in (sa', inputGrads)
       _ -> error "SelfAttention: backward called before forward"
 
   layerType _ = "SelfAttention"
 
   parameters sa =
     let embDim = saEmbeddingDim sa
-        -- Three weight matrices, each of size (embedding_dim x embedding_dim)
-    in 3 * embDim * embDim
+     in -- Three weight matrices, each of size (embedding_dim x embedding_dim)
+        3 * embDim * embDim

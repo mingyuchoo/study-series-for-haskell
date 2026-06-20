@@ -17,20 +17,22 @@ import           System.Posix.IO                     (OpenMode (..),
 -- 파일 디스크립터를 열고 Vty 설정을 구성하여 Vty 인스턴스 생성
 buildVtyFromTty :: IO V.Vty
 buildVtyFromTty = do
-  ttyFd    <- openFd "/dev/tty" ReadWrite defaultFileFlags
+  ttyFd <- openFd "/dev/tty" ReadWrite defaultFileFlags
   termName <- fromMaybe "xterm" <$> lookupEnv "TERM"
-  let unixSettings = VtyUnixSettings.UnixSettings
-        { VtyUnixSettings.settingVmin     = 1
-        , VtyUnixSettings.settingVtime    = 100
-        , VtyUnixSettings.settingInputFd  = ttyFd
-        , VtyUnixSettings.settingOutputFd = ttyFd
-        , VtyUnixSettings.settingTermName = termName
-        }
-      userConfig = V.VtyUserConfig
-        { V.configInputMap                     = mempty
-        , V.configPreferredColorMode           = Nothing
-        , V.configDebugLog                     = Nothing
-        , V.configAllowCustomUnicodeWidthTables = Nothing
-        , V.configTermWidthMaps                = []
-        }
+  let unixSettings =
+        VtyUnixSettings.UnixSettings
+          { VtyUnixSettings.settingVmin = 1
+          , VtyUnixSettings.settingVtime = 100
+          , VtyUnixSettings.settingInputFd = ttyFd
+          , VtyUnixSettings.settingOutputFd = ttyFd
+          , VtyUnixSettings.settingTermName = termName
+          }
+      userConfig =
+        V.VtyUserConfig
+          { V.configInputMap = mempty
+          , V.configPreferredColorMode = Nothing
+          , V.configDebugLog = Nothing
+          , V.configAllowCustomUnicodeWidthTables = Nothing
+          , V.configTermWidthMaps = []
+          }
   mkVtyWithSettings userConfig unixSettings

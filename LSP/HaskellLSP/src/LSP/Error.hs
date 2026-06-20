@@ -47,11 +47,12 @@ data LogContext = LogContext { logHandle :: Handle
 
 -- | Default logging context using stderr
 defaultLogContext :: LogContext
-defaultLogContext = LogContext
-  { logHandle = stderr
-  , logLevel = Info
-  , logPrefix = "[LSP]"
-  }
+defaultLogContext =
+  LogContext
+    { logHandle = stderr
+    , logLevel = Info
+    , logPrefix = "[LSP]"
+    }
 
 -- | Classify an exception for error recovery
 classifyError :: SomeException -> ErrorSeverity
@@ -80,7 +81,8 @@ recoverFromError recovery e = do
   logWarning defaultLogContext <| "Attempting error recovery: " <> T.pack (show e)
   case classifyError e of
     Transient -> do
-      logInfo defaultLogContext <| "Retrying after " <> T.pack (show (retryDelay recovery)) <> "ms"
+      logInfo defaultLogContext <|
+        "Retrying after " <> T.pack (show (retryDelay recovery)) <> "ms"
       threadDelay (retryDelay recovery * 1000) -- Convert to microseconds
     Recoverable -> do
       logInfo defaultLogContext "Executing fallback action"
@@ -100,40 +102,43 @@ withErrorRecovery recovery action = do
     Right val -> pure (Right val)
 
 -- | Log an error message
-logError :: MonadIO m => LogContext -> Text -> m ()
+logError :: (MonadIO m) => LogContext -> Text -> m ()
 logError ctx msg = logWithLevel ctx Error msg
 
 -- | Log a warning message
-logWarning :: MonadIO m => LogContext -> Text -> m ()
+logWarning :: (MonadIO m) => LogContext -> Text -> m ()
 logWarning ctx msg = logWithLevel ctx Warning msg
 
 -- | Log an info message
-logInfo :: MonadIO m => LogContext -> Text -> m ()
+logInfo :: (MonadIO m) => LogContext -> Text -> m ()
 logInfo ctx msg = logWithLevel ctx Info msg
 
 -- | Log a debug message
-logDebug :: MonadIO m => LogContext -> Text -> m ()
+logDebug :: (MonadIO m) => LogContext -> Text -> m ()
 logDebug ctx msg = logWithLevel ctx Debug msg
 
 -- | Log a message with the specified level
-logWithLevel :: MonadIO m => LogContext -> LogLevel -> Text -> m ()
-logWithLevel ctx level msg = liftIO <| do
-  when (level >= logLevel ctx) <| do
-    timestamp <- getCurrentTime
-    let timeStr = formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" timestamp
-        levelStr = case level of
-          Debug   -> "DEBUG"
-          Info    -> "INFO"
-          Warning -> "WARN"
-          Error   -> "ERROR"
-        fullMsg = T.unpack <| T.unwords
-          [ T.pack timeStr
-          , logPrefix ctx
-          , T.pack levelStr
-          , msg
-          ]
-    hPutStrLn (logHandle ctx) fullMsg
-    hFlush (logHandle ctx)
+logWithLevel :: (MonadIO m) => LogContext -> LogLevel -> Text -> m ()
+logWithLevel ctx level msg =
+  liftIO <| do
+    when (level >= logLevel ctx) <| do
+      timestamp <- getCurrentTime
+      let timeStr = formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" timestamp
+          levelStr = case level of
+            Debug   -> "DEBUG"
+            Info    -> "INFO"
+            Warning -> "WARN"
+            Error   -> "ERROR"
+          fullMsg =
+            T.unpack <|
+              T.unwords
+                [ T.pack timeStr
+                , logPrefix ctx
+                , T.pack levelStr
+                , msg
+                ]
+      hPutStrLn (logHandle ctx) fullMsg
+      hFlush (logHandle ctx)
   where
     when True action = action
     when False _     = pure ()
@@ -142,16 +147,18 @@ logWithLevel ctx level msg = liftIO <| do
 withLogging :: LogContext -> IO a -> IO a
 withLogging ctx action = do
   logInfo ctx "Starting operation"
-  result <- action `catch` \e -> do
-    logError ctx <| "Operation failed: " <> T.pack (show e)
-    handleLspError e >>= \_ -> error (show e)  -- Re-throw for now
+  result <-
+    action `catch` \e -> do
+      logError ctx <| "Operation failed: " <> T.pack (show e)
+      handleLspError e >>= \_ -> error (show e) -- Re-throw for now
   logInfo ctx "Operation completed"
   pure result
 
 -- | Default error recovery configuration
 defaultErrorRecovery :: ErrorRecovery
-defaultErrorRecovery = ErrorRecovery
-  { maxRetries = 3
-  , retryDelay = 1000  -- 1 second
-  , fallbackAction = logError defaultLogContext "Fallback action executed"
-  }
+defaultErrorRecovery =
+  ErrorRecovery
+    { maxRetries = 3
+    , retryDelay = 1000 -- 1 second
+    , fallbackAction = logError defaultLogContext "Fallback action executed"
+    }

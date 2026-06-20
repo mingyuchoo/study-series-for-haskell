@@ -2,6 +2,7 @@ module Fuzzy
     ( filterItems
     , fuzzyMatchScore
     ) where
+
 import           Data.List   (sortOn)
 import qualified Data.Text   as T
 import qualified Data.Vector as Vec
@@ -14,13 +15,13 @@ import           Flow        ((<|))
 fuzzyMatchScore :: T.Text -> T.Text -> Maybe Int
 fuzzyMatchScore query text = go (T.toLower query) (T.toLower text) 0
   where
-    -- | 재귀적으로 문자를 비교하며 갭(건너뛴 문자 수) 계산 (Pure)
+    -- \| 재귀적으로 문자를 비교하며 갭(건너뛴 문자 수) 계산 (Pure)
     -- T.uncons를 사용하여 head/tail 이중 순회를 방지
     go q t gaps = case (T.uncons q, T.uncons t) of
-      (Nothing, _)                       -> Just gaps
-      (_, Nothing)                       -> Nothing
+      (Nothing, _) -> Just gaps
+      (_, Nothing) -> Nothing
       (Just (qc, qr), Just (tc, tr))
-        | qc == tc  -> go qr tr gaps
+        | qc == tc -> go qr tr gaps
         | otherwise -> go q tr (gaps + 1)
 
 -- | 파일 경로의 깊이(슬래시 개수) 계산 (Pure)
@@ -33,9 +34,10 @@ pathDepth t = T.count "/" t + T.count "\\" t
 filterItems :: T.Text -> Vec.Vector T.Text -> Vec.Vector T.Text
 filterItems query items
   | T.null query = items
-  | otherwise    = Vec.fromList . map snd . sortOn fst <| scored
+  | otherwise = Vec.fromList . map snd . sortOn fst <| scored
   where
-    scored = [ ((score, pathDepth item), item)
-             | item <- Vec.toList items
-             , Just score <- [fuzzyMatchScore query item]
-             ]
+    scored =
+      [ ((score, pathDepth item), item)
+      | item <- Vec.toList items
+      , Just score <- [fuzzyMatchScore query item]
+      ]

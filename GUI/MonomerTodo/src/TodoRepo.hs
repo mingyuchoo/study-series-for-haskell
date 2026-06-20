@@ -3,24 +3,24 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module TodoRepo
-    ( MonadTodoRepo (..)
-    , TodoRepoError (..)
-    ) where
+  ( MonadTodoRepo (..)
+  , TodoRepoError (..)
+  ) where
 
-import           Control.Monad.Except
+import Control.Monad.Except
 
-import           Data.Text            (Text)
+import Data.Text (Text)
 
-import           TodoTypes
+import TodoTypes
 
 -- | Repository 에러 타입
 data TodoRepoError = TodoNotFound Int
                    | DatabaseError Text
                    | ValidationError Text
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 -- | Todo Repository MTL 타입클래스 (데이터 접근 추상화)
-class Monad m => MonadTodoRepo m where
+class (Monad m) => MonadTodoRepo m where
   -- | 모든 할일 목록 조회
   getAllTodos :: m [Todo]
 

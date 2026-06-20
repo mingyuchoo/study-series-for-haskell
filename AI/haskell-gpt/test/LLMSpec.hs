@@ -1,26 +1,24 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 
 module LLMSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.Embeddings       (newEmbeddings)
-import           HaskellGPT.LLM
-import           HaskellGPT.OutputProjection (newOutputProjection)
-import           HaskellGPT.Transformer      (newTransformerBlock)
-import           HaskellGPT.Types            (SomeLayer (..), embeddingDim,
-                                              hiddenDim)
-import           HaskellGPT.Vocab            (defaultVocab, newVocab, vocabSize)
+import HaskellGPT.Embeddings (newEmbeddings)
+import HaskellGPT.LLM
+import HaskellGPT.OutputProjection (newOutputProjection)
+import HaskellGPT.Transformer (newTransformerBlock)
+import HaskellGPT.Types (SomeLayer (..), embeddingDim, hiddenDim)
+import HaskellGPT.Vocab (defaultVocab, newVocab, vocabSize)
 
-import           Numeric.LinearAlgebra       ((><))
-import qualified Numeric.LinearAlgebra       as LA
+import Numeric.LinearAlgebra ((><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
   describe "LLM Module" $ do
-
     describe "newLLM and basic functions" $ do
       it "creates LLM with vocabulary and network" $ do
         let vocab = defaultVocab
@@ -209,4 +207,3 @@ spec = do
         -- Test parameter counting
         let params = totalParameters llm
         params `shouldSatisfy` (> 0)
-

@@ -23,7 +23,6 @@ import           LSP.Types                   (ServerConfig)
 import           Language.LSP.Protocol.Types
 import           Language.LSP.Server
 
-
 -- | Handle textDocument/hover request
 -- Resolves symbol at hover position and formats hover content with type information
 handleHover :: HoverParams -> LspM ServerConfig (Maybe Hover)
@@ -40,7 +39,9 @@ handleHover (HoverParams (TextDocumentIdentifier uri) position _workDoneToken) =
       liftIO <| putStrLn "Document not found in server state"
       return Nothing
     Just content -> do
-      liftIO <| putStrLn <| "Processing hover for document with " <> show (T.length content) <> " characters"
+      liftIO <|
+        putStrLn <|
+          "Processing hover for document with " <> show (T.length content) <> " characters"
 
       -- Parse the document
       case parseModule content of
@@ -63,10 +64,11 @@ handleHover (HoverParams (TextDocumentIdentifier uri) position _workDoneToken) =
                 Nothing -> return Nothing
                 Just hoverText -> do
                   let markupContent = MarkupContent MarkupKind_Markdown hoverText
-                      hover = Hover
-                        { _contents = InL markupContent  -- Use InL for MarkupContent
-                        , _range = Nothing  -- We could provide the symbol range here
-                        }
+                      hover =
+                        Hover
+                          { _contents = InL markupContent -- Use InL for MarkupContent
+                          , _range = Nothing -- We could provide the symbol range here
+                          }
                   return (Just hover)
 
 -- | Format hover content based on symbol information
@@ -77,9 +79,9 @@ formatHoverContent symbolInfo =
     SymbolKind_Function ->
       -- Check if it's an operator (starts with non-alphanumeric character)
       let name = symName symbolInfo
-      in if T.null name || not (isAlphaNumeric (T.head name))
-         then formatOperatorHover symbolInfo
-         else formatFunctionHover symbolInfo
+       in if T.null name || not (isAlphaNumeric (T.head name))
+            then formatOperatorHover symbolInfo
+            else formatFunctionHover symbolInfo
     SymbolKind_Class -> formatTypeHover symbolInfo
     SymbolKind_Struct -> formatTypeHover symbolInfo
     SymbolKind_Variable -> formatVariableHover symbolInfo
@@ -100,8 +102,7 @@ formatFunctionHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (typeInfo <> documentation)
+   in Just (typeInfo <> documentation)
 
 -- | Format hover content for types (data types, type aliases)
 -- Displays type's kind and definition information
@@ -116,8 +117,7 @@ formatTypeHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (kindInfo <> documentation)
+   in Just (kindInfo <> documentation)
 
 -- | Format hover content for variables
 -- Displays variable's type information
@@ -131,8 +131,7 @@ formatVariableHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (typeInfo <> documentation)
+   in Just (typeInfo <> documentation)
 
 -- | Format hover content for modules
 -- Displays module information
@@ -144,10 +143,7 @@ formatModuleHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (moduleInfo <> documentation)
-
-
+   in Just (moduleInfo <> documentation)
 
 -- | Format hover content for operators
 -- Displays operator's type and fixity information
@@ -165,8 +161,7 @@ formatOperatorHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (typeInfo <> fixityInfo <> documentation)
+   in Just (typeInfo <> fixityInfo <> documentation)
 
 -- | Format generic hover content for unknown symbol kinds
 formatGenericHover :: SymbolInfo -> Maybe Text
@@ -177,5 +172,4 @@ formatGenericHover symbolInfo =
       documentation = case symDocumentation symbolInfo of
         Just doc -> "\n\n" <> doc
         Nothing  -> ""
-
-  in Just (genericInfo <> documentation)
+   in Just (genericInfo <> documentation)

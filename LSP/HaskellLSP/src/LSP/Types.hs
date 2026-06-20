@@ -60,15 +60,24 @@ data ResponseError = ResponseError { errorCode    :: Int
      deriving (Eq, FromJSON, Generic, Show, ToJSON)
 
 -- | Standard JSON-RPC error codes
-data LspErrorCode = ParseError -- ^ -32700: Invalid JSON was received by the server
-                  | InvalidRequest -- ^ -32600: The JSON sent is not a valid Request object
-                  | MethodNotFound -- ^ -32601: The method does not exist / is not available
-                  | InvalidParams -- ^ -32602: Invalid method parameter(s)
-                  | InternalError -- ^ -32603: Internal JSON-RPC error
-                  | ServerNotInitialized -- ^ -32002: Server has not been initialized
-                  | UnknownErrorCode -- ^ -32001: Unknown error code
-                  | RequestCancelled -- ^ -32800: Request was cancelled
-                  | ContentModified -- ^ -32801: Content was modified
+data LspErrorCode -- | -32700: Invalid JSON was received by the server
+                  = ParseError
+                  -- | -32600: The JSON sent is not a valid Request object
+                  | InvalidRequest
+                  -- | -32601: The method does not exist / is not available
+                  | MethodNotFound
+                  -- | -32602: Invalid method parameter(s)
+                  | InvalidParams
+                  -- | -32603: Internal JSON-RPC error
+                  | InternalError
+                  -- | -32002: Server has not been initialized
+                  | ServerNotInitialized
+                  -- | -32001: Unknown error code
+                  | UnknownErrorCode
+                  -- | -32800: Request was cancelled
+                  | RequestCancelled
+                  -- | -32801: Content was modified
+                  | ContentModified
      deriving (Eq, Generic, Show)
 
 -- | Convert LspErrorCode to integer
@@ -98,53 +107,60 @@ intToLspErrorCode _        = UnknownErrorCode
 
 -- | Error response builders
 mkParseError :: Text -> ResponseError
-mkParseError msg = ResponseError
-  { errorCode = lspErrorCodeToInt ParseError
-  , errorMessage = msg
-  , errorData = Nothing
-  }
+mkParseError msg =
+  ResponseError
+    { errorCode = lspErrorCodeToInt ParseError
+    , errorMessage = msg
+    , errorData = Nothing
+    }
 
 mkInvalidRequest :: Text -> ResponseError
-mkInvalidRequest msg = ResponseError
-  { errorCode = lspErrorCodeToInt InvalidRequest
-  , errorMessage = msg
-  , errorData = Nothing
-  }
+mkInvalidRequest msg =
+  ResponseError
+    { errorCode = lspErrorCodeToInt InvalidRequest
+    , errorMessage = msg
+    , errorData = Nothing
+    }
 
 mkMethodNotFound :: Text -> ResponseError
-mkMethodNotFound method = ResponseError
-  { errorCode = lspErrorCodeToInt MethodNotFound
-  , errorMessage = "Method not found: " <> method
-  , errorData = Nothing
-  }
+mkMethodNotFound method =
+  ResponseError
+    { errorCode = lspErrorCodeToInt MethodNotFound
+    , errorMessage = "Method not found: " <> method
+    , errorData = Nothing
+    }
 
 mkInvalidParams :: Text -> ResponseError
-mkInvalidParams msg = ResponseError
-  { errorCode = lspErrorCodeToInt InvalidParams
-  , errorMessage = msg
-  , errorData = Nothing
-  }
+mkInvalidParams msg =
+  ResponseError
+    { errorCode = lspErrorCodeToInt InvalidParams
+    , errorMessage = msg
+    , errorData = Nothing
+    }
 
 mkInternalError :: Text -> ResponseError
-mkInternalError msg = ResponseError
-  { errorCode = lspErrorCodeToInt InternalError
-  , errorMessage = msg
-  , errorData = Nothing
-  }
+mkInternalError msg =
+  ResponseError
+    { errorCode = lspErrorCodeToInt InternalError
+    , errorMessage = msg
+    , errorData = Nothing
+    }
 
 mkServerNotInitialized :: ResponseError
-mkServerNotInitialized = ResponseError
-  { errorCode = lspErrorCodeToInt ServerNotInitialized
-  , errorMessage = "Server not initialized"
-  , errorData = Nothing
-  }
+mkServerNotInitialized =
+  ResponseError
+    { errorCode = lspErrorCodeToInt ServerNotInitialized
+    , errorMessage = "Server not initialized"
+    , errorData = Nothing
+    }
 
 mkRequestCancelled :: RequestId -> ResponseError
-mkRequestCancelled _ = ResponseError
-  { errorCode = lspErrorCodeToInt RequestCancelled
-  , errorMessage = "Request was cancelled"
-  , errorData = Nothing
-  }
+mkRequestCancelled _ =
+  ResponseError
+    { errorCode = lspErrorCodeToInt RequestCancelled
+    , errorMessage = "Request was cancelled"
+    , errorData = Nothing
+    }
 
 -- | LSP message wrapper for JSON-RPC communication
 data LspMessage = RequestMessage RequestId Method Value
@@ -165,16 +181,20 @@ data ServerConfig = ServerConfig { configLogLevel   :: LogLevel
 
 -- | Default server configuration
 defaultServerConfig :: ServerConfig
-defaultServerConfig = ServerConfig
-  { configLogLevel = Info
-  , configLogFile = Nothing
-  , configMaxWorkers = 4
-  }
+defaultServerConfig =
+  ServerConfig
+    { configLogLevel = Info
+    , configLogFile = Nothing
+    , configMaxWorkers = 4
+    }
 
 -- | Error classification for recovery strategies
-data ErrorSeverity = Recoverable -- ^ Error that can be handled and processing can continue
-                   | Fatal -- ^ Error that requires server shutdown
-                   | Transient -- ^ Temporary error that may succeed on retry
+data ErrorSeverity -- | Error that can be handled and processing can continue
+                   = Recoverable
+                   -- | Error that requires server shutdown
+                   | Fatal
+                   -- | Temporary error that may succeed on retry
+                   | Transient
      deriving (Eq, Generic, Show)
 
 -- | Error recovery configuration
@@ -192,7 +212,7 @@ encodeLspMessage msg =
   let jsonBytes = encode msg
       contentLength = LBS.length jsonBytes
       header = L8.pack <| "Content-Length: " <> show contentLength <> "\r\n\r\n"
-  in header <> jsonBytes
+   in header <> jsonBytes
 
 -- | Decode a JSON-RPC message from ByteString
 decodeLspMessage :: ByteString -> Maybe LspMessage
@@ -203,40 +223,42 @@ parseContentLength :: ByteString -> Maybe Int
 parseContentLength input =
   case L8.lines input of
     [] -> Nothing
-    (firstLine:_) ->
+    (firstLine : _) ->
       let headerStr = L8.unpack firstLine
           prefix = "Content-Length: "
-      in if prefix `isPrefixOf` headerStr
-         then case reads (drop (length prefix) headerStr) of
-                [(len, rest)] | all (`elem` (" \r\n" :: String)) rest -> Just len
-                _ -> Nothing
-         else Nothing
+       in if prefix `isPrefixOf` headerStr
+            then case reads (drop (length prefix) headerStr) of
+              [(len, rest)] | all (`elem` (" \r\n" :: String)) rest -> Just len
+              _                                                     -> Nothing
+            else Nothing
 
 -- | Extract JSON content after Content-Length header
 extractJsonContent :: ByteString -> Maybe ByteString
 extractJsonContent input =
   let inputStr = L8.unpack input
       separator = "\r\n\r\n"
-  in case splitOn separator inputStr of
-       (_:rest:_) -> Just (L8.pack rest)
-       _          -> Nothing
+   in case splitOn separator inputStr of
+        (_ : rest : _) -> Just (L8.pack rest)
+        _              -> Nothing
   where
     splitOn :: String -> String -> [String]
     splitOn _ [] = [""]
     splitOn delim str =
       let (before, remainder) = breakOn delim str
-      in before : case remainder of
-                    [] -> []
-                    x -> if delim `isPrefixOf` x
-                         then splitOn delim (drop (length delim) x)
-                         else [x]
+       in before : case remainder of
+            [] -> []
+            x ->
+              if delim `isPrefixOf` x
+                then splitOn delim (drop (length delim) x)
+                else [x]
 
     breakOn :: String -> String -> (String, String)
     breakOn _ [] = ([], [])
-    breakOn delim str@(c:cs)
+    breakOn delim str@(c : cs)
       | delim `isPrefixOf` str = ([], str)
-      | otherwise = let (before, after) = breakOn delim cs
-                    in (c:before, after)
+      | otherwise =
+          let (before, after) = breakOn delim cs
+           in (c : before, after)
 
 -- | Parse a complete JSON-RPC message with Content-Length header
 parseJsonRpcMessage :: ByteString -> Maybe LspMessage

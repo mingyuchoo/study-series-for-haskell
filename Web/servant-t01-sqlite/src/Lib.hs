@@ -4,50 +4,72 @@
 {-# LANGUAGE TypeOperators     #-}
 
 module Lib
-    ( appRunner
-    ) where
+  ( appRunner
+  ) where
 
 -- -------------------------------------------------------------------
 
-import           Control.Exception              (try)
-import           Control.Monad.IO.Class         (liftIO)
+import Control.Exception (try)
+import Control.Monad.IO.Class (liftIO)
 
-import           Data.Aeson                     (FromJSON, ToJSON)
-import           Data.Text                      (Text, pack)
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text, pack)
 
-import           Database.SQLite.Simple         (Connection, FromRow (..),
-                                                 Only (Only), ToRow (..), close,
-                                                 execute, execute_, field,
-                                                 lastInsertRowId, open, query,
-                                                 query_)
+import Database.SQLite.Simple
+  ( Connection
+  , FromRow (..)
+  , Only (Only)
+  , ToRow (..)
+  , close
+  , execute
+  , execute_
+  , field
+  , lastInsertRowId
+  , open
+  , query
+  , query_
+  )
 
-import           GHC.Generics                   (Generic)
+import GHC.Generics (Generic)
 
-import           Lucid
+import Lucid
 
-import           Network.Wai                    (Application)
-import           Network.Wai.Application.Static (defaultWebAppSettings)
-import           Network.Wai.Handler.Warp       (run)
+import Network.Wai (Application)
+import Network.Wai.Application.Static (defaultWebAppSettings)
+import Network.Wai.Handler.Warp (run)
 
-import           Servant                        (Capture, Delete, Get, Handler,
-                                                 JSON, Post, Proxy (..), Put,
-                                                 Raw, ReqBody, Server, serve,
-                                                 serveDirectoryWith,
-                                                 type (:<|>) (..), type (:>))
-import           Servant.HTML.Lucid             (HTML)
+import Servant
+  ( Capture
+  , Delete
+  , Get
+  , Handler
+  , JSON
+  , Post
+  , Proxy (..)
+  , Put
+  , Raw
+  , ReqBody
+  , Server
+  , serve
+  , serveDirectoryWith
+  , type (:<|>) (..)
+  , type (:>)
+  )
+import Servant.HTML.Lucid (HTML)
 
 -- -------------------------------------------------------------------
 -- Data
 -- -------------------------------------------------------------------
 
-data User = User { userId   :: Int
-                 , userName :: String
-                 }
-     deriving (Eq, Generic, Show)
+data User = User
+  { userId   :: Int
+  , userName :: String
+  }
+  deriving (Eq, Generic, Show)
 
 -- Used for creating a new user without specifying userId
 newtype NewUser = NewUser { newUserName :: String }
-     deriving (Eq, Generic, Show)
+  deriving (Eq, Generic, Show)
 
 instance FromJSON NewUser
 
@@ -55,7 +77,7 @@ instance ToJSON NewUser
 
 -- Validation error response
 newtype ValidationError = ValidationError { errorMessage :: Text }
-     deriving (Eq, Generic, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON ValidationError
 
@@ -125,9 +147,14 @@ userRow user = tr_ $ do
   td_ (toHtml $ show $ userId user)
   td_ (toHtml $ userName user)
   td_ $ do
-    button_ [class_ "btn", onclick_ $ "editUser(" <> pack (show $ userId user) <> ", '" <> pack (userName user) <> "')"]
+    button_
+      [ class_ "btn"
+      , onclick_ $
+          "editUser(" <> pack (show $ userId user) <> ", '" <> pack (userName user) <> "')"
+      ]
       "Edit"
-    button_ [class_ "btn btn-danger", onclick_ $ "deleteUser(" <> pack (show $ userId user) <> ")"]
+    button_
+      [class_ "btn btn-danger", onclick_ $ "deleteUser(" <> pack (show $ userId user) <> ")"]
       "Delete"
 
 -- -------------------------------------------------------------------
@@ -150,15 +177,20 @@ app = serve appAPI appServer
 -- -------------------------------------------------------------------
 
 -- API for JSON endpoints
-type UserAPI = "users" :> Get '[JSON] [User]
-             :<|> "users" :> ReqBody '[JSON] NewUser :> Post '[JSON] (Either ValidationError [User])
-             :<|> "users" :> Capture "userId" Int :> Get  '[JSON] [User]
-             :<|> "users" :> Capture "userId" Int :> ReqBody '[JSON] User :> Put '[JSON] (Either ValidationError [User])
-             :<|> "users" :> Capture "userId" Int :> Delete '[JSON] [User]
+type UserAPI =
+  "users" :> Get '[JSON] [User]
+    :<|> "users" :> ReqBody '[JSON] NewUser :> Post '[JSON] (Either ValidationError [User])
+    :<|> "users" :> Capture "userId" Int :> Get '[JSON] [User]
+    :<|> "users"
+      :> Capture "userId" Int
+      :> ReqBody '[JSON] User
+      :> Put '[JSON] (Either ValidationError [User])
+    :<|> "users" :> Capture "userId" Int :> Delete '[JSON] [User]
 
 -- API for HTML web interface
-type WebAPI = Get '[HTML] (Html ())
-          :<|> "static" :> Raw
+type WebAPI =
+  Get '[HTML] (Html ())
+    :<|> "static" :> Raw
 
 -- Combined API
 type AppAPI = WebAPI :<|> UserAPI
@@ -182,11 +214,12 @@ webServer = indexHandler :<|> serveDirectoryWith (defaultWebAppSettings "static"
 
 -- JSON API server
 userServer :: Server UserAPI
-userServer = getAll
-  :<|> postOne
-  :<|> getOne
-  :<|> putOne
-  :<|> delOne
+userServer =
+  getAll
+    :<|> postOne
+    :<|> getOne
+    :<|> putOne
+    :<|> delOne
   where
     getAll :: Handler [User]
     getAll = liftIO selectAllUser
@@ -200,7 +233,7 @@ userServer = getAll
     putOne :: Int -> User -> Handler (Either ValidationError [User])
     putOne uId user = liftIO $ validateAndUpdateUser uId user
 
-    delOne ::  Int -> Handler [User]
+    delOne :: Int -> Handler [User]
     delOne uId = liftIO $ deleteOneUser uId
 
 -- -------------------------------------------------------------------
@@ -217,7 +250,9 @@ withConn action = do
 -- Migration
 migrate :: IO ()
 migrate = withConn $ \conn ->
-  execute_ conn "CREATE TABLE IF NOT EXISTS haskell_user (userId INTEGER PRIMARY KEY AUTOINCREMENT, userName TEXT)"
+  execute_
+    conn
+    "CREATE TABLE IF NOT EXISTS haskell_user (userId INTEGER PRIMARY KEY AUTOINCREMENT, userName TEXT)"
 
 -- Original insert function
 insertOneUser :: NewUser -> IO [User]
@@ -240,12 +275,16 @@ selectAllUser = withConn $ \conn ->
 updateOneUser :: Int -> User -> IO [User]
 updateOneUser uId user@(User _ uName) = withConn $ \conn -> do
   _ <- execute conn "UPDATE haskell_user SET userName = (?) WHERE userId = (?)" (uName, uId)
-  query conn "SELECT userId, userName FROM haskell_user WHERE userId = (?) AND userName = (?)" user
+  query
+    conn
+    "SELECT userId, userName FROM haskell_user WHERE userId = (?) AND userName = (?)"
+    user
 
 -- Original delete function
 deleteOneUser :: Int -> IO [User]
 deleteOneUser uId = withConn $ \conn -> do
-  user <- query conn "SELECT userId, userName FROM haskell_user WHERE userId = (?)" (Only uId)
+  user <-
+    query conn "SELECT userId, userName FROM haskell_user WHERE userId = (?)" (Only uId)
   execute conn "DELETE FROM haskell_user WHERE userId = (?)" (Only uId)
   return user
 
@@ -255,8 +294,10 @@ validateUsername name
   | null name = Left $ ValidationError "Username cannot be empty"
   | length name < 3 = Left $ ValidationError "Username must be at least 3 characters long"
   | length name > 50 = Left $ ValidationError "Username must be at most 50 characters long"
-  | not (all (\c -> c `elem` ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ [' ', '_', '-']) name) =
-      Left $ ValidationError "Username can only contain letters, numbers, spaces, underscores, and hyphens"
+  | not (all (\c -> c `elem` ['a' .. 'z'] ++ ['A' .. 'Z'] ++ ['0' .. '9'] ++ [' ', '_', '-']) name) =
+      Left $
+        ValidationError
+          "Username can only contain letters, numbers, spaces, underscores, and hyphens"
   | otherwise = Right ()
 
 -- Insert with validation
@@ -280,4 +321,3 @@ validateAndUpdateUser uId user = do
       case result of
         Left e -> return $ Left $ ValidationError $ pack $ "Database error: " ++ show e
         Right users -> return $ Right users
-

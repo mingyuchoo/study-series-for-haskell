@@ -1,16 +1,16 @@
 module DatasetSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import qualified Data.Aeson           as Aeson
-import qualified Data.ByteString.Lazy as BL
+import Data.Aeson qualified as Aeson
+import Data.ByteString.Lazy qualified as BL
 
-import           HaskellGPT.Dataset
+import HaskellGPT.Dataset
 
-import           System.FilePath      ((</>))
-import           System.IO.Temp       (withSystemTempDirectory)
+import System.FilePath ((</>))
+import System.IO.Temp (withSystemTempDirectory)
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do

@@ -1,7 +1,6 @@
 module App
   ( runApp
-  )
-where
+  ) where
 
 import App.Config (appConfig)
 import App.Model (initialModel)

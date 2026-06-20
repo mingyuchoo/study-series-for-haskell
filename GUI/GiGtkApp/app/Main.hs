@@ -1,8 +1,8 @@
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
-import           GiGtkApp.App
+import GiGtkApp.App
 
 main :: IO ()
 main = runApp

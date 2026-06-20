@@ -1,45 +1,46 @@
 {-# LANGUAGE BangPatterns #-}
 
 module HaskellGPT.FeedForward
-    ( FeedForward (..)
-    , newFeedForward
-    , relu
-    , reluDerivative
-    ) where
+  ( FeedForward (..)
+  , newFeedForward
+  , relu
+  , reluDerivative
+  ) where
 
-import           HaskellGPT.Adam       (Adam, initAdam, stepAdam)
-import           HaskellGPT.Types      (Layer (..), Matrix, heInit)
+import HaskellGPT.Adam (Adam, initAdam, stepAdam)
+import HaskellGPT.Types (Layer (..), Matrix, heInit)
 
-import           Numeric.LinearAlgebra (cmap, cols, konst, rows, tr)
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (cmap, cols, konst, rows, tr)
+import Numeric.LinearAlgebra qualified as LA
 
 -- | Feed-Forward Network data structure
 -- Implements a two-layer feed-forward network with ReLU activation
 -- Architecture: input -> linear -> ReLU -> linear -> output
-data FeedForward = FeedForward { ffW1               :: !(Matrix Float)
-                                 -- ^ First layer weights (embedding_dim x hidden_dim)
-                               , ffB1               :: !(Matrix Float)
-                                 -- ^ First layer bias (1 x hidden_dim)
-                               , ffW2               :: !(Matrix Float)
-                                 -- ^ Second layer weights (hidden_dim x embedding_dim)
-                               , ffB2               :: !(Matrix Float)
-                                 -- ^ Second layer bias (1 x embedding_dim)
-                               , ffCachedInput      :: !(Maybe (Matrix Float))
-                                 -- ^ Cached input for backward pass
-                               , ffCachedHiddenPre  :: !(Maybe (Matrix Float))
-                                 -- ^ Cached pre-activation hidden state
-                               , ffCachedHiddenPost :: !(Maybe (Matrix Float))
-                                 -- ^ Cached post-activation hidden state
-                               , ffOptimizerW1      :: !Adam
-                                 -- ^ Optimizer for W1
-                               , ffOptimizerB1      :: !Adam
-                                 -- ^ Optimizer for B1
-                               , ffOptimizerW2      :: !Adam
-                                 -- ^ Optimizer for W2
-                               , ffOptimizerB2      :: !Adam
-                                 -- ^ Optimizer for B2
-                               }
-     deriving (Show)
+data FeedForward = FeedForward
+  { ffW1               :: !(Matrix Float)
+    -- ^ First layer weights (embedding_dim x hidden_dim)
+  , ffB1               :: !(Matrix Float)
+    -- ^ First layer bias (1 x hidden_dim)
+  , ffW2               :: !(Matrix Float)
+    -- ^ Second layer weights (hidden_dim x embedding_dim)
+  , ffB2               :: !(Matrix Float)
+    -- ^ Second layer bias (1 x embedding_dim)
+  , ffCachedInput      :: !(Maybe (Matrix Float))
+    -- ^ Cached input for backward pass
+  , ffCachedHiddenPre  :: !(Maybe (Matrix Float))
+    -- ^ Cached pre-activation hidden state
+  , ffCachedHiddenPost :: !(Maybe (Matrix Float))
+    -- ^ Cached post-activation hidden state
+  , ffOptimizerW1      :: !Adam
+    -- ^ Optimizer for W1
+  , ffOptimizerB1      :: !Adam
+    -- ^ Optimizer for B1
+  , ffOptimizerW2      :: !Adam
+    -- ^ Optimizer for W2
+  , ffOptimizerB2      :: !Adam
+    -- ^ Optimizer for B2
+  }
+  deriving (Show)
 
 -- | Initialize feed-forward network with random weight initialization
 -- Uses He initialization for weights (suitable for ReLU activation)
@@ -70,19 +71,20 @@ newFeedForward embDim hidDim = do
   let optW2 = initAdam (hidDim, embDim)
   let optB2 = initAdam (1, embDim)
 
-  return FeedForward
-    { ffW1 = w1
-    , ffB1 = b1
-    , ffW2 = w2
-    , ffB2 = b2
-    , ffCachedInput = Nothing
-    , ffCachedHiddenPre = Nothing
-    , ffCachedHiddenPost = Nothing
-    , ffOptimizerW1 = optW1
-    , ffOptimizerB1 = optB1
-    , ffOptimizerW2 = optW2
-    , ffOptimizerB2 = optB2
-    }
+  return
+    FeedForward
+      { ffW1 = w1
+      , ffB1 = b1
+      , ffW2 = w2
+      , ffB2 = b2
+      , ffCachedInput = Nothing
+      , ffCachedHiddenPre = Nothing
+      , ffCachedHiddenPost = Nothing
+      , ffOptimizerW1 = optW1
+      , ffOptimizerB1 = optB1
+      , ffOptimizerW2 = optW2
+      , ffOptimizerB2 = optB2
+      }
 
 -- | ReLU activation function
 -- ReLU(x) = max(0, x)
@@ -115,68 +117,73 @@ addBias input bias =
   let nRows = rows input
       -- Repeat bias for each row
       biasRepeated = LA.fromRows $ replicate nRows (LA.flatten bias)
-  in input + biasRepeated
+   in input + biasRepeated
 
 -- Layer instance for FeedForward
 instance Layer FeedForward where
   -- Forward pass: input -> linear -> ReLU -> linear -> output
   forward ff input =
-    let -- First linear transformation: input · W1 + b1
-        hiddenPre = (input LA.<> ffW1 ff) `addBias` ffB1 ff
+    let
+      -- First linear transformation: input · W1 + b1
+      hiddenPre = (input LA.<> ffW1 ff) `addBias` ffB1 ff
 
-        -- ReLU activation
-        hiddenPost = relu hiddenPre
+      -- ReLU activation
+      hiddenPost = relu hiddenPre
 
-        -- Second linear transformation: hidden · W2 + b2
-        output = (hiddenPost LA.<> ffW2 ff) `addBias` ffB2 ff
+      -- Second linear transformation: hidden · W2 + b2
+      output = (hiddenPost LA.<> ffW2 ff) `addBias` ffB2 ff
 
-        -- Cache values for backward pass
-        ff' = ff
+      -- Cache values for backward pass
+      ff' =
+        ff
           { ffCachedInput = Just input
           , ffCachedHiddenPre = Just hiddenPre
           , ffCachedHiddenPost = Just hiddenPost
           }
-    in (ff', output)
+     in
+      (ff', output)
 
   -- Backward pass: compute gradients and update weights
   backward ff grads lr =
     case (ffCachedInput ff, ffCachedHiddenPre ff, ffCachedHiddenPost ff) of
       (Just input, Just hiddenPre, Just hiddenPost) ->
-        let -- Gradient w.r.t. output: grads (seq_len x embedding_dim)
-            -- output = hiddenPost · W2 + b2
+        let
+          -- Gradient w.r.t. output: grads (seq_len x embedding_dim)
+          -- output = hiddenPost · W2 + b2
 
-            -- Gradient w.r.t. b2: sum over batch dimension
-            -- d_b2 = sum(grads, axis=0)
-            dB2 = LA.asRow $ LA.fromList $ map (sum . LA.toList) $ LA.toColumns grads
+          -- Gradient w.r.t. b2: sum over batch dimension
+          -- d_b2 = sum(grads, axis=0)
+          dB2 = LA.asRow $ LA.fromList $ map (sum . LA.toList) $ LA.toColumns grads
 
-            -- Gradient w.r.t. W2: hiddenPost^T · grads
-            dW2 = tr hiddenPost LA.<> grads
+          -- Gradient w.r.t. W2: hiddenPost^T · grads
+          dW2 = tr hiddenPost LA.<> grads
 
-            -- Gradient w.r.t. hiddenPost: grads · W2^T
-            dHiddenPost = grads LA.<> tr (ffW2 ff)
+          -- Gradient w.r.t. hiddenPost: grads · W2^T
+          dHiddenPost = grads LA.<> tr (ffW2 ff)
 
-            -- Gradient through ReLU activation
-            -- d_hiddenPre = d_hiddenPost * ReLU'(hiddenPre)
-            reluGrad = reluDerivative hiddenPre
-            dHiddenPre = dHiddenPost * reluGrad
+          -- Gradient through ReLU activation
+          -- d_hiddenPre = d_hiddenPost * ReLU'(hiddenPre)
+          reluGrad = reluDerivative hiddenPre
+          dHiddenPre = dHiddenPost * reluGrad
 
-            -- Gradient w.r.t. b1: sum over batch dimension
-            dB1 = LA.asRow $ LA.fromList $ map (sum . LA.toList) $ LA.toColumns dHiddenPre
+          -- Gradient w.r.t. b1: sum over batch dimension
+          dB1 = LA.asRow $ LA.fromList $ map (sum . LA.toList) $ LA.toColumns dHiddenPre
 
-            -- Gradient w.r.t. W1: input^T · d_hiddenPre
-            dW1 = tr input LA.<> dHiddenPre
+          -- Gradient w.r.t. W1: input^T · d_hiddenPre
+          dW1 = tr input LA.<> dHiddenPre
 
-            -- Gradient w.r.t. input: d_hiddenPre · W1^T
-            inputGrads = dHiddenPre LA.<> tr (ffW1 ff)
+          -- Gradient w.r.t. input: d_hiddenPre · W1^T
+          inputGrads = dHiddenPre LA.<> tr (ffW1 ff)
 
-            -- Update parameters using Adam optimizer
-            (newOptW1, newW1) = stepAdam (ffOptimizerW1 ff) (ffW1 ff) dW1 lr
-            (newOptB1, newB1) = stepAdam (ffOptimizerB1 ff) (ffB1 ff) dB1 lr
-            (newOptW2, newW2) = stepAdam (ffOptimizerW2 ff) (ffW2 ff) dW2 lr
-            (newOptB2, newB2) = stepAdam (ffOptimizerB2 ff) (ffB2 ff) dB2 lr
+          -- Update parameters using Adam optimizer
+          (newOptW1, newW1) = stepAdam (ffOptimizerW1 ff) (ffW1 ff) dW1 lr
+          (newOptB1, newB1) = stepAdam (ffOptimizerB1 ff) (ffB1 ff) dB1 lr
+          (newOptW2, newW2) = stepAdam (ffOptimizerW2 ff) (ffW2 ff) dW2 lr
+          (newOptB2, newB2) = stepAdam (ffOptimizerB2 ff) (ffB2 ff) dB2 lr
 
-            -- Create updated feed-forward layer
-            ff' = ff
+          -- Create updated feed-forward layer
+          ff' =
+            ff
               { ffW1 = newW1
               , ffB1 = newB1
               , ffW2 = newW2
@@ -189,8 +196,8 @@ instance Layer FeedForward where
               , ffCachedHiddenPre = Nothing
               , ffCachedHiddenPost = Nothing
               }
-        in (ff', inputGrads)
-
+         in
+          (ff', inputGrads)
       _ -> error "FeedForward: backward called before forward"
 
   layerType _ = "FeedForward"
@@ -198,8 +205,8 @@ instance Layer FeedForward where
   parameters ff =
     let embDim = cols (ffW2 ff)
         hidDim = cols (ffW1 ff)
-        -- W1: embedding_dim x hidden_dim
+     in -- W1: embedding_dim x hidden_dim
         -- b1: 1 x hidden_dim
         -- W2: hidden_dim x embedding_dim
         -- b2: 1 x embedding_dim
-    in (embDim * hidDim) + hidDim + (hidDim * embDim) + embDim
+        (embDim * hidDim) + hidDim + (hidDim * embDim) + embDim

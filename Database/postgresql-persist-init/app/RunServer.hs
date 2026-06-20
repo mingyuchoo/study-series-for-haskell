@@ -8,7 +8,6 @@ import           System.Environment        (getArgs)
 import           System.IO                 (BufferMode (NoBuffering),
                                             hSetBuffering, stdout)
 
--- |
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
@@ -17,6 +16,6 @@ main = do
   where
     choose :: [String] -> IO ()
     choose [] = putStrLn "Running Basic Server" >> Server.runBasicServer
-    choose (a:_)
+    choose (a : _)
       | a == "cache" = putStrLn "Running Cache Server" >> Server.runCachedServer
-      | otherwise    = putStrLn "Running Esqueleto Server" >> Server.runEsqueletoServer
+      | otherwise = putStrLn "Running Esqueleto Server" >> Server.runEsqueletoServer

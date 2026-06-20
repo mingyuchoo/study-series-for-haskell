@@ -6,22 +6,27 @@
 --   LLM의 비결정적 응답을 결정적 영역으로 넘기려면
 --   반드시 이 관문을 통과해야 한다.
 module LlmSafe.Verify
-    ( -- * 단순 검증
-      verify
-    , verifyConfidence
-      -- * 구조적 검증 (파싱 + 검증)
-    , verifyWith
-      -- * 합의 기반 검증
-    , verifyByConsensus
-      -- * 유틸리티 파서
-    , parseIntFromText
-    ) where
+  ( -- * 단순 검증
+    verify
+  , verifyConfidence
+    -- * 구조적 검증 (파싱 + 검증)
+  , verifyWith
+    -- * 합의 기반 검증
+  , verifyByConsensus
+    -- * 유틸리티 파서
+  , parseIntFromText
+  ) where
 
-import           Data.List     (group, maximumBy, sort)
-import           Data.Ord      (comparing)
+import Data.List (group, maximumBy, sort)
+import Data.Ord (comparing)
 
-import           LlmSafe.Types (Confidence (..), LlmError (..),
-                                LlmResponse (..), Verified, mkVerified)
+import LlmSafe.Types
+  ( Confidence (..)
+  , LlmError (..)
+  , LlmResponse (..)
+  , Verified
+  , mkVerified
+  )
 
 -- | 단순 검증: 술어(predicate) 함수로 검증.
 --
@@ -115,10 +120,10 @@ verifyByConsensus parser responses =
                         <> " (과반수 "
                         <> show threshold
                         <> " 필요)"
- where
-  -- group은 빈 리스트를 반환하지 않으므로 각 원소는 비어있지 않다
-  headSafe (x : _) = x
-  headSafe [] = error "LlmSafe.Verify: impossible — group never produces empty sublists"
+  where
+    -- group은 빈 리스트를 반환하지 않으므로 각 원소는 비어있지 않다
+    headSafe (x : _) = x
+    headSafe [] = error "LlmSafe.Verify: impossible — group never produces empty sublists"
 
 -- | 텍스트에서 정수를 추출하는 유틸리티 파서.
 --

@@ -1,14 +1,14 @@
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
 -- -------------------------------------------------------------------
 -- Imports
 -- -------------------------------------------------------------------
 
-import           Lib
+import Lib
 
-import           System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
+import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 
 -- -------------------------------------------------------------------
 -- Application
@@ -16,7 +16,6 @@ import           System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 
 -- Main function
 
--- |
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering

@@ -1,17 +1,16 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 
 module OutputProjectionSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.OutputProjection
-import           HaskellGPT.Types            (Layer (..), embeddingDim)
+import HaskellGPT.OutputProjection
+import HaskellGPT.Types (Layer (..), embeddingDim)
 
-import           Numeric.LinearAlgebra       (cols, konst, rows, sumElements,
-                                              (><))
-import qualified Numeric.LinearAlgebra       as LA
+import Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -40,7 +39,6 @@ spec = do
       it "initializes with no cached input" $ do
         op <- newOutputProjection 128 1000
         opCachedInput op `shouldBe` Nothing
-
 
     describe "forward pass" $ do
       it "produces output with correct shape" $ do
@@ -85,14 +83,13 @@ spec = do
       it "applies bias correctly" $ do
         op <- newOutputProjection 32 50
         -- Set bias to a known value for testing
-        let opWithBias = op { opBOut = konst 1.0 (1, 50) }
-        let input = konst 0.0 (2, 32)  -- Zero input
+        let opWithBias = op {opBOut = konst 1.0 (1, 50)}
+        let input = konst 0.0 (2, 32) -- Zero input
         let (op', output) = forward opWithBias input
         -- With zero input and weights, output should be approximately bias
         -- (may not be exact due to random weight initialization)
         rows output `shouldBe` 2
         cols output `shouldBe` 50
-
 
     describe "backward pass" $ do
       it "produces input gradients with correct shape" $ do
@@ -107,7 +104,7 @@ spec = do
 
       it "updates weight matrix" $ do
         op <- newOutputProjection 64 100
-        let input = (5 >< 64) [1..320]
+        let input = (5 >< 64) [1 .. 320]
         let (op', output) = forward op input
 
         -- Get initial weights
@@ -124,7 +121,7 @@ spec = do
 
       it "updates bias vector" $ do
         op <- newOutputProjection 64 100
-        let input = (5 >< 64) [1..320]
+        let input = (5 >< 64) [1 .. 320]
         let (op', output) = forward op input
 
         -- Get initial bias
@@ -169,7 +166,7 @@ spec = do
 
       it "computes non-zero input gradients" $ do
         op <- newOutputProjection 32 50
-        let input = (3 >< 32) [1..96]
+        let input = (3 >< 32) [1 .. 96]
         let (op', output) = forward op input
 
         -- Backward pass with non-zero gradients
@@ -181,11 +178,10 @@ spec = do
         let sumGrads = abs $ sumElements inputGrads
         sumGrads `shouldSatisfy` (> 0)
 
-
     describe "training updates" $ do
       it "reduces loss with multiple training steps" $ do
         op <- newOutputProjection 32 50
-        let input = (3 >< 32) $ map (* 0.1) [1..96]
+        let input = (3 >< 32) $ map (* 0.1) [1 .. 96]
 
         -- Perform multiple training steps
         let trainStep op' = do

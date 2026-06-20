@@ -2,25 +2,25 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Infrastructure.Web.Server
-    ( startServer
-    ) where
+  ( startServer
+  ) where
 
-import           Application.UserService     (UserService (..))
+import Application.UserService (UserService (..))
 
-import           Control.Exception           (SomeException, try)
+import Control.Exception (SomeException, try)
 
-import           Data.Aeson                  (object, (.=))
+import Data.Aeson (object, (.=))
 
-import           Database.SQLite.Simple      (Error (..), SQLError (..))
+import Database.SQLite.Simple (Error (..), SQLError (..))
 
-import           Domain.UserModel            (User (..))
+import Domain.UserModel (User (..))
 
-import           Flow                        ((<|))
+import Flow ((<|))
 
-import           Network.HTTP.Types
-import           Network.Wai.Middleware.Cors
+import Network.HTTP.Types
+import Network.Wai.Middleware.Cors
 
-import           Web.Scotty
+import Web.Scotty
 
 -- | Web server implementation
 startServer :: (UserService a) => a -> IO ()
@@ -79,7 +79,8 @@ startServer userService =
               status status400
               json <| object ["error" .= ("name, email and password are required" :: String)]
           | otherwise -> do
-              result <- liftIO <| (try (createUser userService name email password) :: IO (Either SQLError User))
+              result <-
+                liftIO <| (try (createUser userService name email password) :: IO (Either SQLError User))
               case result of
                 Right user -> do
                   status status201
@@ -103,10 +104,14 @@ startServer userService =
               status status400
               json <| object ["error" .= ("name, email and password are required" :: String)]
           | otherwise -> do
-              result <- (liftIO <| (try (updateUser userService uid name email password) :: IO (Either SQLError Bool)))
+              result <-
+                ( liftIO <|
+                    (try (updateUser userService uid name email password) :: IO (Either SQLError Bool))
+                )
               case result of
                 Right success | success -> do
-                  userResult <- liftIO <| (try (getUserById userService uid) :: IO (Either SomeException (Maybe User)))
+                  userResult <-
+                    liftIO <| (try (getUserById userService uid) :: IO (Either SomeException (Maybe User)))
                   case userResult of
                     Right maybeUser ->
                       case maybeUser of

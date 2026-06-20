@@ -33,7 +33,6 @@ import           Language.LSP.Protocol.Types hiding (CompletionContext)
 import qualified Language.LSP.Protocol.Types as LSP
 import           Language.LSP.Server
 
-
 -- | Completion context information
 data CompletionContext = CompletionContext { ccPosition :: Position
                                            , ccPrefix :: Text
@@ -48,7 +47,9 @@ data CompletionContext = CompletionContext { ccPosition :: Position
 handleCompletion :: CompletionParams -> LspM ServerConfig [CompletionItem]
 handleCompletion (CompletionParams textDoc position _workDoneToken _partialResultToken context) = do
   let uri = textDoc ^. L.uri
-  liftIO <| putStrLn <| "Completion request at position: " <> show position <> " in " <> show uri
+  liftIO <|
+    putStrLn <|
+      "Completion request at position: " <> show position <> " in " <> show uri
 
   -- Get document content from server state
   maybeContent <- getDocumentContent uri
@@ -58,7 +59,9 @@ handleCompletion (CompletionParams textDoc position _workDoneToken _partialResul
       liftIO <| putStrLn "Document not found in server state"
       return []
     Just content -> do
-      liftIO <| putStrLn <| "Processing completion for document with " <> show (T.length content) <> " characters"
+      liftIO <|
+        putStrLn <|
+          "Processing completion for document with " <> show (T.length content) <> " characters"
 
       -- Parse the document
       case parseModule content of
@@ -77,15 +80,17 @@ handleCompletion (CompletionParams textDoc position _workDoneToken _partialResul
           return completionItems
 
 -- | Determine completion context from document content and position
-determineCompletionContext :: Text -> Position -> Maybe LSP.CompletionContext -> CompletionContext
+determineCompletionContext
+  :: Text -> Position -> Maybe LSP.CompletionContext -> CompletionContext
 determineCompletionContext content position maybeContext =
   let lines' = T.lines content
       lineNum = fromIntegral (position ^. L.line)
       charNum = fromIntegral (position ^. L.character)
 
-      currentLine = if lineNum < length lines'
-                   then lines' !! lineNum
-                   else ""
+      currentLine =
+        if lineNum < length lines'
+          then lines' !! lineNum
+          else ""
 
       -- Extract text before cursor position
       textBeforeCursor = T.take charNum currentLine
@@ -97,13 +102,12 @@ determineCompletionContext content position maybeContext =
 
       -- Extract prefix and module qualifier
       (prefix, moduleQualifier) = extractPrefixAndModule textBeforeCursor
-
-  in CompletionContext
-    { ccPosition = position
-    , ccPrefix = prefix
-    , ccModule = moduleQualifier
-    , ccTriggerKind = triggerKind
-    }
+   in CompletionContext
+        { ccPosition = position
+        , ccPrefix = prefix
+        , ccModule = moduleQualifier
+        , ccTriggerKind = triggerKind
+        }
 
 -- | Extract prefix and module qualifier from text before cursor
 extractPrefixAndModule :: Text -> (Text, Maybe Text)
@@ -114,30 +118,34 @@ extractPrefixAndModule textBeforeCursor =
       prefix = T.reverse prefixReversed
 
       -- Check if there's a module qualifier (look for '.' before the identifier)
-      moduleQualifier = if T.isPrefixOf "." remaining
-                       then extractModuleQualifier (T.drop 1 remaining)
-                       else Nothing
-
-  in (prefix, moduleQualifier)
+      moduleQualifier =
+        if T.isPrefixOf "." remaining
+          then extractModuleQualifier (T.drop 1 remaining)
+          else Nothing
+   in (prefix, moduleQualifier)
   where
-    isIdentifierChar c = (c >= 'a' && c <= 'z') ||
-                        (c >= 'A' && c <= 'Z') ||
-                        (c >= '0' && c <= '9') ||
-                        c == '_' || c == '\''
+    isIdentifierChar c =
+      (c >= 'a' && c <= 'z')
+        || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9')
+        || c == '_'
+        || c == '\''
 
 -- | Extract module qualifier from reversed text
 extractModuleQualifier :: Text -> Maybe Text
 extractModuleQualifier reversedText =
   let (moduleReversed, _) = T.span isModuleChar reversedText
       moduleName = T.reverse moduleReversed
-  in if T.null moduleName
-     then Nothing
-     else Just moduleName
+   in if T.null moduleName
+        then Nothing
+        else Just moduleName
   where
-    isModuleChar c = (c >= 'a' && c <= 'z') ||
-                    (c >= 'A' && c <= 'Z') ||
-                    (c >= '0' && c <= '9') ||
-                    c == '_' || c == '.'
+    isModuleChar c =
+      (c >= 'a' && c <= 'z')
+        || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9')
+        || c == '_'
+        || c == '.'
 
 -- | Generate completion items based on parsed module and completion context
 getCompletions :: ParsedModule -> CompletionContext -> LspM ServerConfig [CompletionItem]
@@ -176,31 +184,115 @@ getModuleCompletions moduleName = do
   -- Return completions based on well-known modules
   let completions = case normalizedModuleName of
         "Data.List" ->
-          [ createCompletionItemWithDoc "sort" (Just "Ord a => [a] -> [a]") CompletionItemKind_Function (Just "Sort a list in ascending order")
-          , createCompletionItemWithDoc "filter" (Just "(a -> Bool) -> [a] -> [a]") CompletionItemKind_Function (Just "Filter elements that satisfy a predicate")
-          , createCompletionItemWithDoc "map" (Just "(a -> b) -> [a] -> [b]") CompletionItemKind_Function (Just "Apply a function to each element of a list")
-          , createCompletionItemWithDoc "length" (Just "Foldable t => t a -> Int") CompletionItemKind_Function (Just "Return the length of a structure")
-          , createCompletionItemWithDoc "reverse" (Just "[a] -> [a]") CompletionItemKind_Function (Just "Reverse a list")
-          , createCompletionItemWithDoc "head" (Just "[a] -> a") CompletionItemKind_Function (Just "Extract the first element of a list")
-          , createCompletionItemWithDoc "tail" (Just "[a] -> [a]") CompletionItemKind_Function (Just "Extract all but the first element of a list")
-          , createCompletionItemWithDoc "null" (Just "Foldable t => t a -> Bool") CompletionItemKind_Function (Just "Test whether a structure is empty")
+          [ createCompletionItemWithDoc
+              "sort"
+              (Just "Ord a => [a] -> [a]")
+              CompletionItemKind_Function
+              (Just "Sort a list in ascending order")
+          , createCompletionItemWithDoc
+              "filter"
+              (Just "(a -> Bool) -> [a] -> [a]")
+              CompletionItemKind_Function
+              (Just "Filter elements that satisfy a predicate")
+          , createCompletionItemWithDoc
+              "map"
+              (Just "(a -> b) -> [a] -> [b]")
+              CompletionItemKind_Function
+              (Just "Apply a function to each element of a list")
+          , createCompletionItemWithDoc
+              "length"
+              (Just "Foldable t => t a -> Int")
+              CompletionItemKind_Function
+              (Just "Return the length of a structure")
+          , createCompletionItemWithDoc
+              "reverse"
+              (Just "[a] -> [a]")
+              CompletionItemKind_Function
+              (Just "Reverse a list")
+          , createCompletionItemWithDoc
+              "head"
+              (Just "[a] -> a")
+              CompletionItemKind_Function
+              (Just "Extract the first element of a list")
+          , createCompletionItemWithDoc
+              "tail"
+              (Just "[a] -> [a]")
+              CompletionItemKind_Function
+              (Just "Extract all but the first element of a list")
+          , createCompletionItemWithDoc
+              "null"
+              (Just "Foldable t => t a -> Bool")
+              CompletionItemKind_Function
+              (Just "Test whether a structure is empty")
           ]
         "Data.Map" ->
-          [ createCompletionItemWithDoc "empty" (Just "Map k a") CompletionItemKind_Function (Just "The empty map")
-          , createCompletionItemWithDoc "insert" (Just "Ord k => k -> a -> Map k a -> Map k a") CompletionItemKind_Function (Just "Insert a key-value pair into a map")
-          , createCompletionItemWithDoc "lookup" (Just "Ord k => k -> Map k a -> Maybe a") CompletionItemKind_Function (Just "Look up a value by key")
-          , createCompletionItemWithDoc "keys" (Just "Map k a -> [k]") CompletionItemKind_Function (Just "Return all keys of the map")
-          , createCompletionItemWithDoc "values" (Just "Map k a -> [a]") CompletionItemKind_Function (Just "Return all values of the map")
-          , createCompletionItemWithDoc "fromList" (Just "Ord k => [(k, a)] -> Map k a") CompletionItemKind_Function (Just "Build a map from a list of key-value pairs")
-          , createCompletionItemWithDoc "toList" (Just "Map k a -> [(k, a)]") CompletionItemKind_Function (Just "Convert a map to a list of key-value pairs")
+          [ createCompletionItemWithDoc
+              "empty"
+              (Just "Map k a")
+              CompletionItemKind_Function
+              (Just "The empty map")
+          , createCompletionItemWithDoc
+              "insert"
+              (Just "Ord k => k -> a -> Map k a -> Map k a")
+              CompletionItemKind_Function
+              (Just "Insert a key-value pair into a map")
+          , createCompletionItemWithDoc
+              "lookup"
+              (Just "Ord k => k -> Map k a -> Maybe a")
+              CompletionItemKind_Function
+              (Just "Look up a value by key")
+          , createCompletionItemWithDoc
+              "keys"
+              (Just "Map k a -> [k]")
+              CompletionItemKind_Function
+              (Just "Return all keys of the map")
+          , createCompletionItemWithDoc
+              "values"
+              (Just "Map k a -> [a]")
+              CompletionItemKind_Function
+              (Just "Return all values of the map")
+          , createCompletionItemWithDoc
+              "fromList"
+              (Just "Ord k => [(k, a)] -> Map k a")
+              CompletionItemKind_Function
+              (Just "Build a map from a list of key-value pairs")
+          , createCompletionItemWithDoc
+              "toList"
+              (Just "Map k a -> [(k, a)]")
+              CompletionItemKind_Function
+              (Just "Convert a map to a list of key-value pairs")
           ]
         "Control.Monad" ->
-          [ createCompletionItemWithDoc "when" (Just "Applicative f => Bool -> f () -> f ()") CompletionItemKind_Function (Just "Conditional execution of applicative expressions")
-          , createCompletionItemWithDoc "unless" (Just "Applicative f => Bool -> f () -> f ()") CompletionItemKind_Function (Just "The reverse of when")
-          , createCompletionItemWithDoc "mapM" (Just "(Traversable t, Monad m) => (a -> m b) -> t a -> m (t b)") CompletionItemKind_Function (Just "Map each element to a monadic action and collect results")
-          , createCompletionItemWithDoc "mapM_" (Just "(Foldable t, Monad m) => (a -> m b) -> t a -> m ()") CompletionItemKind_Function (Just "Map each element to a monadic action, ignoring results")
-          , createCompletionItemWithDoc "forM" (Just "(Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)") CompletionItemKind_Function (Just "mapM with arguments flipped")
-          , createCompletionItemWithDoc "forM_" (Just "(Foldable t, Monad m) => t a -> (a -> m b) -> m ()") CompletionItemKind_Function (Just "mapM_ with arguments flipped")
+          [ createCompletionItemWithDoc
+              "when"
+              (Just "Applicative f => Bool -> f () -> f ()")
+              CompletionItemKind_Function
+              (Just "Conditional execution of applicative expressions")
+          , createCompletionItemWithDoc
+              "unless"
+              (Just "Applicative f => Bool -> f () -> f ()")
+              CompletionItemKind_Function
+              (Just "The reverse of when")
+          , createCompletionItemWithDoc
+              "mapM"
+              (Just "(Traversable t, Monad m) => (a -> m b) -> t a -> m (t b)")
+              CompletionItemKind_Function
+              (Just "Map each element to a monadic action and collect results")
+          , createCompletionItemWithDoc
+              "mapM_"
+              (Just "(Foldable t, Monad m) => (a -> m b) -> t a -> m ()")
+              CompletionItemKind_Function
+              (Just "Map each element to a monadic action, ignoring results")
+          , createCompletionItemWithDoc
+              "forM"
+              (Just "(Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)")
+              CompletionItemKind_Function
+              (Just "mapM with arguments flipped")
+          , createCompletionItemWithDoc
+              "forM_"
+              (Just "(Foldable t, Monad m) => t a -> (a -> m b) -> m ()")
+              CompletionItemKind_Function
+              (Just "mapM_ with arguments flipped")
           ]
         _ ->
           -- For unknown modules, return empty list
@@ -236,18 +328,17 @@ resolveQualifiedModuleName parsedModule qualifierName =
 
       -- Look for qualified imports with aliases
       matchingImport = findMatchingImport imports qualifierName
-
-  in case matchingImport of
-    Just moduleName -> moduleName
-    Nothing         -> normalizeModuleName qualifierName
+   in case matchingImport of
+        Just moduleName -> moduleName
+        Nothing         -> normalizeModuleName qualifierName
 
 -- | Find matching import for a qualifier name
 findMatchingImport :: [Analysis.Parser.Import] -> Text -> Maybe Text
 findMatchingImport imports qualifierName =
   let matchingImports = filter (matchesQualifier qualifierName) imports
-  in case matchingImports of
-    (imp:_) -> Just (Analysis.Parser.importModule imp)
-    []      -> Nothing
+   in case matchingImports of
+        (imp : _) -> Just (Analysis.Parser.importModule imp)
+        []        -> Nothing
 
 -- | Check if an import matches a qualifier name
 matchesQualifier :: Text -> Analysis.Parser.Import -> Bool
@@ -258,12 +349,12 @@ matchesQualifier qualifierName imp =
     -- If no alias, check if it's a qualified import and the qualifier matches the module name
     Nothing ->
       if Analysis.Parser.importQualified imp
-      then
-        -- For qualified imports without alias, use the last part of module name
-        let moduleName = Analysis.Parser.importModule imp
-            lastPart = T.takeWhileEnd (/= '.') moduleName
-        in lastPart == qualifierName
-      else False
+        then
+          -- For qualified imports without alias, use the last part of module name
+          let moduleName = Analysis.Parser.importModule imp
+              lastPart = T.takeWhileEnd (/= '.') moduleName
+           in lastPart == qualifierName
+        else False
 
 -- | Convert SymbolInfo to CompletionItem
 -- Includes type signature in completion detail and adds documentation when available
@@ -280,8 +371,7 @@ symbolInfoToCompletionItem symbolInfo =
       docMarkup = case documentation of
         Just doc -> Just <| InR <| MarkupContent MarkupKind_Markdown doc
         Nothing  -> Nothing
-
-  in baseItem & L.documentation .~ docMarkup
+   in baseItem & L.documentation .~ docMarkup
 
 -- | Convert SymbolKind to CompletionItemKind
 symbolKindToCompletionItemKind :: SymbolKind -> CompletionItemKind
@@ -295,55 +385,60 @@ symbolKindToCompletionItemKind symbolKind =
     _                   -> CompletionItemKind_Text
 
 -- | Create a completion item with documentation
-createCompletionItemWithDoc :: Text -> Maybe Text -> CompletionItemKind -> Maybe Text -> CompletionItem
+createCompletionItemWithDoc
+  :: Text -> Maybe Text -> CompletionItemKind -> Maybe Text -> CompletionItem
 createCompletionItemWithDoc name maybeTypeSignature kind maybeDoc =
   let baseItem = createCompletionItem name maybeTypeSignature kind
       docMarkup = case maybeDoc of
         Just doc -> Just <| InR <| MarkupContent MarkupKind_Markdown doc
         Nothing  -> Nothing
-  in baseItem & L.documentation .~ docMarkup
+   in baseItem & L.documentation .~ docMarkup
 
 -- | Create a completion item with the given name, type signature, and kind
 -- Includes type signature in completion detail and adds documentation when available
 createCompletionItem :: Text -> Maybe Text -> CompletionItemKind -> CompletionItem
 createCompletionItem name maybeTypeSignature kind =
-  let -- Format the detail with type signature for functions
-      detailText = case (kind, maybeTypeSignature) of
-        (CompletionItemKind_Function, Just typeSignature) ->
-          Just <| name <> " :: " <> typeSignature
-        (_, Just typeSignature) -> Just typeSignature
-        _ -> Nothing
+  let
+    -- Format the detail with type signature for functions
+    detailText = case (kind, maybeTypeSignature) of
+      (CompletionItemKind_Function, Just typeSignature) ->
+        Just <| name <> " :: " <> typeSignature
+      (_, Just typeSignature) -> Just typeSignature
+      _ -> Nothing
 
-      -- Set appropriate insert text based on kind
-      insertText = case kind of
-        CompletionItemKind_Function -> Just name
-        _                           -> Just name
-
-  in LSP.CompletionItem
-    { _label = name
-    , _labelDetails = Nothing
-    , _kind = Just kind
-    , _tags = Nothing
-    , _detail = detailText
-    , _documentation = Nothing
-    , _deprecated = Nothing
-    , _preselect = Nothing
-    , _sortText = Nothing
-    , _filterText = Nothing
-    , _insertText = insertText
-    , _insertTextFormat = Just InsertTextFormat_PlainText
-    , _insertTextMode = Nothing
-    , _textEdit = Nothing
-    , _textEditText = Nothing
-    , _additionalTextEdits = Nothing
-    , _commitCharacters = Nothing
-    , _command = Nothing
-    , _data_ = Nothing
-    }
+    -- Set appropriate insert text based on kind
+    insertText = case kind of
+      CompletionItemKind_Function -> Just name
+      _                           -> Just name
+   in
+    LSP.CompletionItem
+      { _label = name
+      , _labelDetails = Nothing
+      , _kind = Just kind
+      , _tags = Nothing
+      , _detail = detailText
+      , _documentation = Nothing
+      , _deprecated = Nothing
+      , _preselect = Nothing
+      , _sortText = Nothing
+      , _filterText = Nothing
+      , _insertText = insertText
+      , _insertTextFormat = Just InsertTextFormat_PlainText
+      , _insertTextMode = Nothing
+      , _textEdit = Nothing
+      , _textEditText = Nothing
+      , _additionalTextEdits = Nothing
+      , _commitCharacters = Nothing
+      , _command = Nothing
+      , _data_ = Nothing
+      }
 
 -- | Filter completion items by prefix
 filterCompletionsByPrefix :: Text -> [CompletionItem] -> [CompletionItem]
 filterCompletionsByPrefix prefix completionItems =
   if T.null prefix
-  then completionItems
-  else filter (\item -> T.toLower prefix `T.isPrefixOf` T.toLower (item ^. L.label)) completionItems
+    then completionItems
+    else
+      filter
+        (\item -> T.toLower prefix `T.isPrefixOf` T.toLower (item ^. L.label))
+        completionItems

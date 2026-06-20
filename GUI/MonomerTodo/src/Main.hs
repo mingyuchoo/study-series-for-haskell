@@ -3,41 +3,43 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main
-    where
+  where
 
-import           Control.Lens
-import           Control.Monad          (filterM, when)
-import           Control.Monad.IO.Class
+import Control.Lens
+import Control.Monad (filterM, when)
+import Control.Monad.IO.Class
 
-import           Data.Default
-import           Data.Maybe             (fromMaybe, listToMaybe)
-import           Data.Text              (Text)
-import qualified Data.Text              as T
+import Data.Default
+import Data.Maybe (fromMaybe, listToMaybe)
+import Data.Text (Text)
+import Data.Text qualified as T
 
-import           Monomer
-import qualified Monomer.Lens           as L
+import Monomer
+import Monomer.Lens qualified as L
 
-import           System.Directory       (createDirectoryIfMissing,
-                                         doesDirectoryExist,
-                                         getAppUserDataDirectory,
-                                         getCurrentDirectory)
-import           System.Environment     (getExecutablePath)
-import           System.FilePath        ((</>), takeDirectory)
-import           System.IO              (BufferMode (NoBuffering),
-                                         hSetBuffering, stdout)
+import System.Directory
+  ( createDirectoryIfMissing
+  , doesDirectoryExist
+  , getAppUserDataDirectory
+  , getCurrentDirectory
+  )
+import System.Environment (getExecutablePath)
+import System.FilePath (takeDirectory, (</>))
+import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 
-import           TextShow
+import TextShow
 
-import           TodoLogic
+import TodoLogic
 
-import           TodoRepo
+import TodoRepo
 
-import           TodoRepoSqlite
+import TodoRepoSqlite
 
-import           TodoTypes
+import TodoTypes
 
 -- | Todo 위젯 환경 타입
 type TodoWenv = WidgetEnv TodoModel TodoEvt
+
 -- | Todo 위젯 노드 타입
 type TodoNode = WidgetNode TodoModel TodoEvt
 
@@ -65,9 +67,13 @@ buildUI wenv model = widgetTree
         dualSlide content = outer
           where
             inner = animSlideIn_ [slideTop, duration 200] content `nodeKey` "animEditIn"
-            outer = animSlideOut_ [slideTop, duration 200, onFinished TodoHideEditDone] inner `nodeKey` "animEditOut"
+            outer =
+              animSlideOut_ [slideTop, duration 200, onFinished TodoHideEditDone] inner
+                `nodeKey` "animEditOut"
 
-        content = vstack [dualSlide (todoEdit wenv model), filler] `styleBasic` [bgColor (grayDark & L.a .~ 0.5)]
+        content =
+          vstack [dualSlide (todoEdit wenv model), filler]
+            `styleBasic` [bgColor (grayDark & L.a .~ 0.5)]
 
     confirmDeleteLayer = case model ^. action of
       TodoConfirmingDelete idx todo -> [popup]
@@ -78,32 +84,43 @@ buildUI wenv model = widgetTree
 
     mainLayer =
       vstack
-        [ countLabel,
-          scroll_ [] (todoList `styleBasic` [padding 20, paddingT 5]),
-          filler,
-          box_ [alignRight] newButton `styleBasic` [bgColor sectionBg, padding 20]
+        [ countLabel
+        , scroll_ [] (todoList `styleBasic` [padding 20, paddingT 5])
+        , filler
+        , box_ [alignRight] newButton `styleBasic` [bgColor sectionBg, padding 20]
         ]
 
     widgetTree = zstack ([mainLayer, editLayer `nodeVisible` isEditing] <> confirmDeleteLayer)
 
 -- 이벤트 핸들러 (로직 처리)
-handleEvent ::
-  SqliteEnv ->
-  TodoWenv ->
-  TodoNode ->
-  TodoModel ->
-  TodoEvt ->
-  [EventResponse TodoModel TodoEvt TodoModel TodoEvt]
+handleEvent
+  :: SqliteEnv
+  -> TodoWenv
+  -> TodoNode
+  -> TodoModel
+  -> TodoEvt
+  -> [EventResponse TodoModel TodoEvt TodoModel TodoEvt]
 handleEvent env wenv node model evt =
   case evt of
     TodoInit -> [Producer (loadTodosProducer env), SetFocusOnKey "todoNew"]
-    TodoNew -> [Event TodoShowEdit, Model $ model & action .~ TodoAdding & activeTodo .~ def, SetFocusOnKey "todoDesc"]
-    TodoEdit idx td -> [Event TodoShowEdit, Model $ model & action .~ TodoEditing idx & activeTodo .~ td, SetFocusOnKey "todoDesc"]
-    TodoAdd -> [Producer (addTodoProducer env wenv model), Event TodoHideEdit, SetFocusOnKey "todoNew"]
-    TodoSave idx -> [Producer (updateTodoProducer env idx model), Event TodoHideEdit, SetFocusOnKey "todoNew"]
+    TodoNew ->
+      [ Event TodoShowEdit
+      , Model $ model & action .~ TodoAdding & activeTodo .~ def
+      , SetFocusOnKey "todoDesc"
+      ]
+    TodoEdit idx td ->
+      [ Event TodoShowEdit
+      , Model $ model & action .~ TodoEditing idx & activeTodo .~ td
+      , SetFocusOnKey "todoDesc"
+      ]
+    TodoAdd ->
+      [Producer (addTodoProducer env wenv model), Event TodoHideEdit, SetFocusOnKey "todoNew"]
+    TodoSave idx ->
+      [Producer (updateTodoProducer env idx model), Event TodoHideEdit, SetFocusOnKey "todoNew"]
     TodoCancel -> [Event TodoHideEdit, Model $ model & activeTodo .~ def, SetFocusOnKey "todoNew"]
     TodoDeleteBegin idx todo -> [Model (model & action .~ TodoConfirmingDelete idx todo)]
-    TodoConfirmDelete idx todo -> [Model (model & action .~ TodoNone), Message (WidgetKey (todoRowKey todo)) AnimationStart]
+    TodoConfirmDelete idx todo ->
+      [Model (model & action .~ TodoNone), Message (WidgetKey (todoRowKey todo)) AnimationStart]
     TodoCancelDelete -> [Model (model & action .~ TodoNone)]
     TodoDelete idx todo -> [Producer (deleteTodoProducer env todo), SetFocusOnKey "todoNew"]
     TodosLoaded loadedTodos -> [Model $ model & todos .~ loadedTodos]
@@ -112,6 +129,7 @@ handleEvent env wenv node model evt =
     TodoHideEdit -> [Message "animEditIn" AnimationStop, Message "animEditOut" AnimationStart]
 
 -- Producer 함수들 (비동기 IO 작업)
+
 -- | 모든 할일을 로드하는 Producer
 loadTodosProducer :: SqliteEnv -> (TodoEvt -> IO ()) -> IO ()
 loadTodosProducer env sendMsg = do
@@ -142,19 +160,20 @@ deleteTodoProducer env todo sendMsg = do
   sendMsg (TodosLoaded todos)
 
 -- 초기 데이터 (데이터베이스가 비어있을 때만 사용)
+
 -- | 초기 샘플 할일 목록
 initialTodos :: [Todo]
 initialTodos = todos
   where
     items =
-      [ Todo 1 Home Done "Tidy up the room",
-        Todo 2 Home Pending "Buy groceries",
-        Todo 3 Home Pending "Pay the bills",
-        Todo 4 Home Pending "Repair kitchen sink",
-        Todo 5 Work Done "Check the status of project A",
-        Todo 6 Work Pending "Finish project B",
-        Todo 7 Work Pending "Send email to clients",
-        Todo 8 Work Pending "Contact cloud services provider"
+      [ Todo 1 Home Done "Tidy up the room"
+      , Todo 2 Home Pending "Buy groceries"
+      , Todo 3 Home Pending "Pay the bills"
+      , Todo 4 Home Pending "Repair kitchen sink"
+      , Todo 5 Work Done "Check the status of project A"
+      , Todo 6 Work Pending "Finish project B"
+      , Todo 7 Work Pending "Send email to clients"
+      , Todo 8 Work Pending "Contact cloud services provider"
       ]
     todos = items
 
@@ -183,14 +202,14 @@ main = do
       (config assetsDir)
   where
     config assetsDir =
-      [ appWindowTitle "Todo list",
-        appWindowIcon (pathText $ assetsDir </> "images" </> "icon.png"),
-        appTheme customDarkTheme,
-        appFontDef "Regular" (pathText $ assetsDir </> "fonts" </> "Roboto-Regular.ttf"),
-        appFontDef "Medium" (pathText $ assetsDir </> "fonts" </> "Roboto-Medium.ttf"),
-        appFontDef "Bold" (pathText $ assetsDir </> "fonts" </> "Roboto-Bold.ttf"),
-        appFontDef "Remix" (pathText $ assetsDir </> "fonts" </> "remixicon.ttf"),
-        appInitEvent TodoInit
+      [ appWindowTitle "Todo list"
+      , appWindowIcon (pathText $ assetsDir </> "images" </> "icon.png")
+      , appTheme customDarkTheme
+      , appFontDef "Regular" (pathText $ assetsDir </> "fonts" </> "Roboto-Regular.ttf")
+      , appFontDef "Medium" (pathText $ assetsDir </> "fonts" </> "Roboto-Medium.ttf")
+      , appFontDef "Bold" (pathText $ assetsDir </> "fonts" </> "Roboto-Bold.ttf")
+      , appFontDef "Remix" (pathText $ assetsDir </> "fonts" </> "remixicon.ttf")
+      , appInitEvent TodoInit
       ]
 
 pathText :: FilePath -> Text
@@ -215,18 +234,25 @@ resolveAssetsDir = do
   return . fromMaybe (cwd </> "assets") . listToMaybe $ existing
 
 -- 스타일 상수
+
 -- | 완료된 할일 배경색
 doneBg = rgbHex "#CFF6E2"
+
 -- | 완료된 할일 글자색
 doneFg = rgbHex "#459562"
+
 -- | 대기중인 할일 배경색
 pendingBg = rgbHex "#F5F0CC"
+
 -- | 대기중인 할일 글자색
 pendingFg = rgbHex "#827330"
+
 -- | 밝은 회색
 grayLight = rgbHex "#9E9E9E"
+
 -- | 어두운 회색
 grayDark = rgbHex "#393939"
+
 -- | 더 어두운 회색
 grayDarker = rgbHex "#2E2E2E"
 
@@ -263,11 +289,24 @@ todoRow wenv model idx t = animRow `nodeKey` todoKey
 
     todoStatus =
       labelS (t ^. status)
-        `styleBasic` [textFont "Medium", textSize 12, textAscender, textColor todoFg, padding 6, paddingH 8, radius 12, bgColor todoBg]
+        `styleBasic` [ textFont "Medium"
+                     , textSize 12
+                     , textAscender
+                     , textColor todoFg
+                     , padding 6
+                     , paddingH 8
+                     , radius 12
+                     , bgColor todoBg
+                     ]
 
     rowButton caption action =
       button caption action
-        `styleBasic` [textFont "Remix", textMiddle, textColor rowButtonColor, bgColor transparent, border 0 transparent]
+        `styleBasic` [ textFont "Remix"
+                     , textMiddle
+                     , textColor rowButtonColor
+                     , bgColor transparent
+                     , border 0 transparent
+                     ]
         `styleHover` [bgColor sectionBg]
         `styleFocus` [bgColor (sectionBg & L.a .~ 0.5)]
         `styleFocusHover` [bgColor sectionBg]
@@ -275,16 +314,16 @@ todoRow wenv model idx t = animRow `nodeKey` todoKey
     todoInfo =
       hstack
         [ vstack
-            [ labelS (t ^. todoType) `styleBasic` [textSize 12, textColor darkGray],
-              spacer_ [width 5],
-              label (t ^. description) `styleBasic` [textThroughline_ todoDone]
-            ],
-          filler,
-          box_ [alignRight] todoStatus `styleBasic` [width 80],
-          spacer,
-          rowButton remixEdit2Line (TodoEdit idx t),
-          spacer,
-          rowButton remixDeleteBinLine (TodoDeleteBegin idx t)
+            [ labelS (t ^. todoType) `styleBasic` [textSize 12, textColor darkGray]
+            , spacer_ [width 5]
+            , label (t ^. description) `styleBasic` [textThroughline_ todoDone]
+            ]
+        , filler
+        , box_ [alignRight] todoStatus `styleBasic` [width 80]
+        , spacer
+        , rowButton remixEdit2Line (TodoEdit idx t)
+        , spacer
+        , rowButton remixDeleteBinLine (TodoDeleteBegin idx t)
         ]
         `styleBasic` [paddingV 15, styleIf (not isLast) $ borderB 1 rowSepColor]
 
@@ -306,19 +345,25 @@ todoEdit wenv model = editNode
     editFields =
       keystroke [("Enter", saveAction) | isValidInput] $
         vstack
-          [ hstack [label "Task:", spacer, textField (activeTodo . description) `nodeKey` "todoDesc"],
-            spacer,
-            hgrid
-              [ hstack [label "Type:", spacer, textDropdownS (activeTodo . todoType) todoTypes `nodeKey` "todoType", spacer],
-                hstack [label "Status:", spacer, textDropdownS (activeTodo . status) todoStatuses]
+          [ hstack [label "Task:", spacer, textField (activeTodo . description) `nodeKey` "todoDesc"]
+          , spacer
+          , hgrid
+              [ hstack
+                  [ label "Type:"
+                  , spacer
+                  , textDropdownS (activeTodo . todoType) todoTypes `nodeKey` "todoType"
+                  , spacer
+                  ]
+              , hstack [label "Status:", spacer, textDropdownS (activeTodo . status) todoStatuses]
               ]
           ]
 
     editNode =
       keystroke [("Esc", TodoCancel)] $
         vstack
-          [ editFields,
-            spacer,
-            hstack [filler, saveTodoBtn `nodeEnabled` isValidInput, spacer, button "Cancel" TodoCancel]
+          [ editFields
+          , spacer
+          , hstack
+              [filler, saveTodoBtn `nodeEnabled` isValidInput, spacer, button "Cancel" TodoCancel]
           ]
           `styleBasic` [bgColor sectionBg, padding 20]

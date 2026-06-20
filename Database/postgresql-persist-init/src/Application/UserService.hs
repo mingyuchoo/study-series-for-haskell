@@ -46,64 +46,69 @@ runCachedUserService repo cache (CachedUserService action) = runReaderT action (
 
 -- Basic service implementation
 instance (UserRepository (BasicUserService repo)) => UserController (BasicUserService repo) where
-    handleGetUser uid = do
-        result <- getUser (GetUserRequest (UserId uid))
-        return $ case result of
-            Left err                     -> Left err
-            Right (GetUserResponse user) -> Right (userToResponseDTO user)
+  handleGetUser uid = do
+    result <- getUser (GetUserRequest (UserId uid))
+    return $ case result of
+      Left err                     -> Left err
+      Right (GetUserResponse user) -> Right (userToResponseDTO user)
 
-    handleCreateUser dto = do
-        result <- createUser (createUserRequestToUseCase dto)
-        return $ case result of
-            Left err -> Left err
-            Right (CreateUserResponse (UserId uid)) -> Right (CreateUserResponseDTO uid)
+  handleCreateUser dto = do
+    result <- createUser (createUserRequestToUseCase dto)
+    return $ case result of
+      Left err -> Left err
+      Right (CreateUserResponse (UserId uid)) -> Right (CreateUserResponseDTO uid)
 
-    handleListUsers = do
-        result <- listUsers ListUsersRequest
-        return $ case result of
-            Left err -> Left err
-            Right (ListUsersResponse users) -> Right (map userToResponseDTO users)
+  handleListUsers = do
+    result <- listUsers ListUsersRequest
+    return $ case result of
+      Left err                        -> Left err
+      Right (ListUsersResponse users) -> Right (map userToResponseDTO users)
 
-    handleUpdateUser uid dto = do
-        result <- updateUserUseCase (updateUserRequestToUseCase uid dto)
-        return $ case result of
-            Left err -> Left err
-            Right _  -> Right ()
+  handleUpdateUser uid dto = do
+    result <- updateUserUseCase (updateUserRequestToUseCase uid dto)
+    return $ case result of
+      Left err -> Left err
+      Right _  -> Right ()
 
-    handleDeleteUser uid = do
-        result <- deleteUserUseCase (DeleteUserRequest (UserId uid))
-        return $ case result of
-            Left err -> Left err
-            Right _  -> Right ()
+  handleDeleteUser uid = do
+    result <- deleteUserUseCase (DeleteUserRequest (UserId uid))
+    return $ case result of
+      Left err -> Left err
+      Right _  -> Right ()
 
 -- Cached service implementation
-instance (UserRepository (CachedUserService repo cache), CacheService (CachedUserService repo cache)) => UserController (CachedUserService repo cache) where
-    handleGetUser uid = do
-        result <- getUserWithCache (GetUserRequest (UserId uid))
-        return $ case result of
-            Left err                     -> Left err
-            Right (GetUserResponse user) -> Right (userToResponseDTO user)
+instance
+  ( UserRepository (CachedUserService repo cache)
+  , CacheService (CachedUserService repo cache)
+  )
+  => UserController (CachedUserService repo cache)
+  where
+  handleGetUser uid = do
+    result <- getUserWithCache (GetUserRequest (UserId uid))
+    return $ case result of
+      Left err                     -> Left err
+      Right (GetUserResponse user) -> Right (userToResponseDTO user)
 
-    handleCreateUser dto = do
-        result <- createUser (createUserRequestToUseCase dto)
-        return $ case result of
-            Left err -> Left err
-            Right (CreateUserResponse (UserId uid)) -> Right (CreateUserResponseDTO uid)
+  handleCreateUser dto = do
+    result <- createUser (createUserRequestToUseCase dto)
+    return $ case result of
+      Left err -> Left err
+      Right (CreateUserResponse (UserId uid)) -> Right (CreateUserResponseDTO uid)
 
-    handleListUsers = do
-        result <- listUsers ListUsersRequest
-        return $ case result of
-            Left err -> Left err
-            Right (ListUsersResponse users) -> Right (map userToResponseDTO users)
+  handleListUsers = do
+    result <- listUsers ListUsersRequest
+    return $ case result of
+      Left err                        -> Left err
+      Right (ListUsersResponse users) -> Right (map userToResponseDTO users)
 
-    handleUpdateUser uid dto = do
-        result <- updateUserWithCacheUseCase (updateUserRequestToUseCase uid dto)
-        return $ case result of
-            Left err -> Left err
-            Right _  -> Right ()
+  handleUpdateUser uid dto = do
+    result <- updateUserWithCacheUseCase (updateUserRequestToUseCase uid dto)
+    return $ case result of
+      Left err -> Left err
+      Right _  -> Right ()
 
-    handleDeleteUser uid = do
-        result <- deleteUserWithCacheUseCase (DeleteUserRequest (UserId uid))
-        return $ case result of
-            Left err -> Left err
-            Right _  -> Right ()
+  handleDeleteUser uid = do
+    result <- deleteUserWithCacheUseCase (DeleteUserRequest (UserId uid))
+    return $ case result of
+      Left err -> Left err
+      Right _  -> Right ()

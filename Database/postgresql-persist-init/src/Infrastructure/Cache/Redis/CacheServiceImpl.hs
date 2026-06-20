@@ -39,8 +39,8 @@ runRedisCacheService redisInfo (RedisCacheService action) = runReaderT action re
 -- Helper functions for Redis operations
 runRedisAction :: RedisInfo -> Redis a -> IO a
 runRedisAction redisInfo action = do
-    connection <- connect redisInfo
-    runRedis connection action
+  connection <- connect redisInfo
+  runRedis connection action
 
 -- Serialize user for caching (simple show/read for now)
 serializeUser :: User -> ByteString
@@ -49,25 +49,37 @@ serializeUser user = pack $ show user
 -- Deserialize user from cache
 deserializeUser :: Int64 -> ByteString -> Maybe User
 deserializeUser uid userString =
-    case reads (unpack userString) of
-        [(user, "")] -> Just user { userId = Just (UserId uid) }
-        _            -> Nothing
+  case reads (unpack userString) of
+    [(user, "")] -> Just user {userId = Just (UserId uid)}
+    _            -> Nothing
 
 -- Cache service implementation
 instance CacheService RedisCacheService where
-    cacheUser (UserId uid) user = RedisCacheService $ do
-        redisInfo <- ask
-        _ <- liftIO $ (try (runRedisAction redisInfo $ setex (pack . show $ uid) 3600 (serializeUser user)) :: IO (Either SomeException (Either Reply Status)))
-        return ()
+  cacheUser (UserId uid) user = RedisCacheService $ do
+    redisInfo <- ask
+    _ <-
+      liftIO $
+        ( try (runRedisAction redisInfo $ setex (pack . show $ uid) 3600 (serializeUser user))
+            :: IO (Either SomeException (Either Reply Status))
+        )
+    return ()
 
-    getCachedUser (UserId uid) = RedisCacheService $ do
-        redisInfo <- ask
-        eResult <- liftIO $ (try (runRedisAction redisInfo $ get (pack . show $ uid)) :: IO (Either SomeException (Either Reply (Maybe ByteString))))
-        return $ case eResult of
-            Right (Right (Just userString)) -> deserializeUser uid userString
-            _                               -> Nothing
+  getCachedUser (UserId uid) = RedisCacheService $ do
+    redisInfo <- ask
+    eResult <-
+      liftIO $
+        ( try (runRedisAction redisInfo $ get (pack . show $ uid))
+            :: IO (Either SomeException (Either Reply (Maybe ByteString)))
+        )
+    return $ case eResult of
+      Right (Right (Just userString)) -> deserializeUser uid userString
+      _                               -> Nothing
 
-    invalidateUser (UserId uid) = RedisCacheService $ do
-        redisInfo <- ask
-        _ <- liftIO $ (try (runRedisAction redisInfo $ del [pack . show $ uid]) :: IO (Either SomeException (Either Reply Integer)))
-        return ()
+  invalidateUser (UserId uid) = RedisCacheService $ do
+    redisInfo <- ask
+    _ <-
+      liftIO $
+        ( try (runRedisAction redisInfo $ del [pack . show $ uid])
+            :: IO (Either SomeException (Either Reply Integer))
+        )
+    return ()

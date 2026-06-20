@@ -1,13 +1,13 @@
 module AdamSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.Adam
+import HaskellGPT.Adam
 
-import           Numeric.LinearAlgebra (cols, konst, rows)
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (cols, konst, rows)
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -68,7 +68,7 @@ spec = do
       it "converges over multiple steps" $ do
         let adam = initAdam (2, 2)
         let params = konst 5.0 (2, 2)
-        let grads = konst 1.0 (2, 2)  -- Constant gradient pointing down
+        let grads = konst 1.0 (2, 2) -- Constant gradient pointing down
         let lr = 0.1
 
         -- Perform 10 optimization steps

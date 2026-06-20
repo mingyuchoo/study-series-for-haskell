@@ -42,25 +42,27 @@ data User = User { userId         :: Maybe UserId
 -- Smart constructor with validation
 mkUser :: Text -> Text -> Int -> Text -> Either Text User
 mkUser name email age occupation
-    | T.null name = Left "Name cannot be empty"
-    | T.null email = Left "Email cannot be empty"
-    | age < 0 = Left "Age cannot be negative"
-    | age > 150 = Left "Age cannot exceed 150"
-    | T.null occupation = Left "Occupation cannot be empty"
-    | otherwise = Right $ User
-        { userId = Nothing
-        , userName = UserName name
-        , userEmail = UserEmail email
-        , userAge = UserAge age
-        , userOccupation = UserOccupation occupation
-        }
+  | T.null name = Left "Name cannot be empty"
+  | T.null email = Left "Email cannot be empty"
+  | age < 0 = Left "Age cannot be negative"
+  | age > 150 = Left "Age cannot exceed 150"
+  | T.null occupation = Left "Occupation cannot be empty"
+  | otherwise =
+      Right $
+        User
+          { userId = Nothing
+          , userName = UserName name
+          , userEmail = UserEmail email
+          , userAge = UserAge age
+          , userOccupation = UserOccupation occupation
+          }
 
 -- Domain validation
 validateUser :: User -> Either Text User
 validateUser user@(User _ (UserName name) (UserEmail email) (UserAge age) (UserOccupation occupation))
-    | T.null name = Left "Name cannot be empty"
-    | T.null email = Left "Email cannot be empty"
-    | age < 0 = Left "Age cannot be negative"
-    | age > 150 = Left "Age cannot exceed 150"
-    | T.null occupation = Left "Occupation cannot be empty"
-    | otherwise = Right user
+  | T.null name = Left "Name cannot be empty"
+  | T.null email = Left "Email cannot be empty"
+  | age < 0 = Left "Age cannot be negative"
+  | age > 150 = Left "Age cannot exceed 150"
+  | T.null occupation = Left "Occupation cannot be empty"
+  | otherwise = Right user

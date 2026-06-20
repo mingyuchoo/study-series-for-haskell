@@ -1,9 +1,9 @@
 module Lib
-    ( someFunc
-    ) where
+  ( someFunc
+  ) where
 
-import           Diagrams.Backend.SVG.CmdLine
-import           Diagrams.Prelude
+import Diagrams.Backend.SVG.CmdLine
+import Diagrams.Prelude
 
 someFunc :: IO ()
 someFunc = mainWith example

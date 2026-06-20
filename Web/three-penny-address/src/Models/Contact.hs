@@ -1,21 +1,22 @@
 module Models.Contact
-    ( Contact(..)
-    , ContactId(..)
+    ( Contact (..)
+    , ContactId (..)
     ) where
 
-import Data.Aeson (FromJSON, ToJSON, FromJSONKey, ToJSONKey)
-import Data.Text (Text)
-import GHC.Generics (Generic)
+import           Data.Aeson   (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
+import           Data.Text    (Text)
+
+import           GHC.Generics (Generic)
 
 -- | Unique identifier for contacts
 newtype ContactId = ContactId Int
-    deriving (Show, Eq, Ord, Generic, FromJSON, ToJSON, FromJSONKey, ToJSONKey)
+     deriving (Eq, FromJSON, FromJSONKey, Generic, Ord, Show, ToJSON, ToJSONKey)
 
 -- | Contact data model
-data Contact = Contact
-    { contactId      :: ContactId
-    , contactName    :: Text
-    , contactPhone   :: Maybe Text
-    , contactEmail   :: Maybe Text
-    , contactAddress :: Maybe Text
-    } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+data Contact = Contact { contactId      :: ContactId
+                       , contactName    :: Text
+                       , contactPhone   :: Maybe Text
+                       , contactEmail   :: Maybe Text
+                       , contactAddress :: Maybe Text
+                       }
+     deriving (Eq, FromJSON, Generic, Show, ToJSON)

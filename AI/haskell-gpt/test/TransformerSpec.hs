@@ -1,15 +1,15 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds -Wno-type-defaults #-}
 
 module TransformerSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.Transformer
-import           HaskellGPT.Types       (Layer (..), embeddingDim, hiddenDim)
+import HaskellGPT.Transformer
+import HaskellGPT.Types (Layer (..), embeddingDim, hiddenDim)
 
-import           Numeric.LinearAlgebra  (cols, konst, rows, sumElements, (><))
+import Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -56,8 +56,8 @@ spec = do
       it "produces different outputs for different inputs" $ do
         tb <- newTransformerBlock 64 128
         -- Use varied patterns instead of uniform values
-        let input1 = (5 >< 64) [fromIntegral (i + j) | i <- [1..5 :: Int], j <- [1..64 :: Int]]
-        let input2 = (5 >< 64) [fromIntegral (i * j) | i <- [1..5 :: Int], j <- [1..64 :: Int]]
+        let input1 = (5 >< 64) [fromIntegral (i + j) | i <- [1 .. 5 :: Int], j <- [1 .. 64 :: Int]]
+        let input2 = (5 >< 64) [fromIntegral (i * j) | i <- [1 .. 5 :: Int], j <- [1 .. 64 :: Int]]
 
         let (tb1, output1) = forward tb input1
         let (tb2, output2) = forward tb input2

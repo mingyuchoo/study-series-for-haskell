@@ -1,23 +1,23 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module HaskellGPT.Types
-    ( Layer (..)
-    , Matrix
-    , SomeLayer (..)
-    , clipGradients
-    , embeddingDim
-    , heInit
-    , hiddenDim
-    , l2Norm
-    , maxSeqLen
-    , randomMatrix
-    , xavierInit
-    ) where
+  ( Layer (..)
+  , Matrix
+  , SomeLayer (..)
+  , clipGradients
+  , embeddingDim
+  , heInit
+  , hiddenDim
+  , l2Norm
+  , maxSeqLen
+  , randomMatrix
+  , xavierInit
+  ) where
 
-import           Numeric.LinearAlgebra (Matrix, cmap, sumElements, (><))
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (Matrix, cmap, sumElements, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           System.Random         (newStdGen, randomRs)
+import System.Random (newStdGen, randomRs)
 
 -- Model hyperparameters
 maxSeqLen :: Int
@@ -44,16 +44,16 @@ class Layer l where
   parameters :: l -> Int
 
 -- Existential type wrapper for heterogeneous layer lists
-data SomeLayer = forall l. Layer l => SomeLayer l
+data SomeLayer = forall l. (Layer l) => SomeLayer l
 
 instance Layer SomeLayer where
   forward (SomeLayer l) input =
     let (l', output) = forward l input
-    in (SomeLayer l', output)
+     in (SomeLayer l', output)
 
   backward (SomeLayer l) grads lr =
     let (l', inputGrads) = backward l grads lr
-    in (SomeLayer l', inputGrads)
+     in (SomeLayer l', inputGrads)
 
   layerType (SomeLayer l) = layerType l
 
@@ -90,6 +90,6 @@ l2Norm m = sqrt $ sumElements $ cmap (** 2) m
 clipGradients :: Matrix Float -> Float -> Matrix Float
 clipGradients grads maxNorm =
   let norm = l2Norm grads
-  in if norm > maxNorm
-     then LA.scale (maxNorm / norm) grads
-     else grads
+   in if norm > maxNorm
+        then LA.scale (maxNorm / norm) grads
+        else grads

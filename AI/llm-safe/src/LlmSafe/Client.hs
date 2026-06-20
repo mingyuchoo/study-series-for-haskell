@@ -6,32 +6,38 @@
 --   이 모듈의 모든 함수는 'IO' 모나드 안에 있으므로,
 --   타입 시그니처만으로 비결정성이 드러난다.
 module LlmSafe.Client
-    ( -- * LLM 호출 (비결정적 영역)
-      callLlm
-    , callLlmN
-    , callLlmWithRetry
-      -- * 모의(Mock) 클라이언트
-    , mockCallLlm
-    ) where
+  ( -- * LLM 호출 (비결정적 영역)
+    callLlm
+  , callLlmN
+  , callLlmWithRetry
+    -- * 모의(Mock) 클라이언트
+  , mockCallLlm
+  ) where
 
-import           Control.Concurrent.Async  (mapConcurrently)
+import Control.Concurrent.Async (mapConcurrently)
 
-import           Data.Aeson                (Value (..), object, (.=))
-import qualified Data.Aeson                as Aeson
-import qualified Data.Aeson.KeyMap         as KM
-import qualified Data.ByteString.Char8     as BS8
-import qualified Data.ByteString.Lazy      as LBS
-import qualified Data.Text                 as T
+import Data.Aeson (Value (..), object, (.=))
+import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as KM
+import Data.ByteString.Char8 qualified as BS8
+import Data.ByteString.Lazy qualified as LBS
+import Data.Text qualified as T
 
-import           LlmSafe.Types             (Confidence (..), LlmConfig (..),
-                                            LlmError (..), LlmResponse (..))
+import LlmSafe.Types (Confidence (..), LlmConfig (..), LlmError (..), LlmResponse (..))
 
-import           Network.HTTP.Client       (RequestBody (..), httpLbs, method,
-                                            newManager, parseRequest,
-                                            requestBody, requestHeaders,
-                                            responseBody, responseStatus)
-import           Network.HTTP.Client.TLS   (tlsManagerSettings)
-import           Network.HTTP.Types.Status (statusCode)
+import Network.HTTP.Client
+  ( RequestBody (..)
+  , httpLbs
+  , method
+  , newManager
+  , parseRequest
+  , requestBody
+  , requestHeaders
+  , responseBody
+  , responseStatus
+  )
+import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Types.Status (statusCode)
 
 -- | Azure OpenAI Chat Completions API를 호출한다.
 --

@@ -1,4 +1,6 @@
-module Main (main) where
+module Main
+  ( main
+  ) where
 
 import Network.Wai.Handler.Warp (run)
 import Order

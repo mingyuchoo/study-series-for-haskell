@@ -1,6 +1,7 @@
 module Main
     ( main
     ) where
+
 import           Brick              (customMain)
 import           Brick.Widgets.List (listSelectedElement)
 

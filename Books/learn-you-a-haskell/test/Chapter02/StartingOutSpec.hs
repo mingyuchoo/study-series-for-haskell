@@ -1,13 +1,10 @@
 module Chapter02.StartingOutSpec
-    where
+  where
 
-import           Chapter02.StartingOut
+import Chapter02.StartingOut
 
-import           Test.Hspec
+import Test.Hspec
 
-
--- |
---
 spec :: Spec
 spec = do
   describe "Given `doubleMe` function" $ do

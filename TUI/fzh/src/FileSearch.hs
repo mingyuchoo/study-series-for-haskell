@@ -25,11 +25,11 @@ excludePatterns =
 shouldExclude :: FilePath -> Bool
 shouldExclude path =
   let name = takeFileName path
-  in name `elem` excludePatterns || isHidden name
+   in name `elem` excludePatterns || isHidden name
   where
     isHidden name = case name of
-      '.':_ -> name `notElem` [".", ".."]
-      _     -> False
+      '.' : _ -> name `notElem` [".", ".."]
+      _       -> False
 
 -- | 재귀적으로 디렉토리 내 모든 파일 검색 (Effect)
 -- 제외 패턴에 해당하는 디렉토리는 건너뛰고, 에러 발생 시 해당 경로만 건너뜀
@@ -37,11 +37,11 @@ listFilesRecursive :: FilePath -> IO [FilePath]
 listFilesRecursive dir = do
   (listDirectory dir >>= processEntries dir) `catch` handleError
   where
-    -- | 디렉토리 읽기 에러 처리 - 빈 리스트 반환 (Effect)
+    -- \| 디렉토리 읽기 에러 처리 - 빈 리스트 반환 (Effect)
     handleError :: SomeException -> IO [FilePath]
     handleError _ = return []
 
-    -- | 디렉토리 엔트리들을 처리 (Effect)
+    -- \| 디렉토리 엔트리들을 처리 (Effect)
     processEntries :: FilePath -> [FilePath] -> IO [FilePath]
     processEntries baseDir entries = do
       paths <- forM entries $ \entry -> do
@@ -52,6 +52,6 @@ listFilesRecursive dir = do
           else do
             isDir <- doesDirectoryExist path `catch` \(_ :: SomeException) -> return False
             if isDir
-              then listFilesRecursive path  -- 재귀 호출
-              else return [path]             -- 파일이면 추가
+              then listFilesRecursive path -- 재귀 호출
+              else return [path] -- 파일이면 추가
       return $ concat paths

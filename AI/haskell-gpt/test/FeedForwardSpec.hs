@@ -1,16 +1,16 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 
 module FeedForwardSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.FeedForward
-import           HaskellGPT.Types       (Layer (..), embeddingDim, hiddenDim)
+import HaskellGPT.FeedForward
+import HaskellGPT.Types (Layer (..), embeddingDim, hiddenDim)
 
-import           Numeric.LinearAlgebra  (cols, konst, rows, sumElements, (><))
-import qualified Numeric.LinearAlgebra  as LA
+import Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -96,7 +96,7 @@ spec = do
     describe "forward pass" $ do
       it "produces output with correct shape" $ do
         ff <- newFeedForward 128 256
-        let input = konst 1.0 (10, 128)  -- 10 tokens, 128 dimensions
+        let input = konst 1.0 (10, 128) -- 10 tokens, 128 dimensions
         let (ff', output) = forward ff input
         rows output `shouldBe` 10
         cols output `shouldBe` 128
@@ -239,8 +239,7 @@ spec = do
 
         -- Input gradients should be computed
         let sumGrads = abs $ sumElements inputGrads
-        sumGrads `shouldSatisfy` (>= 0)  -- Can be zero if ReLU blocks all gradients
-
+        sumGrads `shouldSatisfy` (>= 0) -- Can be zero if ReLU blocks all gradients
     describe "Layer instance" $ do
       it "reports correct layer type" $ do
         ff <- newFeedForward 128 256

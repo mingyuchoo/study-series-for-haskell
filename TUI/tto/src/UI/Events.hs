@@ -130,7 +130,7 @@ deleteTodoFromDB env tid idx = do
     result <- safeIO <| App.runAppM env (TodoService.deleteTodoById tid)
     case result of
         Left err -> setError $ "삭제 실패: " <> show err
-        Right ()  -> modify <| todoList %~ listRemove idx
+        Right () -> modify <| todoList %~ listRemove idx
 
 -- | 리스트에서 선택된 항목 편집 모드로 전환
 enterEditModeFromList :: EventM Name AppState ()

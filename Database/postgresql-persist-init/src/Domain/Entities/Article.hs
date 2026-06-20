@@ -39,19 +39,21 @@ data Article = Article { articleId            :: Maybe ArticleId
 -- Smart constructor with validation
 mkArticle :: Text -> Text -> UTCTime -> UserId -> Either Text Article
 mkArticle title body publishedTime authorId
-    | T.null title = Left "Title cannot be empty"
-    | T.null body = Left "Body cannot be empty"
-    | otherwise = Right $ Article
-        { articleId = Nothing
-        , articleTitle = ArticleTitle title
-        , articleBody = ArticleBody body
-        , articlePublishedTime = publishedTime
-        , articleAuthorId = authorId
-        }
+  | T.null title = Left "Title cannot be empty"
+  | T.null body = Left "Body cannot be empty"
+  | otherwise =
+      Right $
+        Article
+          { articleId = Nothing
+          , articleTitle = ArticleTitle title
+          , articleBody = ArticleBody body
+          , articlePublishedTime = publishedTime
+          , articleAuthorId = authorId
+          }
 
 -- Domain validation
 validateArticle :: Article -> Either Text Article
 validateArticle article@(Article _ (ArticleTitle title) (ArticleBody body) _ _)
-    | T.null title = Left "Title cannot be empty"
-    | T.null body = Left "Body cannot be empty"
-    | otherwise = Right article
+  | T.null title = Left "Title cannot be empty"
+  | T.null body = Left "Body cannot be empty"
+  | otherwise = Right article

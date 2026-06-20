@@ -1,23 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+
 -- 어댑터 계층(Repository): SQLite 구체 구현
 module Adapters.Repository.UserRepositoryAdapter
-    ( createUser
-    , deleteUser
-    , getUser
-    , getUsers
-    , updateUser
-    ) where
+  ( createUser
+  , deleteUser
+  , getUser
+  , getUsers
+  , updateUser
+  ) where
 
-import           Database.SQLite.Simple           (Connection, Only (..),
-                                                   execute, query, query_)
-import           Database.SQLite.Simple.FromField ()
-import           Database.SQLite.Simple.FromRow   (FromRow (..), field)
-import           Database.SQLite.Simple.ToRow     (ToRow (..))
+import Database.SQLite.Simple (Connection, Only (..), execute, query, query_)
+import Database.SQLite.Simple.FromField ()
+import Database.SQLite.Simple.FromRow (FromRow (..), field)
+import Database.SQLite.Simple.ToRow (ToRow (..))
 
-import           Domain.UserModel                 (User (..))
+import Domain.UserModel (User (..))
 
-import           Flow                             ((<|))
+import Flow ((<|))
 
 -- DB 전용 인스턴스 (도메인 밖)
 instance FromRow User where
@@ -35,7 +35,7 @@ createUser conn user = do
   let newId = case rows of
         [Only n] -> fromIntegral n :: Int
         _        -> 0
-  pure <| user { userId = Just newId }
+  pure <| user {userId = Just newId}
 
 -- ID로 사용자 조회
 getUser :: Connection -> Int -> IO (Maybe User)
@@ -51,7 +51,7 @@ getUsers conn = query_ conn "SELECT id, name FROM users"
 
 -- 사용자 업데이트
 updateUser :: Connection -> User -> IO Bool
-updateUser conn User{..} = case userId of
+updateUser conn User {..} = case userId of
   Just i -> do
     execute conn "UPDATE users SET name = ? WHERE id = ?" (userName, i)
     [Only (n :: Int)] <- query conn "SELECT changes()" ()

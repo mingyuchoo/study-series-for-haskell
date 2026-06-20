@@ -1,17 +1,17 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds -Wno-type-defaults #-}
 
 module EmbeddingsSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.Embeddings
-import           HaskellGPT.Types      (Layer (..), embeddingDim, maxSeqLen)
-import           HaskellGPT.Vocab      (defaultVocab, vocabSize)
+import HaskellGPT.Embeddings
+import HaskellGPT.Types (Layer (..), embeddingDim, maxSeqLen)
+import HaskellGPT.Vocab (defaultVocab, vocabSize)
 
-import           Numeric.LinearAlgebra (cols, konst, rows, (><))
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (cols, konst, rows, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do

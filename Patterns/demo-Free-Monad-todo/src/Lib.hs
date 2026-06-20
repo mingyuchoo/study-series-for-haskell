@@ -15,7 +15,6 @@ import           Data.Text          (Text)
 
 import           GHC.Generics       (Generic)
 
-
 data Todo = Todo { todoId :: Int
                  , title  :: Text
                  }
@@ -23,8 +22,6 @@ data Todo = Todo { todoId :: Int
 
 data TodoF next where AddTodo :: Text -> (Todo -> next) -> TodoF next
                       ListTodos :: ([Todo] -> next) -> TodoF next
-
-
 
 instance Functor TodoF where
   fmap f (AddTodo t next) = AddTodo t (f . next)

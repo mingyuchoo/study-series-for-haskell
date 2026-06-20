@@ -4,30 +4,31 @@
 {-# LANGUAGE OverloadedStrings     #-}
 
 module TodoRepoSqlite
-    ( AppM
-    , SqliteEnv (..)
-    , runAppM
-    , withSqliteEnv
-    ) where
+  ( AppM
+  , SqliteEnv (..)
+  , runAppM
+  , withSqliteEnv
+  ) where
 
-import           Control.Monad.Except
-import           Control.Monad.Reader
+import Control.Monad.Except
+import Control.Monad.Reader
 
-import           Data.Int                       (Int64)
-import           Data.Text                      (Text)
-import qualified Data.Text                      as T
+import Data.Int (Int64)
+import Data.Text (Text)
+import Data.Text qualified as T
 
-import           Database.SQLite.Simple
-import           Database.SQLite.Simple.FromRow
-import           Database.SQLite.Simple.ToRow
+import Database.SQLite.Simple
+import Database.SQLite.Simple.FromRow
+import Database.SQLite.Simple.ToRow
 
-import           TodoRepo
+import TodoRepo
 
-import           TodoTypes
+import TodoTypes
 
 -- | SQLite 환경 설정 (데이터베이스 연결 정보)
-data SqliteEnv = SqliteEnv { sqliteConn :: Connection
-                           }
+data SqliteEnv = SqliteEnv
+  { sqliteConn :: Connection
+  }
 
 -- | 애플리케이션 모나드 (Reader + IO)
 type AppM = ReaderT SqliteEnv IO
@@ -47,20 +48,22 @@ withSqliteEnv dbPath action = do
 
 -- | SQLite Row에서 Todo로 변환하는 인스턴스
 instance FromRow Todo where
-  fromRow = Todo
-    <$> (fromIntegral <$> (field :: RowParser Int64))  -- todoId
-    <*> (toTodoType <$> field)  -- todoType (Int로 저장)
-    <*> (toTodoStatus <$> field)  -- status (Int로 저장)
-    <*> field  -- description
+  fromRow =
+    Todo
+      <$> (fromIntegral <$> (field :: RowParser Int64)) -- todoId
+      <*> (toTodoType <$> field) -- todoType (Int로 저장)
+      <*> (toTodoStatus <$> field) -- status (Int로 저장)
+      <*> field -- description
 
 -- | Todo를 SQLite Row로 변환하는 인스턴스
 instance ToRow Todo where
-  toRow todo = toRow
-    ( fromIntegral (_todoId todo) :: Int64
-    , fromTodoType (_todoType todo)
-    , fromTodoStatus (_status todo)
-    , _description todo
-    )
+  toRow todo =
+    toRow
+      ( fromIntegral (_todoId todo) :: Int64
+      , fromTodoType (_todoType todo)
+      , fromTodoStatus (_status todo)
+      , _description todo
+      )
 
 -- | Int를 TodoType으로 변환
 toTodoType :: Int -> TodoType
@@ -88,16 +91,17 @@ fromTodoStatus Done    = 1
 
 -- | MonadTodoRepo 인스턴스 (SQLite 기반 구현)
 instance MonadTodoRepo AppM where
-  -- | 모든 할일 목록 조회
+  -- \| 모든 할일 목록 조회
   getAllTodos = do
     conn <- asks sqliteConn
     liftIO $ query_ conn "SELECT id, type, status, description FROM todos ORDER BY id DESC"
 
-  -- | 할일 추가
+  -- \| 할일 추가
   insertTodo todo = do
     conn <- asks sqliteConn
     liftIO $ do
-      execute conn
+      execute
+        conn
         "INSERT INTO todos (id, type, status, description) VALUES (?, ?, ?, ?)"
         ( fromIntegral (_todoId todo) :: Int64
         , fromTodoType (_todoType todo)
@@ -106,30 +110,36 @@ instance MonadTodoRepo AppM where
         )
       return todo
 
-  -- | 할일 수정
+  -- \| 할일 수정
   updateTodo todoId todo = do
     conn <- asks sqliteConn
-    liftIO $ execute conn
-      "UPDATE todos SET type = ?, status = ?, description = ? WHERE id = ?"
-      ( fromTodoType (_todoType todo)
-      , fromTodoStatus (_status todo)
-      , _description todo
-      , fromIntegral todoId :: Int64
-      )
+    liftIO $
+      execute
+        conn
+        "UPDATE todos SET type = ?, status = ?, description = ? WHERE id = ?"
+        ( fromTodoType (_todoType todo)
+        , fromTodoStatus (_status todo)
+        , _description todo
+        , fromIntegral todoId :: Int64
+        )
 
-  -- | 할일 삭제
+  -- \| 할일 삭제
   deleteTodo todoId = do
     conn <- asks sqliteConn
-    liftIO $ execute conn "DELETE FROM todos WHERE id = ?" (Only (fromIntegral todoId :: Int64))
+    liftIO $
+      execute conn "DELETE FROM todos WHERE id = ?" (Only (fromIntegral todoId :: Int64))
 
-  -- | 데이터베이스 초기화 (테이블 생성)
+  -- \| 데이터베이스 초기화 (테이블 생성)
   initializeDb = do
     conn <- asks sqliteConn
-    liftIO $ execute_ conn $ Query $ T.unlines
-      [ "CREATE TABLE IF NOT EXISTS todos ("
-      , "  id INTEGER PRIMARY KEY,"
-      , "  type INTEGER NOT NULL,"
-      , "  status INTEGER NOT NULL,"
-      , "  description TEXT NOT NULL"
-      , ")"
-      ]
+    liftIO $
+      execute_ conn $
+        Query $
+          T.unlines
+            [ "CREATE TABLE IF NOT EXISTS todos ("
+            , "  id INTEGER PRIMARY KEY,"
+            , "  type INTEGER NOT NULL,"
+            , "  status INTEGER NOT NULL,"
+            , "  description TEXT NOT NULL"
+            , ")"
+            ]

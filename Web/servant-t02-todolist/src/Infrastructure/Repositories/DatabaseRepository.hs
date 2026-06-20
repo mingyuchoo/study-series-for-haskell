@@ -1,13 +1,13 @@
 module Infrastructure.Repositories.DatabaseRepository
-    ( initializeDatabase
-    , migrateDatabase
-    ) where
+  ( initializeDatabase
+  , migrateDatabase
+  ) where
 
 -- -------------------------------------------------------------------
 -- Imports
 -- -------------------------------------------------------------------
 
-import           Infrastructure.Repositories.Operations.DatabaseOperations (initializeDatabase)
+import Infrastructure.Repositories.Operations.DatabaseOperations (initializeDatabase)
 
 -- -------------------------------------------------------------------
 -- Repository
@@ -15,4 +15,4 @@ import           Infrastructure.Repositories.Operations.DatabaseOperations (init
 
 -- Repository interface for database operations
 class DatabaseRepository m where
-    migrateDatabase :: m ()
+  migrateDatabase :: m ()

@@ -1,15 +1,17 @@
 module Lib
-    ( module Models
+    ( module GUI
+    , module Models
     , module Services
-    , module GUI
     , cliMain
     ) where
 
-import Models
-import Services
-import GUI
+import           GUI
+
+import           Models
+
+import           Services
 
 cliMain :: IO ()
 cliMain = do
-    putStrLn "ThreepennyAddress - Address Book Application"
-    startAddressBookGUI
+  putStrLn "ThreepennyAddress - Address Book Application"
+  startAddressBookGUI

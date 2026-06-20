@@ -1,19 +1,14 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-
 module ExampleSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-
-import           Test.Hspec
-
+import Test.Hspec
 
 -- | spec
---
-spec ∷ Spec
+spec :: Spec
 spec = do
   describe "Example" $ do
     it "1 + 1 = 2" $ do
       1 + 1 `shouldBe` 2
-

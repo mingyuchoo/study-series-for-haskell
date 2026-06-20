@@ -1,29 +1,30 @@
 module HaskellGPT.Dataset
-    ( Dataset (..)
-    , DatasetType (..)
-    , loadDataset
-    , loadFromCSV
-    , loadFromJSON
-    ) where
+  ( Dataset (..)
+  , DatasetType (..)
+  , loadDataset
+  , loadFromCSV
+  , loadFromJSON
+  ) where
 
-import           Control.Exception    (IOException, try)
+import Control.Exception (IOException, try)
 
-import qualified Data.Aeson           as Aeson
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.Csv             as Csv
-import qualified Data.Text            as T
-import qualified Data.Text.Encoding   as TE
-import qualified Data.Vector          as V
+import Data.Aeson qualified as Aeson
+import Data.ByteString.Lazy qualified as BL
+import Data.Csv qualified as Csv
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Vector qualified as V
 
 -- | Type of dataset to load
 data DatasetType = JSON | CSV
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 -- | Dataset containing pretraining and chat training data
-data Dataset = Dataset { datasetPretraining  :: [String]
-                       , datasetChatTraining :: [String]
-                       }
-     deriving (Eq, Show)
+data Dataset = Dataset
+  { datasetPretraining  :: [String]
+  , datasetChatTraining :: [String]
+  }
+  deriving (Eq, Show)
 
 -- | Load dataset from files based on DatasetType
 -- Returns Either error message or Dataset

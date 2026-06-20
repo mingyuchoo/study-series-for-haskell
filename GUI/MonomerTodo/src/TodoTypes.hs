@@ -2,22 +2,22 @@
 {-# LANGUAGE TemplateHaskell     #-}
 
 module TodoTypes
-    where
+  where
 
-import           Control.Lens.TH
+import Control.Lens.TH
 
-import           Data.Default
-import           Data.Text       (Text)
+import Data.Default
+import Data.Text (Text)
 
-import           Monomer
+import Monomer
 
-import           TextShow
+import TextShow
 
 -- 데이터 모델 정의 (상태)
 
 -- | 할일의 카테고리 타입 (집, 일, 운동)
 data TodoType = Home | Work | Sports
-     deriving (Enum, Eq, Show)
+  deriving (Enum, Eq, Show)
 
 -- | TodoType을 텍스트로 변환하는 인스턴스
 instance TextShow TodoType where
@@ -27,7 +27,7 @@ instance TextShow TodoType where
 
 -- | 할일의 완료 상태 (대기중, 완료)
 data TodoStatus = Pending | Done
-     deriving (Enum, Eq, Show)
+  deriving (Enum, Eq, Show)
 
 -- | TodoStatus를 텍스트로 변환하는 인스턴스
 instance TextShow TodoStatus where
@@ -35,34 +35,38 @@ instance TextShow TodoStatus where
   showt Done    = "Done"
 
 -- | 할일 항목 데이터 타입
-data Todo = Todo { _todoId      :: Millisecond
-                 , _todoType    :: TodoType
-                 , _status      :: TodoStatus
-                 , _description :: Text
-                 }
-     deriving (Eq, Show)
+data Todo = Todo
+  { _todoId      :: Millisecond
+  , _todoType    :: TodoType
+  , _status      :: TodoStatus
+  , _description :: Text
+  }
+  deriving (Eq, Show)
 
 -- | Todo의 기본값 인스턴스
 instance Default Todo where
-  def = Todo { _todoId      = 0
-             , _todoType    = Home
-             , _status      = Pending
-             , _description = ""
-             }
+  def =
+    Todo
+      { _todoId = 0
+      , _todoType = Home
+      , _status = Pending
+      , _description = ""
+      }
 
 -- | 현재 진행중인 액션 상태
 data TodoAction = TodoNone
                 | TodoAdding
                 | TodoEditing Int
                 | TodoConfirmingDelete Int Todo
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 -- | 애플리케이션의 전체 상태 모델
-data TodoModel = TodoModel { _todos      :: [Todo]
-                           , _activeTodo :: Todo
-                           , _action     :: TodoAction
-                           }
-     deriving (Eq, Show)
+data TodoModel = TodoModel
+  { _todos      :: [Todo]
+  , _activeTodo :: Todo
+  , _action     :: TodoAction
+  }
+  deriving (Eq, Show)
 
 -- | 애플리케이션 이벤트 타입
 data TodoEvt = TodoInit
@@ -79,7 +83,7 @@ data TodoEvt = TodoInit
              | TodoHideEditDone
              | TodoCancel
              | TodosLoaded [Todo]
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 makeLenses 'TodoModel
 makeLenses 'Todo

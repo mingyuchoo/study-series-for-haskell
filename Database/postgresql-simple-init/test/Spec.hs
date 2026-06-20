@@ -1,6 +1,6 @@
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
 -- | Entry point
 main :: IO ()

@@ -1,13 +1,10 @@
 module Chapter03.TypesAndTypeclassesSpec
-    where
+  where
 
-import           Chapter03.TypesAndTypeclasses
+import Chapter03.TypesAndTypeclasses
 
-import           Test.Hspec
+import Test.Hspec
 
-
--- |
---
 spec :: Spec
 spec = do
   describe "Given `removeNonUppercase` function`" $ do

@@ -1,13 +1,13 @@
 module Infrastructure.Repositories.Operations.DatabaseOperations
-    ( -- * Database Operations
-      initializeDatabase
-    ) where
+  ( -- * Database Operations
+    initializeDatabase
+  ) where
 
 -- -------------------------------------------------------------------
 -- Imports
 -- -------------------------------------------------------------------
 
-import           Infrastructure.Repositories.SQLiteTodoRepository (migrate)
+import Infrastructure.Repositories.SQLiteTodoRepository (migrate)
 
 -- -------------------------------------------------------------------
 -- Database Operations

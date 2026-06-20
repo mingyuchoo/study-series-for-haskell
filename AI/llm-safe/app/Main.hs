@@ -2,29 +2,31 @@
 
 -- | LLM 비결정성 관리 TUI — brick 기반 터미널 UI.
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
-import qualified Brick                      as B
-import qualified Brick.BChan                as BChan
-import qualified Brick.Widgets.Border       as Border
-import qualified Brick.Widgets.Border.Style as BS
-import qualified Brick.Widgets.Edit         as Edit
+import Brick qualified as B
+import Brick.BChan qualified as BChan
+import Brick.Widgets.Border qualified as Border
+import Brick.Widgets.Border.Style qualified as BS
+import Brick.Widgets.Edit qualified as Edit
 
-import qualified Configuration.Dotenv       as Dotenv
+import Configuration.Dotenv qualified as Dotenv
 
-import           Control.Concurrent         (forkIO)
-import           Control.Monad              (void, when)
-import           Control.Monad.IO.Class     (liftIO)
+import Control.Concurrent (forkIO)
+import Control.Monad (void, when)
+import Control.Monad.IO.Class (liftIO)
 
-import qualified Graphics.Vty               as Vty
-import qualified Graphics.Vty.CrossPlatform as VtyCross
+import Graphics.Vty qualified as Vty
+import Graphics.Vty.CrossPlatform qualified as VtyCross
 
-import           LlmSafe                    (consensusPipeline, defaultConfig,
-                                             distributionAnalysisPipeline,
-                                             populationPipeline)
-import           LlmSafe.Types              (LlmConfig (..), LlmError,
-                                             renderLlmError)
+import LlmSafe
+  ( consensusPipeline
+  , defaultConfig
+  , distributionAnalysisPipeline
+  , populationPipeline
+  )
+import LlmSafe.Types (LlmConfig (..), LlmError, renderLlmError)
 
 -- ---------------------------------------------------------------------------
 -- 타입 정의
@@ -32,32 +34,33 @@ import           LlmSafe.Types              (LlmConfig (..), LlmError,
 
 -- | 위젯 이름
 data Name = CityInputField | LogViewport
-     deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show)
 
 -- | 파이프라인 모드
 data PipelineMode = SingleCall | ConsensusCall | DistributionAnalysis
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 -- | 커스텀 이벤트 (백그라운드 스레드 → TUI)
 data AppEvent = LogMsg String -- ^ 파이프라인 로그 메시지
               | Done (Either LlmError String)
 
 -- | 앱 상태
-data AppState = AppState { _cityEdit  :: Edit.Editor String Name
-                           -- ^ 도시명 입력 에디터
-                         , _pipeMode  :: PipelineMode
-                           -- ^ 파이프라인 모드
-                         , _logs      :: [String]
-                           -- ^ 실행 로그 라인 목록
-                         , _running   :: Bool
-                           -- ^ 파이프라인 실행 중 여부
-                         , _llmConfig :: LlmConfig
-                           -- ^ Azure OpenAI 설정
-                         , _eventChan :: BChan.BChan AppEvent
-                           -- ^ 커스텀 이벤트 채널
-                         , _focused   :: Name
-                           -- ^ 현재 포커스 위젯
-                         }
+data AppState = AppState
+  { _cityEdit  :: Edit.Editor String Name
+    -- ^ 도시명 입력 에디터
+  , _pipeMode  :: PipelineMode
+    -- ^ 파이프라인 모드
+  , _logs      :: [String]
+    -- ^ 실행 로그 라인 목록
+  , _running   :: Bool
+    -- ^ 파이프라인 실행 중 여부
+  , _llmConfig :: LlmConfig
+    -- ^ Azure OpenAI 설정
+  , _eventChan :: BChan.BChan AppEvent
+    -- ^ 커스텀 이벤트 채널
+  , _focused   :: Name
+    -- ^ 현재 포커스 위젯
+  }
 
 -- ---------------------------------------------------------------------------
 -- 초기 상태

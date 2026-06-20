@@ -1,13 +1,10 @@
 module Chapter04.SyntaxInFunctionsSpec
-    where
+  where
 
-import           Chapter04.SyntaxInFunctions
+import Chapter04.SyntaxInFunctions
 
-import           Test.Hspec
+import Test.Hspec
 
-
--- |
---
 spec :: Spec
 spec = do
   describe "Gvien `lucky` function" $ do

@@ -3,35 +3,30 @@
 
 -- | Main application entry point and server setup
 module Lib
-    ( -- * Application Runner
-      appRunner
-    ) where
+  ( -- * Application Runner
+    appRunner
+  ) where
 
 -- -------------------------------------------------------------------
 -- Imports
 -- -------------------------------------------------------------------
 
 -- Network/Web imports
-import           Flow                                                      ((<|))
+import Flow ((<|))
 
-import           Infrastructure.Repositories.Operations.DatabaseOperations (initializeDatabase)
+import Infrastructure.Repositories.Operations.DatabaseOperations (initializeDatabase)
 
-import           Lucid                                                     ()
+import Lucid ()
 
-import           Network.Wai                                               (Application)
-import           Network.Wai.Handler.Warp                                  (run)
+import Network.Wai (Application)
+import Network.Wai.Handler.Warp (run)
 
-import           Presentation.API.TodoAPI                                  (TodoAPI,
-                                                                            todoServer)
-import           Presentation.Middleware.LoggingMiddleware                 (loggingMiddleware)
-import           Presentation.Web.WebAPI                                   (WebAPI,
-                                                                            webServer)
+import Presentation.API.TodoAPI (TodoAPI, todoServer)
+import Presentation.Middleware.LoggingMiddleware (loggingMiddleware)
+import Presentation.Web.WebAPI (WebAPI, webServer)
 
-import           Servant                                                   (Proxy (..),
-                                                                            Server,
-                                                                            serve,
-                                                                            type (:<|>) (..))
-import           Servant.HTML.Lucid                                        ()
+import Servant (Proxy (..), Server, serve, type (:<|>) (..))
+import Servant.HTML.Lucid ()
 
 -- -------------------------------------------------------------------
 -- Application

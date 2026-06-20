@@ -1,16 +1,16 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 
 module LayerNormSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.LayerNorm
-import           HaskellGPT.Types      (Layer (..), embeddingDim)
+import HaskellGPT.LayerNorm
+import HaskellGPT.Types (Layer (..), embeddingDim)
 
-import           Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
-import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 -- Helper function to compute mean of a list
 mean :: [Float] -> Float
@@ -21,7 +21,7 @@ stdDev :: [Float] -> Float
 stdDev xs =
   let m = mean xs
       variance = sum [(x - m) ** 2 | x <- xs] / fromIntegral (length xs)
-  in sqrt variance
+   in sqrt variance
 
 spec :: Spec
 spec = do
@@ -74,7 +74,7 @@ spec = do
 
       it "handles uniform input" $ do
         let ln = newLayerNorm 5
-        let input = konst 3.0 (2, 5)  -- All values are 3.0
+        let input = konst 3.0 (2, 5) -- All values are 3.0
         let output = normalize ln input
 
         -- With uniform input, output should be all zeros (after normalization)
@@ -108,7 +108,7 @@ spec = do
 
       it "normalizes to approximately zero mean" $ do
         let ln = newLayerNorm 8
-        let input = (4 >< 8) [1..32]
+        let input = (4 >< 8) [1 .. 32]
         let (ln', output) = forward ln input
 
         -- Check each row has approximately zero mean
@@ -118,7 +118,7 @@ spec = do
 
       it "normalizes to approximately unit standard deviation" $ do
         let ln = newLayerNorm 8
-        let input = (4 >< 8) [1..32]
+        let input = (4 >< 8) [1 .. 32]
         let (ln', output) = forward ln input
 
         -- Check each row has approximately unit std
@@ -146,15 +146,14 @@ spec = do
       it "produces different outputs for different inputs" $ do
         let ln = newLayerNorm 64
         -- Use inputs with different distributions
-        let input1 = (3 >< 64) $ map (* 2) [1..192]
-        let input2 = (3 >< 64) $ map (* 3) [1..192]
+        let input1 = (3 >< 64) $ map (* 2) [1 .. 192]
+        let input2 = (3 >< 64) $ map (* 3) [1 .. 192]
         let (ln1, output1) = forward ln input1
         let (ln2, output2) = forward ln input2
         let diff = abs $ sumElements (output1 - output2)
         -- After normalization with same gamma/beta, outputs should be similar but not identical
         -- due to numerical precision
-        diff `shouldSatisfy` (< 1.0)  -- They should be very similar after normalization
-
+        diff `shouldSatisfy` (< 1.0) -- They should be very similar after normalization
     describe "backward pass" $ do
       it "produces input gradients with correct shape" $ do
         let ln = newLayerNorm 128
@@ -169,7 +168,7 @@ spec = do
       it "updates gamma parameter" $ do
         let ln = newLayerNorm 64
         -- Use input with significant variation
-        let inputData = [fromIntegral (i + j * 10) | i <- [1..5 :: Int], j <- [1..64 :: Int]]
+        let inputData = [fromIntegral (i + j * 10) | i <- [1 .. 5 :: Int], j <- [1 .. 64 :: Int]]
         let input = (5 >< 64) inputData
         let (ln', output) = forward ln input
 
@@ -178,7 +177,7 @@ spec = do
 
         -- Backward pass with large uniform gradients
         let grads = konst 2.0 (5, 64)
-        let lr = 0.5  -- Large learning rate
+        let lr = 0.5 -- Large learning rate
         let (ln'', inputGrads) = backward ln' grads lr
 
         -- Gamma should be updated (even if very slightly due to normalization)
@@ -188,7 +187,7 @@ spec = do
 
       it "updates beta parameter" $ do
         let ln = newLayerNorm 64
-        let input = (5 >< 64) [1..320]
+        let input = (5 >< 64) [1 .. 320]
         let (ln', output) = forward ln input
 
         -- Get initial beta
@@ -236,11 +235,13 @@ spec = do
       it "computes non-zero input gradients" $ do
         let ln = newLayerNorm 32
         -- Use input with varying values
-        let input = (3 >< 32) $ concat [[fromIntegral i + fromIntegral j | j <- [1..32 :: Int]] | i <- [0..2 :: Int]]
+        let input =
+              (3 >< 32) $
+                concat [[fromIntegral i + fromIntegral j | j <- [1 .. 32 :: Int]] | i <- [0 .. 2 :: Int]]
         let (ln', output) = forward ln input
 
         -- Backward pass with non-uniform gradients
-        let grads = (3 >< 32) $ concat [[fromIntegral j * 0.1 | j <- [1..32 :: Int]] | _ <- [0..2 :: Int]]
+        let grads = (3 >< 32) $ concat [[fromIntegral j * 0.1 | j <- [1 .. 32 :: Int]] | _ <- [0 .. 2 :: Int]]
         let lr = 0.01
         let (ln'', inputGrads) = backward ln' grads lr
 
@@ -266,4 +267,3 @@ spec = do
         -- beta: 64
         -- Total: 128
         parameters ln `shouldBe` 128
-

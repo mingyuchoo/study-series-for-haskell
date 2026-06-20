@@ -20,7 +20,7 @@ import           LSP.Types              (ServerConfig (..))
 
 -- | Handle configuration change from LSP server
 -- Logs configuration changes and parses new settings
-handleConfigurationChange :: MonadIO m => ServerConfig -> Value -> m ()
+handleConfigurationChange :: (MonadIO m) => ServerConfig -> Value -> m ()
 handleConfigurationChange currentConfig settings = do
   liftIO <| putStrLn "Configuration change notification received"
   liftIO <| putStrLn <| "Current config: " <> show currentConfig

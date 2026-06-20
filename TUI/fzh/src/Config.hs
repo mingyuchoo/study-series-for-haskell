@@ -55,15 +55,17 @@ data RawConfig = RawConfig { rawBindingStyle :: Text
 -- | RawConfig의 JSON 파싱을 위한 타입클래스 인스턴스
 -- "binding_style" 키가 없으면 기본값 "emacs" 사용
 instance FromJSON RawConfig where
-  parseJSON = withObject "RawConfig" <| \v ->
-    RawConfig <$> v .:? "binding_style" .!= "emacs"
+  parseJSON =
+    withObject "RawConfig" <| \v ->
+      RawConfig <$> v .:? "binding_style" .!= "emacs"
 
 -- | 기본 키바인딩 설정값 (Pure)
 -- Emacs 스타일을 기본값으로 사용
 defaultKeyBindingConfig :: KeyBindingConfig
-defaultKeyBindingConfig = KeyBindingConfig
-  { bindingStyle = Emacs
-  }
+defaultKeyBindingConfig =
+  KeyBindingConfig
+    { bindingStyle = Emacs
+    }
 
 -- | XDG 설정 디렉토리에서 설정 파일 경로를 반환 (Effect)
 -- ~/.config/fzh/keybindings.yaml 경로를 반환
@@ -82,8 +84,10 @@ loadKeyBindingConfig = do
     then do
       result <- decodeFileEither configPath
       case result of
-        Right raw -> return <| KeyBindingConfig
-          { bindingStyle = parseBindingStyle (rawBindingStyle raw)
-          }
+        Right raw ->
+          return <|
+            KeyBindingConfig
+              { bindingStyle = parseBindingStyle (rawBindingStyle raw)
+              }
         Left _ -> return defaultKeyBindingConfig
     else return defaultKeyBindingConfig

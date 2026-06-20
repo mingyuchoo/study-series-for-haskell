@@ -1,22 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( appRunner
-    ) where
+  ( appRunner
+  ) where
 
-import           Adapters.Web.UserWebAdapter        (app)
+import Adapters.Web.UserWebAdapter (app)
 
-import           Application.UserService            (mkUserService)
+import Application.UserService (mkUserService)
 
-import           Control.Exception                  (bracket)
+import Control.Exception (bracket)
 
-import           Flow                               ((<|))
+import Flow ((<|))
 
-import           Infrastructure.Config.AppConfig    (AppConfig (..),
-                                                     defaultConfig)
-import           Infrastructure.Database.Connection (initializeDatabase)
+import Infrastructure.Config.AppConfig (AppConfig (..), defaultConfig)
+import Infrastructure.Database.Connection (initializeDatabase)
 
-import           Network.Wai.Handler.Warp           (run)
+import Network.Wai.Handler.Warp (run)
 
 -- | 애플리케이션 진입: 설정 로드 -> DB 초기화 -> 서비스 조립 -> 웹 서버 시작
 appRunner :: IO ()

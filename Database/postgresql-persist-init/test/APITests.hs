@@ -32,7 +32,6 @@ import           Test.Hspec
 
 import           TestUtils                                                (setupTests)
 
--- |
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
@@ -50,11 +49,11 @@ main = do
 
 -- Test data for future use
 testUser :: User
-testUser = User
-  { userId = Nothing
-  , userName = UserName "james"
-  , userEmail = UserEmail "james@test.com"
-  , userAge = UserAge 25
-  , userOccupation = UserOccupation "Software Engineer"
-  }
-
+testUser =
+  User
+    { userId = Nothing
+    , userName = UserName "james"
+    , userEmail = UserEmail "james@test.com"
+    , userAge = UserAge 25
+    , userOccupation = UserOccupation "Software Engineer"
+    }

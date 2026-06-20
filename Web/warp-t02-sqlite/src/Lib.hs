@@ -1,38 +1,47 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( appRunner
-    ) where
+  ( appRunner
+  ) where
 
-import           Control.Exception         (bracket)
+import Control.Exception (bracket)
 
-import           Data.Aeson                (decode, encode, object)
-import qualified Data.ByteString.Lazy      as LBS
-import           Data.Kind                 ()
-import qualified Data.Text                 as T
+import Data.Aeson (decode, encode, object)
+import Data.ByteString.Lazy qualified as LBS
+import Data.Kind ()
+import Data.Text qualified as T
 
-import           Database                  (User (..), createUser, deleteUser,
-                                            getUser, getUsers, initDB,
-                                            updateUser)
-import           Database.SQLite.Simple    (Connection)
+import Database (User (..), createUser, deleteUser, getUser, getUsers, initDB, updateUser)
+import Database.SQLite.Simple (Connection)
 
-import           Flow                      ((<|))
+import Flow ((<|))
 
-import           Network.HTTP.Types        (Status, methodDelete, methodGet,
-                                            methodPost, methodPut, status200,
-                                            status201, status204, status400,
-                                            status404)
-import           Network.HTTP.Types.Header (hContentType)
-import           Network.Wai               (Request (pathInfo, requestMethod),
-                                            Response, ResponseReceived,
-                                            responseFile, responseLBS,
-                                            strictRequestBody)
-import           Network.Wai.Handler.Warp  (run)
+import Network.HTTP.Types
+  ( Status
+  , methodDelete
+  , methodGet
+  , methodPost
+  , methodPut
+  , status200
+  , status201
+  , status204
+  , status400
+  , status404
+  )
+import Network.HTTP.Types.Header (hContentType)
+import Network.Wai
+  ( Request (pathInfo, requestMethod)
+  , Response
+  , ResponseReceived
+  , responseFile
+  , responseLBS
+  , strictRequestBody
+  )
+import Network.Wai.Handler.Warp (run)
 
-import           Text.Read                 (readMaybe)
+import Text.Read (readMaybe)
 
 -- | Main Function
---
 appRunner :: IO ()
 appRunner = do
   putStrLn <| "listening on " <> show port
@@ -43,10 +52,14 @@ appRunner = do
     port = 4000
 
 -- | Application
---
-app :: Connection -> Request             -- ^ request
-    -> (Response -> IO ResponseReceived) -- ^ handler response to IO
-    -> IO ResponseReceived               -- ^ response
+app
+  :: Connection
+  -> Request
+  -- ^ request
+  -> (Response -> IO ResponseReceived)
+  -- ^ handler response to IO
+  -> IO ResponseReceived
+  -- ^ response
 app conn request respond = do
   case requestMethod request of
     -- GET requests
@@ -65,9 +78,27 @@ app conn request respond = do
                 Just user -> respond <| jsonResponse status200 <| encode user
                 Nothing -> respond <| jsonResponse status404 <| encode (object [("error", "User not found")])
             Nothing -> respond <| jsonResponse status400 <| encode (object [("error", "Invalid user ID")])
-        ["styles.css"] -> respond <| responseFile status200 [(hContentType, "text/css"), ("Access-Control-Allow-Origin", "*")] "www/styles.css" Nothing
-        ["script.js"] -> respond <| responseFile status200 [(hContentType, "application/javascript"), ("Access-Control-Allow-Origin", "*")] "www/script.js" Nothing
-        _ -> respond <| responseFile status200 [(hContentType, "text/html"), ("Access-Control-Allow-Origin", "*")] "www/index.html" Nothing
+        ["styles.css"] ->
+          respond <|
+            responseFile
+              status200
+              [(hContentType, "text/css"), ("Access-Control-Allow-Origin", "*")]
+              "www/styles.css"
+              Nothing
+        ["script.js"] ->
+          respond <|
+            responseFile
+              status200
+              [(hContentType, "application/javascript"), ("Access-Control-Allow-Origin", "*")]
+              "www/script.js"
+              Nothing
+        _ ->
+          respond <|
+            responseFile
+              status200
+              [(hContentType, "text/html"), ("Access-Control-Allow-Origin", "*")]
+              "www/index.html"
+              Nothing
 
     -- POST requests
     method | method == methodPost -> do
@@ -92,7 +123,7 @@ app conn request respond = do
               body <- strictRequestBody request
               case decode body of
                 Just user -> do
-                  let userWithId = user { userId = Just id' }
+                  let userWithId = user {userId = Just id'}
                   success <- updateUser conn userWithId
                   if success
                     then respond <| jsonResponse status200 <| encode userWithId
@@ -116,14 +147,22 @@ app conn request respond = do
         _ -> respond <| jsonResponse status404 <| encode (object [("error", "Endpoint not found")])
 
     -- Other methods
-    _ -> respond <| jsonResponse status404 <| encode (object [("error", "Method not supported")])
+    _ ->
+      respond <| jsonResponse status404 <| encode (object [("error", "Method not supported")])
 
 -- | CORS header
 -- | JSON Response helper
 jsonResponse :: Status -> LBS.ByteString -> Response
-jsonResponse status = responseLBS status [(hContentType, "application/json"), ("Access-Control-Allow-Origin", "*")]
+jsonResponse status =
+  responseLBS
+    status
+    [(hContentType, "application/json"), ("Access-Control-Allow-Origin", "*")]
 
 -- | GET / Index Page
---
 index :: Response
-index = responseFile status200 [(hContentType, "text/html"), ("Access-Control-Allow-Origin", "*")] "www/index.html" Nothing
+index =
+  responseFile
+    status200
+    [(hContentType, "text/html"), ("Access-Control-Allow-Origin", "*")]
+    "www/index.html"
+    Nothing

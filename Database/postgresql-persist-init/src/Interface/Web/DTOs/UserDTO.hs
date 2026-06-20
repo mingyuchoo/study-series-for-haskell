@@ -32,21 +32,23 @@ data UserResponseDTO = UserResponseDTO { userId         :: Int64
      deriving (Eq, Generic, Show)
 
 instance ToJSON UserResponseDTO where
-    toJSON (UserResponseDTO uid name email age occupation) = object
-        [ "id" .= uid
-        , "name" .= name
-        , "email" .= email
-        , "age" .= age
-        , "occupation" .= occupation
-        ]
+  toJSON (UserResponseDTO uid name email age occupation) =
+    object
+      [ "id" .= uid
+      , "name" .= name
+      , "email" .= email
+      , "age" .= age
+      , "occupation" .= occupation
+      ]
 
 instance FromJSON UserResponseDTO where
-    parseJSON = withObject "UserResponseDTO" $ \o -> UserResponseDTO
-        <$> o .: "id"
-        <*> o .: "name"
-        <*> o .: "email"
-        <*> o .: "age"
-        <*> o .: "occupation"
+  parseJSON = withObject "UserResponseDTO" $ \o ->
+    UserResponseDTO
+      <$> o .: "id"
+      <*> o .: "name"
+      <*> o .: "email"
+      <*> o .: "age"
+      <*> o .: "occupation"
 
 -- Request DTOs
 data CreateUserRequestDTO = CreateUserRequestDTO { crName       :: Text
@@ -57,30 +59,33 @@ data CreateUserRequestDTO = CreateUserRequestDTO { crName       :: Text
      deriving (Eq, Generic, Show)
 
 instance ToJSON CreateUserRequestDTO where
-    toJSON (CreateUserRequestDTO name email age occupation) = object
-        [ "name" .= name
-        , "email" .= email
-        , "age" .= age
-        , "occupation" .= occupation
-        ]
+  toJSON (CreateUserRequestDTO name email age occupation) =
+    object
+      [ "name" .= name
+      , "email" .= email
+      , "age" .= age
+      , "occupation" .= occupation
+      ]
 
 instance FromJSON CreateUserRequestDTO where
-    parseJSON = withObject "CreateUserRequestDTO" $ \o -> CreateUserRequestDTO
-        <$> o .: "name"
-        <*> o .: "email"
-        <*> o .: "age"
-        <*> o .: "occupation"
+  parseJSON = withObject "CreateUserRequestDTO" $ \o ->
+    CreateUserRequestDTO
+      <$> o .: "name"
+      <*> o .: "email"
+      <*> o .: "age"
+      <*> o .: "occupation"
 
 data CreateUserResponseDTO = CreateUserResponseDTO { crUserId :: Int64
                                                    }
      deriving (Eq, Generic, Show)
 
 instance ToJSON CreateUserResponseDTO where
-    toJSON (CreateUserResponseDTO uid) = object ["id" .= uid]
+  toJSON (CreateUserResponseDTO uid) = object ["id" .= uid]
 
 instance FromJSON CreateUserResponseDTO where
-    parseJSON = withObject "CreateUserResponseDTO" $ \o -> CreateUserResponseDTO
-        <$> o .: "id"
+  parseJSON = withObject "CreateUserResponseDTO" $ \o ->
+    CreateUserResponseDTO
+      <$> o .: "id"
 
 data UpdateUserRequestDTO = UpdateUserRequestDTO { urName       :: Maybe Text
                                                  , urEmail      :: Maybe Text
@@ -90,29 +95,38 @@ data UpdateUserRequestDTO = UpdateUserRequestDTO { urName       :: Maybe Text
      deriving (Eq, Generic, Show)
 
 instance ToJSON UpdateUserRequestDTO where
-    toJSON (UpdateUserRequestDTO name email age occupation) = object
-        [ "name" .= name
-        , "email" .= email
-        , "age" .= age
-        , "occupation" .= occupation
-        ]
+  toJSON (UpdateUserRequestDTO name email age occupation) =
+    object
+      [ "name" .= name
+      , "email" .= email
+      , "age" .= age
+      , "occupation" .= occupation
+      ]
 
 instance FromJSON UpdateUserRequestDTO where
-    parseJSON = withObject "UpdateUserRequestDTO" $ \o -> UpdateUserRequestDTO
-        <$> o .:? "name"
-        <*> o .:? "email"
-        <*> o .:? "age"
-        <*> o .:? "occupation"
+  parseJSON = withObject "UpdateUserRequestDTO" $ \o ->
+    UpdateUserRequestDTO
+      <$> o .:? "name"
+      <*> o .:? "email"
+      <*> o .:? "age"
+      <*> o .:? "occupation"
 
 -- Conversion functions
 userToResponseDTO :: User -> UserResponseDTO
-userToResponseDTO (User (Just (UserId uid)) (UserName name) (UserEmail email) (UserAge age) (UserOccupation occupation)) =
-    UserResponseDTO uid name email age occupation
+userToResponseDTO ( User
+                      (Just (UserId uid))
+                      (UserName name)
+                      (UserEmail email)
+                      (UserAge age)
+                      (UserOccupation occupation)
+                    ) =
+  UserResponseDTO uid name email age occupation
 userToResponseDTO (User Nothing _ _ _ _) =
-    error "Cannot convert user without ID to response DTO"
+  error "Cannot convert user without ID to response DTO"
 
 createUserRequestToUseCase :: CreateUserRequestDTO -> UC.CreateUserRequest
-createUserRequestToUseCase dto = UC.CreateUserRequest
+createUserRequestToUseCase dto =
+  UC.CreateUserRequest
     { UC.crName = crName dto
     , UC.crEmail = crEmail dto
     , UC.crAge = crAge dto
@@ -120,7 +134,8 @@ createUserRequestToUseCase dto = UC.CreateUserRequest
     }
 
 updateUserRequestToUseCase :: Int64 -> UpdateUserRequestDTO -> UU.UpdateUserRequest
-updateUserRequestToUseCase uid dto = UU.UpdateUserRequest
+updateUserRequestToUseCase uid dto =
+  UU.UpdateUserRequest
     { UU.urUserId = UserId uid
     , UU.urName = urName dto
     , UU.urEmail = urEmail dto

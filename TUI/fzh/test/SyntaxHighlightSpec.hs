@@ -38,9 +38,9 @@ spec = do
 
   describe "limitLines" $ do
     it "limits content to 100 lines" $ do
-      let content = T.unlines $ map (T.pack . show) [1..200]
+      let content = T.unlines $ map (T.pack . show) [1 .. 200]
       length (limitLines content) `shouldBe` 100
 
     it "preserves content with less than 100 lines" $ do
-      let content = T.unlines $ map (T.pack . show) [1..50]
+      let content = T.unlines $ map (T.pack . show) [1 .. 50]
       length (limitLines content) `shouldBe` 50

@@ -1,10 +1,10 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Lib
-    ( trainExample
-    ) where
+  ( trainExample
+  ) where
 
-import           System.Random
+import System.Random
 
 -- | 벡터 타입 (리스트로 표현)
 type Vector = [Double]
@@ -13,23 +13,25 @@ type Vector = [Double]
 type Matrix = [[Double]]
 
 -- | RNN 파라미터
-data RNNParams = RNNParams { wxh :: Matrix
-                             -- 입력-은닉층 가중치
-                           , whh :: Matrix
-                             -- 은닉층-은닉층 가중치 (recurrent)
-                           , why :: Matrix
-                             -- 은닉층-출력층 가중치
-                           , bh  :: Vector
-                             -- 은닉층 편향
-                           , by  :: Vector
-                             -- 출력층 편향
-                           }
-     deriving (Show)
+data RNNParams = RNNParams
+  { wxh :: Matrix
+    -- 입력-은닉층 가중치
+  , whh :: Matrix
+    -- 은닉층-은닉층 가중치 (recurrent)
+  , why :: Matrix
+    -- 은닉층-출력층 가중치
+  , bh  :: Vector
+    -- 은닉층 편향
+  , by  :: Vector
+    -- 출력층 편향
+  }
+  deriving (Show)
 
 -- | RNN 상태
-data RNNState = RNNState { hiddenState :: Vector
-                         }
-     deriving (Show)
+data RNNState = RNNState
+  { hiddenState :: Vector
+  }
+  deriving (Show)
 
 -- ============= 행렬/벡터 연산 =============
 
@@ -155,13 +157,14 @@ rnnForward params initState inputs = go initState inputs [] []
 -- ============= RNN Backward Pass (BPTT) =============
 
 -- | 그래디언트 구조
-data RNNGradients = RNNGradients { dwxh :: Matrix
-                                 , dwhh :: Matrix
-                                 , dwhy :: Matrix
-                                 , dbh  :: Vector
-                                 , dby  :: Vector
-                                 }
-     deriving (Show)
+data RNNGradients = RNNGradients
+  { dwxh :: Matrix
+  , dwhh :: Matrix
+  , dwhy :: Matrix
+  , dbh  :: Vector
+  , dby  :: Vector
+  }
+  deriving (Show)
 
 -- | 그래디언트 초기화 (0으로)
 zeroGradients :: Int -> Int -> Int -> RNNGradients

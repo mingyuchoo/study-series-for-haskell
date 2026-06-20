@@ -1,12 +1,12 @@
 module VocabSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import qualified Data.Set         as Set
+import Data.Set qualified as Set
 
-import           HaskellGPT.Vocab
+import HaskellGPT.Vocab
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -192,4 +192,3 @@ spec = do
         let wordList = ["one", "two", "three", "four"]
         let vocab = newVocab wordList
         vocabSize vocab `shouldBe` length (vocabWords vocab)
-

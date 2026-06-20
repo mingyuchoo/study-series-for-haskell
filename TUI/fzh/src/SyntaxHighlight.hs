@@ -23,7 +23,7 @@ import           Types           (Name, maxPreviewLines)
 detectLanguage :: FilePath -> Maybe Syntax
 detectLanguage path =
   let ext = T.pack $ takeExtension path
-  in lookupSyntax ext defaultSyntaxMap
+   in lookupSyntax ext defaultSyntaxMap
 
 -- | 내용을 미리보기 최대 줄 수로 제한
 limitLines :: T.Text -> [T.Text]
@@ -48,22 +48,26 @@ tokenAttr _           = attrName "default"
 -- | 일반 텍스트를 라인 번호와 함께 렌더링
 renderPlainText :: [T.Text] -> Widget Name
 renderPlainText textLines =
-  vBox $ zipWith addLineNumber [1..] textLines
+  vBox $ zipWith addLineNumber [1 ..] textLines
   where
     addLineNumber :: Int -> T.Text -> Widget Name
     addLineNumber n line =
-      hBox [ withAttr (attrName "syntax.lineNumber")
-               (str $ printf "%3d | " n)
-           , txt line
-           ]
+      hBox
+        [ withAttr
+            (attrName "syntax.lineNumber")
+            (str $ printf "%3d | " n)
+        , txt line
+        ]
 
 -- | 토큰 줄을 라인 번호와 함께 렌더링
 renderTokenLine :: Int -> SourceLine -> Widget Name
 renderTokenLine lineNum tokens =
-  hBox [ withAttr (attrName "syntax.lineNumber")
-           (str $ printf "%3d | " lineNum)
-       , hBox $ map renderToken tokens
-       ]
+  hBox
+    [ withAttr
+        (attrName "syntax.lineNumber")
+        (str $ printf "%3d | " lineNum)
+    , hBox $ map renderToken tokens
+    ]
   where
     renderToken :: Token -> Widget Name
     renderToken (tokenType, text) =
@@ -73,11 +77,11 @@ renderTokenLine lineNum tokens =
 renderHighlightedContent :: FilePath -> T.Text -> Widget Name
 renderHighlightedContent path content =
   let contentLines = limitLines content
-  in case detectLanguage path of
-       Nothing -> renderPlainText contentLines
-       Just syntax ->
-         let config = TokenizerConfig defaultSyntaxMap False
-         in case tokenize config syntax (T.unlines contentLines) of
-              Left _err -> renderPlainText contentLines
-              Right sourceLines ->
-                vBox $ zipWith renderTokenLine [1..] sourceLines
+   in case detectLanguage path of
+        Nothing -> renderPlainText contentLines
+        Just syntax ->
+          let config = TokenizerConfig defaultSyntaxMap False
+           in case tokenize config syntax (T.unlines contentLines) of
+                Left _err -> renderPlainText contentLines
+                Right sourceLines ->
+                  vBox $ zipWith renderTokenLine [1 ..] sourceLines

@@ -25,8 +25,7 @@ data TodoEffect m a where AddTodo :: Text -> TodoEffect m Todo
 
 makeSem ''TodoEffect
 
-
-runTodoIO :: Member (State [Todo]) r => Sem (TodoEffect : r) a -> Sem r a
+runTodoIO :: (Member (State [Todo]) r) => Sem (TodoEffect : r) a -> Sem r a
 runTodoIO = interpret \case
   AddTodo t -> do
     todos <- get
@@ -35,7 +34,7 @@ runTodoIO = interpret \case
     return new
   ListTodos -> get
 
-program :: Members '[TodoEffect] r => Sem r [Todo]
+program :: (Members '[TodoEffect] r) => Sem r [Todo]
 program = do
   _ <- addTodo "Polysemy 1"
   _ <- addTodo "Polysemy 2"

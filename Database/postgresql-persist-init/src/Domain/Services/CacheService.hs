@@ -5,7 +5,7 @@ module Domain.Services.CacheService
 import           Domain.Entities.User
 
 -- Cache service interface (port)
-class Monad m => CacheService m where
-    cacheUser :: UserId -> User -> m ()
-    getCachedUser :: UserId -> m (Maybe User)
-    invalidateUser :: UserId -> m ()
+class (Monad m) => CacheService m where
+  cacheUser :: UserId -> User -> m ()
+  getCachedUser :: UserId -> m (Maybe User)
+  invalidateUser :: UserId -> m ()

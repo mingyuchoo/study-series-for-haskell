@@ -21,11 +21,11 @@ data ListUsersResponse = ListUsersResponse { lrUsers :: [User]
      deriving (Eq, Show)
 
 -- Use case interface
-class Monad m => ListUsersUseCase m where
-    executeListUsers :: ListUsersRequest -> m (Either Text ListUsersResponse)
+class (Monad m) => ListUsersUseCase m where
+  executeListUsers :: ListUsersRequest -> m (Either Text ListUsersResponse)
 
 -- Use case implementation
 listUsers :: (UserRepository m) => ListUsersRequest -> m (Either Text ListUsersResponse)
 listUsers _ = do
-    users <- findAllUsers
-    return $ Right $ ListUsersResponse users
+  users <- findAllUsers
+  return $ Right $ ListUsersResponse users

@@ -1,16 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-
 module Lib
-    ( someFunc
-    ) where
+  ( someFunc
+  ) where
 
-import           Web.Scotty
+import Web.Scotty
 
 -- | render "Hello, World!"
---
---
 someFunc :: IO ()
 someFunc =
-    scotty 4000 $ get "/" $
-        html "<h1>Hello, World!</h1>"
+  scotty 4000 $
+    get "/" $
+      html "<h1>Hello, World!</h1>"

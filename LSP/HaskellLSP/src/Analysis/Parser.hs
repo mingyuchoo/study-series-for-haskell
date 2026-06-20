@@ -26,7 +26,6 @@ import           GHC.Generics                (Generic)
 import           Language.LSP.Protocol.Types (Location (..), Position (..),
                                               Range (..), SymbolKind (..), Uri)
 
-
 -- | Parsed Haskell module representation
 data ParsedModule = ParsedModule { pmSource       :: Text
                                  , pmDeclarations :: [Declaration]
@@ -101,21 +100,22 @@ runSimpleParser sourceText = do
       let exports = parseExports linesOfCode
       let declarations = parseDeclarations linesOfCode
 
-      Right <| ParsedModule
-        { pmSource = sourceText
-        , pmDeclarations = declarations
-        , pmImports = imports
-        , pmExports = exports
-        }
+      Right <|
+        ParsedModule
+          { pmSource = sourceText
+          , pmDeclarations = declarations
+          , pmImports = imports
+          , pmExports = exports
+          }
 
 -- | Validate basic syntax and return first error found
 validateBasicSyntax :: [Text] -> Maybe ParseError
 validateBasicSyntax linesOfCode =
-  let numberedLines = zip [0..] linesOfCode
+  let numberedLines = zip [0 ..] linesOfCode
       syntaxChecks = concatMap checkBasicLineSyntax numberedLines
-  in case syntaxChecks of
-    []      -> Nothing
-    (err:_) -> Just err
+   in case syntaxChecks of
+        []        -> Nothing
+        (err : _) -> Just err
 
 -- | Check basic syntax issues on a single line
 checkBasicLineSyntax :: (Int, Text) -> [ParseError]
@@ -126,47 +126,62 @@ checkBasicLineSyntax (lineNum, line) =
 checkSeverelyMalformed :: Int -> Text -> [ParseError]
 checkSeverelyMalformed lineNum line =
   let trimmed = T.strip line
-  in if not (T.null trimmed) &&
-        not (T.isPrefixOf "--" trimmed) &&
-        T.any (\c -> c `elem` ("\0\1\2\3\4\5\6\7\8" :: String)) line
-     then [ParseError
-           "Invalid control characters in source code"
-           (Just <| Range (Position (fromIntegral lineNum) 0)
-                        (Position (fromIntegral lineNum) (fromIntegral <| T.length line)))]
-     else []
+   in if not (T.null trimmed)
+        && not (T.isPrefixOf "--" trimmed)
+        && T.any (\c -> c `elem` ("\0\1\2\3\4\5\6\7\8" :: String)) line
+        then
+          [ ParseError
+              "Invalid control characters in source code"
+              ( Just <|
+                  Range
+                    (Position (fromIntegral lineNum) 0)
+                    (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+              )
+          ]
+        else []
 
 -- | Check for invalid module declarations
 checkInvalidModuleDecl :: Int -> Text -> [ParseError]
 checkInvalidModuleDecl lineNum line =
   let trimmed = T.strip line
-  in if T.isPrefixOf "module " trimmed
-     then case T.words trimmed of
-       ["module"] -> [ParseError
-                     "Incomplete module declaration"
-                     (Just <| Range (Position (fromIntegral lineNum) 0)
-                                  (Position (fromIntegral lineNum) (fromIntegral <| T.length line)))]
-       ("module":name:_) ->
-         if not (isValidModuleName name)
-         then [ParseError
-               ("Invalid module name: " <> name)
-               (Just <| Range (Position (fromIntegral lineNum) 7)
-                            (Position (fromIntegral lineNum) (fromIntegral <| 7 + T.length name)))]
-         else []
-       _ -> []
-     else []
+   in if T.isPrefixOf "module " trimmed
+        then case T.words trimmed of
+          ["module"] ->
+            [ ParseError
+                "Incomplete module declaration"
+                ( Just <|
+                    Range
+                      (Position (fromIntegral lineNum) 0)
+                      (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+                )
+            ]
+          ("module" : name : _) ->
+            if not (isValidModuleName name)
+              then
+                [ ParseError
+                    ("Invalid module name: " <> name)
+                    ( Just <|
+                        Range
+                          (Position (fromIntegral lineNum) 7)
+                          (Position (fromIntegral lineNum) (fromIntegral <| 7 + T.length name))
+                    )
+                ]
+              else []
+          _ -> []
+        else []
 
 -- | Check if a module name is valid
 isValidModuleName :: Text -> Bool
 isValidModuleName name =
-  not (T.null name) &&
-  T.all (\c -> isAlphaNum c || c == '.' || c == '_') name &&
-  isAlpha (T.head name)
+  not (T.null name)
+    && T.all (\c -> isAlphaNum c || c == '.' || c == '_') name
+    && isAlpha (T.head name)
 
 -- | Parse import declarations
 parseImports :: [Text] -> [Import]
 parseImports linesOfCode =
   let importLines = filter (T.isPrefixOf "import ") linesOfCode
-  in map parseImportLine importLines
+   in map parseImportLine importLines
 
 -- | Parse a single import line
 parseImportLine :: Text -> Import
@@ -174,164 +189,177 @@ parseImportLine line =
   let tokens = T.words line
       isQualified = "qualified" `elem` tokens
       moduleName = case dropWhile (/= "import") tokens of
-        ("import":"qualified":name:_) -> name
-        ("import":name:_)             -> name
-        _                             -> "Unknown"
+        ("import" : "qualified" : name : _) -> name
+        ("import" : name : _)               -> name
+        _                                   -> "Unknown"
       asName = case dropWhile (/= "as") tokens of
-        ("as":name:_) -> Just name
-        _             -> Nothing
-  in Import
-    { importModule = moduleName
-    , importQualified = isQualified
-    , importAs = asName
-    , importList = Nothing
-    }
+        ("as" : name : _) -> Just name
+        _                 -> Nothing
+   in Import
+        { importModule = moduleName
+        , importQualified = isQualified
+        , importAs = asName
+        , importList = Nothing
+        }
 
 -- | Parse export list from module header
 parseExports :: [Text] -> Maybe [Export]
 parseExports linesOfCode =
   let moduleLines = filter (T.isPrefixOf "module ") linesOfCode
-  in case moduleLines of
-    [] -> Nothing
-    (line:_) ->
-      if T.isInfixOf "(" line && T.isInfixOf ")" line
-      then Just [Export "example" SymbolKind_Function] -- Simplified
-      else Nothing
+   in case moduleLines of
+        [] -> Nothing
+        (line : _) ->
+          if T.isInfixOf "(" line && T.isInfixOf ")" line
+            then Just [Export "example" SymbolKind_Function] -- Simplified
+            else Nothing
 
 -- | Parse top-level declarations
 parseDeclarations :: [Text] -> [Declaration]
 parseDeclarations linesOfCode =
-  let numberedLines = zip [0..] linesOfCode
+  let numberedLines = zip [0 ..] linesOfCode
       functionDecls = concatMap parseFunctionDecl numberedLines
       dataDecls = concatMap parseDataDecl numberedLines
       typeDecls = concatMap parseTypeDecl numberedLines
       classDecls = concatMap parseClassDecl numberedLines
-  in functionDecls <> dataDecls <> typeDecls <> classDecls
+   in functionDecls <> dataDecls <> typeDecls <> classDecls
 
 -- | Parse function declarations
 parseFunctionDecl :: (Int, Text) -> [Declaration]
 parseFunctionDecl (lineNum, line) =
   let trimmed = T.strip line
-  in if isFunctionDeclaration trimmed
-     then case T.words trimmed of
-       (name:_) ->
-         let range = Range (Position (fromIntegral lineNum) 0)
-                          (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
-         in [Declaration name Nothing SymbolKind_Function range []]
-       _ -> []
-     else []
+   in if isFunctionDeclaration trimmed
+        then case T.words trimmed of
+          (name : _) ->
+            let range =
+                  Range
+                    (Position (fromIntegral lineNum) 0)
+                    (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+             in [Declaration name Nothing SymbolKind_Function range []]
+          _ -> []
+        else []
 
 -- | Check if line is a function declaration
 isFunctionDeclaration :: Text -> Bool
 isFunctionDeclaration line =
   let trimmed = T.strip line
-  in not (T.null trimmed) &&
-     not (T.isPrefixOf "--" trimmed) &&
-     not (T.isPrefixOf "import " trimmed) &&
-     not (T.isPrefixOf "module " trimmed) &&
-     not (T.isPrefixOf "data " trimmed) &&
-     not (T.isPrefixOf "type " trimmed) &&
-     not (T.isPrefixOf "class " trimmed) &&
-     not (T.isPrefixOf "instance " trimmed) &&
-     T.isInfixOf "::" trimmed &&
-     case T.words trimmed of
-       (name:_) -> isValidIdentifier name
-       _        -> False
+   in not (T.null trimmed)
+        && not (T.isPrefixOf "--" trimmed)
+        && not (T.isPrefixOf "import " trimmed)
+        && not (T.isPrefixOf "module " trimmed)
+        && not (T.isPrefixOf "data " trimmed)
+        && not (T.isPrefixOf "type " trimmed)
+        && not (T.isPrefixOf "class " trimmed)
+        && not (T.isPrefixOf "instance " trimmed)
+        && T.isInfixOf "::" trimmed
+        && case T.words trimmed of
+          (name : _) -> isValidIdentifier name
+          _          -> False
 
 -- | Parse data declarations
 parseDataDecl :: (Int, Text) -> [Declaration]
 parseDataDecl (lineNum, line) =
   let trimmed = T.strip line
-  in if T.isPrefixOf "data " trimmed
-     then case T.words trimmed of
-       ("data":name:_) ->
-         let range = Range (Position (fromIntegral lineNum) 0)
-                          (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
-         in [Declaration name Nothing SymbolKind_Struct range []]
-       _ -> []
-     else []
+   in if T.isPrefixOf "data " trimmed
+        then case T.words trimmed of
+          ("data" : name : _) ->
+            let range =
+                  Range
+                    (Position (fromIntegral lineNum) 0)
+                    (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+             in [Declaration name Nothing SymbolKind_Struct range []]
+          _ -> []
+        else []
 
 -- | Parse type declarations
 parseTypeDecl :: (Int, Text) -> [Declaration]
 parseTypeDecl (lineNum, line) =
   let trimmed = T.strip line
-  in if T.isPrefixOf "type " trimmed
-     then case T.words trimmed of
-       ("type":name:_) ->
-         let range = Range (Position (fromIntegral lineNum) 0)
-                          (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
-         in [Declaration name Nothing SymbolKind_Class range []]
-       _ -> []
-     else []
+   in if T.isPrefixOf "type " trimmed
+        then case T.words trimmed of
+          ("type" : name : _) ->
+            let range =
+                  Range
+                    (Position (fromIntegral lineNum) 0)
+                    (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+             in [Declaration name Nothing SymbolKind_Class range []]
+          _ -> []
+        else []
 
 -- | Parse class declarations
 parseClassDecl :: (Int, Text) -> [Declaration]
 parseClassDecl (lineNum, line) =
   let trimmed = T.strip line
-  in if T.isPrefixOf "class " trimmed
-     then case T.words trimmed of
-       ("class":name:_) ->
-         let range = Range (Position (fromIntegral lineNum) 0)
-                          (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
-         in [Declaration name Nothing SymbolKind_Class range []]
-       _ -> []
-     else []
+   in if T.isPrefixOf "class " trimmed
+        then case T.words trimmed of
+          ("class" : name : _) ->
+            let range =
+                  Range
+                    (Position (fromIntegral lineNum) 0)
+                    (Position (fromIntegral lineNum) (fromIntegral <| T.length line))
+             in [Declaration name Nothing SymbolKind_Class range []]
+          _ -> []
+        else []
 
 -- | Check if a string is a valid Haskell identifier
 isValidIdentifier :: Text -> Bool
 isValidIdentifier name =
-  not (T.null name) &&
-  isAlpha (T.head name) &&
-  T.all (\c -> isAlphaNum c || c == '_' || c == '\'') name
+  not (T.null name)
+    && isAlpha (T.head name)
+    && T.all (\c -> isAlphaNum c || c == '_' || c == '\'') name
 
 -- | Resolve symbol at position
 resolveSymbol :: ParsedModule -> Position -> Maybe SymbolInfo
 resolveSymbol parsedModule position =
   let declarations = pmDeclarations parsedModule
       matchingDecls = filter (positionInRange position . declRange) declarations
-  in case matchingDecls of
-    [] -> Nothing
-    (decl:_) -> Just <| declarationToSymbolInfo decl (createDummyUri "file:///dummy.hs")
+   in case matchingDecls of
+        [] -> Nothing
+        (decl : _) -> Just <| declarationToSymbolInfo decl (createDummyUri "file:///dummy.hs")
 
 -- | Get all symbols in scope at position
 symbolsInScope :: ParsedModule -> Position -> [SymbolInfo]
 symbolsInScope parsedModule _position =
   let declarations = pmDeclarations parsedModule
       imports = pmImports parsedModule
-      declSymbols = map (\decl -> declarationToSymbolInfo decl (createDummyUri "file:///dummy.hs")) declarations
+      declSymbols =
+        map
+          (\decl -> declarationToSymbolInfo decl (createDummyUri "file:///dummy.hs"))
+          declarations
       importSymbols = concatMap importToSymbolInfos imports
-  in declSymbols <> importSymbols
+   in declSymbols <> importSymbols
 
 -- | Check if position is within range
 positionInRange :: Position -> Range -> Bool
 positionInRange pos range =
   let Position line char = pos
       Range (Position startLine startChar) (Position endLine endChar) = range
-  in (line > startLine || (line == startLine && char >= startChar)) &&
-     (line < endLine || (line == endLine && char <= endChar))
+   in (line > startLine || (line == startLine && char >= startChar))
+        && (line < endLine || (line == endLine && char <= endChar))
 
 -- | Convert Declaration to SymbolInfo
 declarationToSymbolInfo :: Declaration -> Uri -> SymbolInfo
-declarationToSymbolInfo decl uri = SymbolInfo
-  { symName = declName decl
-  , symType = declType decl
-  , symKind = declKind decl
-  , symLocation = Location uri (declRange decl)
-  , symDocumentation = Nothing
-  }
+declarationToSymbolInfo decl uri =
+  SymbolInfo
+    { symName = declName decl
+    , symType = declType decl
+    , symKind = declKind decl
+    , symLocation = Location uri (declRange decl)
+    , symDocumentation = Nothing
+    }
 
 -- | Convert Import to SymbolInfos (simplified)
 importToSymbolInfos :: Import -> [SymbolInfo]
 importToSymbolInfos imp =
   let dummyRange = Range (Position 0 0) (Position 0 (fromIntegral <| T.length <| importModule imp))
       dummyUri = createDummyUri "file:///dummy.hs"
-  in [SymbolInfo
-      { symName = importModule imp
-      , symType = Nothing
-      , symKind = SymbolKind_Module
-      , symLocation = Location dummyUri dummyRange
-      , symDocumentation = Nothing
-      }]
+   in [ SymbolInfo
+          { symName = importModule imp
+          , symType = Nothing
+          , symKind = SymbolKind_Module
+          , symLocation = Location dummyUri dummyRange
+          , symDocumentation = Nothing
+          }
+      ]
 
 -- | Create a dummy URI (for testing purposes)
 createDummyUri :: Text -> Uri
@@ -351,8 +379,7 @@ printModule parsedModule =
       importsText = T.unlines <| map printImport (pmImports parsedModule)
 
       declsText = T.unlines <| map printDeclaration (pmDeclarations parsedModule)
-
-  in "module Module" <> exportsText <> " where\n\n" <> importsText <> "\n" <> declsText
+   in "module Module" <> exportsText <> " where\n\n" <> importsText <> "\n" <> declsText
 
 -- | Print an import declaration
 printImport :: Import -> Text
@@ -361,7 +388,7 @@ printImport imp =
       asText = case importAs imp of
         Nothing    -> ""
         Just alias -> " as " <> alias
-  in "import " <> qualText <> importModule imp <> asText
+   in "import " <> qualText <> importModule imp <> asText
 
 -- | Print a declaration
 printDeclaration :: Declaration -> Text

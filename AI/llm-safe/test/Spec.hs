@@ -1,36 +1,48 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
-import           Control.Exception  (SomeException, try)
+import Control.Exception (SomeException, try)
 
-import           LlmSafe.Client     (mockCallLlm)
-import           LlmSafe.Pipeline   (classifyPopulation, consensusPipelineWith,
-                                     distributionAnalysisPipelineWith,
-                                     formatAnswer, populationPipelineWith)
-import           LlmSafe.Types      (Confidence (..), LlmConfig (..),
-                                     LlmError (..), LlmResponse (..),
-                                     defaultConfig, mkVerified, renderLlmError,
-                                     unVerified)
-import           LlmSafe.Verify     (parseIntFromText, verify,
-                                     verifyByConsensus, verifyConfidence,
-                                     verifyWith)
+import LlmSafe.Client (mockCallLlm)
+import LlmSafe.Pipeline
+  ( classifyPopulation
+  , consensusPipelineWith
+  , distributionAnalysisPipelineWith
+  , formatAnswer
+  , populationPipelineWith
+  )
+import LlmSafe.Types
+  ( Confidence (..)
+  , LlmConfig (..)
+  , LlmError (..)
+  , LlmResponse (..)
+  , defaultConfig
+  , mkVerified
+  , renderLlmError
+  , unVerified
+  )
+import LlmSafe.Verify
+  ( parseIntFromText
+  , verify
+  , verifyByConsensus
+  , verifyConfidence
+  , verifyWith
+  )
 
-import           System.Environment (setEnv, unsetEnv)
+import System.Environment (setEnv, unsetEnv)
 
-import           Test.Hspec
-import           Test.QuickCheck
+import Test.Hspec
+import Test.QuickCheck
 
 main :: IO ()
 main = hspec $ do
-
   -- =========================================================================
   -- LlmSafe.Types
   -- =========================================================================
   describe "LlmSafe.Types" $ do
-
     describe "Verified" $ do
       it "unVerified로 값을 꺼낼 수 있다" $
         unVerified (mkVerified 42) `shouldBe` (42 :: Int)
@@ -41,23 +53,23 @@ main = hspec $ do
     describe "Confidence" $ do
       it "High > Medium > Low 순서로 비교된다" $ do
         (High > Medium) `shouldBe` True
-        (Medium > Low)  `shouldBe` True
-        (High > Low)    `shouldBe` True
+        (Medium > Low) `shouldBe` True
+        (High > Low) `shouldBe` True
 
     describe "LlmResponse" $ do
       let r = mockCallLlm Medium "model-x" "output"
       it "rawContent 필드가 올바르다" $ rawContent r `shouldBe` "output"
       it "confidence 필드가 올바르다" $ confidence r `shouldBe` Medium
-      it "modelId 필드가 올바르다"    $ modelId r    `shouldBe` "model-x"
+      it "modelId 필드가 올바르다" $ modelId r `shouldBe` "model-x"
       it "promptHash 필드가 올바르다" $ promptHash r `shouldBe` "6"
-      it "동일 값끼리 동등하다"       $ r `shouldBe` r
+      it "동일 값끼리 동등하다" $ r `shouldBe` r
 
     describe "LlmError 동등성" $ do
       it "VerificationFailed" $ VerificationFailed "a" `shouldBe` VerificationFailed "a"
       it "ConsensusNotReached" $ ConsensusNotReached "a" `shouldBe` ConsensusNotReached "a"
-      it "ParseError"          $ ParseError "a"          `shouldBe` ParseError "a"
-      it "RetryExhausted"      $ RetryExhausted 3        `shouldBe` RetryExhausted 3
-      it "LowConfidence"       $ LowConfidence High      `shouldBe` LowConfidence High
+      it "ParseError" $ ParseError "a" `shouldBe` ParseError "a"
+      it "RetryExhausted" $ RetryExhausted 3 `shouldBe` RetryExhausted 3
+      it "LowConfidence" $ LowConfidence High `shouldBe` LowConfidence High
 
     describe "renderLlmError" $ do
       it "VerificationFailed 메시지를 렌더링한다" $
@@ -77,30 +89,30 @@ main = hspec $ do
 
     describe "defaultConfig" $ do
       it "환경 변수에서 설정을 읽는다" $ do
-        setEnv "AZURE_OPENAI_ENDPOINT"    "https://example.com"
-        setEnv "AZURE_OPENAI_API_KEY"     "test-key"
-        setEnv "AZURE_OPENAI_DEPLOYMENT"  "my-model"
+        setEnv "AZURE_OPENAI_ENDPOINT" "https://example.com"
+        setEnv "AZURE_OPENAI_API_KEY" "test-key"
+        setEnv "AZURE_OPENAI_DEPLOYMENT" "my-model"
         setEnv "AZURE_OPENAI_API_VERSION" "2024-01-01"
-        setEnv "LLM_CONSENSUS_COUNT"      "7"
+        setEnv "LLM_CONSENSUS_COUNT" "7"
         cfg <- defaultConfig
-        configEndpoint       cfg `shouldBe` "https://example.com"
-        configApiKey         cfg `shouldBe` "test-key"
-        configModelId        cfg `shouldBe` "my-model"
-        configApiVersion     cfg `shouldBe` "2024-01-01"
+        configEndpoint cfg `shouldBe` "https://example.com"
+        configApiKey cfg `shouldBe` "test-key"
+        configModelId cfg `shouldBe` "my-model"
+        configApiVersion cfg `shouldBe` "2024-01-01"
         configConsensusCount cfg `shouldBe` 7
 
       it "선택적 환경 변수가 없으면 기본값을 사용한다" $ do
-        setEnv   "AZURE_OPENAI_ENDPOINT" "https://example.com"
-        setEnv   "AZURE_OPENAI_API_KEY"  "test-key"
+        setEnv "AZURE_OPENAI_ENDPOINT" "https://example.com"
+        setEnv "AZURE_OPENAI_API_KEY" "test-key"
         unsetEnv "AZURE_OPENAI_DEPLOYMENT"
         unsetEnv "AZURE_OPENAI_API_VERSION"
         unsetEnv "LLM_CONSENSUS_COUNT"
         cfg <- defaultConfig
-        configModelId        cfg `shouldBe` "gpt-5-mini"
-        configApiVersion     cfg `shouldBe` "2024-12-01-preview"
+        configModelId cfg `shouldBe` "gpt-5-mini"
+        configApiVersion cfg `shouldBe` "2024-12-01-preview"
         configConsensusCount cfg `shouldBe` 3
-        configMaxRetries     cfg `shouldBe` 3
-        configMinConfidence  cfg `shouldBe` Medium
+        configMaxRetries cfg `shouldBe` 3
+        configMinConfidence cfg `shouldBe` Medium
 
       it "필수 환경 변수(ENDPOINT)가 없으면 예외를 던진다" $ do
         unsetEnv "AZURE_OPENAI_ENDPOINT"
@@ -108,7 +120,7 @@ main = hspec $ do
         result `shouldSatisfy` isLeft
 
       it "필수 환경 변수(API_KEY)가 없으면 예외를 던진다" $ do
-        setEnv   "AZURE_OPENAI_ENDPOINT" "https://example.com"
+        setEnv "AZURE_OPENAI_ENDPOINT" "https://example.com"
         unsetEnv "AZURE_OPENAI_API_KEY"
         result <- try defaultConfig :: IO (Either SomeException LlmConfig)
         result `shouldSatisfy` isLeft
@@ -117,7 +129,6 @@ main = hspec $ do
   -- LlmSafe.Verify
   -- =========================================================================
   describe "LlmSafe.Verify" $ do
-
     describe "verify" $ do
       let resp = mockCallLlm High "test-model" "hello world"
 
@@ -160,18 +171,20 @@ main = hspec $ do
 
     describe "verifyByConsensus" $ do
       it "과반수가 일치하면 합의에 도달한다 (2/3)" $ do
-        let responses = [ mockCallLlm High "m" "950"
-                        , mockCallLlm High "m" "950"
-                        , mockCallLlm High "m" "1000"
-                        ]
+        let responses =
+              [ mockCallLlm High "m" "950"
+              , mockCallLlm High "m" "950"
+              , mockCallLlm High "m" "1000"
+              ]
         verifyByConsensus parseIntFromText responses
           `shouldBe` Right (mkVerified 950)
 
       it "과반수가 없으면 ConsensusNotReached를 반환한다 (1/3 각각)" $ do
-        let responses = [ mockCallLlm High "m" "100"
-                        , mockCallLlm High "m" "200"
-                        , mockCallLlm High "m" "300"
-                        ]
+        let responses =
+              [ mockCallLlm High "m" "100"
+              , mockCallLlm High "m" "200"
+              , mockCallLlm High "m" "300"
+              ]
         verifyByConsensus parseIntFromText responses
           `shouldSatisfy` isConsensusNotReached
 
@@ -180,16 +193,17 @@ main = hspec $ do
           `shouldBe` Left (ConsensusNotReached "응답 없음")
 
       it "모든 응답이 파싱 실패하면 ConsensusNotReached를 반환한다" $ do
-        let responses = [ mockCallLlm High "m" "숫자없음"
-                        , mockCallLlm High "m" "없음"
-                        ]
+        let responses =
+              [ mockCallLlm High "m" "숫자없음"
+              , mockCallLlm High "m" "없음"
+              ]
         verifyByConsensus parseIntFromText responses
           `shouldBe` Left (ConsensusNotReached "파싱 가능한 응답 없음")
 
     describe "parseIntFromText" $ do
       it "숫자가 포함된 텍스트에서 정수를 추출한다" $ do
         parseIntFromText "약 950만 명" `shouldBe` Right 950
-        parseIntFromText "123"         `shouldBe` Right 123
+        parseIntFromText "123" `shouldBe` Right 123
 
       it "숫자만 있는 문자열에서 정수를 추출한다" $
         parseIntFromText "42" `shouldBe` Right 42
@@ -204,7 +218,6 @@ main = hspec $ do
   -- LlmSafe.Pipeline
   -- =========================================================================
   describe "LlmSafe.Pipeline" $ do
-
     describe "classifyPopulation" $ do
       it "1000 초과이면 대도시로 분류한다" $
         classifyPopulation (mkVerified 1500) `shouldBe` "대도시 (인구 1500만)"
@@ -255,10 +268,11 @@ main = hspec $ do
         result `shouldBe` Right "중도시 (인구 950만)"
 
       it "합의 실패 시 Left ConsensusNotReached를 반환한다" $ do
-        let responses = [ mockCallLlm High "m" "100"
-                        , mockCallLlm High "m" "200"
-                        , mockCallLlm High "m" "300"
-                        ]
+        let responses =
+              [ mockCallLlm High "m" "100"
+              , mockCallLlm High "m" "200"
+              , mockCallLlm High "m" "300"
+              ]
         let callFn _ _ = pure responses
         result <- consensusPipelineWith callFn noLog 3 "서울"
         result `shouldSatisfy` isLeft
@@ -278,10 +292,11 @@ main = hspec $ do
         result `shouldBe` Right "중도시 (인구 950만)"
 
       it "분석 LLM이 다양한 형식을 정규화한 결과를 반환한다" $ do
-        let responses = [ mockCallLlm High "m" "950"
-                        , mockCallLlm High "m" "약 950만"
-                        , mockCallLlm High "m" "9500000"
-                        ]
+        let responses =
+              [ mockCallLlm High "m" "950"
+              , mockCallLlm High "m" "약 950만"
+              , mockCallLlm High "m" "9500000"
+              ]
             callFn _ _ = pure responses
             -- 형식이 달라도 LLM이 950으로 정규화한다고 가정
             analysisFn _ = pure (mockCallLlm High "m" "950")
@@ -304,7 +319,6 @@ main = hspec $ do
   -- QuickCheck 속성 기반 테스트
   -- =========================================================================
   describe "QuickCheck 속성" $ do
-
     it "verify는 항상 참인 술어에 대해 항상 Right를 반환한다" $
       property $ \s ->
         let resp = mockCallLlm High "m" (s :: String)

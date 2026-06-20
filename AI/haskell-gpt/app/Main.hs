@@ -1,7 +1,6 @@
 module Main
-  ( main,
-  )
-where
+  ( main
+  ) where
 
 import Control.Monad (when)
 import Data.Set qualified as Set

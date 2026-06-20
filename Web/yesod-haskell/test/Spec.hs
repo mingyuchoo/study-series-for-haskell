@@ -1,21 +1,22 @@
 -- | [REQ-T001] 테스트 진입점
-module Main where
+module Main
+  where
 
 import Test.Hspec
 
+import Integration.ApiHandlerSpec qualified
+import Integration.CommentServiceSpec qualified
+import Integration.PostServiceSpec qualified
 import TestFoundation ()
-import qualified Unit.AuthServiceSpec
-import qualified Unit.ApiPostHelperSpec
-import qualified Unit.ApiCommentHelperSpec
-import qualified Integration.PostServiceSpec
-import qualified Integration.CommentServiceSpec
-import qualified Integration.ApiHandlerSpec
+import Unit.ApiCommentHelperSpec qualified
+import Unit.ApiPostHelperSpec qualified
+import Unit.AuthServiceSpec qualified
 
 main :: IO ()
 main = hspec $ do
-    Unit.AuthServiceSpec.spec
-    Unit.ApiPostHelperSpec.spec
-    Unit.ApiCommentHelperSpec.spec
-    Integration.PostServiceSpec.spec
-    Integration.CommentServiceSpec.spec
-    Integration.ApiHandlerSpec.spec
+  Unit.AuthServiceSpec.spec
+  Unit.ApiPostHelperSpec.spec
+  Unit.ApiCommentHelperSpec.spec
+  Integration.PostServiceSpec.spec
+  Integration.CommentServiceSpec.spec
+  Integration.ApiHandlerSpec.spec

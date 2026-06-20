@@ -1,16 +1,16 @@
 {-# OPTIONS_GHC -Wno-unused-local-binds #-}
 
 module SelfAttentionSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           HaskellGPT.SelfAttention
-import           HaskellGPT.Types         (Layer (..), embeddingDim)
+import HaskellGPT.SelfAttention
+import HaskellGPT.Types (Layer (..), embeddingDim)
 
-import           Numeric.LinearAlgebra    (cols, konst, rows, sumElements, (><))
-import qualified Numeric.LinearAlgebra    as LA
+import Numeric.LinearAlgebra (cols, konst, rows, sumElements, (><))
+import Numeric.LinearAlgebra qualified as LA
 
-import           Test.Hspec
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -41,7 +41,7 @@ spec = do
     describe "computeQKV" $ do
       it "computes Q, K, V with correct shapes" $ do
         sa <- newSelfAttention 128
-        let input = konst 1.0 (10, 128)  -- 10 tokens, 128 dimensions
+        let input = konst 1.0 (10, 128) -- 10 tokens, 128 dimensions
         let (q, k, v) = computeQKV sa input
         rows q `shouldBe` 10
         cols q `shouldBe` 128

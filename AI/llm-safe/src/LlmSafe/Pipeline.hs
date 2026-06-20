@@ -14,24 +14,29 @@
 --   함수의 반환값이 'Right'이면,
 --   그 안의 값은 검증을 통과한 결정적 결과이다.
 module LlmSafe.Pipeline
-    ( -- * 결정적 영역 (Verified 값만 받는 순수 함수)
-      classifyPopulation
-    , formatAnswer
-      -- * 파이프라인 (실제 LLM 호출)
-    , consensusPipeline
-    , distributionAnalysisPipeline
-    , populationPipeline
-      -- * 파이프라인 (주입 가능한 호출 함수 — 테스트용)
-    , consensusPipelineWith
-    , distributionAnalysisPipelineWith
-    , populationPipelineWith
-    ) where
+  ( -- * 결정적 영역 (Verified 값만 받는 순수 함수)
+    classifyPopulation
+  , formatAnswer
+    -- * 파이프라인 (실제 LLM 호출)
+  , consensusPipeline
+  , distributionAnalysisPipeline
+  , populationPipeline
+    -- * 파이프라인 (주입 가능한 호출 함수 — 테스트용)
+  , consensusPipelineWith
+  , distributionAnalysisPipelineWith
+  , populationPipelineWith
+  ) where
 
-import           LlmSafe.Client (callLlm, callLlmN)
-import           LlmSafe.Types  (LlmConfig (..), LlmError, LlmResponse (..),
-                                 Verified, renderLlmError, unVerified)
-import           LlmSafe.Verify (parseIntFromText, verifyByConsensus,
-                                 verifyWith)
+import LlmSafe.Client (callLlm, callLlmN)
+import LlmSafe.Types
+  ( LlmConfig (..)
+  , LlmError
+  , LlmResponse (..)
+  , Verified
+  , renderLlmError
+  , unVerified
+  )
+import LlmSafe.Verify (parseIntFromText, verifyByConsensus, verifyWith)
 
 --------------------------------------------------------------------------------
 -- 결정적 영역: Verified 값만 받는 순수 함수들
@@ -68,7 +73,8 @@ formatAnswer v = "[검증됨] " <> unVerified v
 -- | 도시 인구를 LLM에게 물어보고, 검증 후 결정적 처리를 수행하는 파이프라인.
 --
 --   'logger'를 통해 각 단계의 진행 상황을 출력한다.
-populationPipeline :: LlmConfig -> (String -> IO ()) -> String -> IO (Either LlmError String)
+populationPipeline
+  :: LlmConfig -> (String -> IO ()) -> String -> IO (Either LlmError String)
 populationPipeline config logger =
   populationPipelineWith (callLlm config logger) logger
 
@@ -104,7 +110,8 @@ populationPipelineWith callFn logger cityName = do
 -- | 합의 기반 파이프라인: N번 호출하여 다수결로 결정.
 --
 --   Self-consistency 기법으로 비결정성을 줄인다.
-consensusPipeline :: LlmConfig -> (String -> IO ()) -> Int -> String -> IO (Either LlmError String)
+consensusPipeline
+  :: LlmConfig -> (String -> IO ()) -> Int -> String -> IO (Either LlmError String)
 consensusPipeline config logger =
   consensusPipelineWith (callLlmN config logger) logger
 
@@ -161,12 +168,17 @@ distributionAnalysisPipelineWith callFn analysisFn logger n cityName = do
 
   -- [2단계] 메타 프롬프트 구성 + LLM 분포 분석 호출 (비결정적)
   logger "=== 2단계: LLM 분포 분석 호출 (비결정적) ==="
-  let numbered = zipWith
-        (\i r -> "  " <> show (i :: Int) <> ". " <> rawContent r)
-        [1 ..] responses
+  let numbered =
+        zipWith
+          (\i r -> "  " <> show (i :: Int) <> ". " <> rawContent r)
+          [1 ..]
+          responses
       metaPrompt =
-        "다음은 '" <> cityName <> "'의 인구에 대한 "
-          <> show n <> "개의 LLM 응답입니다:\n"
+        "다음은 '"
+          <> cityName
+          <> "'의 인구에 대한 "
+          <> show n
+          <> "개의 LLM 응답입니다:\n"
           <> unlines numbered
           <> "\n이 응답들의 분포를 분석하여, 가장 신뢰할 수 있는 값을 "
           <> "만 단위 정수 하나로만 답하세요. 다른 설명 없이 숫자만 출력하세요."

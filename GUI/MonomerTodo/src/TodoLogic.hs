@@ -1,22 +1,22 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module TodoLogic
-    ( loadAllTodos
-    , removeExistingTodo
-    , saveTodo
-    , updateExistingTodo
-    , validateTodo
-    ) where
+  ( loadAllTodos
+  , removeExistingTodo
+  , saveTodo
+  , updateExistingTodo
+  , validateTodo
+  ) where
 
-import           Control.Lens
-import           Control.Monad.IO.Class
+import Control.Lens
+import Control.Monad.IO.Class
 
-import           Data.Text              (Text)
-import qualified Data.Text              as T
+import Data.Text (Text)
+import Data.Text qualified as T
 
-import           TodoRepo
+import TodoRepo
 
-import           TodoTypes
+import TodoTypes
 
 -- | 모든 할일 로드
 loadAllTodos :: (MonadTodoRepo m, MonadIO m) => m [Todo]
@@ -25,7 +25,7 @@ loadAllTodos = getAllTodos
 -- | 새 할일 저장
 saveTodo :: (MonadTodoRepo m, MonadIO m) => Todo -> m Todo
 saveTodo todo = case validateTodo todo of
-  Left err    -> error $ T.unpack err  -- 실제로는 Either나 ExceptT 사용 권장
+  Left err    -> error $ T.unpack err -- 실제로는 Either나 ExceptT 사용 권장
   Right valid -> insertTodo valid
 
 -- | 기존 할일 수정

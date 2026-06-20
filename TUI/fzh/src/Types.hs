@@ -16,6 +16,7 @@ module Types
     , previewWidth
     , resultListWidth
     ) where
+
 import           Brick              (on)
 import           Brick.Widgets.List (List, list)
 
@@ -63,33 +64,35 @@ data AppState = AppState { stItems        :: !(Vec.Vector T.Text)
 -- | 기본 앱 설정값 (Pure)
 -- 너비 80, 기본 속성, 파란 배경 선택 속성, Emacs 키바인딩
 defaultConfig :: AppConfig
-defaultConfig = AppConfig
-  { configMaxWidth     = 80
-  , configDefaultAttr  = V.defAttr
-  , configSelectedAttr = V.white `on` V.blue
-  , configKeyBinding   = Emacs
-  }
+defaultConfig =
+  AppConfig
+    { configMaxWidth = 80
+    , configDefaultAttr = V.defAttr
+    , configSelectedAttr = V.white `on` V.blue
+    , configKeyBinding = Emacs
+    }
 
 -- | KeyBindingConfig로부터 AppConfig 생성 (Pure)
 -- 키바인딩 설정만 적용하고 나머지는 기본값 사용
 configWithKeyBinding :: KeyBindingConfig -> AppConfig
-configWithKeyBinding kbConfig = defaultConfig
-  { configKeyBinding = bindingStyle kbConfig
-  }
+configWithKeyBinding kbConfig =
+  defaultConfig
+    { configKeyBinding = bindingStyle kbConfig
+    }
 
 -- | 아이템 목록, 설정, 터미널 크기로 초기 상태 생성 (Pure)
 -- 검색어는 빈 문자열로 초기화
 initialState :: [T.Text] -> AppConfig -> (Int, Int) -> AppState
 initialState items cfg termSize =
   let itemVec = Vec.fromList items
-  in AppState
-       { stItems        = itemVec
-       , stFilteredList = list ItemList itemVec 1
-       , stSearchQuery  = ""
-       , stConfig       = cfg
-       , stFileContent  = Nothing
-       , stTerminalSize = termSize
-       }
+   in AppState
+        { stItems = itemVec
+        , stFilteredList = list ItemList itemVec 1
+        , stSearchQuery = ""
+        , stConfig = cfg
+        , stFileContent = Nothing
+        , stTerminalSize = termSize
+        }
 
 -- | 최소 터미널 너비
 minTerminalWidth :: Int
@@ -123,5 +126,5 @@ contentHeight :: Int -> Int
 contentHeight termHeight = termHeight - searchBoxHeight - infoBoxHeight - helpBoxHeight
   where
     searchBoxHeight = 3
-    infoBoxHeight   = 3
-    helpBoxHeight   = 2
+    infoBoxHeight = 3
+    helpBoxHeight = 2

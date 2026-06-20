@@ -69,8 +69,6 @@ waitUntilServerReady clientEnv retries = do
   res <- rootApiListClient clientEnv
   case res of
     Right _ -> pure ()
-    Left _  -> do
+    Left _ -> do
       threadDelay 100000 -- 100ms
       waitUntilServerReady clientEnv (retries - 1)
-
-

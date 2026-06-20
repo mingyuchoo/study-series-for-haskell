@@ -1,9 +1,6 @@
 import Lib
-import Test.Hspec (hspec, describe, it, shouldBe)
+import Test.Hspec (describe, hspec, it, shouldBe)
 
--- |
---
---
 main :: IO ()
 main = hspec $ do
   describe "Given an initial context of the system" $ do

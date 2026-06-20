@@ -1,9 +1,9 @@
 module Models
-    ( module Models.Contact
-    , module Models.AddressBookState
+    ( module Models.AddressBookState
     , module Models.AppState
+    , module Models.Contact
     ) where
 
-import Models.Contact
-import Models.AddressBookState
-import Models.AppState
+import           Models.AddressBookState
+import           Models.AppState
+import           Models.Contact

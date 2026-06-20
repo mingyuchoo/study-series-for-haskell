@@ -1,5 +1,5 @@
 module Main
-    where
+  where
 
 -- import           Chapter02.StartingOut
 -- import           Chapter03.TypesAndTypeclasses
@@ -14,9 +14,8 @@ module Main
 -- import           Chapter12.AFistfulOfMonads
 -- import           Chapter13.ForAFewMonadsMore
 
-import           System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
+import System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 
--- |
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering

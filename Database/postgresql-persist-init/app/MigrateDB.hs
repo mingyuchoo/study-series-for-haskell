@@ -10,7 +10,6 @@ import           System.IO                                                (Buffe
                                                                            hSetBuffering,
                                                                            stdout)
 
--- |
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
@@ -19,6 +18,6 @@ main = do
   where
     choose :: [String] -> IO ()
     choose [] = migrateDB localConnString
-    choose (a:_)
-      | a == "esq" = migrateDB localConnString  -- Using same migration for now
-      | otherwise   = migrateDB localConnString
+    choose (a : _)
+      | a == "esq" = migrateDB localConnString -- Using same migration for now
+      | otherwise = migrateDB localConnString

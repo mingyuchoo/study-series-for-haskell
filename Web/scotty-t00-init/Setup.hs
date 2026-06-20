@@ -1,6 +1,6 @@
 module Main
-    where
+  where
 
-import           Distribution.Simple
+import Distribution.Simple
 
 main = defaultMain

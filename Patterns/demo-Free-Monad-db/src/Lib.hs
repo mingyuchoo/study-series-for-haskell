@@ -1,24 +1,22 @@
 module Lib
-  ( someFunc,
-    App,
-    AppF (..),
-    logMsg,
-    getUser,
-    program,
-    runApp,
-  )
-where
+    ( App
+    , AppF (..)
+    , getUser
+    , logMsg
+    , program
+    , runApp
+    , someFunc
+    ) where
 
-import Control.Monad.Free
+import           Control.Monad.Free
 
 -- ----------------------------------------------
 -- 1. 언어(DSL) 정의 - Functor여야 함
 -- 'next'는 다음으로 실행할 작업을 의미합니다.
 -- ----------------------------------------------
-data AppF next
-  = LogMsg String next
-  | GetUser Int (String -> next)
-  deriving (Functor)
+data AppF next = LogMsg String next
+               | GetUser Int (String -> next)
+     deriving (Functor)
 
 -- ----------------------------------------------
 -- 2. Free Monad 타입 별칭

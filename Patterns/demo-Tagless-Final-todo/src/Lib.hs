@@ -17,7 +17,7 @@ data Todo = Todo { todoId :: Int
                  }
      deriving (Generic, Show)
 
-class Monad m => Todos m where
+class (Monad m) => Todos m where
   addTodo :: Text -> m Todo
   listTodos :: m [Todo]
 
@@ -31,7 +31,7 @@ instance Todos App where
   listTodos = App $ do
     pure [Todo 1 "Sample"]
 
-program :: Todos m => m [Todo]
+program :: (Todos m) => m [Todo]
 program = do
   _ <- addTodo "Buy milk"
   _ <- addTodo "Write Haskell"

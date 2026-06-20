@@ -1,15 +1,15 @@
 module Infrastructure.Postgres
-    ( loadConnectInfoFromEnv
-    , withConnection
-    ) where
+  ( loadConnectInfoFromEnv
+  , withConnection
+  ) where
 
-import           Control.Exception          (bracket)
+import Control.Exception (bracket)
 
-import           Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple
 
-import           System.Environment         (lookupEnv)
+import System.Environment (lookupEnv)
 
-import           Text.Read                  (readMaybe)
+import Text.Read (readMaybe)
 
 -- | 환경변수에서 접속정보 로드
 -- DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
@@ -22,13 +22,14 @@ loadConnectInfoFromEnv = do
   mPass <- lookupEnv "DB_PASSWORD"
   let port :: Int
       port = maybe 5432 id (mPort >>= readMaybe)
-  pure defaultConnectInfo
-        { connectHost     = maybe "127.0.0.1" id mHost
-        , connectPort     = fromIntegral port
-        , connectDatabase = maybe "postgres" id mName
-        , connectUser     = maybe "postgres" id mUser
-        , connectPassword = maybe "postgres" id mPass
-        }
+  pure
+    defaultConnectInfo
+      { connectHost = maybe "127.0.0.1" id mHost
+      , connectPort = fromIntegral port
+      , connectDatabase = maybe "postgres" id mName
+      , connectUser = maybe "postgres" id mUser
+      , connectPassword = maybe "postgres" id mPass
+      }
 
 withConnection :: ConnectInfo -> (Connection -> IO a) -> IO a
 withConnection ci = bracket (connect ci) close

@@ -38,72 +38,70 @@ runLspServer = do
   liftIO <| putStrLn "Starting Haskell LSP Server..."
 
   -- Run the LSP server with configured handlers
-  runServer <| ServerDefinition
-    { parseConfig = const <| const <| Right defaultServerConfig
-    , onConfigChange = \newConfig ->
-        liftIO <| putStrLn <| "Configuration changed: " <> show newConfig
-    , defaultConfig = defaultServerConfig
-    , configSection = "haskellLSP"
-    , doInitialize = \env _req -> do
-        liftIO <| putStrLn "Server initialized"
-        pure <| Right env
-    , staticHandlers = \_caps -> lspHandlers
-    , interpretHandler = \env -> Iso (\f -> runLspT env f) liftIO
-    , options = defaultOptions
-        { optTextDocumentSync = Just TextDocumentSyncOptions
-            { _openClose = Just True
-            , _change = Just TextDocumentSyncKind_Incremental
-            , _willSave = Nothing
-            , _willSaveWaitUntil = Nothing
-            , _save = Just <| InR <| SaveOptions { _includeText = Just False }
+  runServer <|
+    ServerDefinition
+      { parseConfig = const <| const <| Right defaultServerConfig
+      , onConfigChange = \newConfig ->
+          liftIO <| putStrLn <| "Configuration changed: " <> show newConfig
+      , defaultConfig = defaultServerConfig
+      , configSection = "haskellLSP"
+      , doInitialize = \env _req -> do
+          liftIO <| putStrLn "Server initialized"
+          pure <| Right env
+      , staticHandlers = \_caps -> lspHandlers
+      , interpretHandler = \env -> Iso (\f -> runLspT env f) liftIO
+      , options =
+          defaultOptions
+            { optTextDocumentSync =
+                Just
+                  TextDocumentSyncOptions
+                    { _openClose = Just True
+                    , _change = Just TextDocumentSyncKind_Incremental
+                    , _willSave = Nothing
+                    , _willSaveWaitUntil = Nothing
+                    , _save = Just <| InR <| SaveOptions {_includeText = Just False}
+                    }
+            , optCompletionTriggerCharacters = Just ['.']
             }
-        , optCompletionTriggerCharacters = Just ['.']
-        }
-    }
+      }
 
 -- | LSP request and notification handlers
 -- Registers all supported LSP methods with their handler functions
 lspHandlers :: Handlers (LspM ServerConfig)
-lspHandlers = mconcat
-  [ -- Document synchronization (notifications)
-    notificationHandler SMethod_TextDocumentDidOpen <| \msg -> do
-      let TNotificationMessage _ _ params = msg
-      handleDidOpen params
-
-  , notificationHandler SMethod_TextDocumentDidChange <| \msg -> do
-      let TNotificationMessage _ _ params = msg
-      handleDidChange params
-
-  , notificationHandler SMethod_TextDocumentDidClose <| \msg -> do
-      let TNotificationMessage _ _ params = msg
-      handleDidClose params
-
-  , notificationHandler SMethod_Initialized <| \_msg ->
-      liftIO <| putStrLn "Client initialized notification received"
-
-    -- Hover request
-  , requestHandler SMethod_TextDocumentHover <| \req responder -> do
-      let TRequestMessage _ _ _ params = req
-      result <- handleHover params
-      responder <| Right <| maybeToNull result
-
-    -- Completion request
-  , requestHandler SMethod_TextDocumentCompletion <| \req responder -> do
-      let TRequestMessage _ _ _ params = req
-      items <- handleCompletion params
-      responder <| Right <| InL items
-
-    -- Definition request
-  , requestHandler SMethod_TextDocumentDefinition <| \req responder -> do
-      let TRequestMessage _ _ _ params = req
-      result <- handleDefinition params
-      case result of
-        Just loc -> responder <| Right <| InL <| Definition <| InL loc
-        Nothing  -> responder <| Right <| InR <| InR Null
-
-    -- Document symbols request
-  , requestHandler SMethod_TextDocumentDocumentSymbol <| \req responder -> do
-      let TRequestMessage _ _ _ params = req
-      symbols <- handleDocumentSymbol params
-      responder <| Right <| InR (InL symbols)
-  ]
+lspHandlers =
+  mconcat
+    [ -- Document synchronization (notifications)
+      notificationHandler SMethod_TextDocumentDidOpen <| \msg -> do
+        let TNotificationMessage _ _ params = msg
+        handleDidOpen params
+    , notificationHandler SMethod_TextDocumentDidChange <| \msg -> do
+        let TNotificationMessage _ _ params = msg
+        handleDidChange params
+    , notificationHandler SMethod_TextDocumentDidClose <| \msg -> do
+        let TNotificationMessage _ _ params = msg
+        handleDidClose params
+    , notificationHandler SMethod_Initialized <| \_msg ->
+        liftIO <| putStrLn "Client initialized notification received"
+    , -- Hover request
+      requestHandler SMethod_TextDocumentHover <| \req responder -> do
+        let TRequestMessage _ _ _ params = req
+        result <- handleHover params
+        responder <| Right <| maybeToNull result
+    , -- Completion request
+      requestHandler SMethod_TextDocumentCompletion <| \req responder -> do
+        let TRequestMessage _ _ _ params = req
+        items <- handleCompletion params
+        responder <| Right <| InL items
+    , -- Definition request
+      requestHandler SMethod_TextDocumentDefinition <| \req responder -> do
+        let TRequestMessage _ _ _ params = req
+        result <- handleDefinition params
+        case result of
+          Just loc -> responder <| Right <| InL <| Definition <| InL loc
+          Nothing  -> responder <| Right <| InR <| InR Null
+    , -- Document symbols request
+      requestHandler SMethod_TextDocumentDocumentSymbol <| \req responder -> do
+        let TRequestMessage _ _ _ params = req
+        symbols <- handleDocumentSymbol params
+        responder <| Right <| InR (InL symbols)
+    ]

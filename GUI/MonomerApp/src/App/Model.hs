@@ -1,18 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module App.Model
-  ( AppModel,
-    clickCount,
-    increaseClickCount,
-    initialModel,
-  )
-where
+  ( AppModel
+  , clickCount
+  , increaseClickCount
+  , initialModel
+  ) where
 
 import Control.Lens (makeLenses)
 
-newtype AppModel = AppModel
-  { _clickCount :: Int
-  }
+newtype AppModel = AppModel { _clickCount :: Int }
   deriving (Eq, Show)
 
 makeLenses ''AppModel

@@ -1,8 +1,8 @@
 module Main
-    ( main
-    ) where
+  ( main
+  ) where
 
-import           Lib (runApp)
+import Lib (runApp)
 
 -- | 애플리케이션 진입점
 main :: IO ()

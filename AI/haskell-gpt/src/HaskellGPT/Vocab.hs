@@ -1,30 +1,31 @@
 {-# LANGUAGE BangPatterns #-}
 
 module HaskellGPT.Vocab
-    ( Vocab (..)
-    , decode
-    , defaultVocab
-    , encode
-    , newVocab
-    , processTextForVocab
-    , vocabSize
-    ) where
+  ( Vocab (..)
+  , decode
+  , defaultVocab
+  , encode
+  , newVocab
+  , processTextForVocab
+  , vocabSize
+  ) where
 
-import           Data.Char       (isAlphaNum, isPunctuation)
+import Data.Char (isAlphaNum, isPunctuation)
 
-import qualified Data.Map.Strict as Map
-import qualified Data.Set        as Set
+import Data.Map.Strict qualified as Map
+import Data.Set qualified as Set
 
 -- | Vocabulary data structure with bidirectional mappings
 -- Provides O(1) lookup for both word-to-ID and ID-to-word conversions
-data Vocab = Vocab { vocabEncode :: !(Map.Map String Int)
-                     -- ^ Word to token ID mapping
-                   , vocabDecode :: !(Map.Map Int String)
-                     -- ^ Token ID to word mapping
-                   , vocabWords  :: ![String]
-                     -- ^ List of all words in vocabulary
-                   }
-     deriving (Eq, Show)
+data Vocab = Vocab
+  { vocabEncode :: !(Map.Map String Int)
+    -- ^ Word to token ID mapping
+  , vocabDecode :: !(Map.Map Int String)
+    -- ^ Token ID to word mapping
+  , vocabWords  :: ![String]
+    -- ^ List of all words in vocabulary
+  }
+  deriving (Eq, Show)
 
 -- | Create a new vocabulary from a list of words
 -- Builds bidirectional mappings for efficient encoding and decoding
@@ -38,15 +39,17 @@ data Vocab = Vocab { vocabEncode :: !(Map.Map String Int)
 -- Just "hello"
 newVocab :: [String] -> Vocab
 newVocab wordList =
-  let -- Create word to ID mapping
-      encodeMap = Map.fromList $ zip wordList [0..]
-      -- Create ID to word mapping
-      decodeMap = Map.fromList $ zip [0..] wordList
-  in Vocab
-    { vocabEncode = encodeMap
-    , vocabDecode = decodeMap
-    , vocabWords = wordList
-    }
+  let
+    -- Create word to ID mapping
+    encodeMap = Map.fromList $ zip wordList [0 ..]
+    -- Create ID to word mapping
+    decodeMap = Map.fromList $ zip [0 ..] wordList
+   in
+    Vocab
+      { vocabEncode = encodeMap
+      , vocabDecode = decodeMap
+      , vocabWords = wordList
+      }
 
 -- | Encode a word to its token ID
 -- Returns Nothing if the word is not in the vocabulary
@@ -76,33 +79,171 @@ vocabSize vocab = length (vocabWords vocab)
 -- Includes special tokens: [PAD], [UNK], [START], [END], </s>
 -- Plus a set of common English words for basic functionality
 defaultVocab :: Vocab
-defaultVocab = newVocab $
-  -- Special tokens
-  [ "[PAD]"
-  , "[UNK]"
-  , "[START]"
-  , "[END]"
-  , "</s>"
-  ] ++
-  -- Common words and punctuation
-  [ "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for"
-  , "of", "with", "by", "from", "as", "is", "was", "are", "were", "be"
-  , "been", "being", "have", "has", "had", "do", "does", "did", "will"
-  , "would", "should", "could", "can", "may", "might", "must", "shall"
-  , "I", "you", "he", "she", "it", "we", "they", "me", "him", "her"
-  , "us", "them", "my", "your", "his", "its", "our", "their", "this"
-  , "that", "these", "those", "what", "which", "who", "whom", "whose"
-  , "when", "where", "why", "how", "all", "each", "every", "both"
-  , "few", "more", "most", "other", "some", "such", "no", "not", "only"
-  , "own", "same", "so", "than", "too", "very", "just", "now", "then"
-  , "here", "there", "up", "down", "out", "over", "under", "again"
-  , "further", "once", "also", "well", "even", "back", "through", "still"
-  , ".", ",", "!", "?", ":", ";", "-", "(", ")", "[", "]", "{", "}"
-  , "'", "\"", "/", "\\", "@", "#", "$", "%", "^", "&", "*", "+", "="
-  , "hello", "hi", "hey", "goodbye", "bye", "thanks", "thank", "please"
-  , "yes", "no", "ok", "okay", "sure", "maybe", "help", "sorry"
-  , "User", "Assistant", "user", "assistant"
-  ]
+defaultVocab =
+  newVocab $
+    -- Special tokens
+    [ "[PAD]"
+    , "[UNK]"
+    , "[START]"
+    , "[END]"
+    , "</s>"
+    ]
+      ++
+      -- Common words and punctuation
+      [ "the"
+      , "a"
+      , "an"
+      , "and"
+      , "or"
+      , "but"
+      , "in"
+      , "on"
+      , "at"
+      , "to"
+      , "for"
+      , "of"
+      , "with"
+      , "by"
+      , "from"
+      , "as"
+      , "is"
+      , "was"
+      , "are"
+      , "were"
+      , "be"
+      , "been"
+      , "being"
+      , "have"
+      , "has"
+      , "had"
+      , "do"
+      , "does"
+      , "did"
+      , "will"
+      , "would"
+      , "should"
+      , "could"
+      , "can"
+      , "may"
+      , "might"
+      , "must"
+      , "shall"
+      , "I"
+      , "you"
+      , "he"
+      , "she"
+      , "it"
+      , "we"
+      , "they"
+      , "me"
+      , "him"
+      , "her"
+      , "us"
+      , "them"
+      , "my"
+      , "your"
+      , "his"
+      , "its"
+      , "our"
+      , "their"
+      , "this"
+      , "that"
+      , "these"
+      , "those"
+      , "what"
+      , "which"
+      , "who"
+      , "whom"
+      , "whose"
+      , "when"
+      , "where"
+      , "why"
+      , "how"
+      , "all"
+      , "each"
+      , "every"
+      , "both"
+      , "few"
+      , "more"
+      , "most"
+      , "other"
+      , "some"
+      , "such"
+      , "no"
+      , "not"
+      , "only"
+      , "own"
+      , "same"
+      , "so"
+      , "than"
+      , "too"
+      , "very"
+      , "just"
+      , "now"
+      , "then"
+      , "here"
+      , "there"
+      , "up"
+      , "down"
+      , "out"
+      , "over"
+      , "under"
+      , "again"
+      , "further"
+      , "once"
+      , "also"
+      , "well"
+      , "even"
+      , "back"
+      , "through"
+      , "still"
+      , "."
+      , ","
+      , "!"
+      , "?"
+      , ":"
+      , ";"
+      , "-"
+      , "("
+      , ")"
+      , "["
+      , "]"
+      , "{"
+      , "}"
+      , "'"
+      , "\""
+      , "/"
+      , "\\"
+      , "@"
+      , "#"
+      , "$"
+      , "%"
+      , "^"
+      , "&"
+      , "*"
+      , "+"
+      , "="
+      , "hello"
+      , "hi"
+      , "hey"
+      , "goodbye"
+      , "bye"
+      , "thanks"
+      , "thank"
+      , "please"
+      , "yes"
+      , "no"
+      , "ok"
+      , "okay"
+      , "sure"
+      , "maybe"
+      , "help"
+      , "sorry"
+      , "User"
+      , "Assistant"
+      , "user"
+      , "assistant"
+      ]
 
 -- | Process text data to extract unique words for vocabulary building
 -- Tokenizes text by splitting on whitespace and punctuation
@@ -118,9 +259,11 @@ defaultVocab = newVocab $
 -- fromList ["Hello","there","world",",","!"]
 processTextForVocab :: [String] -> Set.Set String
 processTextForVocab texts =
-  let -- Process all texts and collect words
-      allWords = concatMap tokenizeText texts
-  in Set.fromList allWords
+  let
+    -- Process all texts and collect words
+    allWords = concatMap tokenizeText texts
+   in
+    Set.fromList allWords
 
 -- | Tokenize a single text string into words and punctuation
 -- Splits on whitespace and treats punctuation as separate tokens
@@ -136,5 +279,4 @@ splitWord str =
   let (alphanum, rest) = span isAlphaNum str
       (punct, remaining) = span isPunctuation rest
       result = filter (not . null) [alphanum, punct]
-  in result ++ splitWord remaining
-
+   in result ++ splitWord remaining

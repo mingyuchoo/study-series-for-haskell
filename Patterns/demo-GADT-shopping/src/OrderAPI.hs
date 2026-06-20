@@ -1,19 +1,22 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeOperators #-}
 
-module OrderAPI where
+module OrderAPI
+  where
 
-import GHC.Generics
-import Data.Text (Text)
 import Data.Aeson (ToJSON)
-import Servant
+import Data.Text (Text)
+import GHC.Generics
 import Order
+import Servant
 
 -- JSON Response Type
-data OrderResponse = OrderResponse { status :: Text
-                                   , logs   :: [OrderLog]
-                                   } deriving (Generic, Show)
+data OrderResponse = OrderResponse
+  { status :: Text
+  , logs   :: [OrderLog]
+  }
+  deriving (Generic, Show)
 
 instance ToJSON OrderLog
 instance ToJSON OrderResponse

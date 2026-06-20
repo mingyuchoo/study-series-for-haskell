@@ -1,47 +1,29 @@
 module Chapter11.FunctorsApplicativeFunctorsAndMonoids
-    where
+  where
 
-import           Data.Char
-import           Data.Kind   (Constraint, Type)
-import           Data.List
-import           Data.Monoid
+import Data.Char
+import Data.Kind (Constraint, Type)
+import Data.List
+import Data.Monoid
 
-
--- |
---
 myAction :: IO ()
 myAction = do
   putStrLn "Enter two numbers one by one."
   a <- (++) <$> getLine <*> getLine
   putStrLn $ "The two lines concatenated turn out to be: " ++ a
 
-
--- |
---
 type CoolBool :: Type
 newtype CoolBool = CoolBool { getCoolBool :: Bool }
 
-
--- |
---
 helloMe :: CoolBool -> String
 helloMe (CoolBool _) = "Hello"
 
-
--- |
---
 type IntList :: Type
 type IntList = [Int]
 
-
--- |
---
 type CharList :: Type
 newtype CharList = CharList { getCharList :: [Char] }
 
-
--- |
---
 lengthCompare :: String -> String -> Ordering
 lengthCompare x y = (length x `compare` length y) `mappend` (x `compare` y)
 
@@ -140,4 +122,3 @@ lengthCompare x y = (length x `compare` length y) `mappend` (x `compare` y)
 --                 (Node 8 Empty Empty)
 --                 (Node 10 Empty Empty)
 --             )
-

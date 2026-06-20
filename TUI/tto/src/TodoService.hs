@@ -78,7 +78,7 @@ findTodoById tid = find (\row -> DB.todoId row == tid)
 cycleStatusForward :: MonadTodoRepo m => DB.TodoId -> String -> m ()
 cycleStatusForward tid currentStatus =
     case TodoStatus.stringToStatus currentStatus of
-        Nothing -> pure ()
+        Nothing                       -> pure ()
         Just (TodoStatus.AnyStatus s) -> dispatchTransition tid s
 
 -- | GADT 패턴 매칭을 통한 타입 안전한 상태 전이 디스패치

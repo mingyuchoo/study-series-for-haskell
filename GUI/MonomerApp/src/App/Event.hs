@@ -1,9 +1,6 @@
 module App.Event
   ( AppEvent (..)
-  )
-where
+  ) where
 
-data AppEvent
-  = AppInit
-  | AppIncrease
+data AppEvent = AppInit | AppIncrease
   deriving (Eq, Show)

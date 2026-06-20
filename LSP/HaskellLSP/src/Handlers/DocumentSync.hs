@@ -51,11 +51,12 @@ handleDidClose (DidCloseTextDocumentParams (TextDocumentIdentifier uri)) = do
   liftIO <| putStrLn <| "Document closed: " <> show uri
 
   -- Clear diagnostics for the closed document
-  let clearParams = PublishDiagnosticsParams
-        { _uri = uri
-        , _version = Nothing
-        , _diagnostics = []
-        }
+  let clearParams =
+        PublishDiagnosticsParams
+          { _uri = uri
+          , _version = Nothing
+          , _diagnostics = []
+          }
   sendNotification SMethod_TextDocumentPublishDiagnostics clearParams
 
 -- | Analyze document content and publish diagnostics to client
@@ -65,14 +66,14 @@ analyzeAndPublishDiagnostics uri content = do
 
   case parseModule content of
     Left _parseError -> do
-      let emptyModule = Analysis.Parser.ParsedModule
-            { Analysis.Parser.pmSource = content
-            , Analysis.Parser.pmDeclarations = []
-            , Analysis.Parser.pmImports = []
-            , Analysis.Parser.pmExports = Nothing
-            }
+      let emptyModule =
+            Analysis.Parser.ParsedModule
+              { Analysis.Parser.pmSource = content
+              , Analysis.Parser.pmDeclarations = []
+              , Analysis.Parser.pmImports = []
+              , Analysis.Parser.pmExports = Nothing
+              }
       Diag.publishDiagnostics uri (analyzeDiagnostics emptyModule)
-
     Right parsedModule -> do
       let diagnosticInfos = analyzeDiagnostics parsedModule
       Diag.publishDiagnostics uri diagnosticInfos

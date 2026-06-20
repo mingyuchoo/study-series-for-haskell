@@ -31,13 +31,14 @@ import qualified Language.LSP.Protocol.Lens  as L
 import           Language.LSP.Protocol.Types
 import           Language.LSP.Server
 
-
 -- | Handle textDocument/definition request
 -- Resolves symbol definition location and handles local bindings and imports
 handleDefinition :: DefinitionParams -> LspM ServerConfig (Maybe Location)
 handleDefinition (DefinitionParams textDoc position _workDoneToken _partialResultToken) = do
   let uri = textDoc ^. L.uri
-  liftIO <| putStrLn <| "Definition request at position: " <> show position <> " in " <> show uri
+  liftIO <|
+    putStrLn <|
+      "Definition request at position: " <> show position <> " in " <> show uri
 
   -- Get document content from server state
   maybeContent <- getDocumentContent uri
@@ -47,7 +48,9 @@ handleDefinition (DefinitionParams textDoc position _workDoneToken _partialResul
       liftIO <| putStrLn "Document not found in server state"
       return Nothing
     Just content -> do
-      liftIO <| putStrLn <| "Processing definition for document with " <> show (T.length content) <> " characters"
+      liftIO <|
+        putStrLn <|
+          "Processing definition for document with " <> show (T.length content) <> " characters"
 
       -- Parse the document
       case parseModule content of
@@ -89,7 +92,11 @@ handleDocumentSymbol (DocumentSymbolParams _workDoneToken _partialResultToken te
       liftIO <| putStrLn "Document not found in server state"
       return []
     Just content -> do
-      liftIO <| putStrLn <| "Processing document symbols for document with " <> show (T.length content) <> " characters"
+      liftIO <|
+        putStrLn <|
+          "Processing document symbols for document with "
+            <> show (T.length content)
+            <> " characters"
 
       -- Parse the document
       case parseModule content of
@@ -105,7 +112,8 @@ handleDocumentSymbol (DocumentSymbolParams _workDoneToken _partialResultToken te
 
 -- | Resolve definition location for a symbol
 -- Handles local bindings and imports with source available
-resolveDefinitionLocation :: ParsedModule -> SymbolInfo -> Uri -> LspM ServerConfig (Maybe Location)
+resolveDefinitionLocation
+  :: ParsedModule -> SymbolInfo -> Uri -> LspM ServerConfig (Maybe Location)
 resolveDefinitionLocation parsedModule symbolInfo currentUri = do
   let symbolName = symName symbolInfo
   liftIO <| putStrLn <| "Resolving definition for symbol: " <> T.unpack symbolName
@@ -126,14 +134,14 @@ findLocalBinding :: ParsedModule -> Text -> Maybe Location
 findLocalBinding parsedModule symbolName =
   let declarations = pmDeclarations parsedModule
       matchingDecls = filter (\decl -> Parser.declName decl == symbolName) declarations
-  in case matchingDecls of
-    [] -> Nothing
-    (decl:_) ->
-      -- Create a location pointing to the declaration
-      -- For now, we'll use a dummy URI since we don't have proper state management
-      let dummyUri = createDummyUri "file:///current.hs"
-          location = Location dummyUri (Parser.declRange decl)
-      in Just location
+   in case matchingDecls of
+        [] -> Nothing
+        (decl : _) ->
+          -- Create a location pointing to the declaration
+          -- For now, we'll use a dummy URI since we don't have proper state management
+          let dummyUri = createDummyUri "file:///current.hs"
+              location = Location dummyUri (Parser.declRange decl)
+           in Just location
 
 -- | Find imported symbol definition location
 -- Handles imports with source available
@@ -175,13 +183,12 @@ findSymbolInImports imports symbolName =
 
       -- Check if any of the matching symbols are from imported modules
       importedModules = map Parser.importModule imports
-
-  in case matchingSymbols of
-    [] -> Nothing
-    ((_, moduleName, location):_) ->
-      if moduleName `elem` importedModules
-      then Just (moduleName, location)
-      else Nothing
+   in case matchingSymbols of
+        [] -> Nothing
+        ((_, moduleName, location) : _) ->
+          if moduleName `elem` importedModules
+            then Just (moduleName, location)
+            else Nothing
 
 -- | Create a location in a specific module (for simulation)
 createLocationInModule :: Text -> Int -> Int -> Location
@@ -189,7 +196,7 @@ createLocationInModule moduleName line char =
   let uri = createDummyUri ("file:///" <> T.replace "." "/" moduleName <> ".hs")
       position = Position (fromIntegral line) (fromIntegral char)
       range = Range position position
-  in Location uri range
+   in Location uri range
 
 -- | Create document symbols from declarations
 -- Includes symbol hierarchy for nested declarations
@@ -203,24 +210,23 @@ declarationToDocumentSymbol decl =
   let name = Parser.declName decl
       kind = Parser.declKind decl
       range = Parser.declRange decl
-      selectionRange = range  -- For now, use the same range for selection
+      selectionRange = range -- For now, use the same range for selection
       children = map declarationToDocumentSymbol (Parser.declChildren decl)
 
       -- Create detail text with type information if available
       detail = case Parser.declType decl of
         Just typeInfo -> Just typeInfo
         Nothing       -> Nothing
-
-  in DocumentSymbol
-    { _name = name
-    , _detail = detail
-    , _kind = kind
-    , _tags = Nothing
-    , _deprecated = Nothing
-    , _range = range
-    , _selectionRange = selectionRange
-    , _children = if null children then Nothing else Just children
-    }
+   in DocumentSymbol
+        { _name = name
+        , _detail = detail
+        , _kind = kind
+        , _tags = Nothing
+        , _deprecated = Nothing
+        , _range = range
+        , _selectionRange = selectionRange
+        , _children = if null children then Nothing else Just children
+        }
 
 -- | Create a dummy URI (for testing purposes)
 createDummyUri :: Text -> Uri
