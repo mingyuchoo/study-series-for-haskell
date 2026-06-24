@@ -156,9 +156,9 @@ renderBody sender to subject plain =
 jsonStr :: Text -> Text
 jsonStr t = "\"" <> T.concatMap esc t <> "\""
   where
-    esc '"' = "\\\""
+    esc '"'  = "\\\""
     esc '\\' = "\\\\"
     esc '\n' = "\\n"
     esc '\r' = "\\r"
     esc '\t' = "\\t"
-    esc c = T.singleton c
+    esc c    = T.singleton c

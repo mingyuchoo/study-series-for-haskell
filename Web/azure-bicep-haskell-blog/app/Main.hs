@@ -4,6 +4,7 @@ module Main
   ) where
 
 import Data.Text (Text)
+import Network.HTTP.Client.TLS (newTlsManager)
 import System.Exit (exitFailure)
 import System.IO
   ( BufferMode (LineBuffering)
@@ -14,7 +15,6 @@ import System.IO
   , stdout
   , utf8
   )
-import Network.HTTP.Client.TLS (newTlsManager)
 import Web.Scotty (scotty)
 
 import Blog.App (Env (..), application)
