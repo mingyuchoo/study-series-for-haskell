@@ -1,0 +1,46 @@
+name: Deploy to Azure
+
+# `azd pipeline config` 를 한 번 실행하면 아래 변수/시크릿과
+# OIDC 페더레이션 자격 증명이 자동으로 설정된다.
+#   Variables: AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID,
+#              AZURE_ENV_NAME, AZURE_LOCATION
+#   Secrets:   POSTGRES_ADMIN_PASSWORD, PREVIEW_SECRET (직접 추가)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+      PREVIEW_SECRET: ${{ secrets.PREVIEW_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install azd
+        uses: Azure/setup-azd@v2
+
+      - name: Log in to Azure (federated credentials)
+        run: >
+          azd auth login
+          --client-id "$AZURE_CLIENT_ID"
+          --federated-credential-provider "github"
+          --tenant-id "$AZURE_TENANT_ID"
+
+      - name: Provision infrastructure
+        run: azd provision --no-prompt
+
+      - name: Deploy application
+        run: azd deploy --no-prompt

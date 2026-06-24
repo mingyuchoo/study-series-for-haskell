@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: haskell-blog
+metadata:
+  template: haskell-blog@0.1.0
+
+# azd가 Dockerfile을 빌드해 ACR에 푸시하고 Container App 이미지를 갱신한다.
+# remoteBuild: ACR에서 네이티브 linux/amd64로 빌드한다. Apple Silicon(arm64)에서
+# 로컬 QEMU 에뮬레이션(매우 느린 GHC 빌드)과 잘못된 아키텍처 이미지를 피한다.
+services:
+  web:
+    project: .
+    language: docker
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      remoteBuild: true

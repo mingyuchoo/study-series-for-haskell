@@ -1,0 +1,27 @@
+# 로컬 개발용. `docker compose up --build` 로 앱과 PostgreSQL을 함께 실행한다.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      PORT: "8080"
+      # 로컬은 sslmode=disable (프로덕션 Flexible Server는 require)
+      DATABASE_URL: "postgresql://blog:blog@db:5432/blog?sslmode=disable"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy

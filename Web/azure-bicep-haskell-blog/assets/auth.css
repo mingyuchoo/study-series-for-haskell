@@ -1,0 +1,16 @@
+.header-actions{display:flex;align-items:center;gap:var(--s12)}
+.auth-nav{display:inline-flex;align-items:center;gap:var(--s8)}
+.auth-nav .viewer{font-size:13px;font-weight:600;color:var(--fg2)}
+.btn-link{background:transparent;border-color:transparent;color:var(--link);padding:0 var(--s4)}
+.btn-link:hover{background:transparent;text-decoration:underline}
+.form-error{margin:0 0 var(--s16);padding:var(--s8) var(--s12);border-radius:var(--radiusMedium);background:var(--bg3);border:1px solid var(--danger);color:var(--danger);font-size:13px}
+.auth-nav a.viewer{text-decoration:none}
+.auth-nav a.viewer:hover{text-decoration:underline}
+.profile{background:var(--bg1);border:1px solid var(--stroke1);border-radius:var(--radiusXLarge);padding:var(--s24);margin-bottom:var(--s24)}
+.profile h2{margin-bottom:var(--s4)}
+.profile .bio{white-space:pre-wrap;margin:var(--s12) 0 0}
+.profile-edit{margin-top:var(--s20);padding-top:var(--s20);border-top:1px solid var(--stroke1)}
+.profile-edit h3{margin:0 0 var(--s12)}
+.theme-option{display:inline-flex;align-items:center;gap:6px;margin-right:var(--s16);cursor:pointer}
+.theme-option input{width:auto}
+

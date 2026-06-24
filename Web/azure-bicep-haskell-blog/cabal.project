@@ -1,0 +1,5 @@
+packages: .
+
+-- 재현 가능한 빌드를 원하면 아래 index-state를 고정하고
+-- `cabal freeze`로 cabal.project.freeze를 생성하세요.
+-- index-state: 2025-06-01T00:00:00Z

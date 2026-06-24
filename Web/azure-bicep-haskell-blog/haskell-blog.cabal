@@ -1,0 +1,104 @@
+cabal-version:   3.0
+name:            haskell-blog
+version:         0.1.0.0
+synopsis:        Azure Container Apps + PostgreSQL Flexible Server에 배포하는 Haskell 블로그 샘플
+license:         MIT
+build-type:      Simple
+
+-- Blog.View.Assets 가 file-embed 로 컴파일 타임에 임베드하는 정적 자산.
+extra-source-files:
+  assets/app.css
+  assets/auth.css
+  assets/theme-init.js
+  assets/theme-toggle.js
+  assets/org-editor.js
+
+common common-options
+  default-language: GHC2021
+  ghc-options:      -Wall -Wcompat -Widentities
+                    -Wincomplete-record-updates
+                    -Wincomplete-uni-patterns
+                    -Wpartial-fields
+                    -Wredundant-constraints
+  default-extensions:
+    OverloadedStrings
+    DerivingStrategies
+
+library
+  import:          common-options
+  hs-source-dirs:  src
+  exposed-modules:
+    Blog.App
+    Blog.App.AuthRoutes
+    Blog.App.Common
+    Blog.App.PostRoutes
+    Blog.App.ProfileRoutes
+    Blog.Auth
+    Blog.Config
+    Blog.Database
+    Blog.Email
+    Blog.Email.Acs
+    Blog.Keys
+    Blog.Org
+    Blog.Post
+    Blog.Publish
+    Blog.Routes
+    Blog.User
+    Blog.Verification
+    Blog.View
+    Blog.View.Assets
+  build-depends:
+    , base              >= 4.17 && < 5
+    , blaze-html        >= 0.9  && < 0.10
+    , blaze-markup      >= 0.8  && < 0.9
+    , bytestring        >= 0.11
+    , cookie            >= 0.4  && < 0.6
+    , crypton           >= 1.0  && < 2
+    , file-embed        >= 0.0.15
+    , http-client       >= 0.7
+    , http-client-tls   >= 0.3
+    , http-types        >= 0.12
+    , org-mode          >= 2.0
+    , postgresql-simple >= 0.7
+    , ram               >= 0.22
+    , resource-pool     >= 0.4
+    , scotty            >= 0.21 && < 0.31
+    , text              >= 2.0
+    , time              >= 1.12
+
+executable haskell-blog
+  import:          common-options
+  hs-source-dirs:  app
+  main-is:         Main.hs
+  build-depends:
+    , base            >= 4.17 && < 5
+    , haskell-blog
+    , http-client-tls >= 0.3
+    , scotty          >= 0.21 && < 0.31
+    , text            >= 2.0
+  ghc-options:     -threaded -rtsopts -with-rtsopts=-N
+
+test-suite spec
+  import:          common-options
+  type:            exitcode-stdio-1.0
+  hs-source-dirs:  test
+  main-is:         Spec.hs
+  other-modules:
+    DerivingSpec
+    DomainSpec
+    OrgSpec
+    RouteSpec
+    SecuritySpec
+  build-depends:
+    , base
+    , haskell-blog
+    , blaze-html  >= 0.9  && < 0.10
+    , bytestring
+    , containers
+    , http-types  >= 0.12
+    , HUnit
+    , scotty      >= 0.21 && < 0.31
+    , text        >= 2.0
+    , time        >= 1.12
+    , wai
+    , wai-extra

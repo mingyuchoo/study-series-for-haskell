@@ -1,0 +1,10 @@
+.git
+.github
+.azure
+dist-newstyle
+*.hi
+*.o
+README.md
+docker-compose.yml
+.gitignore
+.dockerignore

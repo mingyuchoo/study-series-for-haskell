@@ -1,0 +1,12 @@
+# Haskell
+dist-newstyle/
+*.hi
+*.o
+.ghc.environment.*
+cabal.project.local
+
+# azd
+.azure/
+
+# 기타
+.DS_Store
