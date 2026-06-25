@@ -1,0 +1,17 @@
+{
+  "name": "luck-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "운을 부르는 실천 체크리스트 - 모노레포 (Haskell/Servant + Solid.js)",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build:frontend": "npm --workspace frontend run build",
+    "dev:backend": "cd backend && cabal run luck-backend",
+    "build:backend": "cd backend && cabal build",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down"
+  }
+}

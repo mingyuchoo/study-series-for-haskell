@@ -1,0 +1,584 @@
+:root {
+  --base: #13152a;
+  --base-2: #191c38;
+  --panel: #1f2347;
+  --panel-line: #2c315c;
+  --gold: #e3b04b;
+  --gold-soft: #f0cd80;
+  --jade: #74ab93;
+  --ink: #f2efe6;
+  --muted: #9095bd;
+  --muted-2: #6a6f9c;
+  --danger: #e0728a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+  color: var(--ink);
+  background-color: var(--base);
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 8%, rgba(242, 239, 230, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 82% 14%, rgba(242, 239, 230, 0.4), transparent),
+    radial-gradient(1px 1px at 34% 20%, rgba(242, 239, 230, 0.35), transparent),
+    radial-gradient(1px 1px at 68% 6%, rgba(242, 239, 230, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 50% 22%, rgba(227, 176, 75, 0.45), transparent),
+    radial-gradient(900px 500px at 50% -10%, rgba(227, 176, 75, 0.08), transparent),
+    linear-gradient(180deg, #14162b 0%, #101327 60%, #0d0f22 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--gold-soft);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.muted-line {
+  color: var(--muted-2);
+  font-size: 12.5px;
+  font-weight: 300;
+}
+.eyebrow {
+  font-family: "Song Myung", serif;
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+
+/* ===== 인증 화면 ===== */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, var(--base-2), #15182f);
+  border: 1px solid var(--panel-line);
+  border-radius: 22px;
+  padding: 34px 26px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+.auth-mark {
+  font-family: "Song Myung", serif;
+  font-size: 40px;
+  color: var(--gold-soft);
+  width: 72px;
+  height: 72px;
+  line-height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line);
+  background: radial-gradient(circle at 50% 35%, #232751, #15182f);
+  box-shadow: 0 0 24px rgba(227, 176, 75, 0.18);
+}
+.auth-title {
+  font-family: "Song Myung", serif;
+  font-weight: 400;
+  font-size: 23px;
+  margin-bottom: 6px;
+}
+.auth-sub {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+.auth-foot {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ===== 폼 ===== */
+.field {
+  display: block;
+  text-align: left;
+  margin-bottom: 14px;
+}
+.field > span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--ink);
+  background: #12152b;
+  border: 1px solid var(--panel-line);
+  border-radius: 11px;
+  padding: 11px 13px;
+  transition: border-color 0.2s ease;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+.field input:disabled {
+  color: var(--muted-2);
+  background: #101225;
+}
+.field textarea {
+  resize: vertical;
+}
+
+.btn-primary {
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #15182f;
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: filter 0.2s ease, transform 0.1s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+.btn-primary:disabled {
+  filter: grayscale(0.4) brightness(0.8);
+  cursor: default;
+}
+.form-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.form-ok {
+  color: var(--jade);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* ===== 셸 / 네비게이션 ===== */
+.shell {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(44, 49, 92, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  background: rgba(16, 19, 39, 0.7);
+}
+.brand {
+  font-family: "Song Myung", serif;
+  font-size: 24px;
+  color: var(--gold-soft);
+  text-decoration: none;
+  width: 38px;
+  height: 38px;
+  line-height: 38px;
+  text-align: center;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line);
+}
+.brand:hover {
+  text-decoration: none;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.nav-link {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 7px 12px;
+  border-radius: 9px;
+  text-decoration: none;
+}
+.nav-link:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+.nav-link.active {
+  color: var(--gold-soft);
+  background: rgba(227, 176, 75, 0.08);
+}
+.nav-logout {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--muted-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 7px 10px;
+}
+.nav-logout:hover {
+  color: var(--danger);
+}
+.content {
+  padding: 22px 20px 70px;
+}
+
+/* ===== 페이지 공통 ===== */
+.page-head {
+  margin-bottom: 18px;
+}
+.page-head h2 {
+  font-family: "Song Myung", serif;
+  font-weight: 400;
+  font-size: 24px;
+  margin-top: 6px;
+}
+
+/* ===== 대시보드 ===== */
+.dash-head {
+  text-align: center;
+  margin-bottom: 26px;
+}
+.dash-date {
+  font-family: "Song Myung", serif;
+  font-weight: 400;
+  font-size: 22px;
+  margin: 6px 0 18px;
+}
+.dash-stat {
+  margin-top: 14px;
+}
+.dash-stat .big {
+  display: block;
+  font-family: "Song Myung", serif;
+  font-size: 30px;
+  color: var(--gold-soft);
+  line-height: 1.1;
+}
+
+.medallion {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--panel-line);
+  background: radial-gradient(circle at 50% 35%, #232751, #15182f);
+  box-shadow: 0 0 0 6px rgba(31, 35, 71, 0.5), 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+.medallion-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold) 60%, #c8902f);
+  transition: height 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.medallion-glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Song Myung", serif;
+  font-size: 54px;
+  color: var(--ink);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  z-index: 2;
+}
+.medallion.complete {
+  box-shadow: 0 0 0 6px rgba(227, 176, 75, 0.25), 0 0 38px rgba(227, 176, 75, 0.5),
+    0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* ===== 체크리스트 ===== */
+.list {
+  background: linear-gradient(180deg, var(--base-2), #15182f);
+  border: 1px solid var(--panel-line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px 16px;
+  cursor: pointer;
+  user-select: none;
+  border-top: 1px solid rgba(44, 49, 92, 0.55);
+  transition: background 0.25s ease;
+}
+.item:first-child {
+  border-top: none;
+}
+.item:hover {
+  background: rgba(227, 176, 75, 0.04);
+}
+.box {
+  flex: none;
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  margin-top: 1px;
+  border: 1.5px solid var(--muted-2);
+  position: relative;
+  transition: all 0.25s ease;
+}
+.box::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 6px;
+  height: 11px;
+  border: solid #15182f;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.2s ease;
+}
+.txt {
+  font-size: 14.5px;
+  color: var(--ink);
+  transition: color 0.25s ease;
+}
+.item.done .box {
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(227, 176, 75, 0.4);
+}
+.item.done .box::after {
+  transform: rotate(45deg) scale(1);
+}
+.item.done .txt {
+  color: var(--muted);
+}
+
+.note-field {
+  margin-top: 22px;
+}
+.save-hint {
+  font-size: 11.5px;
+  color: var(--muted-2);
+  text-align: right;
+  margin-top: -6px;
+}
+
+/* ===== 원칙 카드 ===== */
+.principles {
+  margin-top: 34px;
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.pcard {
+  background: linear-gradient(135deg, #1c2046, #161937);
+  border: 1px solid var(--panel-line);
+  border-radius: 16px;
+  padding: 17px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.pcard::before {
+  content: attr(data-n);
+  position: absolute;
+  right: 14px;
+  top: 4px;
+  font-family: "Song Myung", serif;
+  font-size: 52px;
+  color: rgba(227, 176, 75, 0.1);
+}
+.pcard h3 {
+  font-family: "Song Myung", serif;
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--gold-soft);
+  margin-bottom: 6px;
+}
+.pcard p {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+  max-width: 90%;
+}
+
+/* ===== 프로필 폼 카드 ===== */
+.card-form {
+  background: linear-gradient(180deg, var(--base-2), #15182f);
+  border: 1px solid var(--panel-line);
+  border-radius: 18px;
+  padding: 22px 20px;
+}
+
+/* ===== 달력 ===== */
+.cal-head {
+  text-align: center;
+}
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+.cal-nav h2 {
+  font-family: "Song Myung", serif;
+  font-weight: 400;
+  font-size: 22px;
+  min-width: 150px;
+}
+.cal-arrow {
+  font-family: inherit;
+  font-size: 22px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  line-height: 1;
+}
+.cal-arrow:hover {
+  color: var(--gold-soft);
+  border-color: var(--gold);
+}
+.weekrow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: 18px 0 8px;
+}
+.wd {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-2);
+}
+.calgrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.cal-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 11px;
+  border: 1px solid var(--panel-line);
+  background: var(--base-2);
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 6px 8px;
+  transition: transform 0.12s ease, border-color 0.2s ease;
+}
+.cal-cell:hover {
+  transform: translateY(-1px);
+  border-color: var(--gold);
+}
+.cell-day {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.cal-cell.dim {
+  opacity: 0.4;
+}
+.cal-cell.today {
+  border-color: var(--gold-soft);
+  box-shadow: 0 0 0 1px var(--gold-soft) inset;
+}
+.cal-cell.lvl-1 {
+  background: rgba(227, 176, 75, 0.16);
+}
+.cal-cell.lvl-2 {
+  background: rgba(227, 176, 75, 0.32);
+}
+.cal-cell.lvl-3 {
+  background: rgba(227, 176, 75, 0.55);
+}
+.cal-cell.lvl-4 {
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+}
+.cal-cell.lvl-3 .cell-day,
+.cal-cell.lvl-4 .cell-day {
+  color: #15182f;
+  font-weight: 600;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+}
+.lg {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--panel-line);
+}
+.lg.lvl-1 {
+  background: rgba(227, 176, 75, 0.16);
+}
+.lg.lvl-2 {
+  background: rgba(227, 176, 75, 0.32);
+}
+.lg.lvl-3 {
+  background: rgba(227, 176, 75, 0.55);
+}
+.lg.lvl-4 {
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+@media (max-width: 420px) {
+  .nav-link {
+    padding: 7px 9px;
+    font-size: 13px;
+  }
+  .cal-nav h2 {
+    min-width: 120px;
+    font-size: 19px;
+  }
+}
