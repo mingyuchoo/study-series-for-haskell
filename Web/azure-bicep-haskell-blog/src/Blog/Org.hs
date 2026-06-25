@@ -149,27 +149,45 @@ renderWord w = case w of
   Org.Punct c -> H.toHtml (T.singleton c)
   Org.Plain t -> H.toHtml t
 
--- | 헤딩·리스트 시작 줄 앞에 필요한 빈 줄을 보강하고(='go'), 문서를 여는
+-- | 헤딩·리스트·블록 시작 줄 앞에 필요한 빈 줄을 보강하고(='go'), 문서를 여는
 --   블록 지시자가 메타 파서에 삼켜지지 않게 보호한다(='fixLeadingBlock').
 --
 -- @org-mode@ 라이브러리의 문단·리스트 파서는 빈 줄로 구분되지 않은 다음 줄을
 -- 직전 블록의 연속 텍스트로 흡수한다. 그래서 (1) @-@ 항목 바로 뒤의 @**@ 헤딩이
 -- 헤딩으로 인식되지 못하고, (2) 문단 바로 뒤의 @-@/@+@ 줄이 리스트가 아니라 문단
--- 꼬리로 빨려든다. Emacs org-mode 에서는 헤딩이 빈 줄 없이도 리스트를 끝내고,
--- 불릿 줄은 문단 한가운데서도 새 리스트를 시작한다. 파싱 직전에 빈 줄을 보강해
--- 그 의미론에 맞춘다.
+-- 꼬리로 빨려들며, (3) 문단·리스트 바로 뒤의 @#+begin_src@ 줄도 블록이 아니라
+-- 문단 꼬리로 흡수된다. Emacs org-mode 에서는 헤딩·불릿·블록이 빈 줄 없이도
+-- 직전 블록을 끝내고 새로 시작한다. 파싱 직전에 빈 줄을 보강해 그 의미론에 맞춘다.
+--
+-- 단, 블록(@#+begin_…@ … @#+end_…@) "안"의 본문은 리터럴이므로 건드리지 않는다.
+-- 'go' 를 블록 밖('outside')·안('inside') 상태로 나눠, 안에서는 어떤 줄(헤딩처럼
+-- 보이는 @*@ 줄 등)도 빈 줄 보강 없이 그대로 통과시킨다.
 normalizeOrg :: Text -> Text
 normalizeOrg = T.intercalate "\n" . fixLeadingBlock . go . T.splitOn "\n"
   where
-    go (prev : cur : rest)
-      | needsBlank prev cur = prev : "" : go (cur : rest)
-      | otherwise = prev : go (cur : rest)
-    go xs = xs
+    go :: [Text] -> [Text]
+    go = outside
+      where
+        -- 블록 밖: 헤딩·리스트·블록 시작 앞에 빈 줄을 끼운다. @#+begin_…@ 를
+        -- 지나면 블록 안으로 전환한다.
+        outside (prev : cur : rest)
+          | isBlockBegin prev = prev : inside (cur : rest)
+          | needsBlank prev cur = prev : "" : outside (cur : rest)
+          | otherwise = prev : outside (cur : rest)
+        outside xs = xs
+
+        -- 블록 안: @#+end_…@ 를 지날 때까지 모든 줄을 원본 그대로 통과시킨다.
+        inside (prev : cur : rest)
+          | isBlockEnd prev = prev : outside (cur : rest)
+          | otherwise = prev : inside (cur : rest)
+        inside xs = xs
 
     -- 직전 줄이 비어있지 않을 때, cur 앞에 빈 줄이 필요한가.
     needsBlank :: Text -> Text -> Bool
     needsBlank prev cur
       | blank prev = False
+      -- 블록(@#+begin_…@) 시작은 무엇 뒤에 오든 빈 줄로 끊어 블록으로 인식시킨다.
+      | isBlockBegin cur = True
       -- 헤딩은 무엇 뒤에 오든 빈 줄로 끊어 헤딩으로 인식시킨다.
       | isHeading cur = True
       -- 리스트 시작은 문단 뒤일 때만 끊는다(연속 항목·중첩·헤딩 뒤는 그대로 둔다).
@@ -178,6 +196,24 @@ normalizeOrg = T.intercalate "\n" . fixLeadingBlock . go . T.splitOn "\n"
 
     blank :: Text -> Bool
     blank = T.null . T.strip
+
+    -- 라이브러리가 블록으로 파싱하는 세 종류(@src@/@quote@/@example@)의 여닫이 줄.
+    -- 대소문자·선행 공백을 무시하고, 키워드 뒤는 공백이거나 줄 끝이어야 한다.
+    isBlockBegin :: Text -> Bool
+    isBlockBegin = isBlockDirective "begin_"
+
+    isBlockEnd :: Text -> Bool
+    isBlockEnd = isBlockDirective "end_"
+
+    isBlockDirective :: Text -> Text -> Bool
+    isBlockDirective kw l =
+      case T.stripPrefix ("#+" <> kw) (T.toLower (T.dropWhile (== ' ') l)) of
+        Nothing   -> False
+        Just rest -> any (afterKw rest) ["src", "quote", "example"]
+      where
+        afterKw rest name = case T.stripPrefix name rest of
+          Just r  -> T.null r || T.head r == ' '
+          Nothing -> False
 
     -- 줄이 @*@ 한 개 이상으로 시작하고 그 뒤가 공백이면 헤딩으로 본다.
     isHeading :: Text -> Bool

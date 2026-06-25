@@ -66,6 +66,27 @@ orgTests =
         let out = render ["- item", "* H"]
         contains "<li>item</li>" out
         contains "<h1>H</h1>" out
+    , TestLabel "문단 바로 뒤의 #+begin_src 도 빈 줄 없이 코드 블록이 된다(빈 줄 보강)" . TestCase $ do
+        -- 스크린샷 재현: 빈 줄 없이 이어 쓴 본문 뒤의 블록이 문단에 흡수되지 않게 끊는다.
+        let out = render ["/Hello/", "~hello~", "#+begin_src cpp", "printf(1);", "#+end_src"]
+        contains "<i>Hello</i>" out
+        contains "<code class=\"org-highlight\">hello</code>" out
+        contains "org-src-container" out
+        contains "src-cpp" out
+        contains "printf(1);" out
+        excludes "#+begin_src" out
+    , TestLabel "리스트 바로 뒤의 #+begin_src 도 빈 줄 없이 코드 블록이 된다(빈 줄 보강)" . TestCase $ do
+        let out = render ["- item", "#+begin_src", "x = 1", "#+end_src"]
+        contains "<li>item</li>" out
+        contains "org-src-container" out
+        contains "x = 1" out
+    , TestLabel "블록 본문 안의 헤딩처럼 보이는 줄은 빈 줄 보강 없이 리터럴로 보존된다" . TestCase $ do
+        -- 블록 안에서는 normalizeOrg 가 끼어들지 않아야 코드가 깨지지 않는다.
+        let out = render ["intro", "#+begin_src", "* not a heading", "- not a list", "#+end_src"]
+        contains "org-src-container" out
+        contains "* not a heading" out
+        contains "- not a list" out
+        excludes "<h1>" out
     , TestLabel "인라인 굵게·링크 서식이 렌더된다" . TestCase $ do
         let out = render ["plain *bold* and [[https://x.com][go]] end"]
         contains "<b>bold</b>" out
