@@ -37,6 +37,12 @@ param entraAdminPrincipalType string = 'User'
 @description('ACS(이메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION <값>. 예: United States, Europe, Asia Pacific.')
 param acsDataLocation string = 'United States'
 
+@description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 커스텀 도메인 비활성화. azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com')
+param customDomainName string = ''
+
+@description('2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true')
+param bindCustomDomain bool = false
+
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
 
@@ -61,9 +67,18 @@ module resources 'resources.bicep' = {
     entraAdminPrincipalName: entraAdminPrincipalName
     entraAdminPrincipalType: entraAdminPrincipalType
     acsDataLocation: acsDataLocation
+    customDomainName: customDomainName
+    bindCustomDomain: bindCustomDomain
   }
 }
 
 output AZURE_LOCATION string = location
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = resources.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
 output WEB_URI string = resources.outputs.WEB_URI
+
+// 커스텀 도메인 운영용 출력값(azd env 에 자동 저장됨).
+output DNS_ZONE_NAME string = resources.outputs.DNS_ZONE_NAME
+output DNS_NAME_SERVERS array = resources.outputs.DNS_NAME_SERVERS
+output CONTAINER_ENV_STATIC_IP string = resources.outputs.CONTAINER_ENV_STATIC_IP
+output WEB_CUSTOM_DOMAIN_VERIFICATION_ID string = resources.outputs.WEB_CUSTOM_DOMAIN_VERIFICATION_ID
+output CUSTOM_DOMAIN_URI string = resources.outputs.CUSTOM_DOMAIN_URI

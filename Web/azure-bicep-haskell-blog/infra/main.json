@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "6352379268998976670"
+      "templateHash": "12582264799114218981"
     }
   },
   "parameters": {
@@ -83,6 +83,20 @@
       "metadata": {
         "description": "ACS(이메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION <값>. 예: United States, Europe, Asia Pacific."
       }
+    },
+    "customDomainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 커스텀 도메인 비활성화. azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com"
+      }
+    },
+    "bindCustomDomain": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true"
+      }
     }
   },
   "variables": {
@@ -142,6 +156,12 @@
           },
           "acsDataLocation": {
             "value": "[parameters('acsDataLocation')]"
+          },
+          "customDomainName": {
+            "value": "[parameters('customDomainName')]"
+          },
+          "bindCustomDomain": {
+            "value": "[parameters('bindCustomDomain')]"
           }
         },
         "template": {
@@ -151,7 +171,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "1887713020724678243"
+              "templateHash": "7827035737127130168"
             }
           },
           "parameters": {
@@ -238,10 +258,28 @@
               "metadata": {
                 "description": "서명 마스터 키(PREVIEW_SECRET). main.bicep 이 azd 환경의 고정값을 전달한다. (모듈을 단독 배포할 때만 newGuid() 폴백이 동작하며, 그 경우 배포마다 값이 바뀜에 유의.)"
               }
+            },
+            "customDomainName": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 DNS Zone·커스텀 도메인 리소스를 만들지 않는다."
+              }
+            },
+            "bindCustomDomain": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것(false 일 때는 DNS Zone·레코드만 생성)."
+              }
             }
           },
           "variables": {
-            "databaseName": "blog"
+            "databaseName": "blog",
+            "useCustomDomain": "[not(empty(parameters('customDomainName')))]",
+            "doBindCustomDomain": "[and(variables('useCustomDomain'), parameters('bindCustomDomain'))]",
+            "wwwDomainName": "[format('www.{0}', parameters('customDomainName'))]",
+            "customDomainsConfig": "[if(variables('doBindCustomDomain'), createArray(createObject('name', parameters('customDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-apex-{0}', parameters('resourceToken')))), createObject('name', variables('wwwDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-www-{0}', parameters('resourceToken'))))), createArray())]"
           },
           "resources": [
             {
@@ -536,7 +574,8 @@
                   "ingress": {
                     "external": true,
                     "targetPort": 8080,
-                    "transport": "auto"
+                    "transport": "auto",
+                    "customDomains": "[variables('customDomainsConfig')]"
                   },
                   "registries": [
                     {
@@ -613,6 +652,8 @@
               },
               "dependsOn": [
                 "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', parameters('resourceToken'))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken'))), 'AcrPull'))]",
+                "[resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-apex-{0}', parameters('resourceToken')))]",
+                "[resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-www-{0}', parameters('resourceToken')))]",
                 "[resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken')))]",
                 "[resourceId('Microsoft.Communication/emailServices/domains', format('acs-email-{0}', parameters('resourceToken')), 'AzureManagedDomain')]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken')))]",
@@ -622,6 +663,118 @@
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', format('kv-{0}', parameters('resourceToken')), 'preview-secret')]",
                 "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken'))), 'KeyVaultSecretsUser'))]",
                 "[resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "condition": "[variables('useCustomDomain')]",
+              "type": "Microsoft.Network/dnsZones",
+              "apiVersion": "2023-07-01-preview",
+              "name": "[parameters('customDomainName')]",
+              "location": "global",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "condition": "[variables('useCustomDomain')]",
+              "type": "Microsoft.Network/dnsZones/A",
+              "apiVersion": "2023-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('customDomainName'), '@')]",
+              "properties": {
+                "TTL": 3600,
+                "ARecords": [
+                  {
+                    "ipv4Address": "[reference(resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken'))), '2024-03-01').staticIp]"
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken')))]",
+                "[resourceId('Microsoft.Network/dnsZones', parameters('customDomainName'))]"
+              ]
+            },
+            {
+              "condition": "[variables('useCustomDomain')]",
+              "type": "Microsoft.Network/dnsZones/CNAME",
+              "apiVersion": "2023-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('customDomainName'), 'www')]",
+              "properties": {
+                "TTL": 3600,
+                "CNAMERecord": {
+                  "cname": "[reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').configuration.ingress.fqdn]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/dnsZones', parameters('customDomainName'))]",
+                "[resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "condition": "[variables('useCustomDomain')]",
+              "type": "Microsoft.Network/dnsZones/TXT",
+              "apiVersion": "2023-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('customDomainName'), 'asuid')]",
+              "properties": {
+                "TTL": 3600,
+                "TXTRecords": [
+                  {
+                    "value": [
+                      "[reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').customDomainVerificationId]"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/dnsZones', parameters('customDomainName'))]",
+                "[resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "condition": "[variables('useCustomDomain')]",
+              "type": "Microsoft.Network/dnsZones/TXT",
+              "apiVersion": "2023-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('customDomainName'), 'asuid.www')]",
+              "properties": {
+                "TTL": 3600,
+                "TXTRecords": [
+                  {
+                    "value": [
+                      "[reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').customDomainVerificationId]"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/dnsZones', parameters('customDomainName'))]",
+                "[resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "condition": "[variables('doBindCustomDomain')]",
+              "type": "Microsoft.App/managedEnvironments/managedCertificates",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}/{1}', format('cae-{0}', parameters('resourceToken')), format('cert-apex-{0}', parameters('resourceToken')))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subjectName": "[parameters('customDomainName')]",
+                "domainControlValidation": "TXT"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "condition": "[variables('doBindCustomDomain')]",
+              "type": "Microsoft.App/managedEnvironments/managedCertificates",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}/{1}', format('cae-{0}', parameters('resourceToken')), format('cert-www-{0}', parameters('resourceToken')))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subjectName": "[variables('wwwDomainName')]",
+                "domainControlValidation": "TXT"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken')))]"
               ]
             }
           ],
@@ -633,6 +786,26 @@
             "WEB_URI": {
               "type": "string",
               "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').configuration.ingress.fqdn)]"
+            },
+            "DNS_ZONE_NAME": {
+              "type": "string",
+              "value": "[if(variables('useCustomDomain'), parameters('customDomainName'), '')]"
+            },
+            "DNS_NAME_SERVERS": {
+              "type": "array",
+              "value": "[if(variables('useCustomDomain'), reference(resourceId('Microsoft.Network/dnsZones', parameters('customDomainName')), '2023-07-01-preview').nameServers, createArray())]"
+            },
+            "CONTAINER_ENV_STATIC_IP": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken'))), '2024-03-01').staticIp]"
+            },
+            "WEB_CUSTOM_DOMAIN_VERIFICATION_ID": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').customDomainVerificationId]"
+            },
+            "CUSTOM_DOMAIN_URI": {
+              "type": "string",
+              "value": "[if(variables('doBindCustomDomain'), format('https://{0}', parameters('customDomainName')), '')]"
             }
           }
         }
@@ -654,6 +827,26 @@
     "WEB_URI": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.WEB_URI.value]"
+    },
+    "DNS_ZONE_NAME": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.DNS_ZONE_NAME.value]"
+    },
+    "DNS_NAME_SERVERS": {
+      "type": "array",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.DNS_NAME_SERVERS.value]"
+    },
+    "CONTAINER_ENV_STATIC_IP": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.CONTAINER_ENV_STATIC_IP.value]"
+    },
+    "WEB_CUSTOM_DOMAIN_VERIFICATION_ID": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.WEB_CUSTOM_DOMAIN_VERIFICATION_ID.value]"
+    },
+    "CUSTOM_DOMAIN_URI": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.CUSTOM_DOMAIN_URI.value]"
     }
   }
 }

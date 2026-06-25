@@ -37,7 +37,19 @@ param acsDataLocation string = 'United States'
 @description('서명 마스터 키(PREVIEW_SECRET). main.bicep 이 azd 환경의 고정값을 전달한다. (모듈을 단독 배포할 때만 newGuid() 폴백이 동작하며, 그 경우 배포마다 값이 바뀜에 유의.)')
 param previewSecret string = newGuid()
 
+@description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 DNS Zone·커스텀 도메인 리소스를 만들지 않는다.')
+param customDomainName string = ''
+
+@description('2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것(false 일 때는 DNS Zone·레코드만 생성).')
+param bindCustomDomain bool = false
+
 var databaseName = 'blog'
+
+// 커스텀 도메인 사용 여부. customDomainName 이 비어 있으면 모든 도메인 리소스를 건너뛴다.
+var useCustomDomain = !empty(customDomainName)
+// 인증서 발급/바인딩(2단계)은 DNS Zone 사용 + 플래그가 모두 켜졌을 때만.
+var doBindCustomDomain = useCustomDomain && bindCustomDomain
+var wwwDomainName = 'www.${customDomainName}'
 
 // ---------- Log Analytics (ACA 환경 로그) ----------
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -278,6 +290,23 @@ resource kvAcsConnString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// ---------- 커스텀 도메인 바인딩 구성(2단계에서만 채워짐) ----------
+// useCustomDomain && bindCustomDomain 일 때 apex + www 를 SNI/TLS 로 바인딩한다.
+// 인증서는 아래 managedCertificate 리소스(certApex/certWww)가 제공한다.
+// (1단계에서는 빈 배열 → 기본 도메인만. DNS 위임/전파 후 2단계로 채운다.)
+var customDomainsConfig = doBindCustomDomain ? [
+  {
+    name: customDomainName
+    bindingType: 'SniEnabled'
+    certificateId: certApex.id
+  }
+  {
+    name: wwwDomainName
+    bindingType: 'SniEnabled'
+    certificateId: certWww.id
+  }
+] : []
+
 // ---------- Container App ----------
 // 'azd-service-name: web' 태그로 azd가 이미지 배포 대상을 식별한다.
 resource web 'Microsoft.App/containerApps@2024-03-01' = {
@@ -298,6 +327,7 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
         external: true
         targetPort: 8080
         transport: 'auto'
+        customDomains: customDomainsConfig
       }
       registries: [
         {
@@ -357,5 +387,100 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
   dependsOn: [ acrPull, kvSecretsUser, kvPreviewSecret, kvDatabaseUrl, kvAcsConnString ]
 }
 
+// ---------- Azure DNS Zone (mingyuchoo.com) ----------
+// customDomainName 이 설정되면 Azure 에서 도메인을 관리한다. azd provision 후 출력되는
+// nameServers(NS 4개)를 whois.co.kr 의 네임서버로 교체해야 위임이 시작된다(전파 최대 24~48h).
+resource dnsZone 'Microsoft.Network/dnsZones@2023-07-01-preview' = if (useCustomDomain) {
+  name: customDomainName
+  location: 'global'
+  tags: tags
+}
+
+// apex(@) → Container App Environment 의 Static IP (A 레코드).
+// 루트 도메인은 CNAME 을 쓸 수 없으므로 반드시 A 레코드로 staticIp 를 가리킨다.
+resource dnsApexA 'Microsoft.Network/dnsZones/A@2023-07-01-preview' = if (useCustomDomain) {
+  parent: dnsZone
+  name: '@'
+  properties: {
+    TTL: 3600
+    ARecords: [
+      { ipv4Address: containerEnv.properties.staticIp }
+    ]
+  }
+}
+
+// www → Container App 기본 FQDN (CNAME 레코드).
+resource dnsWwwCname 'Microsoft.Network/dnsZones/CNAME@2023-07-01-preview' = if (useCustomDomain) {
+  parent: dnsZone
+  name: 'www'
+  properties: {
+    TTL: 3600
+    CNAMERecord: {
+      cname: web.properties.configuration.ingress.fqdn
+    }
+  }
+}
+
+// apex 소유권 검증용 TXT 레코드(asuid). 값은 Container App 의 customDomainVerificationId.
+// 이 레코드가 전파돼야 호스트네임 바인딩과 매니지드 인증서 발급이 통과한다.
+resource dnsAsuidTxt 'Microsoft.Network/dnsZones/TXT@2023-07-01-preview' = if (useCustomDomain) {
+  parent: dnsZone
+  name: 'asuid'
+  properties: {
+    TTL: 3600
+    TXTRecords: [
+      { value: [ web.properties.customDomainVerificationId ] }
+    ]
+  }
+}
+
+// www 소유권 검증용 TXT 레코드(asuid.www). 값은 동일한 customDomainVerificationId.
+resource dnsAsuidWwwTxt 'Microsoft.Network/dnsZones/TXT@2023-07-01-preview' = if (useCustomDomain) {
+  parent: dnsZone
+  name: 'asuid.www'
+  properties: {
+    TTL: 3600
+    TXTRecords: [
+      { value: [ web.properties.customDomainVerificationId ] }
+    ]
+  }
+}
+
+// ---------- 매니지드 인증서 (HTTPS, 2단계에서만) ----------
+// asuid TXT 로 소유권을 검증(domainControlValidation: 'TXT')한 뒤 무료 인증서를 자동 발급한다.
+// DNS 위임/전파가 끝난 뒤(1단계 완료 후) bindCustomDomain=true 로 켜야 발급에 성공한다.
+resource certApex 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' = if (doBindCustomDomain) {
+  parent: containerEnv
+  name: 'cert-apex-${resourceToken}'
+  location: location
+  tags: tags
+  properties: {
+    subjectName: customDomainName
+    domainControlValidation: 'TXT'
+  }
+}
+
+resource certWww 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' = if (doBindCustomDomain) {
+  parent: containerEnv
+  name: 'cert-www-${resourceToken}'
+  location: location
+  tags: tags
+  properties: {
+    subjectName: wwwDomainName
+    domainControlValidation: 'TXT'
+  }
+}
+
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.properties.loginServer
 output WEB_URI string = 'https://${web.properties.configuration.ingress.fqdn}'
+
+// 커스텀 도메인 운영용 출력값.
+// DNS_NAME_SERVERS: whois.co.kr 네임서버로 교체할 Azure NS 4개.
+// WEB_CUSTOM_DOMAIN_VERIFICATION_ID / CONTAINER_ENV_STATIC_IP: 검증·디버깅 참고용.
+output DNS_ZONE_NAME string = useCustomDomain ? customDomainName : ''
+// useCustomDomain 이 true 일 때만 dnsZone 이 존재하며 같은 조건의 삼항으로 보호되므로 null 접근은 발생하지 않는다.
+#disable-next-line BCP318
+output DNS_NAME_SERVERS array = useCustomDomain ? dnsZone.properties.nameServers : []
+output CONTAINER_ENV_STATIC_IP string = containerEnv.properties.staticIp
+output WEB_CUSTOM_DOMAIN_VERIFICATION_ID string = web.properties.customDomainVerificationId
+output CUSTOM_DOMAIN_URI string = doBindCustomDomain ? 'https://${customDomainName}' : ''

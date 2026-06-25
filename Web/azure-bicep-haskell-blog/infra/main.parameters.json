@@ -31,6 +31,12 @@
     },
     "acsDataLocation": {
       "value": "${ACS_DATA_LOCATION=United States}"
+    },
+    "customDomainName": {
+      "value": "${CUSTOM_DOMAIN_NAME=}"
+    },
+    "bindCustomDomain": {
+      "value": "${BIND_CUSTOM_DOMAIN=false}"
     }
   }
 }

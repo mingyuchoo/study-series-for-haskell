@@ -114,6 +114,58 @@ psql "host=<psql-...>.postgres.database.azure.com port=5432 dbname=blog sslmode=
 3. 앱은 ACA가 주입한 `DATABASE_URL` 시크릿(`sslmode=require`)으로 Flexible Server에 연결하고,
    시작 시 `posts` 테이블을 자동 생성한다.
 
+## 커스텀 도메인 연결 (mingyuchoo.com → Azure Container Apps)
+
+`infra/`는 Azure DNS Zone과 apex(`mingyuchoo.com`)·`www` 호스트네임 바인딩, 무료 매니지드
+인증서(HTTPS)를 Bicep으로 선언한다. NS 위임(whois.co.kr)과 DNS 전파가 끝나야 인증서가 발급되므로
+**2단계**로 나눠 진행한다. `CUSTOM_DOMAIN_NAME`이 비어 있으면 도메인 리소스를 전혀 만들지 않는다(현행 동작 유지).
+
+```
+whois.co.kr (도메인 등록)  ──NS 변경──▶  Azure DNS Zone  ──A/CNAME/TXT──▶  ACA (커스텀 도메인 + 인증서)
+```
+
+### 1단계 — DNS Zone + 레코드 생성, 네임서버 위임
+
+```bash
+# apex 도메인만 지정(www는 자동 구성). BIND_CUSTOM_DOMAIN은 아직 false(기본값).
+azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com
+azd provision
+
+# Azure가 발급한 네임서버(NS 4개) 확인 → whois.co.kr의 네임서버로 교체
+azd env get-values | grep DNS_NAME_SERVERS
+# 또는: az network dns zone show -g rg-<env> -n mingyuchoo.com --query nameServers -o tsv
+```
+
+이 단계에서 Bicep이 만드는 것:
+
+- **DNS Zone** `mingyuchoo.com`
+- **A** `@` → Container App Environment의 Static IP (루트 도메인은 CNAME 불가 → A 레코드 필수)
+- **CNAME** `www` → Container App 기본 FQDN
+- **TXT** `asuid`, `asuid.www` → `customDomainVerificationId` (소유권 검증값)
+
+whois.co.kr에서 기존 네임서버를 삭제하고 위 NS 4개를 입력한다. **전파에는 최대 24~48시간**이 걸린다.
+`dig NS mingyuchoo.com +short`가 Azure NS를 반환하면 전파 완료다.
+
+### 2단계 — 인증서 발급 + 호스트네임 바인딩
+
+DNS 위임/전파가 끝난 뒤에 플래그를 켜고 다시 프로비저닝한다.
+
+```bash
+azd env set BIND_CUSTOM_DOMAIN true
+azd provision
+
+azd env get-values | grep CUSTOM_DOMAIN_URI   # https://mingyuchoo.com
+```
+
+이 단계에서 Bicep이 추가하는 것:
+
+- **매니지드 인증서** 2개(apex/www) — `asuid` TXT로 소유권 검증(`domainControlValidation: 'TXT'`) 후 자동 발급
+- Container App ingress의 **`customDomains`** 바인딩(`SniEnabled`, 인증서 연결)
+
+> 왜 2단계인가: 호스트네임 바인딩과 인증서 발급은 `asuid` TXT 레코드가 **위임된 Zone에서 실제로 조회**돼야
+> 통과한다. 전파 전에 `BIND_CUSTOM_DOMAIN=true`로 한 번에 배포하면 검증 실패로 프로비저닝이 멈춘다.
+> 1단계에서 DNS만 먼저 깔고 전파를 기다린 뒤 2단계를 켜는 이유다(인증서는 보통 전파 후 수 분 내 발급).
+
 ## GitHub Actions 자동 배포
 
 ```bash
