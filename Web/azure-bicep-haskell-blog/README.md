@@ -117,8 +117,9 @@ psql "host=<psql-...>.postgres.database.azure.com port=5432 dbname=blog sslmode=
 ## 커스텀 도메인 연결 (mingyuchoo.com → Azure Container Apps)
 
 `infra/`는 Azure DNS Zone과 apex(`mingyuchoo.com`)·`www` 호스트네임 바인딩, 무료 매니지드
-인증서(HTTPS)를 Bicep으로 선언한다. NS 위임(whois.co.kr)과 DNS 전파가 끝나야 인증서가 발급되므로
-**2단계**로 나눠 진행한다. `CUSTOM_DOMAIN_NAME`이 비어 있으면 도메인 리소스를 전혀 만들지 않는다(현행 동작 유지).
+인증서(HTTPS)를 Bicep으로 선언한다. NS 위임(whois.co.kr)과 DNS 전파가 끝나야 인증서가 발급되고,
+ACA 매니지드 인증서는 **호스트네임이 컨테이너 앱에 먼저 등록돼 있어야** 발급되므로 **3단계**로 나눠
+진행한다. `CUSTOM_DOMAIN_NAME`이 비어 있으면 도메인 리소스를 전혀 만들지 않는다(현행 동작 유지).
 
 ```
 whois.co.kr (도메인 등록)  ──NS 변경──▶  Azure DNS Zone  ──A/CNAME/TXT──▶  ACA (커스텀 도메인 + 인증서)
@@ -146,9 +147,24 @@ azd env get-values | grep DNS_NAME_SERVERS
 whois.co.kr에서 기존 네임서버를 삭제하고 위 NS 4개를 입력한다. **전파에는 최대 24~48시간**이 걸린다.
 `dig NS mingyuchoo.com +short`가 Azure NS를 반환하면 전파 완료다.
 
-### 2단계 — 인증서 발급 + 호스트네임 바인딩
+### 2단계 — 호스트네임 등록(인증서 없음)
 
-DNS 위임/전파가 끝난 뒤에 플래그를 켜고 다시 프로비저닝한다.
+DNS 위임/전파가 끝난 뒤(`dig NS`가 Azure NS 반환) 플래그를 켜고 다시 프로비저닝한다. 이 단계는
+인증서를 **발급하지 않고** apex·www 호스트네임만 컨테이너 앱에 등록한다(`bindingType: 'Disabled'`).
+
+```bash
+azd env set ADD_CUSTOM_HOSTNAME true
+azd provision
+```
+
+이 단계에서 Bicep이 추가하는 것:
+
+- Container App ingress의 **`customDomains`** 바인딩 2개(apex/www, `bindingType: 'Disabled'`, 인증서 미연결)
+  — `asuid` TXT로 소유권 검증 후 호스트네임이 환경에 등록된다.
+
+### 3단계 — 매니지드 인증서 발급 + SNI/TLS 바인딩
+
+호스트네임이 등록된 뒤에 플래그를 켜고 다시 프로비저닝한다.
 
 ```bash
 azd env set BIND_CUSTOM_DOMAIN true
@@ -160,11 +176,13 @@ azd env get-values | grep CUSTOM_DOMAIN_URI   # https://mingyuchoo.com
 이 단계에서 Bicep이 추가하는 것:
 
 - **매니지드 인증서** 2개(apex/www) — `asuid` TXT로 소유권 검증(`domainControlValidation: 'TXT'`) 후 자동 발급
-- Container App ingress의 **`customDomains`** 바인딩(`SniEnabled`, 인증서 연결)
+- Container App ingress의 `customDomains` 바인딩을 **`SniEnabled`(인증서 연결)** 로 승격
 
-> 왜 2단계인가: 호스트네임 바인딩과 인증서 발급은 `asuid` TXT 레코드가 **위임된 Zone에서 실제로 조회**돼야
-> 통과한다. 전파 전에 `BIND_CUSTOM_DOMAIN=true`로 한 번에 배포하면 검증 실패로 프로비저닝이 멈춘다.
-> 1단계에서 DNS만 먼저 깔고 전파를 기다린 뒤 2단계를 켜는 이유다(인증서는 보통 전파 후 수 분 내 발급).
+> 왜 2·3단계로 나누나: ACA 매니지드 인증서는 "호스트네임이 컨테이너 앱에 이미 등록된 상태"를 전제로만
+> 발급된다(`RequireCustomHostnameInEnvironment`). 그런데 `SniEnabled` 바인딩은 인증서를 참조하므로,
+> 한 배포에서 인증서 발급과 SNI 바인딩을 동시에 하면 "인증서↔호스트네임" 순환이 생겨 실패한다. 그래서
+> 2단계에서 `Disabled`로 호스트네임만 먼저 등록하고, 3단계에서 인증서를 발급하며 `SniEnabled`로 승격한다.
+> (DNS 전파 전에 켜도 `asuid` 조회 실패로 멈추므로, 1단계 전파 완료를 먼저 확인할 것. 인증서는 보통 수 분 내 발급.)
 
 ## GitHub Actions 자동 배포
 

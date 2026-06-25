@@ -35,6 +35,9 @@
     "customDomainName": {
       "value": "${CUSTOM_DOMAIN_NAME=}"
     },
+    "addCustomHostname": {
+      "value": "${ADD_CUSTOM_HOSTNAME=false}"
+    },
     "bindCustomDomain": {
       "value": "${BIND_CUSTOM_DOMAIN=false}"
     }

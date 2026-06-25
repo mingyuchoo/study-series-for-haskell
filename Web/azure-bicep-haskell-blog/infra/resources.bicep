@@ -40,14 +40,19 @@ param previewSecret string = newGuid()
 @description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 DNS Zone·커스텀 도메인 리소스를 만들지 않는다.')
 param customDomainName string = ''
 
-@description('2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것(false 일 때는 DNS Zone·레코드만 생성).')
+@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(bindingType: Disabled). 매니지드 인증서를 발급하려면 호스트네임이 먼저 컨테이너 앱에 등록돼 있어야 하므로, 이 단계가 3단계(인증서 발급)의 전제 조건이다. DNS NS 위임/전파 완료 후 켤 것.')
+param addCustomHostname bool = false
+
+@description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임이 이미 등록된 뒤에 켤 것(false 일 때는 DNS Zone·레코드만 생성).')
 param bindCustomDomain bool = false
 
 var databaseName = 'blog'
 
 // 커스텀 도메인 사용 여부. customDomainName 이 비어 있으면 모든 도메인 리소스를 건너뛴다.
 var useCustomDomain = !empty(customDomainName)
-// 인증서 발급/바인딩(2단계)은 DNS Zone 사용 + 플래그가 모두 켜졌을 때만.
+// 호스트네임만 바인딩(2단계). 인증서 없이 hostname 을 등록해 3단계 인증서 발급의 전제 조건을 만든다.
+var doAddHostname = useCustomDomain && addCustomHostname
+// 인증서 발급/SNI 바인딩(3단계)은 DNS Zone 사용 + 플래그가 모두 켜졌을 때만.
 var doBindCustomDomain = useCustomDomain && bindCustomDomain
 var wwwDomainName = 'www.${customDomainName}'
 
@@ -290,10 +295,13 @@ resource kvAcsConnString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
-// ---------- 커스텀 도메인 바인딩 구성(2단계에서만 채워짐) ----------
-// useCustomDomain && bindCustomDomain 일 때 apex + www 를 SNI/TLS 로 바인딩한다.
-// 인증서는 아래 managedCertificate 리소스(certApex/certWww)가 제공한다.
-// (1단계에서는 빈 배열 → 기본 도메인만. DNS 위임/전파 후 2단계로 채운다.)
+// ---------- 커스텀 도메인 바인딩 구성(2·3단계에서 채워짐) ----------
+// ACA 매니지드 인증서는 "호스트네임이 이미 컨테이너 앱에 등록된 상태"를 전제로만 발급된다.
+// 따라서 호스트네임 등록(Disabled)과 인증서 발급(SniEnabled)을 한 배포에서 동시에 할 수 없다
+// (인증서는 hostname 등록을 요구하고, SniEnabled 바인딩은 인증서를 요구 → 순환). 그래서 3단계로 나눈다.
+//   1단계: 빈 배열 → 기본 도메인만. DNS Zone·레코드만 생성하고 NS 위임/전파를 기다린다.
+//   2단계(doAddHostname): bindingType 'Disabled' + 인증서 없음 → 호스트네임만 등록(인증서 전제 조건).
+//   3단계(doBindCustomDomain): 인증서(certApex/certWww) 발급 + SniEnabled 로 승격.
 var customDomainsConfig = doBindCustomDomain ? [
   {
     name: customDomainName
@@ -304,6 +312,15 @@ var customDomainsConfig = doBindCustomDomain ? [
     name: wwwDomainName
     bindingType: 'SniEnabled'
     certificateId: certWww.id
+  }
+] : doAddHostname ? [
+  {
+    name: customDomainName
+    bindingType: 'Disabled'
+  }
+  {
+    name: wwwDomainName
+    bindingType: 'Disabled'
   }
 ] : []
 
@@ -446,9 +463,10 @@ resource dnsAsuidWwwTxt 'Microsoft.Network/dnsZones/TXT@2023-07-01-preview' = if
   }
 }
 
-// ---------- 매니지드 인증서 (HTTPS, 2단계에서만) ----------
+// ---------- 매니지드 인증서 (HTTPS, 3단계에서만) ----------
 // asuid TXT 로 소유권을 검증(domainControlValidation: 'TXT')한 뒤 무료 인증서를 자동 발급한다.
-// DNS 위임/전파가 끝난 뒤(1단계 완료 후) bindCustomDomain=true 로 켜야 발급에 성공한다.
+// 호스트네임이 2단계(addCustomHostname=true)에서 컨테이너 앱에 이미 등록돼 있어야 발급에 성공한다
+// (그렇지 않으면 RequireCustomHostnameInEnvironment 오류). DNS 위임/전파 + 2단계 완료 후 켤 것.
 resource certApex 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' = if (doBindCustomDomain) {
   parent: containerEnv
   name: 'cert-apex-${resourceToken}'

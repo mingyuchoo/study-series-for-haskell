@@ -40,7 +40,10 @@ param acsDataLocation string = 'United States'
 @description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 커스텀 도메인 비활성화. azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com')
 param customDomainName string = ''
 
-@description('2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true')
+@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(매니지드 인증서 발급의 전제 조건). DNS NS 위임/전파 완료 후 켤 것. azd env set ADD_CUSTOM_HOSTNAME true')
+param addCustomHostname bool = false
+
+@description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true')
 param bindCustomDomain bool = false
 
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
@@ -68,6 +71,7 @@ module resources 'resources.bicep' = {
     entraAdminPrincipalType: entraAdminPrincipalType
     acsDataLocation: acsDataLocation
     customDomainName: customDomainName
+    addCustomHostname: addCustomHostname
     bindCustomDomain: bindCustomDomain
   }
 }
