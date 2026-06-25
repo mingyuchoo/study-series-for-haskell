@@ -149,7 +149,8 @@ renderWord w = case w of
   Org.Punct c -> H.toHtml (T.singleton c)
   Org.Plain t -> H.toHtml t
 
--- | 헤딩·리스트 시작 줄 앞에 필요한 빈 줄을 보강해 파서가 블록을 끊게 한다.
+-- | 헤딩·리스트 시작 줄 앞에 필요한 빈 줄을 보강하고(='go'), 문서를 여는
+--   블록 지시자가 메타 파서에 삼켜지지 않게 보호한다(='fixLeadingBlock').
 --
 -- @org-mode@ 라이브러리의 문단·리스트 파서는 빈 줄로 구분되지 않은 다음 줄을
 -- 직전 블록의 연속 텍스트로 흡수한다. 그래서 (1) @-@ 항목 바로 뒤의 @**@ 헤딩이
@@ -158,7 +159,7 @@ renderWord w = case w of
 -- 불릿 줄은 문단 한가운데서도 새 리스트를 시작한다. 파싱 직전에 빈 줄을 보강해
 -- 그 의미론에 맞춘다.
 normalizeOrg :: Text -> Text
-normalizeOrg = T.intercalate "\n" . go . T.splitOn "\n"
+normalizeOrg = T.intercalate "\n" . fixLeadingBlock . go . T.splitOn "\n"
   where
     go (prev : cur : rest)
       | needsBlank prev cur = prev : "" : go (cur : rest)
@@ -202,3 +203,40 @@ normalizeOrg = T.intercalate "\n" . go . T.splitOn "\n"
         spaceHead r = case T.uncons r of
           Just (' ', _) -> True
           _             -> False
+
+    -- 문서를 @#+begin_src@ 같은 블록 지시자로 "시작"하면, 라이브러리의 meta
+    -- 파서가 그 @#+@ 를 메타데이터 키(@#+KEY: VALUE@)로 오인해 삼키다 실패하고,
+    -- 실패가 소비된 입력째로 번져 문서 전체 파싱이 무너진다(그 결과 'renderOrg'
+    -- 가 원문 텍스트로 폴백해 @#+begin_src@ 가 글자 그대로 노출된다).
+    --
+    -- meta 의 키 스캔이 그 지시자 "앞"에서 끝나도록 보강한다. (1) 앞에 진짜
+    -- 메타데이터가 있으면 그 뒤·지시자 앞에 빈 줄을 끼워 스캔을 끊는다. (2)
+    -- 지시자가 맨 앞이라 끊어줄 메타가 없으면, 버려질 더미 메타 한 줄을 앞세운다.
+    -- 더미 메타는 'renderOrg' 가 무시하는 메타데이터 맵으로만 들어가 출력에 드러나지
+    -- 않으며, 뒤이은 빈 줄이 스캔을 끝내 지시자는 본문 블록 파서가 처리한다.
+    fixLeadingBlock :: [Text] -> [Text]
+    fixLeadingBlock ls =
+      let (leadBlanks, rest0) = span blank ls
+          (metaRun, rest1) = span isMetaLine rest0
+       in case rest1 of
+            (d : _)
+              | isDirective d ->
+                  if null metaRun
+                    then leadBlanks <> ("#+blog_meta_guard: 1" : "" : rest1)
+                    else leadBlanks <> metaRun <> ("" : rest1)
+            _ -> ls
+      where
+        -- meta 가 키로 삼키지만 정상 메타가 아닌 @#+@ 줄(@#+begin_src@ 등).
+        isDirective l =
+          let s = T.dropWhile (== ' ') l
+           in "#+" `T.isPrefixOf` s && not (isMetaLine s)
+
+    -- 라이브러리의 @keyword@ 와 같은 판정: @#+@ + 키(@:@ 전까지) + @": "@ + 값(1자+).
+    isMetaLine :: Text -> Bool
+    isMetaLine l = case T.stripPrefix "#+" l of
+      Nothing -> False
+      Just rest ->
+        let (key, afterKey) = T.break (== ':') rest
+         in not (T.null key) && case T.stripPrefix ": " afterKey of
+              Just val -> not (T.null val)
+              Nothing  -> False

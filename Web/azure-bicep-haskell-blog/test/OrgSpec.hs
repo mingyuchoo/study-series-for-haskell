@@ -100,22 +100,35 @@ orgTests =
         contains "<figure>" out
         contains "<img" out
         contains "photo.png" out
-    , TestLabel "#+begin_quote 블록은 <blockquote> 가 된다" . TestCase $ do
-        -- org-mode 2.1.0 의 meta 파서는 '#+' 로 시작하는 첫 줄을 메타데이터로
-        -- 오인해 파싱에 실패하므로, 블록 앞에 일반 문단을 둬 블록으로 인식시킨다.
-        let out = render ["intro", "", "#+begin_quote", "quoted body", "#+end_quote"]
-        contains "<blockquote>" out
-        contains "quoted body" out
-    , TestLabel "#+begin_example 블록은 <pre> 가 된다" . TestCase $ do
-        let out = render ["intro", "", "#+begin_example", "raw example", "#+end_example"]
-        contains "<pre>" out
-        contains "raw example" out
-    , TestLabel "언어 없는 #+begin_src 는 pre.src 가 된다" . TestCase $ do
-        let out = render ["intro", "", "#+begin_src", "x = 1", "#+end_src"]
+    , TestLabel "문서 첫 줄의 #+begin_src 블록도 pre.src 로 살아난다(선행 블록 보호)" . TestCase $ do
+        -- 예전엔 meta 파서가 선행 '#+' 를 키로 삼키다 실패해 전체 파싱이 무너지고
+        -- 원문이 노출됐다. normalizeOrg 의 fixLeadingBlock 이 이를 본문 블록으로 살린다.
+        let out = render ["#+begin_src", "x = 1", "#+end_src"]
         contains "org-src-container" out
         contains "class=\"src\"" out
-    , TestLabel "언어 있는 #+begin_src 는 src-<lang> 클래스를 단다" . TestCase $
-        contains "src-haskell" (render ["intro", "", "#+begin_src haskell", "x = 1", "#+end_src"])
+        contains "x = 1" out
+        excludes "#+begin_src" out
+    , TestLabel "문서 첫 줄의 언어 있는 #+begin_src 도 src-<lang> 클래스를 단다" . TestCase $ do
+        let out = render ["#+begin_src haskell", "x = 1", "#+end_src"]
+        contains "src-haskell" out
+        excludes "#+begin_src" out
+    , TestLabel "문서 첫 줄의 #+begin_quote 블록은 <blockquote> 가 된다" . TestCase $ do
+        let out = render ["#+begin_quote", "quoted body", "#+end_quote"]
+        contains "<blockquote>" out
+        contains "quoted body" out
+        excludes "#+begin_quote" out
+    , TestLabel "문서 첫 줄의 #+begin_example 블록은 <pre> 가 된다" . TestCase $ do
+        let out = render ["#+begin_example", "raw example", "#+end_example"]
+        contains "<pre>" out
+        contains "raw example" out
+        excludes "#+begin_example" out
+    , TestLabel "선행 #+TITLE 메타데이터 뒤의 #+begin_src 도 블록으로 인식된다" . TestCase $ do
+        -- 진짜 메타데이터가 있을 땐 그 뒤·지시자 앞에 빈 줄을 끼워 스캔을 끊는다.
+        -- #+TITLE 은 메타데이터 맵으로만 들어가 본문에 노출되지 않는다.
+        let out = render ["#+TITLE: My Post", "#+begin_src", "x = 1", "#+end_src"]
+        contains "org-src-container" out
+        contains "x = 1" out
+        excludes "My Post" out
     , TestLabel "표는 thead/th + tbody/td 로 렌더된다" . TestCase $ do
         let out = render ["| h1 | h2 |", "|----+----|", "| c1 | c2 |"]
         contains "<table>" out
@@ -127,9 +140,10 @@ orgTests =
         let out = render ["foo (bar) baz"]
         contains "foo" out
         contains "(bar)" out
-    , TestLabel "파싱에 실패하면 원본 텍스트를 그대로 보여준다" . TestCase $
-        -- '#+' 로 시작하는 문서는 meta 파서가 삼키며 파싱에 실패 → 원문 폴백.
-        contains "#+begin_quote" (render ["#+begin_quote", "x", "#+end_quote"])
+    , TestLabel "끝나지 않은 #+begin_src 도 본문 텍스트를 잃지 않는다(우아한 저하)" . TestCase $
+        -- #+end_src 가 없어 코드 블록으로 닫히지 않으면 문단으로 떨어지지만,
+        -- 본문(x = 1)은 보존돼 사용자에게 보인다.
+        contains "x = 1" (render ["#+begin_src", "x = 1"])
     , TestLabel "표의 빈 셀은 빈 th/td 로 렌더된다" . TestCase $ do
         let out = render ["intro", "", "| a | |", "| | d |"]
         contains "<table>" out
