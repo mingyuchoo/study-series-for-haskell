@@ -39,7 +39,7 @@
       "value": "${ACS_DATA_LOCATION=United States}"
     },
     "customDomainName": {
-      "value": "${CUSTOM_DOMAIN_NAME=}"
+      "value": "${CUSTOM_DOMAIN_NAME=mingyuchoo.com}"
     },
     "addCustomHostname": {
       "value": "${ADD_CUSTOM_HOSTNAME=false}"

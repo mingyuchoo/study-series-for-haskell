@@ -44,8 +44,8 @@ param acsDataLocation string = 'United States'
 @description('서명 마스터 키(PREVIEW_SECRET). main.bicep 이 azd 환경의 고정값을 전달한다. (모듈을 단독 배포할 때만 newGuid() 폴백이 동작하며, 그 경우 배포마다 값이 바뀜에 유의.)')
 param previewSecret string = newGuid()
 
-@description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 DNS Zone·커스텀 도메인 리소스를 만들지 않는다.')
-param customDomainName string = ''
+@description('연결할 커스텀 도메인(apex). 기본값 mingyuchoo.com 이면 DNS Zone·A/CNAME/TXT 레코드를 항상 생성한다. 비우면(빈 문자열) DNS Zone·커스텀 도메인 리소스를 만들지 않는다.')
+param customDomainName string = 'mingyuchoo.com'
 
 @description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(bindingType: Disabled). 매니지드 인증서를 발급하려면 호스트네임이 먼저 컨테이너 앱에 등록돼 있어야 하므로, 이 단계가 3단계(인증서 발급)의 전제 조건이다. DNS NS 위임/전파 완료 후 켤 것.')
 param addCustomHostname bool = false

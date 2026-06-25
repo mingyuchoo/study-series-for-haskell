@@ -44,8 +44,8 @@ param principalType string = 'User'
 @description('ACS(이메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION <값>. 예: United States, Europe, Asia Pacific.')
 param acsDataLocation string = 'United States'
 
-@description('연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 커스텀 도메인 비활성화. azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com')
-param customDomainName string = ''
+@description('연결할 커스텀 도메인(apex). 기본값 mingyuchoo.com — azd provision 시 DNS Zone·A/CNAME/TXT 레코드가 항상 함께 생성된다. 다른 도메인은 azd env set CUSTOM_DOMAIN_NAME <도메인>, 비활성화는 azd env set CUSTOM_DOMAIN_NAME "" 로 재정의.')
+param customDomainName string = 'mingyuchoo.com'
 
 @description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(매니지드 인증서 발급의 전제 조건). DNS NS 위임/전파 완료 후 켤 것. azd env set ADD_CUSTOM_HOSTNAME true')
 param addCustomHostname bool = false
