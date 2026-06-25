@@ -15,3 +15,19 @@ services:
       path: ./Dockerfile
       context: .
       remoteBuild: true
+
+# 프로비저닝 전에 필요한 리소스 공급자(RP)를 등록한다.
+# 신규 구독에서는 Microsoft.Communication 등이 자동 등록돼 있지 않아
+# 첫 배포가 MissingSubscriptionRegistration 으로 실패할 수 있으므로 미리 등록한다.
+hooks:
+  preprovision:
+    posix:
+      shell: sh
+      run: ./scripts/register-providers.sh
+      continueOnError: false
+      interactive: false
+    windows:
+      shell: pwsh
+      run: ./scripts/register-providers.ps1
+      continueOnError: false
+      interactive: false

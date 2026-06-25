@@ -26,6 +26,9 @@ jobs:
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
       POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
       PREVIEW_SECRET: ${{ secrets.PREVIEW_SECRET }}
+      # CI 는 OIDC 서비스 주체로 배포하므로 Key Vault Secrets Officer 역할 할당의
+      # principalType 을 ServicePrincipal 로 지정한다(AAD 복제 지연 오류 완화).
+      AZURE_PRINCIPAL_TYPE: ServicePrincipal
     steps:
       - uses: actions/checkout@v4
 

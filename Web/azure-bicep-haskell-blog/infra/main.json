@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "12582264799114218981"
+      "templateHash": "903323050516555130"
     }
   },
   "parameters": {
@@ -77,6 +77,25 @@
         "description": "Entra 관리자 주체 유형."
       }
     },
+    "principalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "배포를 실행하는 주체의 objectId. azd 가 AZURE_PRINCIPAL_ID 환경값으로 자동 주입한다. RBAC 인증 Key Vault 에 시크릿을 쓰기 위한 데이터플레인 역할 부여에 사용된다."
+      }
+    },
+    "principalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "allowedValues": [
+        "User",
+        "Group",
+        "ServicePrincipal"
+      ],
+      "metadata": {
+        "description": "배포 주체 유형. 로컬(az login)은 User, CI(OIDC)는 ServicePrincipal. azd env set AZURE_PRINCIPAL_TYPE ServicePrincipal 또는 워크플로 env 로 설정."
+      }
+    },
     "acsDataLocation": {
       "type": "string",
       "defaultValue": "United States",
@@ -91,11 +110,18 @@
         "description": "연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 커스텀 도메인 비활성화. azd env set CUSTOM_DOMAIN_NAME mingyuchoo.com"
       }
     },
+    "addCustomHostname": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(매니지드 인증서 발급의 전제 조건). DNS NS 위임/전파 완료 후 켤 것. azd env set ADD_CUSTOM_HOSTNAME true"
+      }
+    },
     "bindCustomDomain": {
       "type": "bool",
       "defaultValue": false,
       "metadata": {
-        "description": "2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true"
+        "description": "3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true"
       }
     }
   },
@@ -154,11 +180,20 @@
           "entraAdminPrincipalType": {
             "value": "[parameters('entraAdminPrincipalType')]"
           },
+          "principalId": {
+            "value": "[parameters('principalId')]"
+          },
+          "principalType": {
+            "value": "[parameters('principalType')]"
+          },
           "acsDataLocation": {
             "value": "[parameters('acsDataLocation')]"
           },
           "customDomainName": {
             "value": "[parameters('customDomainName')]"
+          },
+          "addCustomHostname": {
+            "value": "[parameters('addCustomHostname')]"
           },
           "bindCustomDomain": {
             "value": "[parameters('bindCustomDomain')]"
@@ -171,7 +206,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "7827035737127130168"
+              "templateHash": "11061324079801741517"
             }
           },
           "parameters": {
@@ -238,6 +273,25 @@
                 "description": "Entra 관리자 주체 유형."
               }
             },
+            "principalId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "배포를 실행하는 주체의 objectId(azd 가 AZURE_PRINCIPAL_ID 로 자동 주입). RBAC 인증 Key Vault 에 시크릿을 쓰려면 이 주체에 데이터플레인 역할이 필요하다(Contributor 만으로는 부족). 비우면 역할 할당을 건너뛴다."
+              }
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "User",
+              "allowedValues": [
+                "User",
+                "Group",
+                "ServicePrincipal"
+              ],
+              "metadata": {
+                "description": "배포 주체 유형. 로컬(az login)은 User, CI(OIDC)는 ServicePrincipal. 새로 만든 주체의 AAD 복제 지연으로 인한 역할 할당 실패를 줄인다."
+              }
+            },
             "webImage": {
               "type": "string",
               "defaultValue": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
@@ -266,20 +320,28 @@
                 "description": "연결할 커스텀 도메인(apex). 예: mingyuchoo.com. 비우면 DNS Zone·커스텀 도메인 리소스를 만들지 않는다."
               }
             },
+            "addCustomHostname": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(bindingType: Disabled). 매니지드 인증서를 발급하려면 호스트네임이 먼저 컨테이너 앱에 등록돼 있어야 하므로, 이 단계가 3단계(인증서 발급)의 전제 조건이다. DNS NS 위임/전파 완료 후 켤 것."
+              }
+            },
             "bindCustomDomain": {
               "type": "bool",
               "defaultValue": false,
               "metadata": {
-                "description": "2단계 플래그. true 이면 매니지드 인증서 발급 + 호스트네임 바인딩까지 수행한다. DNS NS 위임/전파 완료 후 켤 것(false 일 때는 DNS Zone·레코드만 생성)."
+                "description": "3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임이 이미 등록된 뒤에 켤 것(false 일 때는 DNS Zone·레코드만 생성)."
               }
             }
           },
           "variables": {
             "databaseName": "blog",
             "useCustomDomain": "[not(empty(parameters('customDomainName')))]",
+            "doAddHostname": "[and(variables('useCustomDomain'), parameters('addCustomHostname'))]",
             "doBindCustomDomain": "[and(variables('useCustomDomain'), parameters('bindCustomDomain'))]",
             "wwwDomainName": "[format('www.{0}', parameters('customDomainName'))]",
-            "customDomainsConfig": "[if(variables('doBindCustomDomain'), createArray(createObject('name', parameters('customDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-apex-{0}', parameters('resourceToken')))), createObject('name', variables('wwwDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-www-{0}', parameters('resourceToken'))))), createArray())]"
+            "customDomainsConfig": "[if(variables('doBindCustomDomain'), createArray(createObject('name', parameters('customDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-apex-{0}', parameters('resourceToken')))), createObject('name', variables('wwwDomainName'), 'bindingType', 'SniEnabled', 'certificateId', resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-www-{0}', parameters('resourceToken'))))), if(variables('doAddHostname'), createArray(createObject('name', parameters('customDomainName'), 'bindingType', 'Disabled'), createObject('name', variables('wwwDomainName'), 'bindingType', 'Disabled')), createArray()))]"
           },
           "resources": [
             {
@@ -521,6 +583,21 @@
               ]
             },
             {
+              "condition": "[not(empty(parameters('principalId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), parameters('principalId'), 'KeyVaultSecretsOfficer')]",
+              "properties": {
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
               "type": "Microsoft.KeyVault/vaults/secrets",
               "apiVersion": "2023-07-01",
               "name": "[format('{0}/{1}', format('kv-{0}', parameters('resourceToken')), 'preview-secret')]",
@@ -528,7 +605,8 @@
                 "value": "[parameters('previewSecret')]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]"
+                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), parameters('principalId'), 'KeyVaultSecretsOfficer'))]"
               ]
             },
             {
@@ -540,6 +618,7 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), parameters('principalId'), 'KeyVaultSecretsOfficer'))]",
                 "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', format('psql-{0}', parameters('resourceToken')))]"
               ]
             },
@@ -552,7 +631,8 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Communication/communicationServices', format('acs-{0}', parameters('resourceToken')))]",
-                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]"
+                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), parameters('principalId'), 'KeyVaultSecretsOfficer'))]"
               ]
             },
             {

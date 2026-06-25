@@ -27,6 +27,13 @@ param entraAdminPrincipalName string = ''
 @description('Entra 관리자 주체 유형.')
 param entraAdminPrincipalType string = 'User'
 
+@description('배포를 실행하는 주체의 objectId(azd 가 AZURE_PRINCIPAL_ID 로 자동 주입). RBAC 인증 Key Vault 에 시크릿을 쓰려면 이 주체에 데이터플레인 역할이 필요하다(Contributor 만으로는 부족). 비우면 역할 할당을 건너뛴다.')
+param principalId string = ''
+
+@allowed([ 'User', 'Group', 'ServicePrincipal' ])
+@description('배포 주체 유형. 로컬(az login)은 User, CI(OIDC)는 ServicePrincipal. 새로 만든 주체의 AAD 복제 지연으로 인한 역할 할당 실패를 줄인다.')
+param principalType string = 'User'
+
 @description('배포할 컨테이너 이미지. azd deploy가 실제 이미지를 푸시하기 전까지 사용하는 플레이스홀더.')
 param webImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
@@ -269,6 +276,20 @@ resource kvSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
+// 배포 주체(azd 가 주입한 principalId)에 'Key Vault Secrets Officer' 권한 부여.
+// RBAC 인증 Vault(enableRbacAuthorization)에서는 시크릿을 쓰려면 데이터플레인 역할이 필요하다.
+// 구독 Contributor 만으로는 secrets 쓰기가 403 으로 막히므로, 아래 시크릿 리소스가 이 역할에 의존한다.
+resource kvSecretsOfficer 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(principalId)) {
+  name: guid(keyVault.id, principalId, 'KeyVaultSecretsOfficer')
+  scope: keyVault
+  properties: {
+    principalId: principalId
+    principalType: principalType
+    // Key Vault Secrets Officer 역할 정의 ID
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7')
+  }
+}
+
 // PREVIEW_SECRET — newGuid() 기본값(배포 시 자동 생성)을 Vault 에 저장.
 resource kvPreviewSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
@@ -276,6 +297,7 @@ resource kvPreviewSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: {
     value: previewSecret
   }
+  dependsOn: [ kvSecretsOfficer ]
 }
 
 resource kvDatabaseUrl 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
@@ -284,6 +306,7 @@ resource kvDatabaseUrl 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: {
     value: databaseUrl
   }
+  dependsOn: [ kvSecretsOfficer ]
 }
 
 // ACS 연결 문자열(액세스 키 포함) — Vault 에 저장하고 앱은 매니지드 ID 로 참조.
@@ -293,6 +316,7 @@ resource kvAcsConnString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: {
     value: acsConnectionString
   }
+  dependsOn: [ kvSecretsOfficer ]
 }
 
 // ---------- 커스텀 도메인 바인딩 구성(2·3단계에서 채워짐) ----------

@@ -34,6 +34,13 @@ param entraAdminPrincipalName string = ''
 @description('Entra 관리자 주체 유형.')
 param entraAdminPrincipalType string = 'User'
 
+@description('배포를 실행하는 주체의 objectId. azd 가 AZURE_PRINCIPAL_ID 환경값으로 자동 주입한다. RBAC 인증 Key Vault 에 시크릿을 쓰기 위한 데이터플레인 역할 부여에 사용된다.')
+param principalId string = ''
+
+@allowed([ 'User', 'Group', 'ServicePrincipal' ])
+@description('배포 주체 유형. 로컬(az login)은 User, CI(OIDC)는 ServicePrincipal. azd env set AZURE_PRINCIPAL_TYPE ServicePrincipal 또는 워크플로 env 로 설정.')
+param principalType string = 'User'
+
 @description('ACS(이메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION <값>. 예: United States, Europe, Asia Pacific.')
 param acsDataLocation string = 'United States'
 
@@ -69,6 +76,8 @@ module resources 'resources.bicep' = {
     entraAdminObjectId: entraAdminObjectId
     entraAdminPrincipalName: entraAdminPrincipalName
     entraAdminPrincipalType: entraAdminPrincipalType
+    principalId: principalId
+    principalType: principalType
     acsDataLocation: acsDataLocation
     customDomainName: customDomainName
     addCustomHostname: addCustomHostname

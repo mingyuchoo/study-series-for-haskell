@@ -29,6 +29,12 @@
     "entraAdminPrincipalType": {
       "value": "${ENTRA_ADMIN_PRINCIPAL_TYPE=User}"
     },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "principalType": {
+      "value": "${AZURE_PRINCIPAL_TYPE=User}"
+    },
     "acsDataLocation": {
       "value": "${ACS_DATA_LOCATION=United States}"
     },

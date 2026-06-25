@@ -198,8 +198,22 @@ azd pipeline config
 ## 정리
 
 ```bash
-azd down
+azd down --purge
 ```
+
+> **`--purge` 를 권장하는 이유:** Key Vault(`kv-...`)는 소프트삭제가 켜져 있어(보존 7일)
+> 일반 `azd down` 으로는 삭제 후에도 같은 이름이 7일간 예약 상태로 남는다. 리소스 이름은
+> `uniqueString(구독, 환경 이름, 위치)` 로 결정돼 **재배포 시 동일한 이름**이 되므로, purge
+> 하지 않으면 다음 `azd up` 이 *"Key Vault 가 soft-deleted 상태로 이미 존재"* 충돌로 실패한다.
+> `--purge` 는 이런 소프트삭제 리소스(Key Vault 등)까지 영구 삭제한다.
+>
+> 이미 일반 `azd down` 으로 지운 뒤 재배포가 막힌다면 수동 purge:
+>
+> ```bash
+> az keyvault purge --name kv-<resourceToken> --location <위치>
+> # 남아 있는 소프트삭제 Vault 확인:
+> az keyvault list-deleted --query "[].{name:name, location:properties.location}" -o table
+> ```
 
 ## 참고 / 조정 포인트
 
