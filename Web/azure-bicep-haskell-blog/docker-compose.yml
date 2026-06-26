@@ -20,6 +20,9 @@ services:
       PORT: "8080"
       # 로컬은 sslmode=disable (프로덕션 Flexible Server는 require)
       DATABASE_URL: "postgresql://blog:blog@db:5432/blog?sslmode=disable"
+      # 로컬 개발 전용: PREVIEW_SECRET 미설정 시 개발용 기본키 사용을 명시적으로 허용.
+      # 프로덕션에서는 절대 설정하지 말고 PREVIEW_SECRET 를 주입한다.
+      ALLOW_INSECURE_SECRET: "1"
     ports:
       - "8080:8080"
     depends_on:

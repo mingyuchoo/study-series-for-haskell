@@ -137,6 +137,30 @@ orgTests =
         contains "<figure>" out
         contains "<img" out
         contains "photo.png" out
+    , TestLabel "javascript: 링크는 href 없이 설명 텍스트로만 렌더된다(저장형 XSS 차단)" . TestCase $ do
+        -- blaze 는 속성값만 이스케이프할 뿐 위험 스킴을 막지 않아 그대로 두면
+        -- <a href="javascript:…"> 가 만들어져 다른 사용자에게 저장형 XSS 가 된다.
+        let out = render ["plain [[javascript:alert(document.cookie)][클릭]] end"]
+        excludes "javascript:" out
+        excludes "<a" out
+        contains "클릭" out
+    , TestLabel "대문자 스킴(JAVASCRIPT:)도 차단된다(대소문자 우회 방지)" . TestCase $ do
+        let out = render ["[[JAVASCRIPT:alert(1)][열기]]"]
+        excludes "AVASCRIPT:" out
+        excludes "<a" out
+        contains "열기" out
+    , TestLabel "data: 링크도 차단된다" . TestCase $ do
+        let out = render ["[[data:text/html;base64,PHNjcmlwdD4=][보기]]"]
+        excludes "<a" out
+        contains "보기" out
+    , TestLabel "정상 https 링크는 <a href> 로 그대로 렌더된다(무회귀)" . TestCase $ do
+        let out = render ["[[https://example.com][ok]]"]
+        contains "href=\"https://example.com\"" out
+        contains ">ok</a>" out
+    , TestLabel "스킴 없는 상대 경로 링크는 허용된다" . TestCase $
+        contains "href=\"/about\"" (render ["[[/about][소개]]"])
+    , TestLabel "javascript: 이미지는 <img> 를 만들지 않는다" . TestCase $
+        excludes "<img" (render ["[[javascript:alert(1)]]"])
     , TestLabel "문서 첫 줄의 #+begin_src 블록도 pre.src 로 살아난다(선행 블록 보호)" . TestCase $ do
         -- 예전엔 meta 파서가 선행 '#+' 를 키로 삼키다 실패해 전체 파싱이 무너지고
         -- 원문이 노출됐다. normalizeOrg 의 fixLeadingBlock 이 이를 본문 블록으로 살린다.

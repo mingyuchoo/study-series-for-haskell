@@ -47,9 +47,13 @@ main = do
       hPutStrLn stderr ("설정 오류: " ++ err)
       exitFailure
     Right cfg -> do
-      -- PREVIEW_SECRET 미설정 시 개발용 기본키를 쓰고 있음을 크게 경고한다.
+      -- ALLOW_INSECURE_SECRET 로 명시 허용된 개발용 기본키를 쓰는 중임을 크게 경고한다
+      -- (PREVIEW_SECRET 미설정 + 미허용이면 loadConfig 가 이미 기동을 거부한다).
       if configInsecureKey cfg
-        then hPutStrLn stderr "경고: PREVIEW_SECRET 미설정 — 개발용 기본키로 동작합니다. 프로덕션에서는 반드시 설정하세요."
+        then
+          hPutStrLn
+            stderr
+            "경고: ALLOW_INSECURE_SECRET 로 개발용 기본키를 사용 중입니다 — 프로덕션에서는 절대 사용하지 말고 PREVIEW_SECRET 를 설정하세요."
         else pure ()
       pool <- newDbPool (configDatabaseUrl cfg)
       runMigrations pool

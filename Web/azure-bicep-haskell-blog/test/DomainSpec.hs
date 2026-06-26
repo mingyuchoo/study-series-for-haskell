@@ -5,7 +5,7 @@
 -- 라우트·렌더러 테스트가 위치 생성자·패턴 매칭만 쓰느라 닿지 않던
 -- (1) 레코드 필드 접근자, (2) 파생 'Show'/'Eq' 인스턴스,
 -- (3) 'Theme' 직렬화/역직렬화, (4) 'Blog.Config.loadConfig' 의 환경 변수
--- 해석(포트 기본값·DATABASE_URL 누락·개발용 키 노출)을 직접 잠근다.
+-- 해석(포트 기본값·DATABASE_URL 누락·PREVIEW_SECRET fail-closed 와 opt-in)을 직접 잠근다.
 module DomainSpec
   ( domainTests
   ) where
@@ -103,14 +103,26 @@ configTests =
         unsetEnv "DATABASE_URL"
         unsetEnv "PORT"
         unsetEnv "PREVIEW_SECRET"
+        unsetEnv "ALLOW_INSECURE_SECRET"
         r <- loadConfig
         case r of
           Left e  -> assertBool "error message present" (not (null e))
           Right _ -> assertFailure "DATABASE_URL 없이 Right 가 나왔다"
-    , TestLabel "DATABASE_URL 만 있으면 기본 포트·개발용 키로 로드된다" . TestCase $ do
+    , TestLabel "PREVIEW_SECRET·ALLOW_INSECURE_SECRET 모두 없으면 fail-closed(Left)" . TestCase $ do
+        -- 공개된 개발용 기본키로 조용히 기동하지 않도록 기동을 거부한다.
         setEnv "DATABASE_URL" "postgresql://localhost/db"
         unsetEnv "PORT"
         unsetEnv "PREVIEW_SECRET"
+        unsetEnv "ALLOW_INSECURE_SECRET"
+        r <- loadConfig
+        case r of
+          Left e  -> assertBool "error message present" (not (null e))
+          Right _ -> assertFailure "PREVIEW_SECRET 없이 Right 가 나왔다(fail-closed 위반)"
+    , TestLabel "ALLOW_INSECURE_SECRET=1 이면 개발용 기본키로 로드된다(명시적 opt-in)" . TestCase $ do
+        setEnv "DATABASE_URL" "postgresql://localhost/db"
+        unsetEnv "PORT"
+        unsetEnv "PREVIEW_SECRET"
+        setEnv "ALLOW_INSECURE_SECRET" "1"
         r <- loadConfig
         case r of
           Left e -> assertFailure ("예상치 못한 실패: " <> e)
@@ -119,10 +131,12 @@ configTests =
             assertBool "insecure key flagged" (configInsecureKey c)
             assertEqual "dev key" "dev-insecure-secret-key" (configSecretKey c)
             assertEqual "db url" "postgresql://localhost/db" (configDatabaseUrl c)
+        unsetEnv "ALLOW_INSECURE_SECRET"
     , TestLabel "PORT·PREVIEW_SECRET 가 있으면 그 값으로 로드된다" . TestCase $ do
         setEnv "DATABASE_URL" "postgresql://localhost/db"
         setEnv "PORT" "9090"
         setEnv "PREVIEW_SECRET" "topsecret"
+        unsetEnv "ALLOW_INSECURE_SECRET"
         r <- loadConfig
         case r of
           Left e -> assertFailure ("예상치 못한 실패: " <> e)

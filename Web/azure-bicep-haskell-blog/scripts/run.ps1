@@ -144,6 +144,12 @@ function Invoke-Run {
         $env:DATABASE_URL = $DefaultDatabaseUrl
     }
     $env:PORT = $Port
+    # PREVIEW_SECRET 가 없으면 로컬 개발용 기본키 사용을 명시적으로 허용한다.
+    # (앱은 fail-closed — 미허용 시 기동을 거부한다. 프로덕션은 PREVIEW_SECRET 를 설정.)
+    if (-not $env:PREVIEW_SECRET) {
+        Write-Warn 'PREVIEW_SECRET 미설정 — 로컬 개발용 기본키 사용(ALLOW_INSECURE_SECRET=1). 프로덕션에서는 PREVIEW_SECRET 를 설정하세요.'
+        if (-not $env:ALLOW_INSECURE_SECRET) { $env:ALLOW_INSECURE_SECRET = '1' }
+    }
     Write-Log "앱 실행: http://localhost:$Port  (종료: Ctrl+C)"
     cabal run haskell-blog
 }

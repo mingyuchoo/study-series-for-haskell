@@ -122,6 +122,12 @@ cmd_run() {
     export DATABASE_URL="${DEFAULT_DATABASE_URL}"
   fi
   export PORT
+  # PREVIEW_SECRET 가 없으면 로컬 개발용 기본키 사용을 명시적으로 허용한다.
+  # (앱은 fail-closed — 미허용 시 기동을 거부한다. 프로덕션은 PREVIEW_SECRET 를 설정.)
+  if [[ -z "${PREVIEW_SECRET:-}" ]]; then
+    warn "PREVIEW_SECRET 미설정 — 로컬 개발용 기본키 사용(ALLOW_INSECURE_SECRET=1). 프로덕션에서는 PREVIEW_SECRET 를 설정하세요."
+    export ALLOW_INSECURE_SECRET="${ALLOW_INSECURE_SECRET:-1}"
+  fi
   log "앱 실행: http://localhost:${PORT}  (종료: Ctrl+C)"
   cabal run haskell-blog
 }

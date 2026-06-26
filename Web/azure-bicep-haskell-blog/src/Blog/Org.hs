@@ -10,7 +10,7 @@ module Blog.Org
   , renderOrgFragment
   ) where
 
-import Data.Char (isDigit)
+import Data.Char (isAlpha, isAlphaNum, isDigit)
 import Data.Foldable (toList)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Org qualified as Org
@@ -144,10 +144,43 @@ renderWord w = case w of
   Org.Underline t -> H.span ! A.style "text-decoration: underline;" $ H.toHtml t
   Org.Verbatim t -> H.toHtml t
   Org.Strike t -> H.span ! A.style "text-decoration: line-through;" $ H.toHtml t
-  Org.Link (Org.URL u) mt -> H.a ! A.href (H.toValue u) $ maybe mempty H.toHtml mt
-  Org.Image (Org.URL u) -> H.figure (H.img ! A.src (H.toValue u))
+  Org.Link (Org.URL u) mt
+    -- 위험 스킴(@javascript:@ 등)은 링크를 걸지 않고 텍스트로만 남겨 XSS 를 막는다.
+    | isSafeUrl u -> H.a ! A.href (H.toValue u) $ maybe mempty H.toHtml mt
+    | otherwise -> maybe (H.toHtml u) H.toHtml mt
+  Org.Image (Org.URL u)
+    | isSafeUrl u -> H.figure (H.img ! A.src (H.toValue u))
+    | otherwise -> H.toHtml u
   Org.Punct c -> H.toHtml (T.singleton c)
   Org.Plain t -> H.toHtml t
+
+-- | 링크·이미지 URL 이 안전한가 — 스킴 화이트리스트.
+--
+-- blaze 의 속성 이스케이프는 HTML 특수문자만 막을 뿐 @javascript:@·@data:@ 같은
+-- 위험 스킴은 그대로 통과시킨다. 그래서 본문에 심은 @[[javascript:…][클릭]]@ 가
+-- 다른 사용자에게 저장형 XSS 로 동작한다. 브라우저는 URL 을 파싱하기 전에 탭·개행을
+-- 제거하고 선행 공백·제어문자를 버리며 스킴을 대소문자 구분 없이 보므로, 우회
+-- (@java&#9;script:@·@ JavaScript:@ 등)를 막기 위해 같은 방식으로 정규화한 뒤
+-- 판정한다. @http@·@https@·@mailto@ 또는 스킴이 없는(같은 출처) 상대 URL 만 허용한다.
+isSafeUrl :: Text -> Bool
+isSafeUrl url = case scheme of
+  Nothing -> True -- 스킴 없음 = 상대 URL → 안전
+  Just s  -> s `elem` ["http", "https", "mailto"]
+  where
+    -- 브라우저처럼 탭·개행을 제거하고 선행 공백·제어문자를 버린 뒤 스킴을 본다.
+    cleaned = T.dropWhile (<= ' ') (T.filter (`notElem` ['\t', '\n', '\r']) url)
+    scheme = case T.break (== ':') cleaned of
+      (pre, rest)
+        | T.null rest -> Nothing -- ':' 없음 → 스킴 없음
+        -- ':' 앞에 경로 구분자가 있으면 스킴이 아니라 상대 URL 의 일부다.
+        | T.any (`elem` ['/', '?', '#', '\\']) pre -> Nothing
+        | isScheme pre -> Just (T.toLower pre)
+        | otherwise -> Nothing
+    -- RFC 3986 스킴: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ).
+    isScheme p = case T.uncons p of
+      Just (c, cs) -> isAlpha c && T.all schemeChar cs
+      Nothing      -> False
+    schemeChar c = isAlphaNum c || c == '+' || c == '-' || c == '.'
 
 -- | 줄바꿈을 LF 로 정규화하고(='stripCR'), 헤딩·리스트·블록 시작 줄 앞에 필요한
 --   빈 줄을 보강하고(='go'), 문서를 여는 블록 지시자가 메타 파서에 삼켜지지 않게
