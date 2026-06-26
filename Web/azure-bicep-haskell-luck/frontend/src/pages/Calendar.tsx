@@ -1,6 +1,8 @@
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { api, type RecordDTO } from "../lib/api";
+import { api } from "../lib/api";
+import type { RecordDTO } from "../lib/types";
+import { completionRatio, ratioToLevel } from "../lib/luck";
 import { monthGrid, monthLabel, WEEKDAYS, fmt, todayStr } from "../lib/date";
 
 export default function Calendar() {
@@ -23,8 +25,7 @@ export default function Calendar() {
     const map = new Map<string, number>();
     const list: RecordDTO[] = records() ?? [];
     for (const rec of list) {
-      const ratio = rec.total === 0 ? 0 : rec.completed.length / rec.total;
-      map.set(rec.date, ratio);
+      map.set(rec.date, completionRatio(rec.completed.length, rec.total));
     }
     return map;
   });
@@ -44,14 +45,10 @@ export default function Calendar() {
     } else setMonth(month() + 1);
   };
 
-  // 달성률 -> 0~4 단계 (CSS 클래스용)
+  // 달성 비율 -> 0~4 단계 (CSS 클래스용). 임계값은 lib/luck 에서 관리.
   const level = (date: string): number => {
     const r = ratioMap().get(date);
-    if (r === undefined || r === 0) return 0;
-    if (r >= 1) return 4;
-    if (r >= 0.75) return 3;
-    if (r >= 0.5) return 2;
-    return 1;
+    return r === undefined ? 0 : ratioToLevel(r);
   };
 
   return (

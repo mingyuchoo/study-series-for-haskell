@@ -1,6 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { api, ApiError } from "../lib/api";
+import { api } from "../lib/api";
+import { ApiError } from "../lib/http";
 import { auth } from "../lib/store";
 
 export default function Signup() {

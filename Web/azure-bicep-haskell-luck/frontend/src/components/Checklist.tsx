@@ -1,5 +1,5 @@
 import { For, type Component } from "solid-js";
-import { type CatalogItem } from "../lib/api";
+import type { CatalogItem } from "../lib/types";
 
 interface Props {
   items: CatalogItem[];

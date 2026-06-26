@@ -1,5 +1,6 @@
 import { createSignal, onMount, Show } from "solid-js";
-import { api, ApiError } from "../lib/api";
+import { api } from "../lib/api";
+import { ApiError } from "../lib/http";
 import { auth } from "../lib/store";
 
 const TIMEZONES = [

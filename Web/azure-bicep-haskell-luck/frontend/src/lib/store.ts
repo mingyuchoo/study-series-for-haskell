@@ -1,7 +1,8 @@
 // 전역 인증 상태 (Solid 시그널).
 
 import { createSignal } from "solid-js";
-import { clearToken, getToken, setToken, type UserDTO } from "./api";
+import { clearToken, getToken, setToken } from "./token";
+import type { UserDTO } from "./types";
 
 const [user, setUserSignal] = createSignal<UserDTO | null>(null);
 const [authed, setAuthed] = createSignal<boolean>(!!getToken());

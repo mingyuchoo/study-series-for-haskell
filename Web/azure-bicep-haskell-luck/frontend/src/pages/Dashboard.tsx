@@ -1,6 +1,7 @@
 import { createEffect, createResource, createSignal, For, Show } from "solid-js";
 import { useParams } from "@solidjs/router";
 import { api } from "../lib/api";
+import { completionPct } from "../lib/luck";
 import { todayStr } from "../lib/date";
 import Medallion from "../components/Medallion";
 import Checklist from "../components/Checklist";
@@ -34,7 +35,7 @@ export default function Dashboard() {
   });
 
   const total = () => catalog()?.length ?? 0;
-  const pct = () => (total() === 0 ? 0 : Math.round((completed().length / total()) * 100));
+  const pct = () => completionPct(completed().length, total());
 
   const persist = async (next: string[], noteVal: string) => {
     try {
