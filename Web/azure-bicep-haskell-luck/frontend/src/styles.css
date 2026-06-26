@@ -1,15 +1,73 @@
+/* =============================================================
+   DESIGN.md — Figma 마케팅 디자인 시스템 적용
+   모노크롬 코어(흰 캔버스 + 검정 잉크) + 파스텔 컬러블록,
+   Inter / JetBrains Mono, 알약형 CTA, 헤어라인 보더, 그림자 최소화.
+   ============================================================= */
+
+/* 조선100년체 (조선일보 창간 100주년 기념 서체) — 디스플레이/제목용 명조 */
+@font-face {
+  font-family: "ChosunCentennial";
+  src: url("https://cdn.jsdelivr.net/gh/fontbee/font@main/CHOSUN/ChosunCentennial.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 조선일보명조 — 일반(본문)용 명조 */
+@font-face {
+  font-family: "ChosunilboMyungjo";
+  src: url("https://cdn.jsdelivr.net/gh/fontbee/font@main/CHOSUN/Chosunilbo_myungjo.woff")
+    format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --base: #13152a;
-  --base-2: #191c38;
-  --panel: #1f2347;
-  --panel-line: #2c315c;
-  --gold: #e3b04b;
-  --gold-soft: #f0cd80;
-  --jade: #74ab93;
-  --ink: #f2efe6;
-  --muted: #9095bd;
-  --muted-2: #6a6f9c;
-  --danger: #e0728a;
+  /* ----- 색상 ----- */
+  --primary: #000000;
+  --on-primary: #ffffff;
+  --ink: #000000;
+  --canvas: #ffffff;
+  --inverse-canvas: #000000;
+  --inverse-ink: #ffffff;
+  --hairline: #e6e6e6;
+  --hairline-soft: #f1f1f1;
+  --surface-soft: #f7f7f5;
+
+  /* 파스텔 컬러블록 */
+  --block-lime: #dceeb1;
+  --block-lilac: #c5b0f4;
+  --block-cream: #f4ecd6;
+  --block-pink: #efd4d4;
+  --block-mint: #c8e6cd;
+  --block-coral: #f3c9b6;
+  --block-navy: #1f1d3d;
+
+  --accent-magenta: #ff3d8b;
+  --success: #1ea64a;
+
+  /* 달력 히트맵 — 모노크롬 단계 스케일 */
+  --heat-1: #ededed;
+  --heat-2: #cfcfcf;
+  --heat-3: #8a8a8a;
+  --heat-4: #000000;
+
+  /* ----- 모서리 ----- */
+  --r-xs: 2px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-pill: 50px;
+  --r-full: 9999px;
+
+  /* ----- 폰트 ----- */
+  /* 일반(본문) 글꼴: 조선일보명조 (라틴/폴백은 Inter·Noto Sans KR) */
+  --font-sans: "ChosunilboMyungjo", "Noto Sans KR", "Inter", system-ui, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "ChosunCentennial", "Noto Sans KR", serif;
 }
 
 * {
@@ -19,47 +77,48 @@
 }
 
 body {
-  font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink);
-  background-color: var(--base);
-  background-image:
-    radial-gradient(1.5px 1.5px at 12% 8%, rgba(242, 239, 230, 0.5), transparent),
-    radial-gradient(1.5px 1.5px at 82% 14%, rgba(242, 239, 230, 0.4), transparent),
-    radial-gradient(1px 1px at 34% 20%, rgba(242, 239, 230, 0.35), transparent),
-    radial-gradient(1px 1px at 68% 6%, rgba(242, 239, 230, 0.3), transparent),
-    radial-gradient(1.5px 1.5px at 50% 22%, rgba(227, 176, 75, 0.45), transparent),
-    radial-gradient(900px 500px at 50% -10%, rgba(227, 176, 75, 0.08), transparent),
-    linear-gradient(180deg, #14162b 0%, #101327 60%, #0d0f22 100%);
-  background-attachment: fixed;
+  background: var(--canvas);
   min-height: 100vh;
-  line-height: 1.6;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  font-feature-settings: "kern" 1;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--gold-soft);
+  color: var(--ink);
   text-decoration: none;
+  font-weight: 480;
+  letter-spacing: -0.1px;
 }
 a:hover {
   text-decoration: underline;
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-  border-radius: 6px;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
 }
 
-.muted-line {
-  color: var(--muted-2);
-  font-size: 12.5px;
-  font-weight: 300;
-}
+/* ===== 모노 라벨 (eyebrow / caption) — 분류용, 본문 아님 ===== */
 .eyebrow {
-  font-family: "Song Myung", serif;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
   font-size: 13px;
-  color: var(--gold);
+  font-weight: 400;
   letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.muted-line {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--ink);
 }
 
 /* ===== 인증 화면 ===== */
@@ -69,124 +128,140 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 24px 20px;
+  background: var(--canvas);
 }
 .auth-card {
   width: 100%;
-  max-width: 380px;
-  background: linear-gradient(180deg, var(--base-2), #15182f);
-  border: 1px solid var(--panel-line);
-  border-radius: 22px;
-  padding: 34px 26px 28px;
+  max-width: 420px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 40px 32px 32px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 .auth-mark {
-  font-family: "Song Myung", serif;
-  font-size: 40px;
-  color: var(--gold-soft);
-  width: 72px;
-  height: 72px;
-  line-height: 72px;
-  margin: 0 auto 18px;
-  border-radius: 50%;
-  border: 1px solid var(--panel-line);
-  background: radial-gradient(circle at 50% 35%, #232751, #15182f);
-  box-shadow: 0 0 24px rgba(227, 176, 75, 0.18);
+  font-size: 30px;
+  color: var(--ink);
+  width: 64px;
+  height: 64px;
+  line-height: 64px;
+  margin: 0 auto 22px;
+  border-radius: var(--r-full);
+  background: var(--surface-soft);
 }
 .auth-title {
-  font-family: "Song Myung", serif;
-  font-weight: 400;
-  font-size: 23px;
-  margin-bottom: 6px;
+  font-size: 32px;
+  font-weight: 340;
+  line-height: 1.1;
+  letter-spacing: -0.96px;
+  margin-bottom: 10px;
 }
 .auth-sub {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 300;
-  margin-bottom: 24px;
+  font-size: 18px;
+  font-weight: 330;
+  letter-spacing: -0.26px;
+  margin-bottom: 28px;
 }
 .auth-foot {
-  margin-top: 20px;
-  font-size: 13px;
-  color: var(--muted);
+  margin-top: 24px;
+  font-size: 16px;
+  font-weight: 330;
 }
 
 /* ===== 폼 ===== */
 .field {
   display: block;
   text-align: left;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 .field > span {
   display: block;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
   font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-  letter-spacing: 0.02em;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  margin-bottom: 8px;
 }
 .field input,
 .field textarea,
 .field select {
   width: 100%;
-  font-family: inherit;
-  font-size: 14.5px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 320;
+  letter-spacing: -0.26px;
   color: var(--ink);
-  background: #12152b;
-  border: 1px solid var(--panel-line);
-  border-radius: 11px;
-  padding: 11px 13px;
-  transition: border-color 0.2s ease;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: var(--gold);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
   outline: none;
 }
 .field input:disabled {
-  color: var(--muted-2);
-  background: #101225;
+  color: var(--ink);
+  background: var(--surface-soft);
 }
 .field textarea {
   resize: vertical;
 }
 
+/* ===== 버튼 — 알약형 primary ===== */
 .btn-primary {
   width: 100%;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  color: #15182f;
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 480;
+  letter-spacing: -0.1px;
+  color: var(--on-primary);
+  background: var(--primary);
   border: none;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: var(--r-pill);
+  padding: 12px 24px;
   cursor: pointer;
-  margin-top: 6px;
-  transition: filter 0.2s ease, transform 0.1s ease;
+  margin-top: 8px;
+  transition: transform 0.1s ease, opacity 0.15s ease;
 }
 .btn-primary:hover {
-  filter: brightness(1.05);
+  opacity: 0.9;
 }
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: scale(0.985);
 }
 .btn-primary:disabled {
-  filter: grayscale(0.4) brightness(0.8);
+  opacity: 0.4;
   cursor: default;
 }
+
+/* 오류/성공 — 색상 텍스트 대신 파스텔 블록 위 검정 잉크 */
 .form-error {
-  color: var(--danger);
-  font-size: 13px;
-  margin-bottom: 12px;
+  color: var(--ink);
+  background: var(--block-pink);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 450;
+  margin-bottom: 14px;
 }
 .form-ok {
-  color: var(--jade);
-  font-size: 13px;
-  margin-bottom: 12px;
+  color: var(--ink);
+  background: var(--block-mint);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 450;
+  margin-bottom: 14px;
 }
 
-/* ===== 셸 / 네비게이션 ===== */
+/* ===== 셸 / 상단 내비게이션 ===== */
 .shell {
   width: 100%;
   max-width: 1200px;
@@ -196,26 +271,22 @@ a:hover {
 .topnav {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px clamp(16px, 4vw, 48px);
-  border-bottom: 1px solid rgba(44, 49, 92, 0.5);
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid var(--hairline);
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(8px);
-  background: rgba(16, 19, 39, 0.7);
+  background: var(--canvas);
 }
 .brand {
-  font-family: "Song Myung", serif;
+  font-family: var(--font-sans);
   font-size: 24px;
-  color: var(--gold-soft);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--ink);
   text-decoration: none;
-  width: 38px;
-  height: 38px;
-  line-height: 38px;
-  text-align: center;
-  border-radius: 50%;
-  border: 1px solid var(--panel-line);
 }
 .brand:hover {
   text-decoration: none;
@@ -227,51 +298,59 @@ a:hover {
   margin-left: auto;
 }
 .nav-link {
-  font-size: 14px;
-  color: var(--muted);
-  padding: 7px 12px;
-  border-radius: 9px;
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.1px;
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
   text-decoration: none;
 }
 .nav-link:hover {
-  color: var(--ink);
   text-decoration: none;
+  background: var(--surface-soft);
 }
-.nav-link.active {
-  color: var(--gold-soft);
-  background: rgba(227, 176, 75, 0.08);
+/* 선택 = primary 표면 (DESIGN.md: selected = primary) */
+.nav-link.active,
+.nav-link.active:hover {
+  color: var(--on-primary);
+  background: var(--primary);
 }
 .nav-logout {
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--muted-2);
-  background: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 450;
+  letter-spacing: -0.1px;
+  color: var(--ink);
+  background: var(--surface-soft);
   border: none;
+  border-radius: var(--r-pill);
+  padding: 8px 16px;
   cursor: pointer;
-  padding: 7px 10px;
 }
 .nav-logout:hover {
-  color: var(--danger);
+  background: var(--hairline);
 }
 .content {
-  padding: clamp(22px, 3vw, 40px) clamp(16px, 4vw, 48px) 80px;
+  padding: clamp(28px, 3.5vw, 56px) clamp(16px, 4vw, 48px) 96px;
 }
 
 /* ===== 페이지 공통 ===== */
 .page-head {
-  margin-bottom: 18px;
+  margin-bottom: 32px;
 }
 .page-head h2 {
-  font-family: "Song Myung", serif;
-  font-weight: 400;
-  font-size: 24px;
-  margin-top: 6px;
+  font-size: 40px;
+  font-weight: 340;
+  line-height: 1.1;
+  letter-spacing: -0.96px;
+  margin-top: 8px;
 }
 
 /* ===== 대시보드 ===== */
 .dash {
   display: grid;
-  gap: 28px;
+  gap: 48px;
 }
 .dash-head {
   text-align: center;
@@ -281,56 +360,59 @@ a:hover {
   min-width: 0;
 }
 
-/* 넓은 화면: 좌측 요약 + 우측 체크리스트 2단, 원칙은 전체 폭 */
+/* 넓은 화면: 좌측 요약 + 우측 체크리스트 2단, 원칙 블록은 전체 폭 */
 @media (min-width: 860px) {
   .dash {
     grid-template-columns: 300px minmax(0, 1fr);
     align-items: start;
-    column-gap: 44px;
-    row-gap: 36px;
+    column-gap: 56px;
+    row-gap: 64px;
   }
   .dash-head {
     position: sticky;
-    top: 86px;
+    top: 80px;
   }
   .dash .principles {
     grid-column: 1 / -1;
   }
 }
+
 .dash-date {
-  font-family: "Song Myung", serif;
-  font-weight: 400;
-  font-size: 22px;
-  margin: 6px 0 18px;
+  font-size: 32px;
+  font-weight: 340;
+  line-height: 1.1;
+  letter-spacing: -0.96px;
+  margin: 10px 0 24px;
 }
 .dash-stat {
-  margin-top: 14px;
+  margin-top: 20px;
 }
 .dash-stat .big {
   display: block;
-  font-family: "Song Myung", serif;
-  font-size: 30px;
-  color: var(--gold-soft);
-  line-height: 1.1;
+  font-size: 48px;
+  font-weight: 340;
+  line-height: 1;
+  letter-spacing: -0.96px;
+  color: var(--ink);
 }
 
+/* ===== 메달리온(완료율 게이지) — 평면 + 파스텔 채움 ===== */
 .medallion {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 120px;
+  height: 120px;
   margin: 0 auto;
-  border-radius: 50%;
+  border-radius: var(--r-full);
   overflow: hidden;
-  border: 1px solid var(--panel-line);
-  background: radial-gradient(circle at 50% 35%, #232751, #15182f);
-  box-shadow: 0 0 0 6px rgba(31, 35, 71, 0.5), 0 14px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--hairline);
+  background: var(--surface-soft);
 }
 .medallion-fill {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold) 60%, #c8902f);
+  background: var(--block-lime);
   transition: height 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .medallion-glyph {
@@ -339,137 +421,151 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Song Myung", serif;
-  font-size: 54px;
+  font-size: 52px;
+  font-weight: 500;
   color: var(--ink);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
   z-index: 2;
 }
 .medallion.complete {
-  box-shadow: 0 0 0 6px rgba(227, 176, 75, 0.25), 0 0 38px rgba(227, 176, 75, 0.5),
-    0 14px 40px rgba(0, 0, 0, 0.45);
+  border: 2px solid var(--primary);
 }
 
 /* ===== 체크리스트 ===== */
 .list {
-  background: linear-gradient(180deg, var(--base-2), #15182f);
-  border: 1px solid var(--panel-line);
-  border-radius: 18px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
   overflow: hidden;
 }
 .item {
   display: flex;
   align-items: flex-start;
-  gap: 13px;
-  padding: 15px 16px;
+  gap: 14px;
+  padding: 16px 20px;
   cursor: pointer;
   user-select: none;
-  border-top: 1px solid rgba(44, 49, 92, 0.55);
-  transition: background 0.25s ease;
+  border-top: 1px solid var(--hairline-soft);
+  transition: background 0.15s ease;
 }
 .item:first-child {
   border-top: none;
 }
 .item:hover {
-  background: rgba(227, 176, 75, 0.04);
+  background: var(--surface-soft);
 }
 .box {
   flex: none;
-  width: 23px;
-  height: 23px;
-  border-radius: 7px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
   margin-top: 1px;
-  border: 1.5px solid var(--muted-2);
+  border: 1.5px solid var(--ink);
   position: relative;
-  transition: all 0.25s ease;
+  transition: background 0.15s ease;
 }
 .box::after {
   content: "";
   position: absolute;
-  left: 7px;
+  left: 8px;
   top: 3px;
   width: 6px;
-  height: 11px;
-  border: solid #15182f;
+  height: 12px;
+  border: solid var(--on-primary);
   border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg) scale(0);
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease;
 }
 .txt {
-  font-size: 14.5px;
+  font-size: 18px;
+  font-weight: 320;
+  letter-spacing: -0.26px;
   color: var(--ink);
-  transition: color 0.25s ease;
 }
 .item.done .box {
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
-  border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(227, 176, 75, 0.4);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 .item.done .box::after {
   transform: rotate(45deg) scale(1);
 }
 .item.done .txt {
-  color: var(--muted);
+  text-decoration: line-through;
+  font-weight: 330;
 }
 
 .note-field {
-  margin-top: 22px;
+  margin-top: 28px;
 }
 .save-hint {
-  font-size: 11.5px;
-  color: var(--muted-2);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--ink);
   text-align: right;
-  margin-top: -6px;
+  margin-top: 6px;
 }
 
-/* ===== 원칙 카드 ===== */
+/* ===== 마음의 4원칙 — 라임 컬러블록(시그니처) ===== */
 .principles {
   margin-top: 0;
+  background: var(--block-lime);
+  border-radius: var(--r-lg);
+  padding: clamp(28px, 4vw, 48px);
+}
+.principles .eyebrow {
+  color: var(--ink);
 }
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  margin-top: 12px;
+  gap: 32px;
+  margin-top: 24px;
 }
 .pcard {
-  background: linear-gradient(135deg, #1c2046, #161937);
-  border: 1px solid var(--panel-line);
-  border-radius: 16px;
-  padding: 17px 18px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
+/* 큰 한자 숫자를 블록 내부 마커로 */
 .pcard::before {
   content: attr(data-n);
-  position: absolute;
-  right: 14px;
-  top: 4px;
-  font-family: "Song Myung", serif;
-  font-size: 52px;
-  color: rgba(227, 176, 75, 0.1);
+  position: static;
+  display: block;
+  font-size: 36px;
+  font-weight: 340;
+  letter-spacing: -0.96px;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: 10px;
 }
 .pcard h3 {
-  font-family: "Song Myung", serif;
-  font-weight: 400;
-  font-size: 17px;
-  color: var(--gold-soft);
-  margin-bottom: 6px;
+  font-size: 24px;
+  font-weight: 540;
+  line-height: 1.3;
+  letter-spacing: -0.26px;
+  color: var(--ink);
+  margin-bottom: 8px;
 }
 .pcard p {
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 300;
-  max-width: 90%;
+  font-size: 16px;
+  font-weight: 330;
+  line-height: 1.45;
+  letter-spacing: -0.14px;
+  color: var(--ink);
+  max-width: 100%;
 }
 
 /* ===== 프로필 폼 카드 ===== */
 .card-form {
   max-width: 560px;
-  background: linear-gradient(180deg, var(--base-2), #15182f);
-  border: 1px solid var(--panel-line);
-  border-radius: 18px;
-  padding: 22px 20px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 24px;
 }
 
 /* ===== 달력 ===== */
@@ -484,37 +580,42 @@ a:hover {
   margin-top: 8px;
 }
 .cal-nav h2 {
-  font-family: "Song Myung", serif;
-  font-weight: 400;
-  font-size: 22px;
-  min-width: 150px;
+  font-size: 32px;
+  font-weight: 340;
+  letter-spacing: -0.96px;
+  min-width: 160px;
 }
 .cal-arrow {
-  font-family: inherit;
-  font-size: 22px;
-  color: var(--muted);
-  background: none;
-  border: 1px solid var(--panel-line);
-  border-radius: 10px;
-  width: 38px;
-  height: 38px;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--surface-soft);
+  border: none;
+  border-radius: var(--r-full);
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .cal-arrow:hover {
-  color: var(--gold-soft);
-  border-color: var(--gold);
+  background: var(--hairline);
 }
 .weekrow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin: 18px auto 8px;
+  margin: 24px auto 8px;
   max-width: 880px;
 }
 .wd {
   text-align: center;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
   font-size: 12px;
-  color: var(--muted-2);
+  letter-spacing: 0.05em;
+  color: var(--ink);
 }
 .calgrid {
   display: grid;
@@ -526,49 +627,53 @@ a:hover {
 .cal-cell {
   aspect-ratio: auto;
   min-height: clamp(54px, 8vw, 104px);
-  border-radius: 11px;
-  border: 1px solid var(--panel-line);
-  background: var(--base-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
   color: var(--ink);
-  font-family: inherit;
+  font-family: var(--font-sans);
   cursor: pointer;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding: 6px 8px;
-  transition: transform 0.12s ease, border-color 0.2s ease;
+  padding: 8px;
+  transition: border-color 0.15s ease, transform 0.1s ease;
 }
 .cal-cell:hover {
   transform: translateY(-1px);
-  border-color: var(--gold);
+  border-color: var(--primary);
 }
 .cell-day {
-  font-size: 12.5px;
-  color: var(--muted);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink);
 }
 .cal-cell.dim {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 .cal-cell.today {
-  border-color: var(--gold-soft);
-  box-shadow: 0 0 0 1px var(--gold-soft) inset;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
 }
 .cal-cell.lvl-1 {
-  background: rgba(227, 176, 75, 0.16);
+  background: var(--heat-1);
+  border-color: var(--heat-1);
 }
 .cal-cell.lvl-2 {
-  background: rgba(227, 176, 75, 0.32);
+  background: var(--heat-2);
+  border-color: var(--heat-2);
 }
 .cal-cell.lvl-3 {
-  background: rgba(227, 176, 75, 0.55);
+  background: var(--heat-3);
+  border-color: var(--heat-3);
 }
 .cal-cell.lvl-4 {
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  background: var(--heat-4);
+  border-color: var(--heat-4);
 }
 .cal-cell.lvl-3 .cell-day,
 .cal-cell.lvl-4 .cell-day {
-  color: #15182f;
-  font-weight: 600;
+  color: var(--on-primary);
 }
 
 .legend {
@@ -576,39 +681,83 @@ a:hover {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 18px;
+  margin-top: 24px;
 }
 .lg {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
-  border: 1px solid var(--panel-line);
+  border-radius: var(--r-xs);
+  border: 1px solid var(--hairline);
 }
 .lg.lvl-1 {
-  background: rgba(227, 176, 75, 0.16);
+  background: var(--heat-1);
 }
 .lg.lvl-2 {
-  background: rgba(227, 176, 75, 0.32);
+  background: var(--heat-2);
 }
 .lg.lvl-3 {
-  background: rgba(227, 176, 75, 0.55);
+  background: var(--heat-3);
 }
 .lg.lvl-4 {
-  background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+  background: var(--heat-4);
 }
 
+/* ===== 조선100년체 — 디스플레이/제목 서체 적용 =====
+   브랜드 마크, 페이지 제목, 큰 숫자, 한자 글리프 등 디스플레이 요소에만 사용.
+   본문(Inter/Noto)과 라벨(JetBrains Mono)은 그대로 둔다.
+   명조 한글 제목에는 Inter용 음수 자간이 맞지 않으므로 자간을 정상화한다. */
+.brand,
+.auth-mark,
+.auth-title,
+.page-head h2,
+.dash-date,
+.dash-stat .big,
+.medallion-glyph,
+.cal-nav h2,
+.pcard h3,
+.pcard::before {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+/* ===== 반응형 ===== */
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
   }
 }
-@media (max-width: 420px) {
+
+/* 모바일-L: 컬러블록을 화면 가장자리까지 풀블리드(포스터 효과) */
+@media (max-width: 768px) {
+  .principles {
+    border-radius: 0;
+    margin-left: calc(-1 * clamp(16px, 4vw, 48px));
+    margin-right: calc(-1 * clamp(16px, 4vw, 48px));
+  }
+}
+
+/* 모바일: 디스플레이 축소 */
+@media (max-width: 560px) {
   .nav-link {
-    padding: 7px 9px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  .nav-logout {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  .auth-title {
+    font-size: 28px;
+  }
+  .page-head h2 {
+    font-size: 32px;
   }
   .cal-nav h2 {
     min-width: 120px;
-    font-size: 19px;
+    font-size: 26px;
+  }
+  .dash-stat .big {
+    font-size: 40px;
   }
 }

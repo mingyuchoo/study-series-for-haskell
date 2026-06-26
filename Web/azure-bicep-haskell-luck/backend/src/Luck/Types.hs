@@ -18,10 +18,8 @@ module Luck.Types
   , RecordDTO (..)
   , RecordUpdate (..)
 
-    -- * 체크리스트 카탈로그
+    -- * 체크리스트 항목 타입 (정본 데이터는 'Luck.Domain.Checklist')
   , CatalogItem (..)
-  , catalog
-  , catalogKeys
 
     -- * 공용
   , MessageResp (..)
@@ -29,7 +27,6 @@ module Luck.Types
 
 import Data.Aeson
 import Data.Char (toLower)
-import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Time (Day, UTCTime)
 import Data.UUID (UUID)
@@ -181,17 +178,3 @@ instance FromJSON CatalogItem where
 newtype MessageResp = MessageResp {message :: Text}
   deriving stock (Show, Generic)
   deriving anyclass (ToJSON, FromJSON)
-
--- | 일별 체크리스트 항목 (서버 측 정본).
-catalog :: [CatalogItem]
-catalog =
-  [ CatalogItem "d1" "오늘 연락할 사람 한 명 정하고 연락하기 (오랜만인 사람 우선)"
-  , CatalogItem "d2" "평소와 다른 선택 한 가지 하기 (다른 길, 새 가게, 새 메뉴)"
-  , CatalogItem "d3" "떠오른 직감 하나를 메모해 두기"
-  , CatalogItem "d4" "마감과 목표에서 잠시 벗어나 '다른 가능성은 없나' 한 번 묻기"
-  , CatalogItem "d5" "잠들기 전 오늘 좋았던 일 세 가지 적기"
-  ]
-
--- | 유효한 항목 key 집합 (저장 시 알 수 없는 key를 걸러내기 위함).
-catalogKeys :: Set.Set Text
-catalogKeys = Set.fromList (map ciKey catalog)

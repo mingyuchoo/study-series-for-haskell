@@ -28,9 +28,20 @@ library
   exposed-modules:
     Luck.Config
     Luck.Types
-    Luck.Database
+    Luck.Error
+    Luck.Domain.Checklist
+    Luck.Domain.Record
+    Luck.Domain.Validation
+    Luck.DB
+    Luck.Repository.User
+    Luck.Repository.Record
+    Luck.Web.Error
+    Luck.Web.Dto
     Luck.Auth
     Luck.Api
+    Luck.Handler.Auth
+    Luck.Handler.Profile
+    Luck.Handler.Record
     Luck.Server
     Luck.App
   build-depends:
@@ -44,6 +55,7 @@ library
     , mtl
     , transformers
     , containers
+    , file-embed
     , servant
     , servant-server
     , servant-auth
