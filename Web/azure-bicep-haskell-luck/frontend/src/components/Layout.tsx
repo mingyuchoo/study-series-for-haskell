@@ -17,7 +17,7 @@ const Layout: Component<{ children?: JSX.Element }> = (props) => {
   onMount(async () => {
     if (auth.authed() && !auth.user()) {
       try {
-        auth.setUser(await api.me());
+        auth.setUser(await api.profile.me());
       } catch {
         // 실패 시 401 처리는 http 계층이 담당 — 여기서는 무시
       }
@@ -26,7 +26,7 @@ const Layout: Component<{ children?: JSX.Element }> = (props) => {
 
   const onLogout = async () => {
     try {
-      await api.logout();
+      await api.auth.logout();
     } catch {
       // 로그아웃은 클라이언트 토큰 삭제가 본질 — 실패 무시
     }

@@ -10,7 +10,7 @@ import Luck.Handler.Admin (createItemH, deleteItemH, listItemsH, setActiveH, upd
 import Luck.Handler.Auth (catalogH, loginH, logoutH, signupH)
 import Luck.Handler.Profile (meH, updateMeH)
 import Luck.Handler.Record (putRecordH, recordH, recordsH)
-import Luck.Types (AuthUser)
+import Luck.Types.Auth (AuthUser)
 import Luck.Web.Error (jsonErr)
 import Servant
 import Servant.Auth.Server (AuthResult (..), throwAll)

@@ -15,7 +15,14 @@ export interface AuthResp {
   user: UserDTO;
 }
 
+/** 공개 카탈로그 항목 (활성 항목만 내려오므로 active를 담지 않는다). */
 export interface CatalogItem {
+  key: string;
+  label: string;
+}
+
+/** 관리자용 카탈로그 항목 (비활성 항목도 다루므로 active 포함). */
+export interface AdminCatalogItem {
   key: string;
   label: string;
   active: boolean;

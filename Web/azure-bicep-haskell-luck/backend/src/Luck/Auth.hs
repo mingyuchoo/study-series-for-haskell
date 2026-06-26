@@ -18,7 +18,7 @@ import qualified Data.ByteString.Lazy as BL
 import           Data.Text            (Text)
 import qualified Data.Text.Encoding   as TE
 import           Data.Time            (addUTCTime, getCurrentTime, nominalDay)
-import           Luck.Types           (AuthUser)
+import           Luck.Types.Auth      (AuthUser)
 import           Servant.Auth.Server
     ( JWTSettings
     , defaultJWTSettings

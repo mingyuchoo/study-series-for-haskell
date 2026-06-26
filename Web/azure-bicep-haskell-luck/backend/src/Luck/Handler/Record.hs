@@ -7,45 +7,38 @@ module Luck.Handler.Record
     , recordsH
     ) where
 
-import           Control.Monad.Except   (throwError)
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Reader   (ask)
-import           Data.Maybe             (fromMaybe)
-import           Data.Time              (Day)
-import           Luck.App               (AppEnv (..), AppM)
-import           Luck.Domain.Checklist  (sanitize)
-import           Luck.Domain.Record     (DailyRecord (..))
-import           Luck.Error             (DomainError (..))
+import           Control.Monad.Except      (throwError)
+import           Data.Maybe                (fromMaybe)
+import           Data.Time                 (Day)
+import           Luck.App                  (AppM)
+import           Luck.Domain.Checklist     (sanitize)
+import           Luck.Domain.Record        (DailyRecord (..))
+import           Luck.Error                (DomainError (..))
+import           Luck.Handler.Util         (runDB)
 import           Luck.Repository.Checklist (listItems)
-import           Luck.Repository.Record
-    ( getRecord
-    , getRecordsBetween
-    , upsertRecord
-    )
-import           Luck.Types
-import           Luck.Web.Dto           (recordToDTO)
-import           Luck.Web.Error         (toServerError)
+import           Luck.Repository.Record    (getRecord, getRecordsBetween, upsertRecord)
+import           Luck.Types.Auth           (AuthUser (..))
+import           Luck.Types.Record         (RecordDTO, RecordUpdate (..))
+import           Luck.Web.Dto              (recordToDTO)
+import           Luck.Web.Error            (toServerError)
 
 recordsH :: AuthUser -> Maybe Day -> Maybe Day -> AppM [RecordDTO]
 recordsH u mFrom mTo =
   case (mFrom, mTo) of
     (Just from, Just to) -> do
-      env <- ask
-      cat <- liftIO (listItems (envPool env))
-      rows <- liftIO (getRecordsBetween (envPool env) (auId u) from to)
+      cat <- runDB listItems
+      rows <- runDB (\p -> getRecordsBetween p (auId u) from to)
       pure (map (recordToDTO cat) rows)
     _ -> throwError (toServerError (ValidationError "from, to 쿼리 파라미터가 필요합니다."))
 
 recordH :: AuthUser -> Day -> AppM RecordDTO
 recordH u d = do
-  env <- ask
-  cat <- liftIO (listItems (envPool env))
-  mrow <- liftIO (getRecord (envPool env) (auId u) d)
+  cat <- runDB listItems
+  mrow <- runDB (\p -> getRecord p (auId u) d)
   pure (recordToDTO cat (fromMaybe (DailyRecord d [] Nothing) mrow))
 
 putRecordH :: AuthUser -> Day -> RecordUpdate -> AppM RecordDTO
 putRecordH u d RecordUpdate {..} = do
-  env <- ask
-  cat <- liftIO (listItems (envPool env))
-  saved <- liftIO (upsertRecord (envPool env) (auId u) d (sanitize cat ruCompleted) ruNote)
+  cat <- runDB listItems
+  saved <- runDB (\p -> upsertRecord p (auId u) d (sanitize cat ruCompleted) ruNote)
   pure (recordToDTO cat saved)

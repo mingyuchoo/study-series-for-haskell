@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js";
 import { useParams } from "@solidjs/router";
 import { createDayRecord } from "../lib/dayRecord";
+import { imeInput } from "../lib/ime";
 import { PRINCIPLES } from "../lib/principles";
 import { todayStr } from "../lib/date";
 import Medallion from "../components/Medallion";
@@ -57,12 +58,7 @@ export default function Dashboard() {
           <textarea
             rows="3"
             value={day.note()}
-            onInput={(e) => {
-              // 한글 IME 조합 중에는 값 역기입을 막아 조합이 끊겨 글자가 떨리는 것을 방지한다.
-              if (e.isComposing) return;
-              day.setNote(e.currentTarget.value);
-            }}
-            onCompositionEnd={(e) => day.setNote(e.currentTarget.value)}
+            {...imeInput(day.setNote)}
             onBlur={day.saveNote}
             placeholder="좋았던 일, 떠오른 직감 등을 적어 두세요"
           />

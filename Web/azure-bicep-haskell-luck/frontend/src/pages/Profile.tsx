@@ -25,7 +25,7 @@ export default function Profile() {
 
   onMount(async () => {
     try {
-      const u = await api.me();
+      const u = await api.profile.me();
       setEmail(u.email);
       setDisplayName(u.displayName);
       setBio(u.bio);
@@ -44,7 +44,7 @@ export default function Profile() {
     setErr("");
     setSaving(true);
     try {
-      const u = await api.updateProfile(displayName().trim(), bio(), timezone());
+      const u = await api.profile.update(displayName().trim(), bio(), timezone());
       auth.setUser(u);
       setMsg("저장되었습니다.");
     } catch (ex) {

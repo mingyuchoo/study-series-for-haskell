@@ -8,7 +8,17 @@ module Luck.Api
 
 import Data.Text (Text)
 import Data.Time (Day)
-import Luck.Types
+import Luck.Types.Auth (AuthResp, AuthUser, LoginReq, SignupReq)
+import Luck.Types.Checklist
+  ( AdminCatalogItem
+  , CatalogItem
+  , ChecklistActiveReq
+  , ChecklistCreateReq
+  , ChecklistUpdateReq
+  )
+import Luck.Types.Common (MessageResp)
+import Luck.Types.Record (RecordDTO, RecordUpdate)
+import Luck.Types.User (ProfileUpdate, UserDTO)
 import Servant
 import Servant.Auth.Server (Auth, JWT)
 
@@ -31,10 +41,10 @@ type ProtectedAPI =
     :<|> "records" :> Capture "date" Day :> ReqBody '[JSON] RecordUpdate :> Put '[JSON] RecordDTO
     -- 관리자 전용: 체크리스트 항목 CRUD
     -- (목록은 비활성 포함 전체를 주는 별도 라우트. 공개 /catalog 는 활성 항목만.)
-    :<|> "admin" :> "catalog" :> Get '[JSON] [CatalogItem]
-    :<|> "admin" :> "catalog" :> ReqBody '[JSON] ChecklistCreateReq :> Post '[JSON] CatalogItem
-    :<|> "admin" :> "catalog" :> Capture "key" Text :> ReqBody '[JSON] ChecklistUpdateReq :> Put '[JSON] CatalogItem
-    :<|> "admin" :> "catalog" :> Capture "key" Text :> "active" :> ReqBody '[JSON] ChecklistActiveReq :> Put '[JSON] CatalogItem
+    :<|> "admin" :> "catalog" :> Get '[JSON] [AdminCatalogItem]
+    :<|> "admin" :> "catalog" :> ReqBody '[JSON] ChecklistCreateReq :> Post '[JSON] AdminCatalogItem
+    :<|> "admin" :> "catalog" :> Capture "key" Text :> ReqBody '[JSON] ChecklistUpdateReq :> Put '[JSON] AdminCatalogItem
+    :<|> "admin" :> "catalog" :> Capture "key" Text :> "active" :> ReqBody '[JSON] ChecklistActiveReq :> Put '[JSON] AdminCatalogItem
     :<|> "admin" :> "catalog" :> Capture "key" Text :> Delete '[JSON] MessageResp
 
 -- | 전체 API: @/api@ 하위에 공개 + 보호 라우트.

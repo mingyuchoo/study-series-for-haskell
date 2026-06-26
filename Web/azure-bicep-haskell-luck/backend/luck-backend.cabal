@@ -27,7 +27,11 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Luck.Config
-    Luck.Types
+    Luck.Types.Common
+    Luck.Types.Auth
+    Luck.Types.User
+    Luck.Types.Record
+    Luck.Types.Checklist
     Luck.Error
     Luck.Domain.Checklist
     Luck.Domain.Record
@@ -36,10 +40,12 @@ library
     Luck.Repository.User
     Luck.Repository.Record
     Luck.Repository.Checklist
+    Luck.Authz
     Luck.Web.Error
     Luck.Web.Dto
     Luck.Auth
     Luck.Api
+    Luck.Handler.Util
     Luck.Handler.Auth
     Luck.Handler.Profile
     Luck.Handler.Record

@@ -21,7 +21,7 @@ export default function Signup() {
     }
     setLoading(true);
     try {
-      const r = await api.signup(email().trim(), password(), displayName().trim());
+      const r = await api.auth.signup(email().trim(), password(), displayName().trim());
       auth.login(r.token, r.user);
       navigate("/", { replace: true });
     } catch (ex) {

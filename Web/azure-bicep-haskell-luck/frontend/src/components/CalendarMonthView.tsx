@@ -9,7 +9,7 @@ import { WEEKDAYS, todayStr, pad } from "../lib/date";
 export default function CalendarMonthView() {
   const navigate = useNavigate();
   const cal = createMonthRecords();
-  const [catalog] = createResource(() => api.catalog());
+  const [catalog] = createResource(() => api.catalog.list());
   const [selected, setSelected] = createSignal(todayStr());
 
   const stats = () => {

@@ -36,7 +36,7 @@ export function createMonthRecords(): MonthRecordsState {
     return { from: fmt(first), to: fmt(last) };
   });
 
-  const [records] = createResource(range, (r) => api.getRecords(r.from, r.to));
+  const [records] = createResource(range, (r) => api.records.list(r.from, r.to));
 
   // date -> 달성 비율 맵
   const ratioMap = createMemo(() => {

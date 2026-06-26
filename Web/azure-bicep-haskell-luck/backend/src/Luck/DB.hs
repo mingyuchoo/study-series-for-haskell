@@ -32,16 +32,13 @@ withConn = withResource
 --   in-code 정의와 마이그레이션 파일이 어긋날 여지를 없앤다.
 --   각 파일은 멱등(IF NOT EXISTS / ON CONFLICT)하므로 매 기동마다 순서대로 실행한다.
 initSchema :: Pool Connection -> IO ()
-initSchema pool = withConn pool $ \c -> do
-  _ <- execute_ c schema0001
-  _ <- execute_ c schema0002
-  pure ()
+initSchema pool = withConn pool $ \c -> mapM_ (execute_ c) migrations
 
--- | @migrations/0001_init.sql@ 의 내용을 원시 바이트로 임베드한 스키마 쿼리
---   (UTF-8 한글 주석을 손상 없이 보존).
-schema0001 :: Query
-schema0001 = Query $(embedFile "migrations/0001_init.sql")
-
--- | @migrations/0002_admin_and_checklist.sql@ : 관리자 권한 + 체크리스트 항목.
-schema0002 :: Query
-schema0002 = Query $(embedFile "migrations/0002_admin_and_checklist.sql")
+-- | 적용 순서대로 나열한 마이그레이션. 새 마이그레이션은 파일을 추가하고
+--   이 목록 끝에 @Query $(embedFile "migrations/NNNN_....sql")@ 한 줄만 더하면 된다.
+--   (원시 바이트로 임베드해 UTF-8 한글 주석을 손상 없이 보존한다.)
+migrations :: [Query]
+migrations =
+  [ Query $(embedFile "migrations/0001_init.sql")
+  , Query $(embedFile "migrations/0002_admin_and_checklist.sql")
+  ]

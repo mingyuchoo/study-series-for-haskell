@@ -1,9 +1,10 @@
-// 백엔드 엔드포인트 정의. 트랜스포트는 http.ts, 타입은 types.ts, 토큰은 token.ts.
+// 백엔드 엔드포인트 정의 (기능별 네임스페이스). 트랜스포트는 http.ts, 타입은 types.ts.
 
 import { request } from "./http";
-import type { AuthResp, CatalogItem, RecordDTO, UserDTO } from "./types";
+import type { AdminCatalogItem, AuthResp, CatalogItem, RecordDTO, UserDTO } from "./types";
 
-export const api = {
+/** 인증 (회원가입/로그인/로그아웃). */
+const authApi = {
   signup(email: string, password: string, displayName: string): Promise<AuthResp> {
     return request("/auth/signup", {
       method: "POST",
@@ -19,57 +20,78 @@ export const api = {
   logout(): Promise<{ message: string }> {
     return request("/auth/logout", { method: "POST" });
   },
-  catalog(): Promise<CatalogItem[]> {
-    return request("/catalog");
-  },
+};
+
+/** 내 프로필 조회/수정. */
+const profileApi = {
   me(): Promise<UserDTO> {
     return request("/me");
   },
-  updateProfile(displayName: string, bio: string, timezone: string): Promise<UserDTO> {
+  update(displayName: string, bio: string, timezone: string): Promise<UserDTO> {
     return request("/me", {
       method: "PUT",
       body: JSON.stringify({ displayName, bio, timezone }),
     });
   },
-  getRecords(from: string, to: string): Promise<RecordDTO[]> {
+};
+
+/** 일별 기록 조회/저장. */
+const recordsApi = {
+  list(from: string, to: string): Promise<RecordDTO[]> {
     return request(`/records?from=${from}&to=${to}`);
   },
-  getRecord(date: string): Promise<RecordDTO> {
+  get(date: string): Promise<RecordDTO> {
     return request(`/records/${date}`);
   },
-  putRecord(date: string, completed: string[], note: string | null): Promise<RecordDTO> {
+  save(date: string, completed: string[], note: string | null): Promise<RecordDTO> {
     return request(`/records/${date}`, {
       method: "PUT",
       body: JSON.stringify({ completed, note }),
     });
   },
+};
 
-  // 관리자 전용: 체크리스트 항목 CRUD
-  // 목록은 비활성 항목까지 포함 (공개 catalog() 는 활성 항목만 준다)
-  adminCatalog(): Promise<CatalogItem[]> {
+/** 공개 카탈로그 (활성 항목만). */
+const catalogApi = {
+  list(): Promise<CatalogItem[]> {
+    return request("/catalog");
+  },
+};
+
+/** 관리자 전용 카탈로그 CRUD (목록은 비활성 항목까지 포함). */
+const adminApi = {
+  list(): Promise<AdminCatalogItem[]> {
     return request("/admin/catalog");
   },
-  createCatalogItem(label: string): Promise<CatalogItem> {
+  create(label: string): Promise<AdminCatalogItem> {
     return request("/admin/catalog", {
       method: "POST",
       body: JSON.stringify({ label }),
     });
   },
-  updateCatalogItem(key: string, label: string): Promise<CatalogItem> {
+  update(key: string, label: string): Promise<AdminCatalogItem> {
     return request(`/admin/catalog/${encodeURIComponent(key)}`, {
       method: "PUT",
       body: JSON.stringify({ label }),
     });
   },
-  setCatalogItemActive(key: string, active: boolean): Promise<CatalogItem> {
+  setActive(key: string, active: boolean): Promise<AdminCatalogItem> {
     return request(`/admin/catalog/${encodeURIComponent(key)}/active`, {
       method: "PUT",
       body: JSON.stringify({ active }),
     });
   },
-  deleteCatalogItem(key: string): Promise<{ message: string }> {
+  remove(key: string): Promise<{ message: string }> {
     return request(`/admin/catalog/${encodeURIComponent(key)}`, {
       method: "DELETE",
     });
   },
+};
+
+export const api = {
+  auth: authApi,
+  profile: profileApi,
+  records: recordsApi,
+  catalog: catalogApi,
+  admin: adminApi,
 };

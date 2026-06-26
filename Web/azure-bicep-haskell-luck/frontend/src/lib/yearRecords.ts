@@ -20,7 +20,7 @@ export function createYearRecords(): YearRecordsState {
   const [year, setYear] = createSignal(now.getFullYear());
 
   const range = createMemo(() => ({ from: `${year()}-01-01`, to: `${year()}-12-31` }));
-  const [records] = createResource(range, (r) => api.getRecords(r.from, r.to));
+  const [records] = createResource(range, (r) => api.records.list(r.from, r.to));
 
   const ratioMap = createMemo(() => {
     const m = new Map<string, number>();

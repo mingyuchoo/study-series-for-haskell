@@ -7,10 +7,10 @@ module Luck.Web.Error
     , toServerError
     ) where
 
-import           Data.Aeson (encode)
-import           Data.Text  (Text)
-import           Luck.Error (DomainError (..))
-import           Luck.Types (MessageResp (..))
+import           Data.Aeson        (encode)
+import           Data.Text         (Text)
+import           Luck.Error        (DomainError (..))
+import           Luck.Types.Common (MessageResp (..))
 import           Servant
 
 -- | 도메인 에러 → HTTP 응답.

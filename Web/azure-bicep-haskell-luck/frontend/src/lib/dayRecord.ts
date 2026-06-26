@@ -20,8 +20,8 @@ export interface DayRecordState {
 
 /** @param date 조회/저장 대상 날짜("YYYY-MM-DD")를 주는 접근자. */
 export function createDayRecord(date: Accessor<string>): DayRecordState {
-  const [catalog] = createResource(() => api.catalog());
-  const [record] = createResource(date, (d) => api.getRecord(d));
+  const [catalog] = createResource(() => api.catalog.list());
+  const [record] = createResource(date, (d) => api.records.get(d));
 
   const [completed, setCompleted] = createSignal<string[]>([]);
   const [note, setNote] = createSignal("");
@@ -41,7 +41,7 @@ export function createDayRecord(date: Accessor<string>): DayRecordState {
 
   const persist = async (next: string[], noteVal: string) => {
     try {
-      await api.putRecord(date(), next, noteVal.trim() === "" ? null : noteVal);
+      await api.records.save(date(), next, noteVal.trim() === "" ? null : noteVal);
       setSavedAt(`${hhmm(new Date())} 저장됨`);
     } catch {
       setSavedAt("저장 실패 — 다시 시도하세요");
