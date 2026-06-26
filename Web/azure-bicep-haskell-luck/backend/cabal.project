@@ -1,1 +1,7 @@
 packages: .
+
+-- jose-0.12 uses the `memory` package for ByteArray/ScrubbedBytes, but
+-- crypton >= 1.1 switched its ByteArray backend from `memory` to `ram`.
+-- Mixing them yields "Could not deduce ram-...:ByteArray ScrubbedBytes"
+-- errors when building jose. Keep crypton on the memory-based 1.0 series.
+constraints: crypton < 1.1

@@ -72,23 +72,25 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <Show when={catalog()} fallback={<p class="muted-line">불러오는 중...</p>}>
-        <Checklist items={catalog()!} completed={completed()} onToggle={toggle} />
-      </Show>
+      <div class="dash-main">
+        <Show when={catalog()} fallback={<p class="muted-line">불러오는 중...</p>}>
+          <Checklist items={catalog()!} completed={completed()} onToggle={toggle} />
+        </Show>
 
-      <label class="field note-field">
-        <span>오늘의 메모</span>
-        <textarea
-          rows="3"
-          value={note()}
-          onInput={(e) => setNote(e.currentTarget.value)}
-          onBlur={onNoteBlur}
-          placeholder="좋았던 일, 떠오른 직감 등을 적어 두세요"
-        />
-      </label>
-      <Show when={savedAt()}>
-        <p class="save-hint">{savedAt()}</p>
-      </Show>
+        <label class="field note-field">
+          <span>오늘의 메모</span>
+          <textarea
+            rows="3"
+            value={note()}
+            onInput={(e) => setNote(e.currentTarget.value)}
+            onBlur={onNoteBlur}
+            placeholder="좋았던 일, 떠오른 직감 등을 적어 두세요"
+          />
+        </label>
+        <Show when={savedAt()}>
+          <p class="save-hint">{savedAt()}</p>
+        </Show>
+      </div>
 
       <section class="principles">
         <span class="eyebrow">心法 · 마음의 4원칙</span>

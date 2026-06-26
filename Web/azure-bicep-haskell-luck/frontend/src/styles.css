@@ -188,7 +188,8 @@ a:hover {
 
 /* ===== 셸 / 네비게이션 ===== */
 .shell {
-  max-width: 640px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
   min-height: 100vh;
 }
@@ -196,7 +197,7 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 20px;
+  padding: 16px clamp(16px, 4vw, 48px);
   border-bottom: 1px solid rgba(44, 49, 92, 0.5);
   position: sticky;
   top: 0;
@@ -253,7 +254,7 @@ a:hover {
   color: var(--danger);
 }
 .content {
-  padding: 22px 20px 70px;
+  padding: clamp(22px, 3vw, 40px) clamp(16px, 4vw, 48px) 80px;
 }
 
 /* ===== 페이지 공통 ===== */
@@ -268,9 +269,33 @@ a:hover {
 }
 
 /* ===== 대시보드 ===== */
+.dash {
+  display: grid;
+  gap: 28px;
+}
 .dash-head {
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 0;
+}
+.dash-main {
+  min-width: 0;
+}
+
+/* 넓은 화면: 좌측 요약 + 우측 체크리스트 2단, 원칙은 전체 폭 */
+@media (min-width: 860px) {
+  .dash {
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 44px;
+    row-gap: 36px;
+  }
+  .dash-head {
+    position: sticky;
+    top: 86px;
+  }
+  .dash .principles {
+    grid-column: 1 / -1;
+  }
 }
 .dash-date {
   font-family: "Song Myung", serif;
@@ -399,12 +424,12 @@ a:hover {
 
 /* ===== 원칙 카드 ===== */
 .principles {
-  margin-top: 34px;
+  margin-top: 0;
 }
 .cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
   margin-top: 12px;
 }
 .pcard {
@@ -440,6 +465,7 @@ a:hover {
 
 /* ===== 프로필 폼 카드 ===== */
 .card-form {
+  max-width: 560px;
   background: linear-gradient(180deg, var(--base-2), #15182f);
   border: 1px solid var(--panel-line);
   border-radius: 18px;
@@ -482,7 +508,8 @@ a:hover {
 .weekrow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin: 18px 0 8px;
+  margin: 18px auto 8px;
+  max-width: 880px;
 }
 .wd {
   text-align: center;
@@ -492,10 +519,13 @@ a:hover {
 .calgrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: clamp(6px, 1vw, 10px);
+  max-width: 880px;
+  margin: 0 auto;
 }
 .cal-cell {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: auto;
+  min-height: clamp(54px, 8vw, 104px);
   border-radius: 11px;
   border: 1px solid var(--panel-line);
   background: var(--base-2);
