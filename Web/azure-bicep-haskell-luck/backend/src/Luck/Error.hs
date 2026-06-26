@@ -14,6 +14,10 @@ data DomainError
     EmailTaken
   | -- | 이메일/비밀번호 불일치 (→ 401)
     InvalidCredentials
+  | -- | 권한 없음 (→ 403)
+    Forbidden Text
+  | -- | 리소스 충돌, 예: key 중복 (→ 409)
+    Conflict Text
   | -- | 리소스를 찾을 수 없음 (→ 404)
     NotFound Text
   | -- | JWT 발급 실패 (→ 500)

@@ -19,6 +19,8 @@ toServerError = \case
   ValidationError m -> jsonErr err400 m
   EmailTaken -> jsonErr err409 "이미 가입된 이메일입니다."
   InvalidCredentials -> jsonErr err401 "이메일 또는 비밀번호가 올바르지 않습니다."
+  Forbidden m -> jsonErr err403 m
+  Conflict m -> jsonErr err409 m
   NotFound m -> jsonErr err404 m
   TokenFailure -> jsonErr err500 "토큰 발급에 실패했습니다."
   InternalError m -> jsonErr err500 m

@@ -16,6 +16,7 @@ import           Luck.App               (AppEnv (..), AppM)
 import           Luck.Domain.Checklist  (sanitize)
 import           Luck.Domain.Record     (DailyRecord (..))
 import           Luck.Error             (DomainError (..))
+import           Luck.Repository.Checklist (listItems)
 import           Luck.Repository.Record
     ( getRecord
     , getRecordsBetween
@@ -30,18 +31,21 @@ recordsH u mFrom mTo =
   case (mFrom, mTo) of
     (Just from, Just to) -> do
       env <- ask
+      cat <- liftIO (listItems (envPool env))
       rows <- liftIO (getRecordsBetween (envPool env) (auId u) from to)
-      pure (map recordToDTO rows)
+      pure (map (recordToDTO cat) rows)
     _ -> throwError (toServerError (ValidationError "from, to 쿼리 파라미터가 필요합니다."))
 
 recordH :: AuthUser -> Day -> AppM RecordDTO
 recordH u d = do
   env <- ask
+  cat <- liftIO (listItems (envPool env))
   mrow <- liftIO (getRecord (envPool env) (auId u) d)
-  pure (recordToDTO (fromMaybe (DailyRecord d [] Nothing) mrow))
+  pure (recordToDTO cat (fromMaybe (DailyRecord d [] Nothing) mrow))
 
 putRecordH :: AuthUser -> Day -> RecordUpdate -> AppM RecordDTO
 putRecordH u d RecordUpdate {..} = do
   env <- ask
-  saved <- liftIO (upsertRecord (envPool env) (auId u) d (sanitize ruCompleted) ruNote)
-  pure (recordToDTO saved)
+  cat <- liftIO (listItems (envPool env))
+  saved <- liftIO (upsertRecord (envPool env) (auId u) d (sanitize cat ruCompleted) ruNote)
+  pure (recordToDTO cat saved)

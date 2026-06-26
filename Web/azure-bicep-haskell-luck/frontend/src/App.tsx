@@ -6,6 +6,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import { auth } from "./lib/store";
 
 const App: Component = () => {
@@ -23,6 +24,7 @@ const App: Component = () => {
         <Route path="/day/:date" component={Dashboard} />
         <Route path="/calendar" component={Calendar} />
         <Route path="/profile" component={Profile} />
+        <Route path="/admin" component={Admin} />
       </Route>
     </Router>
   );

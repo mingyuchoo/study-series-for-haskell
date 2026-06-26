@@ -43,4 +43,33 @@ export const api = {
       body: JSON.stringify({ completed, note }),
     });
   },
+
+  // 관리자 전용: 체크리스트 항목 CRUD
+  // 목록은 비활성 항목까지 포함 (공개 catalog() 는 활성 항목만 준다)
+  adminCatalog(): Promise<CatalogItem[]> {
+    return request("/admin/catalog");
+  },
+  createCatalogItem(label: string): Promise<CatalogItem> {
+    return request("/admin/catalog", {
+      method: "POST",
+      body: JSON.stringify({ label }),
+    });
+  },
+  updateCatalogItem(key: string, label: string): Promise<CatalogItem> {
+    return request(`/admin/catalog/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      body: JSON.stringify({ label }),
+    });
+  },
+  setCatalogItemActive(key: string, active: boolean): Promise<CatalogItem> {
+    return request(`/admin/catalog/${encodeURIComponent(key)}/active`, {
+      method: "PUT",
+      body: JSON.stringify({ active }),
+    });
+  },
+  deleteCatalogItem(key: string): Promise<{ message: string }> {
+    return request(`/admin/catalog/${encodeURIComponent(key)}`, {
+      method: "DELETE",
+    });
+  },
 };

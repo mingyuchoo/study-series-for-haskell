@@ -6,6 +6,7 @@ export interface UserDTO {
   displayName: string;
   bio: string;
   timezone: string;
+  isAdmin: boolean;
   createdAt: string;
 }
 
@@ -17,6 +18,7 @@ export interface AuthResp {
 export interface CatalogItem {
   key: string;
   label: string;
+  active: boolean;
 }
 
 export interface RecordDTO {

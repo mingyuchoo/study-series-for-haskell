@@ -14,8 +14,11 @@ module Luck.Types
       -- * 기록
     , RecordDTO (..)
     , RecordUpdate (..)
-      -- * 체크리스트 항목 타입 (정본 데이터는 'Luck.Domain.Checklist')
+      -- * 체크리스트 항목 (정본 데이터는 DB @checklist_items@)
     , CatalogItem (..)
+    , ChecklistActiveReq (..)
+    , ChecklistCreateReq (..)
+    , ChecklistUpdateReq (..)
       -- * 공용
     , MessageResp (..)
     ) where
@@ -103,6 +106,7 @@ data UserDTO = UserDTO
   , udDisplayName :: Text
   , udBio         :: Text
   , udTimezone    :: Text
+  , udIsAdmin     :: Bool
   , udCreatedAt   :: UTCTime
   }
   deriving stock (Show, Generic)
@@ -156,10 +160,11 @@ instance FromJSON RecordUpdate where
 instance ToJSON RecordUpdate where
   toJSON = genericToJSON (jsonOpts "ru")
 
--- | 체크리스트 항목 정의.
+-- | 체크리스트 항목 정의. @active@ 가 false면 "오늘" 체크리스트에서 숨겨진다.
 data CatalogItem = CatalogItem
-  { ciKey   :: Text
-  , ciLabel :: Text
+  { ciKey    :: Text
+  , ciLabel  :: Text
+  , ciActive :: Bool
   }
   deriving stock (Show, Generic)
 
@@ -168,6 +173,43 @@ instance ToJSON CatalogItem where
 
 instance FromJSON CatalogItem where
   parseJSON = genericParseJSON (jsonOpts "ci")
+
+-- | 체크리스트 항목 생성 요청 (관리자). @{ "label": ... }@
+--   key는 서버가 자동 생성하므로 본문에 포함하지 않는다.
+newtype ChecklistCreateReq = ChecklistCreateReq
+  { ccLabel :: Text
+  }
+  deriving stock (Show, Generic)
+
+instance FromJSON ChecklistCreateReq where
+  parseJSON = genericParseJSON (jsonOpts "cc")
+
+instance ToJSON ChecklistCreateReq where
+  toJSON = genericToJSON (jsonOpts "cc")
+
+-- | 체크리스트 항목 활성/비활성 토글 요청 (관리자). @{ "active": true|false }@
+newtype ChecklistActiveReq = ChecklistActiveReq
+  { caActive :: Bool
+  }
+  deriving stock (Show, Generic)
+
+instance FromJSON ChecklistActiveReq where
+  parseJSON = genericParseJSON (jsonOpts "ca")
+
+instance ToJSON ChecklistActiveReq where
+  toJSON = genericToJSON (jsonOpts "ca")
+
+-- | 체크리스트 항목 수정 요청 (관리자). key는 URL에서 받고 라벨만 바꾼다.
+newtype ChecklistUpdateReq = ChecklistUpdateReq
+  { cuLabel :: Text
+  }
+  deriving stock (Show, Generic)
+
+instance FromJSON ChecklistUpdateReq where
+  parseJSON = genericParseJSON (jsonOpts "cu")
+
+instance ToJSON ChecklistUpdateReq where
+  toJSON = genericToJSON (jsonOpts "cu")
 
 -- | 단순 메시지 응답.
 newtype MessageResp = MessageResp {message :: Text}

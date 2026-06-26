@@ -12,6 +12,14 @@ export interface MonthRecordsState {
   loading: Accessor<boolean>;
   /** 날짜("YYYY-MM-DD") -> 히트맵 단계(0~4). */
   level: (date: string) => number;
+  /** 현재 보고 있는 연도. */
+  year: Accessor<number>;
+  /** 현재 보고 있는 월(0-based). */
+  month: Accessor<number>;
+  /** 해당 월의 원본 기록 목록(통계·미리보기용). */
+  records: Accessor<RecordDTO[]>;
+  /** 특정 날짜의 기록(없으면 undefined). */
+  recordFor: (date: string) => RecordDTO | undefined;
   prev: () => void;
   next: () => void;
 }
@@ -40,9 +48,18 @@ export function createMonthRecords(): MonthRecordsState {
     return map;
   });
 
+  // date -> 기록 맵 (단일 날짜 미리보기용)
+  const recMap = createMemo(() => {
+    const map = new Map<string, RecordDTO>();
+    for (const rec of records() ?? []) map.set(rec.date, rec);
+    return map;
+  });
+
   const cells = createMemo(() => monthGrid(year(), month()));
   const label = () => monthLabel(year(), month());
   const loading = () => records.loading;
+  const list = () => records() ?? [];
+  const recordFor = (date: string): RecordDTO | undefined => recMap().get(date);
 
   const prev = () => {
     if (month() === 0) {
@@ -63,5 +80,5 @@ export function createMonthRecords(): MonthRecordsState {
     return r === undefined ? 0 : ratioToLevel(r);
   };
 
-  return { cells, label, loading, level, prev, next };
+  return { cells, label, loading, level, year, month, records: list, recordFor, prev, next };
 }

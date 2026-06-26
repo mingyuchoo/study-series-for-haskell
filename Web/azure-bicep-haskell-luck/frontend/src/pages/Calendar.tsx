@@ -1,56 +1,30 @@
-import { For, Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
-import { createMonthRecords } from "../lib/monthRecords";
-import { WEEKDAYS, todayStr } from "../lib/date";
+import { createSignal, Show } from "solid-js";
+import CalendarMonthView from "../components/CalendarMonthView";
+import CalendarYearView from "../components/CalendarYearView";
 
+type View = "month" | "year";
+
+/** "달력" 탭: 월간/연간 토글. "오늘" 탭의 단순 달력과 달리 통계·미리보기·연간 히트맵을 제공한다. */
 export default function Calendar() {
-  const navigate = useNavigate();
-  const cal = createMonthRecords();
+  const [view, setView] = createSignal<View>("month");
 
   return (
-    <div class="page">
-      <header class="page-head cal-head">
+    <div class="page cal-page">
+      <header class="cal-pagehead">
         <span class="eyebrow">曆 · 일별 기록</span>
-        <div class="cal-nav">
-          <button class="cal-arrow" onClick={cal.prev} aria-label="이전 달">
-            ‹
+        <div class="cal-toggle">
+          <button class={view() === "month" ? "active" : ""} onClick={() => setView("month")}>
+            월간
           </button>
-          <h2>{cal.label()}</h2>
-          <button class="cal-arrow" onClick={cal.next} aria-label="다음 달">
-            ›
+          <button class={view() === "year" ? "active" : ""} onClick={() => setView("year")}>
+            연간
           </button>
         </div>
       </header>
 
-      <div class="weekrow">
-        <For each={WEEKDAYS}>{(w) => <span class="wd">{w}</span>}</For>
-      </div>
-
-      <Show when={!cal.loading()} fallback={<p class="muted-line">불러오는 중...</p>}>
-        <div class="calgrid">
-          <For each={cal.cells()}>
-            {(cell) => (
-              <button
-                class={`cal-cell lvl-${cal.level(cell.date)} ${cell.inMonth ? "" : "dim"} ${
-                  cell.date === todayStr() ? "today" : ""
-                }`}
-                onClick={() => navigate(`/day/${cell.date}`)}
-              >
-                <span class="cell-day">{cell.day}</span>
-              </button>
-            )}
-          </For>
-        </div>
+      <Show when={view() === "month"} fallback={<CalendarYearView />}>
+        <CalendarMonthView />
       </Show>
-
-      <div class="legend">
-        <span class="muted-line">적음</span>
-        <span class="lg lvl-1" />
-        <span class="lg lvl-2" />
-        <span class="lg lvl-3" />
-        <span class="lg lvl-4" />
-        <span class="muted-line">많음</span>
-      </div>
     </div>
   );
 }

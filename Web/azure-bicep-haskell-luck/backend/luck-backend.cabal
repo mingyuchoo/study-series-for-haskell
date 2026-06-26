@@ -35,6 +35,7 @@ library
     Luck.DB
     Luck.Repository.User
     Luck.Repository.Record
+    Luck.Repository.Checklist
     Luck.Web.Error
     Luck.Web.Dto
     Luck.Auth
@@ -42,6 +43,7 @@ library
     Luck.Handler.Auth
     Luck.Handler.Profile
     Luck.Handler.Record
+    Luck.Handler.Admin
     Luck.Server
     Luck.App
   build-depends:
@@ -68,6 +70,8 @@ library
     , postgresql-simple
     , resource-pool
     , bcrypt
+    , crypton
+    , memory
 
 executable luck-backend
   import:          common-options

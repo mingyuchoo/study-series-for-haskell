@@ -6,6 +6,7 @@ module Luck.Server
 
 import Luck.Api (API, ProtectedAPI, PublicAPI)
 import Luck.App (AppM)
+import Luck.Handler.Admin (createItemH, deleteItemH, listItemsH, setActiveH, updateItemH)
 import Luck.Handler.Auth (catalogH, loginH, logoutH, signupH)
 import Luck.Handler.Profile (meH, updateMeH)
 import Luck.Handler.Record (putRecordH, recordH, recordsH)
@@ -30,4 +31,9 @@ protectedServer (Authenticated u) =
     :<|> recordsH u
     :<|> recordH u
     :<|> putRecordH u
+    :<|> listItemsH u
+    :<|> createItemH u
+    :<|> updateItemH u
+    :<|> setActiveH u
+    :<|> deleteItemH u
 protectedServer _ = throwAll (jsonErr err401 "인증이 필요합니다.")

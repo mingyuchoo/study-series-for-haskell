@@ -268,7 +268,6 @@ a:hover {
 /* ===== 셸 / 상단 내비게이션 ===== */
 .shell {
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
   min-height: 100vh;
 }
@@ -351,7 +350,7 @@ a:hover {
   margin-top: 8px;
 }
 
-/* ===== 대시보드 ===== */
+/* ===== 대시보드 — ① 4원칙 → ② 달력 → ③ 오늘의 실천 세로 스택 ===== */
 .dash {
   display: grid;
   gap: 48px;
@@ -363,20 +362,21 @@ a:hover {
 .dash-main {
   min-width: 0;
 }
+/* ③ 오늘의 실천 영역: 좁은 화면은 세로, 넓은 화면은 좌(요약)+우(체크리스트) 2단 */
+.dash-today {
+  display: grid;
+  gap: 28px;
+}
 
-/* 넓은 화면: 좌측 요약 + 우측 체크리스트 2단, 원칙 블록은 전체 폭 */
 @media (min-width: 860px) {
-  .dash {
+  .dash-today {
     grid-template-columns: 300px minmax(0, 1fr);
     align-items: start;
     column-gap: 56px;
-    row-gap: 64px;
   }
-  .dash-head {
-    position: sticky;
-    top: 80px;
-  }
-  .dash .principles {
+  /* 메모는 두 칼럼을 가로질러 섹션 전체 폭을 차지한다 */
+  .dash-today .note-field,
+  .dash-today .save-hint {
     grid-column: 1 / -1;
   }
 }
@@ -498,7 +498,7 @@ a:hover {
 }
 
 .note-field {
-  margin-top: 28px;
+  margin-top: 0;
 }
 .save-hint {
   font-family: var(--font-mono);
@@ -522,7 +522,8 @@ a:hover {
 }
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  /* 기본: 4원칙을 한 줄(4열)로. 좁은 화면에서만 여러 줄로 접힌다. */
+  grid-template-columns: repeat(4, 1fr);
   gap: 32px;
   margin-top: 24px;
 }
@@ -611,7 +612,6 @@ a:hover {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   margin: 24px auto 8px;
-  max-width: 880px;
 }
 .wd {
   text-align: center;
@@ -625,8 +625,6 @@ a:hover {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: clamp(6px, 1vw, 10px);
-  max-width: 880px;
-  margin: 0 auto;
 }
 .cal-cell {
   aspect-ratio: auto;
@@ -708,6 +706,253 @@ a:hover {
   background: var(--heat-4);
 }
 
+/* ===== "달력" 탭 (월간 통계 + 미리보기 + 연간 히트맵) ===== */
+.cal-pagehead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+/* 월간/연간 토글 */
+.cal-toggle {
+  display: inline-flex;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 3px;
+}
+.cal-toggle button {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 450;
+  color: var(--heat-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 6px 18px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cal-toggle button.active {
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+/* 월간 통계 카드 */
+.cal-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0 28px;
+}
+.cal-stat {
+  background: var(--surface-soft);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+}
+.cal-stat.streak {
+  background: var(--block-lime);
+}
+.cal-stat-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--heat-3);
+}
+.cal-stat.streak .cal-stat-label {
+  color: var(--ink);
+}
+.cal-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 340;
+  letter-spacing: -0.6px;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.cal-stat-unit {
+  font-size: 13px;
+  color: var(--heat-3);
+}
+
+/* 월간 본문: 달력(좌) + 미리보기(우) */
+.cal-monthbody {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.cal-monthbody .weekrow {
+  margin-top: 0;
+}
+.cal-cell.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* 날짜 미리보기 패널 */
+.cal-preview {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+}
+.cal-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cal-preview-date {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 450;
+  color: var(--ink);
+}
+.cal-preview-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--block-lime);
+  border-radius: var(--r-sm);
+  padding: 3px 8px;
+}
+.cal-preview-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cal-preview-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--heat-3);
+}
+.cal-preview-list li i {
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--heat-2);
+}
+.cal-preview-list li.done {
+  color: var(--ink);
+}
+.cal-preview-list li.done i {
+  color: var(--ink);
+}
+.cal-preview-memo {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.cal-preview-memo-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--heat-3);
+  margin-bottom: 6px;
+}
+.cal-preview-more {
+  width: 100%;
+  margin-top: 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 450;
+  color: var(--ink);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cal-preview-more:hover {
+  background: var(--canvas);
+  border-color: var(--ink);
+}
+
+/* 연간 뷰 */
+.cal-year-summary {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--heat-3);
+  margin: 16px 0 24px;
+}
+.cal-yeargrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.cal-minilabel {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.cal-minicells {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-minicell {
+  aspect-ratio: 1;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  padding: 0;
+  cursor: pointer;
+}
+.cal-minicell.empty {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+.cal-minicell.lvl-1 {
+  background: var(--heat-1);
+  border-color: var(--heat-1);
+}
+.cal-minicell.lvl-2 {
+  background: var(--heat-2);
+  border-color: var(--heat-2);
+}
+.cal-minicell.lvl-3 {
+  background: var(--heat-3);
+  border-color: var(--heat-3);
+}
+.cal-minicell.lvl-4 {
+  background: var(--heat-4);
+  border-color: var(--heat-4);
+}
+.cal-minicell.today {
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+  .cal-monthbody {
+    grid-template-columns: 1fr;
+  }
+  .cal-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cal-yeargrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .cal-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== 조선100년체 — 디스플레이/제목 서체 적용 =====
    브랜드 마크, 페이지 제목, 큰 숫자, 한자 글리프 등 디스플레이 요소에만 사용.
    본문(Inter/Noto)과 라벨(JetBrains Mono)은 그대로 둔다.
@@ -731,6 +976,13 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+}
+
+/* 태블릿: 4원칙을 2열로 접는다 */
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -766,4 +1018,139 @@ a:hover {
   .dash-stat .big {
     font-size: 40px;
   }
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 관리자: 체크리스트 항목 관리 ===== */
+.admin-add {
+  margin-bottom: 28px;
+}
+.admin-list {
+  display: flex;
+  flex-direction: column;
+}
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--hairline);
+}
+.admin-row:first-child {
+  border-top: none;
+}
+.admin-key {
+  flex: 0 0 auto;
+  min-width: 44px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--heat-3);
+  background: var(--surface-soft);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+  text-align: center;
+}
+.admin-label {
+  flex: 1 1 auto;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  word-break: keep-all;
+}
+.admin-edit-input {
+  flex: 1 1 auto;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 8px 12px;
+}
+.admin-edit-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+.admin-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+.admin-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.admin-btn:hover:not(:disabled) {
+  background: var(--surface-soft);
+  border-color: var(--ink);
+}
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.admin-btn.danger {
+  color: var(--accent-magenta);
+  border-color: #f3c9d6;
+}
+.admin-btn.danger:hover:not(:disabled) {
+  background: var(--block-pink);
+  border-color: var(--accent-magenta);
+}
+
+/* 추가 폼 안내 문구 */
+.admin-hint {
+  margin: 10px 0 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--heat-3);
+}
+
+/* 활성/비활성 토글 체크박스 */
+.admin-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.admin-toggle input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--ink);
+}
+.admin-toggle input:disabled {
+  cursor: default;
+}
+
+/* 비활성 항목: 흐리게 + 취소선으로 구분 */
+.admin-row.inactive .admin-label {
+  color: var(--heat-3);
+  text-decoration: line-through;
+}
+.admin-row.inactive .admin-key {
+  opacity: 0.6;
+}
+
+/* 비활성 배지 */
+.admin-badge {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--heat-3);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  padding: 3px 8px;
 }

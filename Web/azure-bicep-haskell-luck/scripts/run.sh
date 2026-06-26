@@ -82,6 +82,12 @@ compose() {
 # ── DB ─────────────────────────────────────────────────────────────────────
 db_up() {
   need docker
+  # 이미 healthy 상태로 떠 있는 luck-db 가 있으면 재사용한다.
+  # (다른 compose 프로젝트가 띄운 컨테이너여도 container_name 이 고정이라 충돌하므로 그대로 사용)
+  if docker ps --filter "name=^/luck-db$" --filter "health=healthy" --format '{{.Names}}' | grep -q '^luck-db$'; then
+    ok "기존 luck-db 컨테이너 재사용 (localhost:5432)"
+    return 0
+  fi
   info "PostgreSQL 컨테이너 기동"
   compose up -d db
   ok "DB 기동 완료 (localhost:5432)"

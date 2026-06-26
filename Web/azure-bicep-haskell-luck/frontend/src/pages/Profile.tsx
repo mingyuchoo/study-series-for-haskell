@@ -72,7 +72,11 @@ export default function Profile() {
             <input
               type="text"
               value={displayName()}
-              onInput={(e) => setDisplayName(e.currentTarget.value)}
+              onInput={(e) => {
+                if (e.isComposing) return;
+                setDisplayName(e.currentTarget.value);
+              }}
+              onCompositionEnd={(e) => setDisplayName(e.currentTarget.value)}
               required
             />
           </label>
@@ -81,7 +85,11 @@ export default function Profile() {
             <textarea
               rows="3"
               value={bio()}
-              onInput={(e) => setBio(e.currentTarget.value)}
+              onInput={(e) => {
+                if (e.isComposing) return;
+                setBio(e.currentTarget.value);
+              }}
+              onCompositionEnd={(e) => setBio(e.currentTarget.value)}
               placeholder="짧은 소개 (선택)"
             />
           </label>

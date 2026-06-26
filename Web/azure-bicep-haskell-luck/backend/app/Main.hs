@@ -4,8 +4,9 @@ module Main
     ) where
 
 import           Data.Proxy                  (Proxy (..))
-import           Luck.Api                    (API, api)
+import           Luck.Api                    (api)
 import           Luck.App                    (AppEnv (..), runAppM)
+import           Luck.Auth                   (jwtSettingsFromSecret)
 import           Luck.Config                 (Config (..), loadConfig)
 import           Luck.DB                     (initSchema, newConnPool)
 import           Luck.Server                 (server)
@@ -21,8 +22,6 @@ import           Servant.Auth.Server
     ( CookieSettings
     , JWTSettings
     , defaultCookieSettings
-    , defaultJWTSettings
-    , fromSecret
     )
 
 -- | 보호 라우트에 필요한 Servant 컨텍스트.
@@ -52,7 +51,7 @@ main = do
   cfg <- loadConfig
   pool <- newConnPool (cfgDbUrl cfg)
   initSchema pool
-  let jwtCfg = defaultJWTSettings (fromSecret (cfgJwtSecret cfg))
+  let jwtCfg = jwtSettingsFromSecret (cfgJwtSecret cfg)
       env = AppEnv pool jwtCfg cfg
   putStrLn ("Luck backend listening on :" <> show (cfgPort cfg))
   run (cfgPort cfg) (corsMiddleware (mkApp env))

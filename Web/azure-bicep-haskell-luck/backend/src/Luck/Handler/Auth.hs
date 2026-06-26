@@ -18,9 +18,9 @@ import           Luck.Auth
     , issueToken
     , verifyPassword
     )
-import           Luck.Domain.Checklist  (catalog)
 import           Luck.Domain.Validation (validateSignup)
 import           Luck.Error             (DomainError (..))
+import           Luck.Repository.Checklist (listItems)
 import           Luck.Repository.User
     ( UserRow (..)
     , getUserByEmail
@@ -56,7 +56,9 @@ logoutH :: AppM MessageResp
 logoutH = pure (MessageResp "로그아웃되었습니다. 클라이언트에서 토큰을 삭제하세요.")
 
 catalogH :: AppM [CatalogItem]
-catalogH = pure catalog
+catalogH = do
+  env <- ask
+  liftIO (listItems (envPool env))
 
 -- | 토큰 + 사용자 DTO 응답을 만든다.
 mkAuthResp :: AppEnv -> UserRow -> AppM AuthResp

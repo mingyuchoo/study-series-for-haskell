@@ -6,6 +6,7 @@ module Luck.Api
   , api
   ) where
 
+import Data.Text (Text)
 import Data.Time (Day)
 import Luck.Types
 import Servant
@@ -28,6 +29,13 @@ type ProtectedAPI =
       :> Get '[JSON] [RecordDTO]
     :<|> "records" :> Capture "date" Day :> Get '[JSON] RecordDTO
     :<|> "records" :> Capture "date" Day :> ReqBody '[JSON] RecordUpdate :> Put '[JSON] RecordDTO
+    -- 관리자 전용: 체크리스트 항목 CRUD
+    -- (목록은 비활성 포함 전체를 주는 별도 라우트. 공개 /catalog 는 활성 항목만.)
+    :<|> "admin" :> "catalog" :> Get '[JSON] [CatalogItem]
+    :<|> "admin" :> "catalog" :> ReqBody '[JSON] ChecklistCreateReq :> Post '[JSON] CatalogItem
+    :<|> "admin" :> "catalog" :> Capture "key" Text :> ReqBody '[JSON] ChecklistUpdateReq :> Put '[JSON] CatalogItem
+    :<|> "admin" :> "catalog" :> Capture "key" Text :> "active" :> ReqBody '[JSON] ChecklistActiveReq :> Put '[JSON] CatalogItem
+    :<|> "admin" :> "catalog" :> Capture "key" Text :> Delete '[JSON] MessageResp
 
 -- | 전체 API: @/api@ 하위에 공개 + 보호 라우트.
 type API =
