@@ -43,6 +43,7 @@ library
     Luck.Authz
     Luck.Web.Error
     Luck.Web.Dto
+    Luck.Web.Middleware
     Luck.Auth
     Luck.Api
     Luck.Handler.Util

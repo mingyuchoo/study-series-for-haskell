@@ -11,9 +11,11 @@ module Luck.Handler.Auth
 import           Control.Monad.Except      (throwError)
 import           Control.Monad.IO.Class    (liftIO)
 import           Control.Monad.Reader      (ask)
+import qualified Data.Text                 as T
 import           Data.UUID.V4              (nextRandom)
 import           Luck.App                  (AppEnv (..), AppM)
 import           Luck.Auth                 (hashPassword, issueToken, verifyPassword)
+import           Luck.Config               (Config (..))
 import           Luck.Domain.Validation    (validateSignup)
 import           Luck.Error                (DomainError (..))
 import           Luck.Handler.Util         (liftEither, runDB)
@@ -31,7 +33,10 @@ signupH req@SignupReq {..} = do
   mh <- liftIO (hashPassword srPassword)
   h <- maybe (throwError (toServerError (InternalError "비밀번호 처리 중 오류가 발생했습니다."))) pure mh
   uid <- liftIO nextRandom
-  row <- liftEither =<< runDB (\p -> insertUser p uid srEmail h srDisplayName)
+  admins <- cfgAdminEmails . envConfig <$> ask
+  let emailIsAdmin = T.toLower (T.strip srEmail) `elem` admins
+      firstUserFallback = null admins
+  row <- liftEither =<< runDB (\p -> insertUser p uid srEmail h srDisplayName emailIsAdmin firstUserFallback)
   mkAuthResp row
 
 loginH :: LoginReq -> AppM AuthResp

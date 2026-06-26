@@ -3,20 +3,22 @@ module Main
     ( main
     ) where
 
-import           Data.Proxy                  (Proxy (..))
-import           Luck.Api                    (api)
-import           Luck.App                    (AppEnv (..), runAppM)
-import           Luck.Auth                   (jwtSettingsFromSecret)
-import           Luck.Config                 (Config (..), loadConfig)
-import           Luck.DB                     (initSchema, newConnPool)
-import           Luck.Server                 (server)
-import           Network.Wai                 (Application)
-import           Network.Wai.Handler.Warp    (run)
-import           Network.Wai.Middleware.Cors
-    ( CorsResourcePolicy (..)
-    , cors
-    , simpleCorsResourcePolicy
+import           Data.Proxy               (Proxy (..))
+import           Luck.Api                 (api)
+import           Luck.App                 (AppEnv (..), runAppM)
+import           Luck.Auth                (jwtSettingsFromSecret)
+import           Luck.Config              (Config (..), loadConfig)
+import           Luck.DB                  (initSchema, newConnPool)
+import           Luck.Repository.User     (promoteAdmins)
+import           Luck.Server              (server)
+import           Luck.Web.Middleware
+    ( corsMiddleware
+    , newRateLimiter
+    , rateLimit
+    , securityHeaders
     )
+import           Network.Wai              (Application)
+import           Network.Wai.Handler.Warp (run)
 import           Servant
 import           Servant.Auth.Server
     ( CookieSettings
@@ -36,22 +38,19 @@ mkApp env =
     ctx :: Context Ctx
     ctx = defaultCookieSettings :. envJwt env :. EmptyContext
 
--- | 프런트엔드(다른 오리진)에서의 호출을 허용하는 CORS 미들웨어.
-corsMiddleware :: Application -> Application
-corsMiddleware = cors (const (Just policy))
-  where
-    policy =
-      simpleCorsResourcePolicy
-        { corsRequestHeaders = ["Authorization", "Content-Type"]
-        , corsMethods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-        }
-
 main :: IO ()
 main = do
   cfg <- loadConfig
   pool <- newConnPool (cfgDbUrl cfg)
   initSchema pool
+  promoteAdmins pool (cfgAdminEmails cfg)
+  limiter <- newRateLimiter
   let jwtCfg = jwtSettingsFromSecret (cfgJwtSecret cfg)
       env = AppEnv pool jwtCfg cfg
+      -- 바깥부터: rate limit → 보안 헤더 → CORS → 앱
+      middleware =
+        rateLimit limiter
+          . securityHeaders (cfgIsProduction cfg)
+          . corsMiddleware (cfgAllowedOrigins cfg)
   putStrLn ("Luck backend listening on :" <> show (cfgPort cfg))
-  run (cfgPort cfg) (corsMiddleware (mkApp env))
+  run (cfgPort cfg) (middleware (mkApp env))

@@ -7,16 +7,19 @@ module Luck.Repository.User
     , getUserByEmail
     , getUserById
     , insertUser
+    , promoteAdmins
     , updateProfile
     ) where
 
 import           Control.Exception                  (try)
+import           Control.Monad                      (unless)
 import           Data.Pool                          (Pool)
 import           Data.Text                          (Text)
 import           Data.Time                          (UTCTime)
 import           Data.UUID                          (UUID)
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import           Database.PostgreSQL.Simple.Types   (In (..))
 import           Luck.DB                            (withConn)
 import           Luck.Error                         (DomainError (..))
 
@@ -45,25 +48,37 @@ instance FromRow UserRow where
       <*> field
 
 -- | 새 사용자를 삽입한다. 이메일 중복(23505)이면 @Left EmailTaken@.
---   DB에 사용자가 한 명도 없을 때(=최초 가입자)는 자동으로 관리자가 된다.
---   COUNT는 삽입 전 상태를 보므로 같은 문장 안에서 안전하게 판정된다.
+--
+--   관리자 부여 규칙 (호출 측에서 정책 결정):
+--     * @explicitAdmin@  : 이메일이 ADMIN_EMAILS 화이트리스트에 있음 → 관리자.
+--     * @firstUserFallback@: ADMIN_EMAILS 미설정 시에만 켜지는 "첫 가입자=관리자"
+--       폴백. ADMIN_EMAILS가 설정되면 꺼져, 공격자가 먼저 가입해 관리자가 되는
+--       레이스를 막는다. COUNT는 삽입 전 상태를 보므로 같은 문장에서 안전하다.
 insertUser
-  :: Pool Connection -> UUID -> Text -> Text -> Text -> IO (Either DomainError UserRow)
-insertUser pool uid email pwHash displayName = withConn pool $ \c -> do
-  res <-
-    try $
-      query
-        c
-        "INSERT INTO users (id, email, password_hash, display_name, is_admin)\
-        \ VALUES (?, ?, ?, ?, (SELECT COUNT(*) = 0 FROM users))\
-        \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at"
-        (uid, email, pwHash, displayName)
-  case res of
-    Left e
-      | sqlState e == "23505" -> pure (Left EmailTaken)
-      | otherwise -> pure (Left (InternalError "가입 중 오류가 발생했습니다."))
-    Right [row] -> pure (Right row)
-    Right _ -> pure (Left (InternalError "가입 처리에 실패했습니다."))
+  :: Pool Connection
+  -> UUID
+  -> Text
+  -> Text
+  -> Text
+  -> Bool  -- ^ explicitAdmin
+  -> Bool  -- ^ firstUserFallback
+  -> IO (Either DomainError UserRow)
+insertUser pool uid email pwHash displayName explicitAdmin firstUserFallback =
+  withConn pool $ \c -> do
+    res <-
+      try $
+        query
+          c
+          "INSERT INTO users (id, email, password_hash, display_name, is_admin)\
+          \ VALUES (?, ?, ?, ?, (? OR (? AND (SELECT COUNT(*) = 0 FROM users))))\
+          \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at"
+          (uid, email, pwHash, displayName, explicitAdmin, firstUserFallback)
+    case res of
+      Left e
+        | sqlState e == "23505" -> pure (Left EmailTaken)
+        | otherwise -> pure (Left (InternalError "가입 중 오류가 발생했습니다."))
+      Right [row] -> pure (Right row)
+      Right _ -> pure (Left (InternalError "가입 처리에 실패했습니다."))
 
 -- | 이메일로 사용자를 조회한다.
 getUserByEmail :: Pool Connection -> Text -> IO (Maybe UserRow)
@@ -99,6 +114,19 @@ updateProfile pool uid displayName bio timezone = withConn pool $ \c -> do
       \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at"
       (displayName, bio, timezone, uid)
   pure (listToMaybe' rows)
+
+-- | ADMIN_EMAILS 로 지정된 이메일들을 관리자로 승격한다 (기동 시 호출, 멱등).
+--   이미 가입한 소유자 계정도 확실히 관리자가 되도록 보장한다 (대소문자 무관).
+promoteAdmins :: Pool Connection -> [Text] -> IO ()
+promoteAdmins pool emails =
+  unless (null emails) $
+    withConn pool $ \c -> do
+      _ <-
+        execute
+          c
+          "UPDATE users SET is_admin = true WHERE lower(email) IN ?"
+          (Only (In emails))
+      pure ()
 
 -- | 안전한 head.
 listToMaybe' :: [a] -> Maybe a
