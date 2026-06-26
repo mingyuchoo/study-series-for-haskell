@@ -1,15 +1,15 @@
 -- | 체크리스트 도메인: 항목 정본(catalog)과 그에 의존하는 순수 규칙
 --   (전체 항목 수, 알 수 없는 key 정리). 웹/DB를 모른다.
 module Luck.Domain.Checklist
-  ( catalog
-  , catalogKeys
-  , total
-  , sanitize
-  ) where
+    ( catalog
+    , catalogKeys
+    , sanitize
+    , total
+    ) where
 
-import Data.Set qualified as Set
-import Data.Text (Text)
-import Luck.Types (CatalogItem (..))
+import qualified Data.Set   as Set
+import           Data.Text  (Text)
+import           Luck.Types (CatalogItem (..))
 
 -- | 일별 체크리스트 항목 (서버 측 정본).
 catalog :: [CatalogItem]

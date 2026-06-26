@@ -29,13 +29,7 @@ import Blog.Post (Post (..), PostView (..))
 import Blog.Publish (PostTarget (..), Token (..))
 import Blog.Routes qualified as R
 import Blog.User (Theme (..), User (..), renderTheme)
-import Blog.View.Assets
-  ( authCss
-  , orgEditorScript
-  , pageCss
-  , themeInitScript
-  , themeToggleScript
-  )
+import Blog.View.Assets (themeInitScript)
 
 -- | 로그인한 사용자 정보(비로그인은 'Nothing'). 헤더 표시·소유권 판정·테마 적용에 쓰인다.
 data ViewerInfo = ViewerInfo
@@ -69,9 +63,11 @@ layout viewer pageTitle inner = htmlRoot $ do
     H.meta ! A.name "viewport" ! A.content "width=device-width, initial-scale=1"
     H.title (H.toHtml pageTitle)
     -- 화면 깜빡임(FOUC) 방지를 위해 본문 렌더 전에 테마를 먼저 적용한다.
+    -- 이 스크립트는 작고 첫 페인트 전에 동기 실행돼야 하므로 인라인을 유지한다.
     H.script (preEscapedToHtml themeInitScript)
-    H.style (H.toHtml pageCss)
-    H.style (H.toHtml authCss)
+    -- CSS 는 별도 라우트로 링크해 브라우저가 캐시하도록 한다(매 응답에서 제외).
+    H.link ! A.rel "stylesheet" ! A.href R.staticAppCss
+    H.link ! A.rel "stylesheet" ! A.href R.staticAuthCss
   H.body $ do
     H.div ! A.class_ "container" $ do
       H.header $ do
@@ -80,8 +76,8 @@ layout viewer pageTitle inner = htmlRoot $ do
           authNav viewer
           themeToggle viewer
       H.main inner
-    H.script (preEscapedToHtml themeToggleScript)
-    H.script ! A.type_ "module" $ preEscapedToHtml orgEditorScript
+    -- 헤더 테마 토글 스크립트(모든 페이지). defer 로 파싱을 막지 않는다.
+    H.script ! A.src R.staticThemeToggle ! A.defer "defer" $ mempty
   where
     htmlRoot = case viewer of
       Just vi ->
@@ -121,9 +117,9 @@ themeToggle viewer = tag "라이트"
         ! A.class_ "btn theme-toggle"
         ! customAttribute "aria-label" "테마 전환"
 
--- | 글 목록 페이지.
-renderIndex :: Viewer -> [PostView] -> Html
-renderIndex viewer posts = layout viewer "Haskell Blog" $ do
+-- | 글 목록 페이지. @page@ 는 현재 페이지(1-기준), @hasNext@ 는 다음 페이지 존재 여부.
+renderIndex :: Viewer -> [PostView] -> Int -> Bool -> Html
+renderIndex viewer posts page hasNext = layout viewer "Haskell Blog" $ do
   -- "새 글 작성"은 로그인 상태에서만 보인다(비로그인은 작성 라우트가 어차피
   -- /login 으로 리다이렉트되므로, 버튼을 숨겨 혼란을 줄인다).
   case viewer of
@@ -134,7 +130,9 @@ renderIndex viewer posts = layout viewer "Haskell Blog" $ do
     Nothing -> mempty
   if null posts
     then H.p ! A.class_ "muted" $ "아직 작성된 글이 없습니다."
-    else H.ul ! A.class_ "posts" $ mapM_ postItem posts
+    else do
+      H.ul ! A.class_ "posts" $ mapM_ postItem posts
+      pagination page hasNext
   where
     postItem :: PostView -> Html
     postItem pv@(PostView p _) = H.li $ do
@@ -144,6 +142,20 @@ renderIndex viewer posts = layout viewer "Haskell Blog" $ do
         H.toHtml (" · " :: Text)
         authorLink pv
         H.toHtml (" · " <> formatCreated (postCreatedAt p))
+
+-- | 목록 하단 페이지 이동(이전/다음). 해당 방향에 페이지가 있을 때만 링크를 낸다.
+pagination :: Int -> Bool -> Html
+pagination page hasNext =
+  H.nav ! A.class_ "pagination" $ do
+    if page > 1
+      then H.a ! A.class_ "btn btn-link" ! A.href (pageHref (page - 1)) $ "← 이전"
+      else mempty
+    if hasNext
+      then H.a ! A.class_ "btn btn-link" ! A.href (pageHref (page + 1)) $ "다음 →"
+      else mempty
+  where
+    pageHref :: Int -> H.AttributeValue
+    pageHref n = H.toValue (R.home <> "?page=" <> T.pack (show n) :: Text)
 
 -- | 단일 글 페이지. 수정/삭제 버튼은 작성자 본인에게만 보인다.
 renderPost :: Viewer -> PostView -> Html
@@ -469,3 +481,6 @@ orgEditorField bodyVal = H.div ! A.class_ "field" $ do
       H.div ! A.class_ "pane-label" $ "미리보기"
       H.div ! A.id "org-preview" ! A.class_ "body" $ mempty
   orgHint
+  -- CodeMirror 라이브 에디터(ESM)는 작성/수정 폼에서만 필요하므로 여기서만 로드한다
+  -- (홈·글 보기 등 다른 모든 페이지의 응답에서 무거운 번들을 제외).
+  H.script ! A.type_ "module" ! A.src R.staticOrgEditor $ mempty

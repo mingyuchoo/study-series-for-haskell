@@ -33,7 +33,7 @@ type ProtectedAPI =
 type API =
   "api"
     :> ( PublicAPI
-          :<|> (Auth '[JWT] AuthUser :> ProtectedAPI)
+           :<|> (Auth '[JWT] AuthUser :> ProtectedAPI)
        )
 
 api :: Proxy API

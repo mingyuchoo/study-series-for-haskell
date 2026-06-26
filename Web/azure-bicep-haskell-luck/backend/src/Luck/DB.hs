@@ -2,16 +2,21 @@
 
 -- | 커넥션 풀과 스키마 부트스트랩만 담당한다 (쿼리는 'Luck.Repository.*').
 module Luck.DB
-  ( newConnPool
-  , withConn
-  , initSchema
-  ) where
+    ( initSchema
+    , newConnPool
+    , withConn
+    ) where
 
-import Data.ByteString (ByteString)
-import Data.FileEmbed (embedFile)
-import Data.Pool (Pool, defaultPoolConfig, newPool, withResource)
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Types (Query (..))
+import           Data.ByteString                  (ByteString)
+import           Data.FileEmbed                   (embedFile)
+import           Data.Pool
+    ( Pool
+    , defaultPoolConfig
+    , newPool
+    , withResource
+    )
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.Types (Query (..))
 
 -- | libpq 접속 문자열로 커넥션 풀을 만든다.
 newConnPool :: ByteString -> IO (Pool Connection)

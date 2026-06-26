@@ -23,6 +23,11 @@ module Blog.Routes
   , postsPreview
   , postsDraft
   , previewFragment
+    -- * 정적 자산 (브라우저 캐시 가능한 별도 라우트)
+  , staticAppCss
+  , staticAuthCss
+  , staticThemeToggle
+  , staticOrgEditor
     -- * 캡처 패턴 (Scotty 라우트 정의용)
   , userByIdPattern
   , postByIdPattern
@@ -65,6 +70,16 @@ postsCollection = "/posts"
 postsPreview = "/posts/preview"
 postsDraft = "/posts/draft"
 previewFragment = "/preview-fragment"
+
+-- 정적 자산 -------------------------------------------------------------
+-- 컴파일 타임에 임베드한 CSS·JS 를 인라인하지 않고 별도 라우트로 서빙해
+-- 브라우저·CDN 이 캐시하도록 한다(매 페이지 응답에서 자산 바이트를 덜어낸다).
+
+staticAppCss, staticAuthCss, staticThemeToggle, staticOrgEditor :: (IsString s) => s
+staticAppCss = "/static/app.css"
+staticAuthCss = "/static/auth.css"
+staticThemeToggle = "/static/theme-toggle.js"
+staticOrgEditor = "/static/org-editor.js"
 
 -- 캡처 패턴 (Scotty @:id@) -----------------------------------------------
 

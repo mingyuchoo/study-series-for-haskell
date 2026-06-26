@@ -23,8 +23,7 @@ const Layout: Component<{ children?: JSX.Element }> = (props) => {
     navigate("/login", { replace: true });
   };
 
-  const isActive = (path: string) =>
-    location.pathname === path ? "nav-link active" : "nav-link";
+  const isActive = (path: string) => (location.pathname === path ? "nav-link active" : "nav-link");
 
   return (
     <div class="shell">

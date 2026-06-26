@@ -7,6 +7,7 @@ module Blog.App.PostRoutes
   ) where
 
 import Control.Monad.IO.Class (liftIO)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Network.HTTP.Types.Status (badRequest400)
 import Web.Scotty
@@ -17,6 +18,7 @@ import Web.Scotty
   , get
   , pathParam
   , post
+  , queryParamMaybe
   , redirect
   , status
   )
@@ -53,8 +55,11 @@ postRoutes :: Env -> ScottyM ()
 postRoutes env = do
   get R.home $ do
     viewer <- currentViewer env
-    posts <- liftIO (storeList (envPosts env))
-    renderView (renderIndex viewer posts)
+    page <- currentPage
+    -- 다음 페이지 존재 여부를 한 행 더 가져와 판단한다(별도 COUNT 쿼리 없이).
+    rows <- liftIO (storeList (envPosts env) (pageSize + 1) ((page - 1) * pageSize))
+    let hasNext = length rows > pageSize
+    renderView (renderIndex viewer (take pageSize rows) page hasNext)
 
   get R.postsNew $ withAuth env $ \user ->
     renderView (renderNewForm (viewerOf user) "" "")
@@ -128,6 +133,16 @@ postRoutes env = do
     case mPost of
       Just p  -> renderView (renderPost viewer p)
       Nothing -> notFoundView viewer
+
+-- | 홈 목록 한 페이지에 보일 글 수.
+pageSize :: Int
+pageSize = 20
+
+-- | 쿼리스트링 @?page=N@ 에서 현재 페이지(1-기준)를 읽는다. 없거나 1 미만이면 1.
+currentPage :: ActionM Int
+currentPage = do
+  mp <- queryParamMaybe "page"
+  pure (max 1 (fromMaybe 1 mp))
 
 -- | 글이 존재하고 현재 사용자가 그 작성자일 때만 act 를 실행한다.
 --   없으면 404, 작성자가 아니면 403. act 에는 순수 저장 행('Post')을 넘긴다.

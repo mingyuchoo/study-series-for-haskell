@@ -3,32 +3,32 @@
 -- | users 테이블 접근. DB 행 표현('UserRow')과 쿼리를 캡슐화한다.
 --   외부 DTO/HTTP는 모른다 (변환은 'Luck.Web.Dto').
 module Luck.Repository.User
-  ( UserRow (..)
-  , insertUser
-  , getUserByEmail
-  , getUserById
-  , updateProfile
-  ) where
+    ( UserRow (..)
+    , getUserByEmail
+    , getUserById
+    , insertUser
+    , updateProfile
+    ) where
 
-import Control.Exception (try)
-import Data.Pool (Pool)
-import Data.Text (Text)
-import Data.Time (UTCTime)
-import Data.UUID (UUID)
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
-import Luck.DB (withConn)
-import Luck.Error (DomainError (..))
+import           Control.Exception                  (try)
+import           Data.Pool                          (Pool)
+import           Data.Text                          (Text)
+import           Data.Time                          (UTCTime)
+import           Data.UUID                          (UUID)
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import           Luck.DB                            (withConn)
+import           Luck.Error                         (DomainError (..))
 
 -- | DB의 users 한 행 (비밀번호 해시 포함, 외부로 노출하지 않음).
 data UserRow = UserRow
-  { urId :: UUID
-  , urEmail :: Text
+  { urId           :: UUID
+  , urEmail        :: Text
   , urPasswordHash :: Text
-  , urDisplayName :: Text
-  , urBio :: Text
-  , urTimezone :: Text
-  , urCreatedAt :: UTCTime
+  , urDisplayName  :: Text
+  , urBio          :: Text
+  , urTimezone     :: Text
+  , urCreatedAt    :: UTCTime
   }
 
 instance FromRow UserRow where
@@ -98,5 +98,5 @@ updateProfile pool uid displayName bio timezone = withConn pool $ \c -> do
 
 -- | 안전한 head.
 listToMaybe' :: [a] -> Maybe a
-listToMaybe' [] = Nothing
+listToMaybe' []      = Nothing
 listToMaybe' (x : _) = Just x

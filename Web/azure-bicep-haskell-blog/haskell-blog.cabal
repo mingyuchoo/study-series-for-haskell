@@ -65,6 +65,7 @@ library
     , scotty            >= 0.21 && < 0.31
     , text              >= 2.0
     , time              >= 1.12
+    , wai-extra         >= 3.1
 
 executable haskell-blog
   import:          common-options

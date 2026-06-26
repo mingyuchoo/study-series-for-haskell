@@ -1,17 +1,21 @@
 -- | 비밀번호 해싱/검증과 JWT 토큰 발급 헬퍼.
 module Luck.Auth
-  ( hashPassword
-  , verifyPassword
-  , issueToken
-  ) where
+    ( hashPassword
+    , issueToken
+    , verifyPassword
+    ) where
 
-import Crypto.BCrypt (hashPasswordUsingPolicy, slowerBcryptHashingPolicy, validatePassword)
-import Data.ByteString.Lazy qualified as BL
-import Data.Text (Text)
-import Data.Text.Encoding qualified as TE
-import Data.Time (addUTCTime, getCurrentTime, nominalDay)
-import Luck.Types (AuthUser)
-import Servant.Auth.Server (JWTSettings, makeJWT)
+import           Crypto.BCrypt
+    ( hashPasswordUsingPolicy
+    , slowerBcryptHashingPolicy
+    , validatePassword
+    )
+import qualified Data.ByteString.Lazy as BL
+import           Data.Text            (Text)
+import qualified Data.Text.Encoding   as TE
+import           Data.Time            (addUTCTime, getCurrentTime, nominalDay)
+import           Luck.Types           (AuthUser)
+import           Servant.Auth.Server  (JWTSettings, makeJWT)
 
 -- | 평문 비밀번호를 bcrypt 해시(텍스트)로 만든다. 실패 시 'Nothing'.
 hashPassword :: Text -> IO (Maybe Text)
@@ -31,5 +35,5 @@ issueToken jwtCfg user = do
   let expiry = addUTCTime (7 * nominalDay) now
   eTok <- makeJWT user jwtCfg (Just expiry)
   pure $ case eTok of
-    Left _ -> Nothing
+    Left _   -> Nothing
     Right bs -> Just (TE.decodeUtf8 (BL.toStrict bs))

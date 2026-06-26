@@ -2,36 +2,31 @@
 
 -- | API 경계에서 주고받는 데이터 타입과 JSON 인코딩을 정의한다.
 module Luck.Types
-  ( -- * JWT 페이로드
-    AuthUser (..)
+    ( -- * JWT 페이로드
+      AuthUser (..)
+      -- * 인증 요청/응답
+    , AuthResp (..)
+    , LoginReq (..)
+    , SignupReq (..)
+      -- * 사용자/프로필
+    , ProfileUpdate (..)
+    , UserDTO (..)
+      -- * 기록
+    , RecordDTO (..)
+    , RecordUpdate (..)
+      -- * 체크리스트 항목 타입 (정본 데이터는 'Luck.Domain.Checklist')
+    , CatalogItem (..)
+      -- * 공용
+    , MessageResp (..)
+    ) where
 
-    -- * 인증 요청/응답
-  , SignupReq (..)
-  , LoginReq (..)
-  , AuthResp (..)
-
-    -- * 사용자/프로필
-  , UserDTO (..)
-  , ProfileUpdate (..)
-
-    -- * 기록
-  , RecordDTO (..)
-  , RecordUpdate (..)
-
-    -- * 체크리스트 항목 타입 (정본 데이터는 'Luck.Domain.Checklist')
-  , CatalogItem (..)
-
-    -- * 공용
-  , MessageResp (..)
-  ) where
-
-import Data.Aeson
-import Data.Char (toLower)
-import Data.Text (Text)
-import Data.Time (Day, UTCTime)
-import Data.UUID (UUID)
-import GHC.Generics (Generic)
-import Servant.Auth.JWT (FromJWT, ToJWT)
+import           Data.Aeson
+import           Data.Char        (toLower)
+import           Data.Text        (Text)
+import           Data.Time        (Day, UTCTime)
+import           Data.UUID        (UUID)
+import           GHC.Generics     (Generic)
+import           Servant.Auth.JWT (FromJWT, ToJWT)
 
 -- | 레코드 필드의 접두사를 떼고 camelCase JSON 키로 변환하는 옵션.
 jsonOpts :: String -> Options
@@ -41,12 +36,12 @@ jsonOpts prefix =
     , omitNothingFields = True
     }
   where
-    lowerFirst [] = []
+    lowerFirst []       = []
     lowerFirst (c : cs) = toLower c : cs
 
 -- | JWT 안에 담기는 인증 사용자 정보.
 data AuthUser = AuthUser
-  { auId :: UUID
+  { auId    :: UUID
   , auEmail :: Text
   }
   deriving stock (Show, Eq, Generic)
@@ -63,8 +58,8 @@ instance FromJWT AuthUser
 
 -- | 회원가입 요청 바디.
 data SignupReq = SignupReq
-  { srEmail :: Text
-  , srPassword :: Text
+  { srEmail       :: Text
+  , srPassword    :: Text
   , srDisplayName :: Text
   }
   deriving stock (Show, Generic)
@@ -77,7 +72,7 @@ instance ToJSON SignupReq where
 
 -- | 로그인 요청 바디.
 data LoginReq = LoginReq
-  { lrEmail :: Text
+  { lrEmail    :: Text
   , lrPassword :: Text
   }
   deriving stock (Show, Generic)
@@ -91,7 +86,7 @@ instance ToJSON LoginReq where
 -- | 인증 성공 응답: 토큰 + 사용자 정보.
 data AuthResp = AuthResp
   { arToken :: Text
-  , arUser :: UserDTO
+  , arUser  :: UserDTO
   }
   deriving stock (Show, Generic)
 
@@ -103,12 +98,12 @@ instance FromJSON AuthResp where
 
 -- | 클라이언트에 노출되는 사용자/프로필.
 data UserDTO = UserDTO
-  { udId :: UUID
-  , udEmail :: Text
+  { udId          :: UUID
+  , udEmail       :: Text
   , udDisplayName :: Text
-  , udBio :: Text
-  , udTimezone :: Text
-  , udCreatedAt :: UTCTime
+  , udBio         :: Text
+  , udTimezone    :: Text
+  , udCreatedAt   :: UTCTime
   }
   deriving stock (Show, Generic)
 
@@ -121,8 +116,8 @@ instance FromJSON UserDTO where
 -- | 프로필 수정 요청.
 data ProfileUpdate = ProfileUpdate
   { puDisplayName :: Text
-  , puBio :: Text
-  , puTimezone :: Text
+  , puBio         :: Text
+  , puTimezone    :: Text
   }
   deriving stock (Show, Generic)
 
@@ -134,10 +129,10 @@ instance ToJSON ProfileUpdate where
 
 -- | 하루치 기록.
 data RecordDTO = RecordDTO
-  { rdDate :: Day
+  { rdDate      :: Day
   , rdCompleted :: [Text]
-  , rdNote :: Maybe Text
-  , rdTotal :: Int
+  , rdNote      :: Maybe Text
+  , rdTotal     :: Int
   -- ^ 전체 항목 수 (달력에서 달성률 계산용)
   }
   deriving stock (Show, Generic)
@@ -151,7 +146,7 @@ instance FromJSON RecordDTO where
 -- | 하루치 기록 저장 요청.
 data RecordUpdate = RecordUpdate
   { ruCompleted :: [Text]
-  , ruNote :: Maybe Text
+  , ruNote      :: Maybe Text
   }
   deriving stock (Show, Generic)
 
@@ -163,7 +158,7 @@ instance ToJSON RecordUpdate where
 
 -- | 체크리스트 항목 정의.
 data CatalogItem = CatalogItem
-  { ciKey :: Text
+  { ciKey   :: Text
   , ciLabel :: Text
   }
   deriving stock (Show, Generic)

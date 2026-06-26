@@ -14,6 +14,11 @@ export function todayStr(): string {
   return fmt(new Date());
 }
 
+/** Date -> "HH:MM" (로컬). */
+export function hhmm(d: Date): string {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 /** "YYYY-MM-DD" -> 로컬 Date. */
 export function parse(s: string): Date {
   const [y, m, d] = s.split("-").map(Number);

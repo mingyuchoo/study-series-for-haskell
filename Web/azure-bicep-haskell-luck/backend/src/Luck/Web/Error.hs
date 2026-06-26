@@ -3,15 +3,15 @@
 -- | 웹 경계 어댑터: 도메인 'DomainError' 를 Servant 'ServerError' 로 변환한다.
 --   도메인/핸들러는 HTTP 상태코드를 몰라도 되며, 매핑은 여기 한곳에 모인다.
 module Luck.Web.Error
-  ( toServerError
-  , jsonErr
-  ) where
+    ( jsonErr
+    , toServerError
+    ) where
 
-import Data.Aeson (encode)
-import Data.Text (Text)
-import Luck.Error (DomainError (..))
-import Luck.Types (MessageResp (..))
-import Servant
+import           Data.Aeson (encode)
+import           Data.Text  (Text)
+import           Luck.Error (DomainError (..))
+import           Luck.Types (MessageResp (..))
+import           Servant
 
 -- | 도메인 에러 → HTTP 응답.
 toServerError :: DomainError -> ServerError

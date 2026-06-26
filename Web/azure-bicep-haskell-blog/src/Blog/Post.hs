@@ -42,8 +42,9 @@ data NewPost = NewPost
 
 -- | 저장소 연산 모음 (record-of-functions 핸들).
 data PostStore = PostStore
-  { storeList         :: IO [PostView]
-    -- ^ 모든 글을 최신순으로 조회.
+  { storeList         :: Int -> Int -> IO [PostView]
+    -- ^ 글을 최신순으로 페이지 조회 (limit, offset). 홈 목록이 글 수에 비례해
+    --   비대해지지 않도록 항상 한 페이지 분량만 가져온다.
   , storeListByAuthor :: Int -> IO [PostView]
     -- ^ 특정 작성자(users.id)의 글을 최신순으로 조회.
   , storeGet          :: Int -> IO (Maybe PostView)

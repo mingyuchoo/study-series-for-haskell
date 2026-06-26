@@ -87,10 +87,7 @@ export default function Profile() {
           </label>
           <label class="field">
             <span>시간대</span>
-            <select
-              value={timezone()}
-              onChange={(e) => setTimezone(e.currentTarget.value)}
-            >
+            <select value={timezone()} onChange={(e) => setTimezone(e.currentTarget.value)}>
               {TIMEZONES.map((tz) => (
                 <option value={tz}>{tz}</option>
               ))}

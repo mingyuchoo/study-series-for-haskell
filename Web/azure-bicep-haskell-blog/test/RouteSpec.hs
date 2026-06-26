@@ -67,8 +67,13 @@ newInMemoryStore ustore = do
         pure (PostView p name)
   pure
     PostStore
-      { storeList =
-          readIORef ref >>= traverse toView . sortOn (Down . postId) . Map.elems
+      { storeList = \limit offset ->
+          readIORef ref
+            >>= traverse toView
+              . take limit
+              . drop offset
+              . sortOn (Down . postId)
+              . Map.elems
       , storeListByAuthor = \authorId ->
           readIORef ref
             >>= traverse toView

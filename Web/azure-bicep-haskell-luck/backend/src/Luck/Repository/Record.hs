@@ -1,18 +1,18 @@
 -- | daily_records 테이블 접근. 도메인 'DailyRecord' 로 결과를 돌려준다.
 module Luck.Repository.Record
-  ( getRecord
-  , getRecordsBetween
-  , upsertRecord
-  ) where
+    ( getRecord
+    , getRecordsBetween
+    , upsertRecord
+    ) where
 
-import Data.Pool (Pool)
-import Data.Text (Text)
-import Data.Time (Day)
-import Data.UUID (UUID)
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Newtypes (Aeson (..))
-import Luck.DB (withConn)
-import Luck.Domain.Record (DailyRecord (..))
+import           Data.Pool                           (Pool)
+import           Data.Text                           (Text)
+import           Data.Time                           (Day)
+import           Data.UUID                           (UUID)
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.Newtypes (Aeson (..))
+import           Luck.DB                             (withConn)
+import           Luck.Domain.Record                  (DailyRecord (..))
 
 -- | 특정 날짜의 기록을 조회한다.
 getRecord :: Pool Connection -> UUID -> Day -> IO (Maybe DailyRecord)
@@ -52,7 +52,7 @@ upsertRecord pool uid d completed note = withConn pool $ \c -> do
       (uid, d, Aeson completed, note)
   pure $ case rows of
     (row : _) -> toRecord row
-    [] -> DailyRecord d completed note
+    []        -> DailyRecord d completed note
 
 -- | DB 행(튜플)을 도메인 'DailyRecord' 로 변환.
 toRecord :: (Day, Aeson [Text], Maybe Text) -> DailyRecord
@@ -60,5 +60,5 @@ toRecord (rd, Aeson cs, note) = DailyRecord rd cs note
 
 -- | 안전한 head.
 listToMaybe' :: [a] -> Maybe a
-listToMaybe' [] = Nothing
+listToMaybe' []      = Nothing
 listToMaybe' (x : _) = Just x

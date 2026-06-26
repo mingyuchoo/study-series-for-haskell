@@ -1,18 +1,18 @@
 -- | 프로필 핸들러 (내 정보 조회/수정).
 module Luck.Handler.Profile
-  ( meH
-  , updateMeH
-  ) where
+    ( meH
+    , updateMeH
+    ) where
 
-import Control.Monad.Except (throwError)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (ask)
-import Luck.App (AppEnv (..), AppM)
-import Luck.Error (DomainError (..))
-import Luck.Repository.User (UserRow, getUserById, updateProfile)
-import Luck.Types
-import Luck.Web.Dto (userRowToDTO)
-import Luck.Web.Error (toServerError)
+import           Control.Monad.Except   (throwError)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Reader   (ask)
+import           Luck.App               (AppEnv (..), AppM)
+import           Luck.Error             (DomainError (..))
+import           Luck.Repository.User   (UserRow, getUserById, updateProfile)
+import           Luck.Types
+import           Luck.Web.Dto           (userRowToDTO)
+import           Luck.Web.Error         (toServerError)
 
 meH :: AuthUser -> AppM UserDTO
 meH u = do
@@ -21,7 +21,7 @@ meH u = do
   toDtoOr404 mrow
 
 updateMeH :: AuthUser -> ProfileUpdate -> AppM UserDTO
-updateMeH u ProfileUpdate{..} = do
+updateMeH u ProfileUpdate {..} = do
   env <- ask
   mrow <- liftIO (updateProfile (envPool env) (auId u) puDisplayName puBio puTimezone)
   toDtoOr404 mrow

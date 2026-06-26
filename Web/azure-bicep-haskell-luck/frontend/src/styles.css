@@ -197,7 +197,9 @@ a:hover {
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
   padding: 12px 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .field input:focus,
 .field textarea:focus,
@@ -228,7 +230,9 @@ a:hover {
   padding: 12px 24px;
   cursor: pointer;
   margin-top: 8px;
-  transition: transform 0.1s ease, opacity 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    opacity 0.15s ease;
 }
 .btn-primary:hover {
   opacity: 0.9;
@@ -637,7 +641,9 @@ a:hover {
   align-items: flex-start;
   justify-content: flex-end;
   padding: 8px;
-  transition: border-color 0.15s ease, transform 0.1s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.1s ease;
 }
 .cal-cell:hover {
   transform: translateY(-1px);

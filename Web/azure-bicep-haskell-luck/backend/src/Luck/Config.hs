@@ -1,22 +1,22 @@
 -- | 환경변수에서 애플리케이션 설정을 읽어온다.
 module Luck.Config
-  ( Config (..)
-  , loadConfig
-  ) where
+    ( Config (..)
+    , loadConfig
+    ) where
 
-import Data.ByteString (ByteString)
-import Data.ByteString.Char8 qualified as BS
-import Data.Maybe (fromMaybe)
-import System.Environment (lookupEnv)
-import Text.Read (readMaybe)
+import           Data.ByteString       (ByteString)
+import qualified Data.ByteString.Char8 as BS
+import           Data.Maybe            (fromMaybe)
+import           System.Environment    (lookupEnv)
+import           Text.Read             (readMaybe)
 
 -- | 런타임 설정.
 data Config = Config
-  { cfgDbUrl :: ByteString
+  { cfgDbUrl     :: ByteString
   -- ^ PostgreSQL libpq 접속 문자열
   , cfgJwtSecret :: ByteString
   -- ^ JWT 서명용 비밀키
-  , cfgPort :: Int
+  , cfgPort      :: Int
   -- ^ HTTP 리슨 포트
   }
 

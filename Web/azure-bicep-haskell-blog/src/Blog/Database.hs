@@ -69,6 +69,8 @@ runMigrations pool = withResource pool $ \conn -> do
   _ <- execute_ conn postsMigration
   _ <- execute_ conn postsAuthorUpgrade
   _ <- execute_ conn verificationsMigration
+  _ <- execute_ conn postsCreatedAtIndex
+  _ <- execute_ conn postsAuthorIndex
   pure ()
 
 usersMigration :: Query
@@ -118,6 +120,17 @@ postsMigration =
 --
 -- 컬럼이 없을 때만 실행되므로 재시작마다 반복되지 않는다. 작성자 정보를 채울
 -- 수 없는 기존 글은 비우고(2단계 결정: 기존 글 삭제) 컬럼을 추가한다.
+-- | 홈 목록의 @ORDER BY created_at DESC@(+페이지네이션) 정렬을 인덱스로 받친다.
+--   인덱스가 없으면 매 요청마다 posts 전체를 정렬한다.
+postsCreatedAtIndex :: Query
+postsCreatedAtIndex =
+  "CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts (created_at DESC)"
+
+-- | 작성자별 조회('listPostsByAuthor')와 작성자 JOIN 의 @author_id@ 탐색을 받친다.
+postsAuthorIndex :: Query
+postsAuthorIndex =
+  "CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts (author_id)"
+
 postsAuthorUpgrade :: Query
 postsAuthorUpgrade =
   "DO $$ \
@@ -170,12 +183,17 @@ selectFrom = " FROM posts p JOIN users u ON u.id = p.author_id "
 returningColumns :: Query
 returningColumns = "id, title, body, created_at, author_id"
 
-listPosts :: DbPool -> IO [PostView]
-listPosts pool = withResource pool $ \conn ->
+listPosts :: DbPool -> Int -> Int -> IO [PostView]
+listPosts pool limit offset = withResource pool $ \conn ->
   map toPostView
-    <$> query_
+    <$> query
       conn
-      ("SELECT " <> selectColumns <> selectFrom <> "ORDER BY p.created_at DESC")
+      ( "SELECT "
+          <> selectColumns
+          <> selectFrom
+          <> "ORDER BY p.created_at DESC LIMIT ? OFFSET ?"
+      )
+      (limit, offset)
 
 listPostsByAuthor :: DbPool -> Int -> IO [PostView]
 listPostsByAuthor pool authorId = withResource pool $ \conn ->

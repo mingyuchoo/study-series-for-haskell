@@ -1,21 +1,21 @@
 -- | 애플리케이션 환경과 핸들러 모나드를 정의한다.
 module Luck.App
-  ( AppEnv (..)
-  , AppM
-  , runAppM
-  ) where
+    ( AppEnv (..)
+    , AppM
+    , runAppM
+    ) where
 
-import Control.Monad.Reader (ReaderT, runReaderT)
-import Data.Pool (Pool)
-import Database.PostgreSQL.Simple (Connection)
-import Luck.Config (Config)
-import Servant (Handler)
-import Servant.Auth.Server (JWTSettings)
+import           Control.Monad.Reader       (ReaderT, runReaderT)
+import           Data.Pool                  (Pool)
+import           Database.PostgreSQL.Simple (Connection)
+import           Luck.Config                (Config)
+import           Servant                    (Handler)
+import           Servant.Auth.Server        (JWTSettings)
 
 -- | 핸들러가 공유하는 읽기 전용 환경.
 data AppEnv = AppEnv
-  { envPool :: Pool Connection
-  , envJwt :: JWTSettings
+  { envPool   :: Pool Connection
+  , envJwt    :: JWTSettings
   , envConfig :: Config
   }
 
