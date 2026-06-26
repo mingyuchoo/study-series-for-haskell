@@ -149,8 +149,16 @@ renderWord w = case w of
   Org.Punct c -> H.toHtml (T.singleton c)
   Org.Plain t -> H.toHtml t
 
--- | 헤딩·리스트·블록 시작 줄 앞에 필요한 빈 줄을 보강하고(='go'), 문서를 여는
---   블록 지시자가 메타 파서에 삼켜지지 않게 보호한다(='fixLeadingBlock').
+-- | 줄바꿈을 LF 로 정규화하고(='stripCR'), 헤딩·리스트·블록 시작 줄 앞에 필요한
+--   빈 줄을 보강하고(='go'), 문서를 여는 블록 지시자가 메타 파서에 삼켜지지 않게
+--   보호한다(='fixLeadingBlock').
+--
+-- 웹 폼(@\<textarea\>@)은 HTML 명세상 제출 시 줄바꿈을 CRLF(@\\r\\n@)로 정규화한다.
+-- @org-mode@ 라이브러리는 @\\n@ 으로만 줄을 나누므로 각 줄 끝에 @\\r@ 가 남고,
+-- 인라인 마크업 닫힘 규칙(닫는 기호 뒤는 줄끝·공백·구두점·EOF 여야 함)이 그 @\\r@
+-- 때문에 깨져 줄 끝의 @\/기울임\/@·@*굵게*@ 등이 마크업으로 인식되지 못한 채
+-- 기호가 그대로 노출된다(라이브 미리보기는 LF 라 정상, 발행 후에만 깨짐). 파싱
+-- 전에 @\\r@ 를 제거해 LF 본문과 동일하게 맞춘다.
 --
 -- @org-mode@ 라이브러리의 문단·리스트 파서는 빈 줄로 구분되지 않은 다음 줄을
 -- 직전 블록의 연속 텍스트로 흡수한다. 그래서 (1) @-@ 항목 바로 뒤의 @**@ 헤딩이
@@ -163,8 +171,13 @@ renderWord w = case w of
 -- 'go' 를 블록 밖('outside')·안('inside') 상태로 나눠, 안에서는 어떤 줄(헤딩처럼
 -- 보이는 @*@ 줄 등)도 빈 줄 보강 없이 그대로 통과시킨다.
 normalizeOrg :: Text -> Text
-normalizeOrg = T.intercalate "\n" . fixLeadingBlock . go . T.splitOn "\n"
+normalizeOrg = T.intercalate "\n" . fixLeadingBlock . go . T.splitOn "\n" . stripCR
   where
+    -- CRLF(@\r\n@)·고전 Mac 의 단독 CR(@\r@) 모두 LF 로 통일한다. CRLF 를 먼저
+    -- 바꿔 (이미 LF 가 된) @\n@ 앞에 CR 이 남지 않게 한 뒤, 남은 단독 CR 을 바꾼다.
+    stripCR :: Text -> Text
+    stripCR = T.replace "\r" "\n" . T.replace "\r\n" "\n"
+
     go :: [Text] -> [Text]
     go = outside
       where

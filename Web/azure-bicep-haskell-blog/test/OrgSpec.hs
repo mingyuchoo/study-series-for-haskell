@@ -20,6 +20,11 @@ import Blog.Org (renderOrg, renderOrgFragment)
 render :: [String] -> String
 render = renderHtml . renderOrg . T.pack . unlines
 
+-- | 'render' 와 같지만 줄을 CRLF(@\r\n@)로 잇는다 — 웹 폼 제출이 줄바꿈을 CRLF 로
+--   정규화하는 상황을 재현한다. 각 줄 끝(마지막 줄 포함)에 @\r\n@ 을 붙인다.
+renderCRLF :: [String] -> String
+renderCRLF = renderHtml . renderOrg . T.concat . map (\l -> T.pack l <> "\r\n")
+
 contains :: String -> String -> Assertion
 contains needle hay =
   assertBool
@@ -104,6 +109,17 @@ orgTests =
         contains "<h6>G</h6>" out
     , TestLabel "기울임 서식이 <i> 로 렌더된다" . TestCase $
         contains "<i>italic</i>" (render ["/italic/"])
+    , TestLabel "CRLF 줄바꿈에서도 줄 끝 기울임이 <i> 로 렌더된다(폼 POST 회귀)" . TestCase $ do
+        -- 웹 폼 제출은 줄바꿈을 CRLF 로 정규화한다. 정규화 전에는 줄 끝 '\r' 때문에
+        -- '/.../' 닫힘이 깨져 슬래시가 그대로 노출됐다(미리보기는 LF 라 정상이었음).
+        let out = renderCRLF ["* 제목", "/큰 변화는 작은 습관에서 시작된다./"]
+        contains "<i>큰 변화는 작은 습관에서 시작된다.</i>" out
+        excludes "/큰 변화는 작은 습관에서 시작된다./" out
+    , TestLabel "CRLF 줄바꿈에서도 줄 끝 굵게가 <b> 로 렌더된다(폼 POST 회귀)" . TestCase $ do
+        -- 같은 원인으로 줄 끝의 *굵게*·~코드~ 등 모든 인라인 마크업이 깨졌었다.
+        let out = renderCRLF ["* 제목", "*굵게*"]
+        contains "<b>굵게</b>" out
+        excludes "*굵게*" out
     , TestLabel "~코드~ 는 org-highlight 클래스의 <code> 가 된다" . TestCase $
         contains "<code class=\"org-highlight\">snippet</code>" (render ["~snippet~"])
     , TestLabel "_밑줄_ 은 underline 스타일 <span> 이 된다" . TestCase $ do
