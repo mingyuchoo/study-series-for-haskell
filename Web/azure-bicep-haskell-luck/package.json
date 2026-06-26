@@ -1,5 +1,5 @@
 {
-  "name": "luck-app",
+  "name": "azure-bicep-haskell-luck",
   "private": true,
   "version": "0.1.0",
   "description": "운을 부르는 실천 체크리스트 - 모노레포 (Haskell/Servant + Solid.js)",

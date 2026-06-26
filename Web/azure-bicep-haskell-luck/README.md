@@ -13,7 +13,7 @@
 ## 디렉터리 구조
 
 ```
-luck-app/
+azure-bicep-haskell-luck/
 ├── package.json            # 워크스페이스 루트 (frontend 워크스페이스 + 스크립트)
 ├── docker-compose.yml      # PostgreSQL 개발 컨테이너
 ├── .env.example            # 백엔드 환경변수 예시

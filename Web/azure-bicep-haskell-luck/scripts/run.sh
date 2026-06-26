@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run.sh — luck-app 통합 빌드/테스트/실행 스크립트
+# run.sh — azure-bicep-haskell-luck 통합 빌드/테스트/실행 스크립트
 #
 # 백엔드(Haskell/Servant), 프런트엔드(Solid.js/Vite), 데이터베이스(PostgreSQL)를
 # 한 곳에서 빌드·테스트·실행한다.
