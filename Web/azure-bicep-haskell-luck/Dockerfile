@@ -41,6 +41,12 @@ RUN apt-get update \
 COPY --from=backend /out/luck-backend /usr/local/bin/luck-backend
 # 빌드된 SPA 정적 파일 → STATIC_DIR 가 가리키는 경로
 COPY --from=frontend /app/frontend/dist ./static
+# UTF-8 로케일 강제: 미설정 시 GHC 의 stdout/stderr 핸들이 ASCII 로 동작해
+# 한글 로그(예: 설정 경고/에러 메시지) 출력 시 "commitBuffer: invalid argument
+# (cannot encode character ...)" 로 프로세스가 죽는다. C.UTF-8 은 locales 패키지
+# 없이도 항상 사용 가능하다.
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 ENV PORT=8080
 ENV STATIC_DIR=/app/static
 EXPOSE 8080

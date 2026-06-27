@@ -33,8 +33,14 @@ import           Network.Wai.Middleware.Cors
 
 -- ── 보안 응답 헤더 ──────────────────────────────────────────────────────────
 
--- | 응답에 보안 헤더를 덧붙인다. 이 서버는 JSON API만 제공하므로 CSP는
---   @default-src 'none'@ 으로 잠근다 (SPA 문서의 CSP는 정적 호스트가 설정).
+-- | 응답에 보안 헤더를 덧붙인다. 이 서버는 SPA 문서와 JSON API를 같은 출처에서
+--   함께 제공하므로, CSP는 동일 출처('self') 자산과 Google Fonts 만 허용한다.
+--   (@default-src 'none'@ 으로 잠그면 SPA 가 자기 JS/CSS/폰트를 못 불러온다.)
+--     - script-src  'self'                : Vite 번들 (/assets/*.js)
+--     - style-src   'self' + googleapis   : 번들 CSS + Google Fonts 스타일시트
+--                   'unsafe-inline'       : 런타임 주입 인라인 스타일/style 속성 허용
+--     - font-src    gstatic               : 실제 폰트 파일
+--     - connect-src 'self'                : /api/* fetch/XHR
 --   HSTS는 운영 모드에서만 (TLS 종단 뒤에서 의미가 있다).
 securityHeaders :: Bool -> Middleware
 securityHeaders isProd app req respond =
@@ -48,8 +54,18 @@ securityHeaders isProd app req respond =
       [ ("X-Content-Type-Options", "nosniff")
       , ("X-Frame-Options", "DENY")
       , ("Referrer-Policy", "no-referrer")
-      , ("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+      , ("Content-Security-Policy", csp)
       ]
+    csp =
+      "default-src 'self'; \
+      \script-src 'self'; \
+      \style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
+      \font-src 'self' https://fonts.gstatic.com data:; \
+      \img-src 'self' data:; \
+      \connect-src 'self'; \
+      \object-src 'none'; \
+      \base-uri 'self'; \
+      \frame-ancestors 'none'"
     hsts = ("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
 -- ── CORS ────────────────────────────────────────────────────────────────────
