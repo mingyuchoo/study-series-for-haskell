@@ -9,6 +9,7 @@ import           Control.Monad.Reader       (ReaderT, runReaderT)
 import           Data.Pool                  (Pool)
 import           Database.PostgreSQL.Simple (Connection)
 import           Luck.Config                (Config)
+import           Luck.Email                 (EmailSender)
 import           Servant                    (Handler)
 import           Servant.Auth.Server        (JWTSettings)
 
@@ -17,6 +18,7 @@ data AppEnv = AppEnv
   { envPool   :: Pool Connection
   , envJwt    :: JWTSettings
   , envConfig :: Config
+  , envEmail  :: EmailSender
   }
 
 -- | 핸들러 모나드: 환경을 읽으며 Servant 'Handler' 위에서 동작한다.

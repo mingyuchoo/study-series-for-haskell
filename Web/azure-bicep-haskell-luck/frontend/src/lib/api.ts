@@ -5,7 +5,7 @@ import type { AdminCatalogItem, AuthResp, CatalogItem, RecordDTO, UserDTO } from
 
 /** 인증 (회원가입/로그인/로그아웃). */
 const authApi = {
-  // 1단계: 가입 정보 제출 → 백엔드가 6자리 인증번호를 발급(현재는 콘솔 로그).
+  // 1단계: 가입 정보 제출 → 백엔드가 6자리 인증번호를 이메일로 발송(ACS).
   requestSignup(email: string, password: string, displayName: string): Promise<{ message: string }> {
     return request("/auth/signup/request", {
       method: "POST",

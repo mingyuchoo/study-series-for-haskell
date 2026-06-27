@@ -32,6 +32,10 @@ data Config = Config
   -- ^ 관리자 이메일(소문자). 설정되면 first-user 자동 관리자 규칙은 비활성화된다.
   , cfgIsProduction   :: Bool
   -- ^ 운영 모드 여부 (HSTS, fail-fast 등에 사용)
+  , cfgAcsConnString  :: ByteString
+  -- ^ Azure Communication Services 연결 문자열. 비면 콘솔 폴백(이메일 미발송).
+  , cfgAcsSender      :: Text
+  -- ^ ACS 발신 주소(DoNotReply@...azurecomm.net). 비면 콘솔 폴백.
   }
 
 -- | 환경변수에서 설정을 읽는다. 운영 모드에서 필수값이 없으면 기동을 중단한다.
@@ -43,6 +47,8 @@ loadConfig = do
   port <- maybe 8080 id . (>>= readMaybe) <$> lookupEnv "PORT"
   origins <- envList "ALLOWED_ORIGINS"
   admins <- envList "ADMIN_EMAILS"
+  acsConn <- maybe "" id <$> lookupEnv "ACS_CONNECTION_STRING"
+  acsSender <- maybe "" id <$> lookupEnv "ACS_SENDER_ADDRESS"
   pure
     Config
       { cfgDbUrl = BS.pack dbUrl
@@ -51,6 +57,8 @@ loadConfig = do
       , cfgAllowedOrigins = map (BS.pack . T.unpack) origins
       , cfgAdminEmails = map T.toLower admins
       , cfgIsProduction = isProd
+      , cfgAcsConnString = BS.pack acsConn
+      , cfgAcsSender = T.pack acsSender
       }
   where
     devDbUrl = "postgresql://luck:luck@localhost:5432/luck"

@@ -19,6 +19,7 @@ import           Data.UUID.V4                  (nextRandom)
 import           Luck.App                      (AppEnv (..), AppM)
 import           Luck.Auth                     (genVerificationCode, hashPassword, issueToken, verifyPassword)
 import           Luck.Config                   (Config (..))
+import           Luck.Email                    (sendVerificationCode)
 import           Luck.Domain.Validation        (validateSignup)
 import           Luck.Error                    (DomainError (..))
 import           Luck.Handler.Util             (liftEither, runDB)
@@ -42,13 +43,14 @@ import           Luck.Types.Common             (MessageResp (..))
 import           Luck.Web.Dto                  (checklistItemToCatalog, userRowToDTO)
 import           Luck.Web.Error                (toServerError)
 
--- | 인증번호 유효시간 (초). 콘솔로 받은 6자리를 이 시간 안에 입력해야 한다.
+-- | 인증번호 유효시간 (초). 이메일로 받은 6자리를 이 시간 안에 입력해야 한다.
+--   메일 전송 지연·스팸함 확인 시간을 감안해 넉넉히 15분.
 verificationTtlSeconds :: Num a => a
-verificationTtlSeconds = 5 * 60
+verificationTtlSeconds = 15 * 60
 
 -- | 1단계: 가입 정보를 검증하고 인증번호를 발급한다.
 --   비밀번호 해시·이름을 인증 대기 테이블에 임시 저장하고, 6자리 코드를
---   생성해 콘솔에 출력한다 (이메일 연동 전까지의 임시 전달 경로). 토큰은 아직 없다.
+--   생성해 이메일로 발송한다(ACS). 토큰은 아직 없다.
 signupRequestH :: SignupReq -> AppM MessageResp
 signupRequestH req@SignupReq {..} = do
   liftEither (validateSignup req)
@@ -62,14 +64,15 @@ signupRequestH req@SignupReq {..} = do
   now <- liftIO getCurrentTime
   let expiresAt = addUTCTime verificationTtlSeconds now
   runDB (\p -> upsertVerification p email h srDisplayName code expiresAt)
-  liftIO $
-    putStrLn
-      ("[SIGNUP] verification code for "
-         <> T.unpack email
-         <> ": "
-         <> T.unpack code
-         <> " (expires in 5m)")
-  pure (MessageResp "인증번호를 발송했습니다. 콘솔 로그의 6자리 번호를 입력하세요.")
+  sender <- envEmail <$> ask
+  sent <- liftIO (sendVerificationCode sender email srDisplayName code)
+  case sent of
+    Right () -> pure ()
+    Left e -> do
+      liftIO $
+        putStrLn ("[SIGNUP] email send failed for " <> T.unpack email <> ": " <> T.unpack e)
+      throwError (toServerError (InternalError "인증번호 이메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요."))
+  pure (MessageResp "인증번호를 이메일로 발송했습니다. 메일함(스팸함 포함)을 확인하고 6자리 번호를 입력하세요.")
 
 -- | 2단계: 인증번호를 확인하고 실제 사용자를 생성한다.
 --   코드 일치 + 미만료면 'insertUser' 로 승격하고 토큰을 발급한 뒤 대기 행을 삭제한다.
@@ -78,9 +81,22 @@ signupVerifyH VerifyReq {..} = do
   let email = T.strip veEmail
       badCode = ValidationError "인증번호가 올바르지 않거나 만료되었습니다."
   mrow <- runDB (\p -> getVerification p email)
-  row <- maybe (throwError (toServerError badCode)) pure mrow
+  row <-
+    case mrow of
+      Just r -> pure r
+      Nothing -> do
+        liftIO $ putStrLn ("[VERIFY] no pending row for " <> T.unpack email)
+        throwError (toServerError badCode)
   now <- liftIO getCurrentTime
-  when (vrCode row /= T.strip veCode || vrExpiresAt row < now) $
+  let codeMismatch = vrCode row /= T.strip veCode
+      expired = vrExpiresAt row < now
+  when (codeMismatch || expired) $ do
+    liftIO $
+      putStrLn
+        ("[VERIFY] reject for "
+           <> T.unpack email
+           <> (if codeMismatch then " codeMismatch" else "")
+           <> (if expired then " expired" else ""))
     throwError (toServerError badCode)
   uid <- liftIO nextRandom
   admins <- cfgAdminEmails . envConfig <$> ask

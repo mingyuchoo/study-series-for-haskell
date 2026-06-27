@@ -56,6 +56,23 @@ param addCustomHostname bool = false
 @description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임이 등록된 뒤에 켤 것.')
 param bindCustomDomain bool = false
 
+@allowed([
+  'Asia Pacific'
+  'Australia'
+  'Europe'
+  'France'
+  'Germany'
+  'India'
+  'Japan'
+  'Korea'
+  'Switzerland'
+  'UAE'
+  'UK'
+  'United States'
+])
+@description('Azure Communication Services(이메일) 데이터 저장 위치. 리소스는 global 이지만 데이터 레지던시는 이 값으로 정해진다. 회원가입 인증번호 메일 발송에 사용.')
+param acsDataLocation string = 'United States'
+
 var databaseName = 'luck'
 
 // 커스텀 도메인 사용 여부. customDomainName 이 비어 있으면 도메인 바인딩 리소스를 건너뛴다.
@@ -256,6 +273,65 @@ resource kvDatabaseUrl 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   dependsOn: [ kvSecretsOfficer ]
 }
 
+// ---------- Azure Communication Services (회원가입 인증번호 이메일) ----------
+// Email Service + Azure 관리형 도메인(DNS 설정 불필요, DoNotReply@<랜덤>.azurecomm.net 발신)
+// + Communication Service(도메인 링크). 연결 문자열은 Key Vault 에 보관해 앱이 매니지드 ID 로 참조한다.
+resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
+  name: 'acsmail-${resourceToken}'
+  location: 'global'
+  tags: tags
+  properties: {
+    dataLocation: acsDataLocation
+  }
+}
+
+// Azure 관리형 도메인: Azure 가 SPF/DKIM 을 자동 구성하므로 외부 DNS 작업이 필요 없다.
+resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
+  parent: emailService
+  name: 'AzureManagedDomain'
+  location: 'global'
+  tags: tags
+  properties: {
+    domainManagement: 'AzureManaged'
+    userEngagementTracking: 'Disabled'
+  }
+}
+
+// 발신 사용자명(DoNotReply). 관리형 도메인에서는 기본 제공되지만 명시적으로 둔다.
+resource emailSenderUsername 'Microsoft.Communication/emailServices/domains/senderUsernames@2023-04-01' = {
+  parent: emailDomain
+  name: 'donotreply'
+  properties: {
+    username: 'DoNotReply'
+    displayName: '운 運'
+  }
+}
+
+resource commService 'Microsoft.Communication/communicationServices@2023-04-01' = {
+  name: 'acs-${resourceToken}'
+  location: 'global'
+  tags: tags
+  properties: {
+    dataLocation: acsDataLocation
+    linkedDomains: [
+      emailDomain.id
+    ]
+  }
+}
+
+// 발신 주소 = DoNotReply@<관리형 도메인>. fromSenderDomain 은 도메인 생성 후 채워진다.
+var acsSenderAddress = 'DoNotReply@${emailDomain.properties.fromSenderDomain}'
+
+// 연결 문자열(엔드포인트+액세스키)을 Key Vault 에 저장.
+resource kvAcsConnString 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'acs-connection-string'
+  properties: {
+    value: commService.listKeys().primaryConnectionString
+  }
+  dependsOn: [ kvSecretsOfficer ]
+}
+
 // ---------- 커스텀 도메인 바인딩 구성(2·3단계에서 채워짐) ----------
 // ACA 매니지드 인증서는 "호스트네임이 이미 컨테이너 앱에 등록된 상태"를 전제로만 발급된다.
 // 따라서 호스트네임 등록(Disabled)과 인증서 발급(SniEnabled)을 3단계로 나눈다.
@@ -314,6 +390,11 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
           keyVaultUrl: '${keyVault.properties.vaultUri}secrets/jwt-secret'
           identity: identity.id
         }
+        {
+          name: 'acs-connection-string'
+          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/acs-connection-string'
+          identity: identity.id
+        }
       ]
     }
     template: {
@@ -332,6 +413,8 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
             { name: 'ALLOWED_ORIGINS', value: allowedOrigins }
             { name: 'ADMIN_EMAILS', value: adminEmails }
+            { name: 'ACS_CONNECTION_STRING', secretRef: 'acs-connection-string' }
+            { name: 'ACS_SENDER_ADDRESS', value: acsSenderAddress }
           ]
         }
       ]
@@ -348,7 +431,7 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
       }
     }
   }
-  dependsOn: [ acrPull, kvSecretsUser, kvJwtSecret, kvDatabaseUrl ]
+  dependsOn: [ acrPull, kvSecretsUser, kvJwtSecret, kvDatabaseUrl, kvAcsConnString ]
 }
 
 // ---------- 매니지드 인증서 (HTTPS, 3단계에서만) ----------
@@ -367,6 +450,9 @@ resource cert 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01'
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.properties.loginServer
 output WEB_URI string = 'https://${web.properties.configuration.ingress.fqdn}'
+
+// 회원가입 인증번호 메일의 실제 발신 주소(관리형 도메인은 배포 후 확인용).
+output ACS_SENDER_ADDRESS string = acsSenderAddress
 
 // 커스텀 도메인 운영용 출력값(외부 DNS zone 에 레코드를 직접 추가할 때 사용).
 //   WEB_FQDN: CNAME(lucky) 의 대상.

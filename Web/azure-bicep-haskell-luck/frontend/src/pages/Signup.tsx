@@ -28,7 +28,7 @@ export default function Signup() {
     try {
       await api.auth.requestSignup(email().trim(), password(), displayName().trim());
       setStep("verify");
-      setInfo("인증번호를 발송했습니다. 콘솔 로그의 6자리 번호를 입력하세요.");
+      setInfo("인증번호를 이메일로 발송했습니다. 메일함(스팸함 포함)을 확인하세요.");
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "인증번호 발송에 실패했습니다.");
     } finally {
@@ -59,7 +59,7 @@ export default function Signup() {
     setLoading(true);
     try {
       await api.auth.requestSignup(email().trim(), password(), displayName().trim());
-      setInfo("인증번호를 다시 발송했습니다. 콘솔 로그를 확인하세요.");
+      setInfo("인증번호를 다시 발송했습니다. 메일함(스팸함 포함)을 확인하세요.");
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "인증번호 재발송에 실패했습니다.");
     } finally {

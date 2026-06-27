@@ -56,6 +56,23 @@ param addCustomHostname bool = false
 @description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true')
 param bindCustomDomain bool = false
 
+@allowed([
+  'Asia Pacific'
+  'Australia'
+  'Europe'
+  'France'
+  'Germany'
+  'India'
+  'Japan'
+  'Korea'
+  'Switzerland'
+  'UAE'
+  'UK'
+  'United States'
+])
+@description('ACS(회원가입 인증 메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION "Korea" 로 변경 가능. 기본 United States.')
+param acsDataLocation string = 'United States'
+
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
 
@@ -86,12 +103,14 @@ module resources 'resources.bicep' = {
     customDomainName: customDomainName
     addCustomHostname: addCustomHostname
     bindCustomDomain: bindCustomDomain
+    acsDataLocation: acsDataLocation
   }
 }
 
 output AZURE_LOCATION string = location
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = resources.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
 output WEB_URI string = resources.outputs.WEB_URI
+output ACS_SENDER_ADDRESS string = resources.outputs.ACS_SENDER_ADDRESS
 
 // 커스텀 도메인 운영용 출력값(azd env 에 자동 저장됨). 외부 DNS zone 에 레코드를 직접 추가할 때 사용.
 output WEB_FQDN string = resources.outputs.WEB_FQDN

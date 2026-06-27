@@ -38,6 +38,7 @@ library
     Luck.Types.Record
     Luck.Types.Checklist
     Luck.Error
+    Luck.Email
     Luck.Domain.Checklist
     Luck.Domain.Record
     Luck.Domain.Validation
@@ -71,6 +72,10 @@ library
     , transformers
     , containers
     , file-embed
+    , http-client
+    , http-client-tls
+    , http-types
+    , base64-bytestring
     , servant
     , servant-server
     , servant-auth

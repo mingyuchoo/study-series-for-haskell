@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "12750034176469175842"
+      "templateHash": "11827407385980894744"
     }
   },
   "parameters": {
@@ -130,6 +130,27 @@
       "metadata": {
         "description": "3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true"
       }
+    },
+    "acsDataLocation": {
+      "type": "string",
+      "defaultValue": "United States",
+      "allowedValues": [
+        "Asia Pacific",
+        "Australia",
+        "Europe",
+        "France",
+        "Germany",
+        "India",
+        "Japan",
+        "Korea",
+        "Switzerland",
+        "UAE",
+        "UK",
+        "United States"
+      ],
+      "metadata": {
+        "description": "ACS(회원가입 인증 메일) 데이터 저장 위치. azd env set ACS_DATA_LOCATION \"Korea\" 로 변경 가능. 기본 United States."
+      }
     }
   },
   "variables": {
@@ -207,6 +228,9 @@
           },
           "bindCustomDomain": {
             "value": "[parameters('bindCustomDomain')]"
+          },
+          "acsDataLocation": {
+            "value": "[parameters('acsDataLocation')]"
           }
         },
         "template": {
@@ -216,7 +240,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "5876494138554823663"
+              "templateHash": "11700146875460102"
             }
           },
           "parameters": {
@@ -349,6 +373,27 @@
               "defaultValue": false,
               "metadata": {
                 "description": "3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임이 등록된 뒤에 켤 것."
+              }
+            },
+            "acsDataLocation": {
+              "type": "string",
+              "defaultValue": "United States",
+              "allowedValues": [
+                "Asia Pacific",
+                "Australia",
+                "Europe",
+                "France",
+                "Germany",
+                "India",
+                "Japan",
+                "Korea",
+                "Switzerland",
+                "UAE",
+                "UK",
+                "United States"
+              ],
+              "metadata": {
+                "description": "Azure Communication Services(이메일) 데이터 저장 위치. 리소스는 global 이지만 데이터 레지던시는 이 값으로 정해진다. 회원가입 인증번호 메일 발송에 사용."
               }
             }
           },
@@ -587,6 +632,71 @@
               ]
             },
             {
+              "type": "Microsoft.Communication/emailServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('acsmail-{0}', parameters('resourceToken'))]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "dataLocation": "[parameters('acsDataLocation')]"
+              }
+            },
+            {
+              "type": "Microsoft.Communication/emailServices/domains",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain')]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "domainManagement": "AzureManaged",
+                "userEngagementTracking": "Disabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices', format('acsmail-{0}', parameters('resourceToken')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Communication/emailServices/domains/senderUsernames",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}/{2}', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain', 'donotreply')]",
+              "properties": {
+                "username": "DoNotReply",
+                "displayName": "운 運"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Communication/communicationServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('acs-{0}', parameters('resourceToken'))]",
+              "location": "global",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "dataLocation": "[parameters('acsDataLocation')]",
+                "linkedDomains": [
+                  "[resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain')]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain')]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', format('kv-{0}', parameters('resourceToken')), 'acs-connection-string')]",
+              "properties": {
+                "value": "[listKeys(resourceId('Microsoft.Communication/communicationServices', format('acs-{0}', parameters('resourceToken'))), '2023-04-01').primaryConnectionString]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/communicationServices', format('acs-{0}', parameters('resourceToken')))]",
+                "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+                "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), parameters('principalId'), 'KeyVaultSecretsOfficer'))]"
+              ]
+            },
+            {
               "type": "Microsoft.App/containerApps",
               "apiVersion": "2024-03-01",
               "name": "[format('ca-web-{0}', parameters('resourceToken'))]",
@@ -624,6 +734,11 @@
                       "name": "jwt-secret",
                       "keyVaultUrl": "[format('{0}secrets/jwt-secret', reference(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), '2023-07-01').vaultUri)]",
                       "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken')))]"
+                    },
+                    {
+                      "name": "acs-connection-string",
+                      "keyVaultUrl": "[format('{0}secrets/acs-connection-string', reference(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), '2023-07-01').vaultUri)]",
+                      "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken')))]"
                     }
                   ]
                 },
@@ -660,6 +775,14 @@
                         {
                           "name": "ADMIN_EMAILS",
                           "value": "[parameters('adminEmails')]"
+                        },
+                        {
+                          "name": "ACS_CONNECTION_STRING",
+                          "secretRef": "acs-connection-string"
+                        },
+                        {
+                          "name": "ACS_SENDER_ADDRESS",
+                          "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain'), '2023-04-01').fromSenderDomain)]"
                         }
                       ]
                     }
@@ -684,8 +807,10 @@
                 "[extensionResourceId(resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerRegistry/registries', format('cr{0}', parameters('resourceToken'))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken'))), 'AcrPull'))]",
                 "[resourceId('Microsoft.App/managedEnvironments/managedCertificates', format('cae-{0}', parameters('resourceToken')), format('cert-{0}', parameters('resourceToken')))]",
                 "[resourceId('Microsoft.App/managedEnvironments', format('cae-{0}', parameters('resourceToken')))]",
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain')]",
                 "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken')))]",
                 "[resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken')))]",
+                "[resourceId('Microsoft.KeyVault/vaults/secrets', format('kv-{0}', parameters('resourceToken')), 'acs-connection-string')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', format('kv-{0}', parameters('resourceToken')), 'database-url')]",
                 "[resourceId('Microsoft.KeyVault/vaults/secrets', format('kv-{0}', parameters('resourceToken')), 'jwt-secret')]",
                 "[extensionResourceId(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', parameters('resourceToken'))), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('resourceToken'))), 'KeyVaultSecretsUser'))]",
@@ -716,6 +841,10 @@
             "WEB_URI": {
               "type": "string",
               "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('ca-web-{0}', parameters('resourceToken'))), '2024-03-01').configuration.ingress.fqdn)]"
+            },
+            "ACS_SENDER_ADDRESS": {
+              "type": "string",
+              "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('acsmail-{0}', parameters('resourceToken')), 'AzureManagedDomain'), '2023-04-01').fromSenderDomain)]"
             },
             "WEB_FQDN": {
               "type": "string",
@@ -753,6 +882,10 @@
     "WEB_URI": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.WEB_URI.value]"
+    },
+    "ACS_SENDER_ADDRESS": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, format('rg-{0}', parameters('environmentName'))), 'Microsoft.Resources/deployments', 'resources'), '2025-04-01').outputs.ACS_SENDER_ADDRESS.value]"
     },
     "WEB_FQDN": {
       "type": "string",

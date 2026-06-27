@@ -8,6 +8,7 @@ import           Luck.App                 (AppEnv (..), runAppM)
 import           Luck.Auth                (jwtSettingsFromSecret)
 import           Luck.Config              (Config (..), loadConfig)
 import           Luck.DB                  (initSchema, newConnPool)
+import           Luck.Email               (newEmailSender)
 import           Luck.Repository.User     (promoteAdmins)
 import           Luck.Server              (server)
 import           Luck.Web.Middleware
@@ -95,9 +96,10 @@ main = do
   pool <- newConnPool (cfgDbUrl cfg)
   initSchema pool
   promoteAdmins pool (cfgAdminEmails cfg)
+  emailSender <- newEmailSender (cfgAcsConnString cfg) (cfgAcsSender cfg)
   limiter <- newRateLimiter
   let jwtCfg = jwtSettingsFromSecret (cfgJwtSecret cfg)
-      env = AppEnv pool jwtCfg cfg
+      env = AppEnv pool jwtCfg cfg emailSender
       -- 바깥부터: rate limit → 보안 헤더 → CORS → 앱
       middleware =
         rateLimit limiter
