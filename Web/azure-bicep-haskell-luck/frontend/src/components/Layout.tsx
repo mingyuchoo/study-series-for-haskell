@@ -1,8 +1,6 @@
 import { createEffect, onMount, Show, type Component, type JSX } from "solid-js";
 import { A, useNavigate, useLocation } from "@solidjs/router";
 import { auth } from "../lib/store";
-import { api } from "../lib/api";
-import { theme } from "../lib/theme";
 import ThemeToggle from "./ThemeToggle";
 
 /** 인증된 사용자만 접근 가능한 공통 레이아웃. */
@@ -15,27 +13,11 @@ const Layout: Component<{ children?: JSX.Element }> = (props) => {
     if (!auth.authed()) navigate("/login", { replace: true });
   });
 
-  // 저장된 컬러 테마를 적용한다.
-  theme.init();
-
-  // 새로고침 등으로 사용자 정보가 비어 있으면 한 번 불러온다 (관리 메뉴 노출 판단용).
-  onMount(async () => {
-    if (auth.authed() && !auth.user()) {
-      try {
-        auth.setUser(await api.profile.me());
-      } catch {
-        // 실패 시 401 처리는 http 계층이 담당 — 여기서는 무시
-      }
-    }
-  });
+  // 사용자 정보가 비어 있으면 한 번 하이드레이션한다(상세 로직은 store).
+  onMount(() => void auth.ensureLoaded());
 
   const onLogout = async () => {
-    try {
-      await api.auth.logout();
-    } catch {
-      // 로그아웃은 클라이언트 토큰 삭제가 본질 — 실패 무시
-    }
-    auth.logout();
+    await auth.signOut();
     navigate("/login", { replace: true });
   };
 

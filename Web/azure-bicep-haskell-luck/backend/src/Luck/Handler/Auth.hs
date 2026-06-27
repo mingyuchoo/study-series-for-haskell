@@ -19,6 +19,7 @@ import           Data.UUID.V4                  (nextRandom)
 import           Luck.App                      (AppEnv (..), AppM)
 import           Luck.Auth                     (genVerificationCode, hashPassword, issueToken, verifyPassword)
 import           Luck.Config                   (Config (..))
+import           Luck.Domain.Admin             (AdminGrant (..), adminGrant)
 import           Luck.Email                    (sendVerificationCode)
 import           Luck.Domain.Validation        (validateSignup)
 import           Luck.Error                    (DomainError (..))
@@ -100,12 +101,11 @@ signupVerifyH VerifyReq {..} = do
     throwError (toServerError badCode)
   uid <- liftIO nextRandom
   admins <- cfgAdminEmails . envConfig <$> ask
-  let emailIsAdmin = T.toLower (vrEmail row) `elem` admins
-      firstUserFallback = null admins
+  let grant = adminGrant admins (vrEmail row)
   inserted <-
     liftEither
       =<< runDB
-        (\p -> insertUser p uid (vrEmail row) (vrPasswordHash row) (vrDisplayName row) emailIsAdmin firstUserFallback)
+        (\p -> insertUser p uid (vrEmail row) (vrPasswordHash row) (vrDisplayName row) (agExplicit grant) (agFirstUserFallback grant))
   runDB (\p -> deleteVerification p email)
   mkAuthResp inserted
 

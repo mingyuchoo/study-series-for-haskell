@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { useParams, useNavigate } from "@solidjs/router";
 import { createDayRecord } from "../lib/dayRecord";
 import { imeInput } from "../lib/ime";
 import { PRINCIPLES } from "../lib/principles";
@@ -10,6 +10,7 @@ import MonthCalendar from "../components/MonthCalendar";
 
 export default function Dashboard() {
   const params = useParams();
+  const navigate = useNavigate();
   const date = () => params.date ?? todayStr();
   const isToday = () => date() === todayStr();
 
@@ -70,7 +71,7 @@ export default function Dashboard() {
 
       {/* ③ 달력 — 일별 기록 히트맵 */}
       <section class="dash-calendar">
-        <MonthCalendar />
+        <MonthCalendar onSelectDate={(d) => navigate(`/day/${d}`)} />
       </section>
     </div>
   );

@@ -39,6 +39,7 @@ library
     Luck.Types.Checklist
     Luck.Error
     Luck.Email
+    Luck.Domain.Admin
     Luck.Domain.Checklist
     Luck.Domain.Record
     Luck.Domain.Validation

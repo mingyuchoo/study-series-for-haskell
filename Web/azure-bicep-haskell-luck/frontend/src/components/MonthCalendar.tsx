@@ -1,12 +1,10 @@
-import { For, Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { For, Show, type Component } from "solid-js";
 import { createMonthRecords } from "../lib/monthRecords";
 import { WEEKDAYS, todayStr } from "../lib/date";
 
-/** 월별 달력 히트맵. 날짜를 누르면 해당 날짜 기록 화면으로 이동한다.
+/** 월별 달력 히트맵. 날짜를 누르면 'onSelectDate' 로 알린다(라우팅은 호출 측 책임).
  *  대시보드("오늘")와 달력 페이지에서 함께 재사용한다. */
-export default function MonthCalendar() {
-  const navigate = useNavigate();
+const MonthCalendar: Component<{ onSelectDate: (date: string) => void }> = (props) => {
   const cal = createMonthRecords();
 
   return (
@@ -36,7 +34,7 @@ export default function MonthCalendar() {
                 class={`cal-cell lvl-${cal.level(cell.date)} ${cell.inMonth ? "" : "dim"} ${
                   cell.date === todayStr() ? "today" : ""
                 }`}
-                onClick={() => navigate(`/day/${cell.date}`)}
+                onClick={() => props.onSelectDate(cell.date)}
               >
                 <span class="cell-day">{cell.day}</span>
               </button>
@@ -55,4 +53,6 @@ export default function MonthCalendar() {
       </div>
     </>
   );
-}
+};
+
+export default MonthCalendar;

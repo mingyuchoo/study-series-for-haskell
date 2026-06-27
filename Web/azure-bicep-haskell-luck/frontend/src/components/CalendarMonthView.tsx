@@ -1,15 +1,13 @@
-import { createResource, createSignal, For, Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { createSignal, For, Show, type Component } from "solid-js";
 import { createMonthRecords } from "../lib/monthRecords";
 import { recordStats } from "../lib/calendarStats";
-import { api } from "../lib/api";
+import { catalog } from "../lib/catalog";
 import { WEEKDAYS, todayStr, pad } from "../lib/date";
 
-/** "달력" 탭 월간 뷰: 월간 통계 + 히트맵 격자 + 날짜 미리보기. */
-export default function CalendarMonthView() {
-  const navigate = useNavigate();
+/** "달력" 탭 월간 뷰: 월간 통계 + 히트맵 격자 + 날짜 미리보기.
+ *  "자세히 보기" 는 'onSelectDate' 로 알린다(라우팅은 호출 측 책임). */
+const CalendarMonthView: Component<{ onSelectDate: (date: string) => void }> = (props) => {
   const cal = createMonthRecords();
-  const [catalog] = createResource(() => api.catalog.list());
   const [selected, setSelected] = createSignal(todayStr());
 
   const stats = () => {
@@ -129,7 +127,7 @@ export default function CalendarMonthView() {
                 </Show>
               </div>
 
-              <button class="cal-preview-more" onClick={() => navigate(`/day/${selected()}`)}>
+              <button class="cal-preview-more" onClick={() => props.onSelectDate(selected())}>
                 자세히 보기 →
               </button>
             </Show>
@@ -138,4 +136,6 @@ export default function CalendarMonthView() {
       </Show>
     </div>
   );
-}
+};
+
+export default CalendarMonthView;

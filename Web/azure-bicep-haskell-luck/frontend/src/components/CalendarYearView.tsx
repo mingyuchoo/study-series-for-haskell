@@ -1,5 +1,4 @@
-import { For, Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { For, Show, type Component } from "solid-js";
 import { createYearRecords } from "../lib/yearRecords";
 import { recordStats } from "../lib/calendarStats";
 import { todayStr, pad } from "../lib/date";
@@ -18,9 +17,9 @@ function miniMonth(year: number, month: number): MiniCell[] {
   return cells;
 }
 
-/** "달력" 탭 연간 뷰: 12개월 미니 히트맵 + 연간 통계. */
-export default function CalendarYearView() {
-  const navigate = useNavigate();
+/** "달력" 탭 연간 뷰: 12개월 미니 히트맵 + 연간 통계.
+ *  셀 클릭은 'onSelectDate' 로 알린다(라우팅은 호출 측 책임). */
+const CalendarYearView: Component<{ onSelectDate: (date: string) => void }> = (props) => {
   const yr = createYearRecords();
   const stats = () => recordStats(yr.records(), todayStr());
   const months = Array.from({ length: 12 }, (_, m) => m);
@@ -57,7 +56,7 @@ export default function CalendarYearView() {
                           }`}
                           title={c.date!}
                           aria-label={c.date!}
-                          onClick={() => navigate(`/day/${c.date}`)}
+                          onClick={() => props.onSelectDate(c.date!)}
                         />
                       </Show>
                     )}
@@ -79,4 +78,6 @@ export default function CalendarYearView() {
       </Show>
     </div>
   );
-}
+};
+
+export default CalendarYearView;

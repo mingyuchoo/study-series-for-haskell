@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 import CalendarMonthView from "../components/CalendarMonthView";
 import CalendarYearView from "../components/CalendarYearView";
 
@@ -6,7 +7,9 @@ type View = "month" | "year";
 
 /** "달력" 탭: 월간/연간 토글. "오늘" 탭의 단순 달력과 달리 통계·미리보기·연간 히트맵을 제공한다. */
 export default function Calendar() {
+  const navigate = useNavigate();
   const [view, setView] = createSignal<View>("month");
+  const goDay = (d: string) => navigate(`/day/${d}`);
 
   return (
     <div class="page cal-page">
@@ -22,8 +25,8 @@ export default function Calendar() {
         </div>
       </header>
 
-      <Show when={view() === "month"} fallback={<CalendarYearView />}>
-        <CalendarMonthView />
+      <Show when={view() === "month"} fallback={<CalendarYearView onSelectDate={goDay} />}>
+        <CalendarMonthView onSelectDate={goDay} />
       </Show>
     </div>
   );

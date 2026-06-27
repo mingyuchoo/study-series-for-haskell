@@ -2,6 +2,7 @@
 
 import { createEffect, createResource, createSignal, type Accessor } from "solid-js";
 import { api } from "./api";
+import { catalog } from "./catalog";
 import { hhmm } from "./date";
 import { completionPct } from "./luck";
 import type { CatalogItem } from "./types";
@@ -20,7 +21,6 @@ export interface DayRecordState {
 
 /** @param date 조회/저장 대상 날짜("YYYY-MM-DD")를 주는 접근자. */
 export function createDayRecord(date: Accessor<string>): DayRecordState {
-  const [catalog] = createResource(() => api.catalog.list());
   const [record] = createResource(date, (d) => api.records.get(d));
 
   const [completed, setCompleted] = createSignal<string[]>([]);
