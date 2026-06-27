@@ -4,6 +4,11 @@ version:         0.1.0.0
 synopsis:        운을 부르는 실천 체크리스트 백엔드 (Servant)
 license:         MIT
 build-type:      Simple
+-- migrations/*.sql 는 Luck.DB 에서 file-embed 의 $(embedFile ...) 로 컴파일 타임에
+-- 바이너리에 내장된다. `cabal install` 은 sdist 로 빌드하므로, 여기에 선언하지 않으면
+-- sdist 에 포함되지 않아 "migrations/0001_init.sql: does not exist" 로 빌드가 실패한다.
+extra-source-files:
+    migrations/*.sql
 
 common common-options
   default-language: GHC2021
