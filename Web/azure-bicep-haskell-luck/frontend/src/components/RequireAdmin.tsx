@@ -1,6 +1,5 @@
 import { createSignal, onMount, Show, type Component, type JSX } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { api } from "../lib/api";
 import { auth } from "../lib/store";
 
 /**
@@ -12,16 +11,9 @@ const RequireAdmin: Component<{ children?: JSX.Element }> = (props) => {
   const [ready, setReady] = createSignal(false);
 
   onMount(async () => {
-    let u = auth.user();
-    if (!u) {
-      try {
-        u = await api.profile.me();
-        auth.setUser(u);
-      } catch {
-        // 401 등은 http 계층이 처리 (전역 로그아웃)
-        return;
-      }
-    }
+    await auth.ensureLoaded(); // 하이드레이션은 store 가 담당 (Layout 과 동일 경로)
+    const u = auth.user();
+    if (!u) return; // 미로드(401 등)는 http 계층이 전역 로그아웃 처리
     if (!u.isAdmin) {
       navigate("/", { replace: true });
       return;

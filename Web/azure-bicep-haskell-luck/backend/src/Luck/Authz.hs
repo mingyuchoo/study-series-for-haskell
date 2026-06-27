@@ -4,19 +4,19 @@ module Luck.Authz
     ( requireAdmin
     ) where
 
+import           Control.Monad          (unless)
 import           Control.Monad.Except   (throwError)
 import           Luck.App               (AppM)
 import           Luck.Error             (DomainError (..))
 import           Luck.Handler.Util      (runDB)
-import           Luck.Repository.User   (UserRow (..), getUserById)
+import           Luck.Repository.User   (userIsAdmin)
 import           Luck.Types.Auth        (AuthUser (..))
 import           Luck.Web.Error         (toServerError)
 
 -- | 현재 인증 사용자가 관리자인지 DB에서 확인한다. 관리자가 아니면 403.
 --   (JWT에 굽지 않고 매 요청마다 DB를 확인하므로 권한 회수가 즉시 반영된다.)
+--   "관리자인가?"라는 질문만 Repository에 위임하고 UserRow 내부는 알지 않는다.
 requireAdmin :: AuthUser -> AppM ()
 requireAdmin u = do
-  mrow <- runDB (\p -> getUserById p (auId u))
-  case mrow of
-    Just row | urIsAdmin row -> pure ()
-    _ -> throwError (toServerError (Forbidden "관리자 권한이 필요합니다."))
+  ok <- runDB (\p -> userIsAdmin p (auId u))
+  unless ok $ throwError (toServerError (Forbidden "관리자 권한이 필요합니다."))

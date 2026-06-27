@@ -56,24 +56,39 @@ signupRequestH :: SignupReq -> AppM MessageResp
 signupRequestH req@SignupReq {..} = do
   liftEither (validateSignup req)
   let email = T.strip srEmail
-  existing <- runDB (\p -> getUserByEmail p email)
-  when (maybe False (const True) existing) $
-    throwError (toServerError EmailTaken)
-  mh <- liftIO (hashPassword srPassword)
-  h <- maybe (throwError (toServerError (InternalError "비밀번호 처리 중 오류가 발생했습니다."))) pure mh
+  ensureEmailAvailable email
+  pwHash <- hashOrFail srPassword
   code <- liftIO genVerificationCode
-  now <- liftIO getCurrentTime
-  let expiresAt = addUTCTime verificationTtlSeconds now
-  runDB (\p -> upsertVerification p email h srDisplayName code expiresAt)
+  expiresAt <- addUTCTime verificationTtlSeconds <$> liftIO getCurrentTime
+  runDB (\p -> upsertVerification p email pwHash srDisplayName code expiresAt)
+  sendCodeOrFail email srDisplayName code
+  pure (MessageResp "인증번호를 이메일로 발송했습니다. 메일함(스팸함 포함)을 확인하고 6자리 번호를 입력하세요.")
+
+-- | 이미 가입된 이메일이면 가입을 막는다(EmailTaken).
+ensureEmailAvailable :: T.Text -> AppM ()
+ensureEmailAvailable email = do
+  existing <- runDB (\p -> getUserByEmail p email)
+  case existing of
+    Just _  -> throwError (toServerError EmailTaken)
+    Nothing -> pure ()
+
+-- | 비밀번호를 해시한다. 해시 실패 시 500.
+hashOrFail :: T.Text -> AppM T.Text
+hashOrFail pw = do
+  mh <- liftIO (hashPassword pw)
+  maybe (throwError (toServerError (InternalError "비밀번호 처리 중 오류가 발생했습니다."))) pure mh
+
+-- | 인증번호 이메일을 발송한다. 실패 시 로그를 남기고 500.
+sendCodeOrFail :: T.Text -> T.Text -> T.Text -> AppM ()
+sendCodeOrFail email displayName code = do
   sender <- envEmail <$> ask
-  sent <- liftIO (sendVerificationCode sender email srDisplayName code)
+  sent <- liftIO (sendVerificationCode sender email displayName code)
   case sent of
     Right () -> pure ()
     Left e -> do
       liftIO $
         putStrLn ("[SIGNUP] email send failed for " <> T.unpack email <> ": " <> T.unpack e)
       throwError (toServerError (InternalError "인증번호 이메일 발송에 실패했습니다. 잠시 후 다시 시도해 주세요."))
-  pure (MessageResp "인증번호를 이메일로 발송했습니다. 메일함(스팸함 포함)을 확인하고 6자리 번호를 입력하세요.")
 
 -- | 2단계: 인증번호를 확인하고 실제 사용자를 생성한다.
 --   코드 일치 + 미만료면 'insertUser' 로 승격하고 토큰을 발급한 뒤 대기 행을 삭제한다.

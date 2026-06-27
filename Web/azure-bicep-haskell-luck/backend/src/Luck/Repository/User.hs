@@ -9,6 +9,7 @@ module Luck.Repository.User
     , insertUser
     , promoteAdmins
     , updateProfile
+    , userIsAdmin
     ) where
 
 import           Control.Exception                  (try)
@@ -90,6 +91,13 @@ getUserByEmail pool email = withConn pool $ \c -> do
       \ FROM users WHERE email = ?"
       (Only email)
   pure (listToMaybe' rows)
+
+-- | 사용자가 관리자인지만 확인한다(권한 검사 전용, 행 전체를 끌어오지 않음).
+--   사용자가 없으면 @False@.
+userIsAdmin :: Pool Connection -> UUID -> IO Bool
+userIsAdmin pool uid = withConn pool $ \c -> do
+  rows <- query c "SELECT is_admin FROM users WHERE id = ?" (Only uid)
+  pure (maybe False fromOnly (listToMaybe' rows))
 
 -- | ID로 사용자를 조회한다.
 getUserById :: Pool Connection -> UUID -> IO (Maybe UserRow)

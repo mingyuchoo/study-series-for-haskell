@@ -1,70 +1,18 @@
-import { createSignal, Show } from "solid-js";
+import { Show } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
-import { api } from "../lib/api";
-import { ApiError } from "../lib/http";
+import { createSignupFlow } from "../lib/signupFlow";
 import { auth } from "../lib/store";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [displayName, setDisplayName] = createSignal("");
-  const [email, setEmail] = createSignal("");
-  const [password, setPassword] = createSignal("");
-  const [code, setCode] = createSignal("");
-  const [err, setErr] = createSignal("");
-  const [info, setInfo] = createSignal("");
-  const [loading, setLoading] = createSignal(false);
-  // "form" = 가입 정보 입력 단계, "verify" = 인증번호 입력 단계
-  const [step, setStep] = createSignal<"form" | "verify">("form");
+  const f = createSignupFlow((r) => {
+    auth.login(r.token, r.user);
+    navigate("/", { replace: true });
+  });
 
-  // 1단계: 가입 정보 제출 → 인증번호 발급 요청
-  const requestCode = async (e: Event) => {
+  const submit = (run: () => void) => (e: Event) => {
     e.preventDefault();
-    setErr("");
-    if (password().length < 6) {
-      setErr("비밀번호는 6자 이상이어야 합니다.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await api.auth.requestSignup(email().trim(), password(), displayName().trim());
-      setStep("verify");
-      setInfo("인증번호를 이메일로 발송했습니다. 메일함(스팸함 포함)을 확인하세요.");
-    } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "인증번호 발송에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 2단계: 인증번호 확인 → 가입 완료 후 로그인
-  const verifyCode = async (e: Event) => {
-    e.preventDefault();
-    setErr("");
-    setLoading(true);
-    try {
-      const r = await api.auth.verifySignup(email().trim(), code().trim());
-      auth.login(r.token, r.user);
-      navigate("/", { replace: true });
-    } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "인증번호 확인에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 인증번호 재발송 (가입 정보는 그대로 유지)
-  const resend = async () => {
-    setErr("");
-    setInfo("");
-    setLoading(true);
-    try {
-      await api.auth.requestSignup(email().trim(), password(), displayName().trim());
-      setInfo("인증번호를 다시 발송했습니다. 메일함(스팸함 포함)을 확인하세요.");
-    } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "인증번호 재발송에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    run();
   };
 
   return (
@@ -74,14 +22,14 @@ export default function Signup() {
         <h1 class="auth-title">운의 기록을 시작합니다</h1>
         <p class="auth-sub">매일 작게 채워 두는 행운의 장부.</p>
 
-        <Show when={step() === "form"}>
-          <form onSubmit={requestCode}>
+        <Show when={f.step() === "form"}>
+          <form onSubmit={submit(f.requestCode)}>
             <label class="field">
               <span>이름</span>
               <input
                 type="text"
-                value={displayName()}
-                onInput={(e) => setDisplayName(e.currentTarget.value)}
+                value={f.displayName()}
+                onInput={(e) => f.setDisplayName(e.currentTarget.value)}
                 placeholder="표시할 이름"
                 required
               />
@@ -90,8 +38,8 @@ export default function Signup() {
               <span>이메일</span>
               <input
                 type="email"
-                value={email()}
-                onInput={(e) => setEmail(e.currentTarget.value)}
+                value={f.email()}
+                onInput={(e) => f.setEmail(e.currentTarget.value)}
                 placeholder="you@example.com"
                 required
               />
@@ -100,25 +48,25 @@ export default function Signup() {
               <span>비밀번호</span>
               <input
                 type="password"
-                value={password()}
-                onInput={(e) => setPassword(e.currentTarget.value)}
+                value={f.password()}
+                onInput={(e) => f.setPassword(e.currentTarget.value)}
                 placeholder="6자 이상"
                 required
               />
             </label>
-            <Show when={err()}>
-              <p class="form-error">{err()}</p>
+            <Show when={f.err()}>
+              <p class="form-error">{f.err()}</p>
             </Show>
-            <button class="btn-primary" type="submit" disabled={loading()}>
-              {loading() ? "발송 중..." : "인증번호 받기"}
+            <button class="btn-primary" type="submit" disabled={f.loading()}>
+              {f.loading() ? "발송 중..." : "인증번호 받기"}
             </button>
           </form>
         </Show>
 
-        <Show when={step() === "verify"}>
-          <form onSubmit={verifyCode}>
+        <Show when={f.step() === "verify"}>
+          <form onSubmit={submit(f.verifyCode)}>
             <p class="auth-sub">
-              <strong>{email().trim()}</strong> 로 보낸 6자리 인증번호를 입력하세요.
+              <strong>{f.email().trim()}</strong> 로 보낸 6자리 인증번호를 입력하세요.
             </p>
             <label class="field">
               <span>인증번호</span>
@@ -127,37 +75,27 @@ export default function Signup() {
                 inputMode="numeric"
                 autocomplete="one-time-code"
                 maxLength={6}
-                value={code()}
-                onInput={(e) => setCode(e.currentTarget.value)}
+                value={f.code()}
+                onInput={(e) => f.setCode(e.currentTarget.value)}
                 placeholder="6자리 숫자"
                 required
               />
             </label>
-            <Show when={info()}>
-              <p class="form-ok">{info()}</p>
+            <Show when={f.info()}>
+              <p class="form-ok">{f.info()}</p>
             </Show>
-            <Show when={err()}>
-              <p class="form-error">{err()}</p>
+            <Show when={f.err()}>
+              <p class="form-error">{f.err()}</p>
             </Show>
-            <button class="btn-primary" type="submit" disabled={loading()}>
-              {loading() ? "확인 중..." : "회원가입 완료"}
+            <button class="btn-primary" type="submit" disabled={f.loading()}>
+              {f.loading() ? "확인 중..." : "회원가입 완료"}
             </button>
             <div class="auth-foot">
-              <button type="button" class="link-btn" onClick={resend} disabled={loading()}>
+              <button type="button" class="link-btn" onClick={f.resend} disabled={f.loading()}>
                 인증번호 재발송
               </button>
               {" · "}
-              <button
-                type="button"
-                class="link-btn"
-                onClick={() => {
-                  setStep("form");
-                  setCode("");
-                  setErr("");
-                  setInfo("");
-                }}
-                disabled={loading()}
-              >
+              <button type="button" class="link-btn" onClick={f.backToForm} disabled={f.loading()}>
                 정보 수정
               </button>
             </div>

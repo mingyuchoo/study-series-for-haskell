@@ -1,6 +1,7 @@
 import { createSignal, onMount, Show } from "solid-js";
 import { api } from "../lib/api";
 import { ApiError } from "../lib/http";
+import { imeInput } from "../lib/ime";
 import { auth } from "../lib/store";
 
 const TIMEZONES = [
@@ -69,29 +70,11 @@ export default function Profile() {
           </label>
           <label class="field">
             <span>이름</span>
-            <input
-              type="text"
-              value={displayName()}
-              onInput={(e) => {
-                if (e.isComposing) return;
-                setDisplayName(e.currentTarget.value);
-              }}
-              onCompositionEnd={(e) => setDisplayName(e.currentTarget.value)}
-              required
-            />
+            <input type="text" value={displayName()} {...imeInput(setDisplayName)} required />
           </label>
           <label class="field">
             <span>소개</span>
-            <textarea
-              rows="3"
-              value={bio()}
-              onInput={(e) => {
-                if (e.isComposing) return;
-                setBio(e.currentTarget.value);
-              }}
-              onCompositionEnd={(e) => setBio(e.currentTarget.value)}
-              placeholder="짧은 소개 (선택)"
-            />
+            <textarea rows="3" value={bio()} {...imeInput(setBio)} placeholder="짧은 소개 (선택)" />
           </label>
           <label class="field">
             <span>시간대</span>
