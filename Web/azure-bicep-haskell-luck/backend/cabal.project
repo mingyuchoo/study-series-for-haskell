@@ -4,4 +4,10 @@ packages: .
 -- crypton >= 1.1 switched its ByteArray backend from `memory` to `ram`.
 -- Mixing them yields "Could not deduce ram-...:ByteArray ScrubbedBytes"
 -- errors when building jose. Keep crypton on the memory-based 1.0 series.
+--
+-- postgresql-libpq-0.11 introduced a Configure build step (postgresql-libpq-configure)
+-- that hard-requires libpq >= 14.12. The haskell:9.6.6 image is Debian Bullseye,
+-- whose libpq-dev is 13.x, so 0.11 fails to configure. The 0.10 series builds
+-- fine against libpq 13 and is accepted by postgresql-simple-0.7.0.1.
 constraints: crypton < 1.1
+           , postgresql-libpq < 0.11
