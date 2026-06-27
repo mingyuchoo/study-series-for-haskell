@@ -9,13 +9,19 @@
       "value": "${AZURE_LOCATION}"
     },
     "postgresAdminLogin": {
-      "value": "${POSTGRES_ADMIN_LOGIN=blogadmin}"
+      "value": "${POSTGRES_ADMIN_LOGIN=luckadmin}"
     },
     "postgresAdminPassword": {
       "value": "${POSTGRES_ADMIN_PASSWORD}"
     },
-    "previewSecret": {
-      "value": "${PREVIEW_SECRET}"
+    "jwtSecret": {
+      "value": "${JWT_SECRET}"
+    },
+    "allowedOrigins": {
+      "value": "${ALLOWED_ORIGINS}"
+    },
+    "adminEmails": {
+      "value": "${ADMIN_EMAILS}"
     },
     "developerIpAddress": {
       "value": "${DEVELOPER_IP_ADDRESS}"
@@ -35,11 +41,8 @@
     "principalType": {
       "value": "${AZURE_PRINCIPAL_TYPE=User}"
     },
-    "acsDataLocation": {
-      "value": "${ACS_DATA_LOCATION=United States}"
-    },
     "customDomainName": {
-      "value": "${CUSTOM_DOMAIN_NAME=mingyuchoo.com}"
+      "value": "${CUSTOM_DOMAIN_NAME=lucky.mingyuchoo.com}"
     },
     "addCustomHostname": {
       "value": "${ADD_CUSTOM_HOSTNAME=false}"

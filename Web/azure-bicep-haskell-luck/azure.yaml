@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: azure-bicep-haskell-luck
+metadata:
+  template: azure-bicep-haskell-luck@0.1.0
+
+# 단일 서비스: Haskell 백엔드 컨테이너가 SPA 정적 파일까지 서빙한다.
+# Bicep 의 Container App 리소스에 붙은 'azd-service-name: web' 태그와 매칭된다.
+services:
+  web:
+    project: .
+    language: docker
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .

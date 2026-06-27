@@ -1,0 +1,14 @@
+# 빌드 컨텍스트에서 제외 (이미지 빌드 속도/크기 최적화)
+node_modules
+frontend/node_modules
+frontend/dist
+backend/dist-newstyle
+.git
+.env
+.env.*
+*.log
+.DS_Store
+infra
+DESIGN.md
+scripts
+docker-compose.yml

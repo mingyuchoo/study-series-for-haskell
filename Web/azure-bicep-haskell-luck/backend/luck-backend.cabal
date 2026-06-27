@@ -90,7 +90,9 @@ executable luck-backend
     , luck-backend
     , warp
     , wai
+    , wai-app-static
     , wai-cors
+    , filepath
     , http-types
     , servant
     , servant-server
