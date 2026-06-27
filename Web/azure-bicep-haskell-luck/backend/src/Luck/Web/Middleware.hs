@@ -39,7 +39,7 @@ import           Network.Wai.Middleware.Cors
 --     - script-src  'self'                : Vite 번들 (/assets/*.js)
 --     - style-src   'self' + googleapis   : 번들 CSS + Google Fonts 스타일시트
 --                   'unsafe-inline'       : 런타임 주입 인라인 스타일/style 속성 허용
---     - font-src    gstatic               : 실제 폰트 파일
+--     - font-src    gstatic + jsdelivr     : Google Fonts + CHOSUN(@font-face) 폰트 파일
 --     - connect-src 'self'                : /api/* fetch/XHR
 --   HSTS는 운영 모드에서만 (TLS 종단 뒤에서 의미가 있다).
 securityHeaders :: Bool -> Middleware
@@ -60,7 +60,7 @@ securityHeaders isProd app req respond =
       "default-src 'self'; \
       \script-src 'self'; \
       \style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
-      \font-src 'self' https://fonts.gstatic.com data:; \
+      \font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; \
       \img-src 'self' data:; \
       \connect-src 'self'; \
       \object-src 'none'; \
