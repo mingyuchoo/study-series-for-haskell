@@ -41,4 +41,5 @@ migrations :: [Query]
 migrations =
   [ Query $(embedFile "migrations/0001_init.sql")
   , Query $(embedFile "migrations/0002_admin_and_checklist.sql")
+  , Query $(embedFile "migrations/0003_signup_verification.sql")
   ]

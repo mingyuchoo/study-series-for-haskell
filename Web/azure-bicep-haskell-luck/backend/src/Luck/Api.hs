@@ -8,7 +8,7 @@ module Luck.Api
 
 import Data.Text (Text)
 import Data.Time (Day)
-import Luck.Types.Auth (AuthResp, AuthUser, LoginReq, SignupReq)
+import Luck.Types.Auth (AuthResp, AuthUser, LoginReq, SignupReq, VerifyReq)
 import Luck.Types.Checklist
   ( AdminCatalogItem
   , CatalogItem
@@ -24,7 +24,8 @@ import Servant.Auth.Server (Auth, JWT)
 
 -- | 인증 없이 접근 가능한 라우트.
 type PublicAPI =
-  "auth" :> "signup" :> ReqBody '[JSON] SignupReq :> Post '[JSON] AuthResp
+  "auth" :> "signup" :> "request" :> ReqBody '[JSON] SignupReq :> Post '[JSON] MessageResp
+    :<|> "auth" :> "signup" :> "verify" :> ReqBody '[JSON] VerifyReq :> Post '[JSON] AuthResp
     :<|> "auth" :> "login" :> ReqBody '[JSON] LoginReq :> Post '[JSON] AuthResp
     :<|> "auth" :> "logout" :> Post '[JSON] MessageResp
     :<|> "catalog" :> Get '[JSON] [CatalogItem]

@@ -40,6 +40,7 @@ library
     Luck.Repository.User
     Luck.Repository.Record
     Luck.Repository.Checklist
+    Luck.Repository.Verification
     Luck.Authz
     Luck.Web.Error
     Luck.Web.Dto

@@ -5,10 +5,18 @@ import type { AdminCatalogItem, AuthResp, CatalogItem, RecordDTO, UserDTO } from
 
 /** 인증 (회원가입/로그인/로그아웃). */
 const authApi = {
-  signup(email: string, password: string, displayName: string): Promise<AuthResp> {
-    return request("/auth/signup", {
+  // 1단계: 가입 정보 제출 → 백엔드가 6자리 인증번호를 발급(현재는 콘솔 로그).
+  requestSignup(email: string, password: string, displayName: string): Promise<{ message: string }> {
+    return request("/auth/signup/request", {
       method: "POST",
       body: JSON.stringify({ email, password, displayName }),
+    });
+  },
+  // 2단계: 받은 인증번호 확인 → 성공 시 토큰 + 사용자 정보 반환.
+  verifySignup(email: string, code: string): Promise<AuthResp> {
+    return request("/auth/signup/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
     });
   },
   login(email: string, password: string): Promise<AuthResp> {

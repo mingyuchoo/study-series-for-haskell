@@ -20,6 +20,12 @@ import           Luck.Web.Middleware
 import           Network.Wai              (Application)
 import           Network.Wai.Handler.Warp (run)
 import           Servant
+import           System.IO
+    ( BufferMode (LineBuffering)
+    , hSetBuffering
+    , stderr
+    , stdout
+    )
 import           Servant.Auth.Server
     ( CookieSettings
     , JWTSettings
@@ -40,6 +46,10 @@ mkApp env =
 
 main :: IO ()
 main = do
+  -- 컨테이너/파이프 환경에서 stdout 은 기본이 블록 버퍼링이라 로그가 즉시 보이지
+  -- 않는다. 라인 버퍼링으로 바꿔 putStrLn(가입 인증번호 등)이 줄 단위로 바로 출력되게 한다.
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
   cfg <- loadConfig
   pool <- newConnPool (cfgDbUrl cfg)
   initSchema pool

@@ -6,6 +6,7 @@ module Luck.Types.Auth
     , AuthResp (..)
     , LoginReq (..)
     , SignupReq (..)
+    , VerifyReq (..)
     ) where
 
 import           Data.Aeson
@@ -46,6 +47,19 @@ instance FromJSON SignupReq where
 
 instance ToJSON SignupReq where
   toJSON = genericToJSON (jsonOpts "sr")
+
+-- | 회원가입 인증번호 확인 요청 바디.
+data VerifyReq = VerifyReq
+  { veEmail :: Text
+  , veCode  :: Text
+  }
+  deriving stock (Show, Generic)
+
+instance FromJSON VerifyReq where
+  parseJSON = genericParseJSON (jsonOpts "ve")
+
+instance ToJSON VerifyReq where
+  toJSON = genericToJSON (jsonOpts "ve")
 
 -- | 로그인 요청 바디.
 data LoginReq = LoginReq

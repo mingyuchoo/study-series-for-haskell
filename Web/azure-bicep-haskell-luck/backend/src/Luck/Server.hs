@@ -7,7 +7,7 @@ module Luck.Server
 import Luck.Api (API, ProtectedAPI, PublicAPI)
 import Luck.App (AppM)
 import Luck.Handler.Admin (createItemH, deleteItemH, listItemsH, setActiveH, updateItemH)
-import Luck.Handler.Auth (catalogH, loginH, logoutH, signupH)
+import Luck.Handler.Auth (catalogH, loginH, logoutH, signupRequestH, signupVerifyH)
 import Luck.Handler.Profile (meH, updateMeH)
 import Luck.Handler.Record (putRecordH, recordH, recordsH)
 import Luck.Types.Auth (AuthUser)
@@ -21,7 +21,7 @@ server = publicServer :<|> protectedServer
 
 -- | 공개 라우트 서버.
 publicServer :: ServerT PublicAPI AppM
-publicServer = signupH :<|> loginH :<|> logoutH :<|> catalogH
+publicServer = signupRequestH :<|> signupVerifyH :<|> loginH :<|> logoutH :<|> catalogH
 
 -- | 보호 라우트 서버. 인증되지 않으면 모든 엔드포인트에서 401.
 protectedServer :: AuthResult AuthUser -> ServerT ProtectedAPI AppM

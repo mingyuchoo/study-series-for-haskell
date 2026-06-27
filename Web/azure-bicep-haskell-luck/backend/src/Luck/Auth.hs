@@ -1,6 +1,7 @@
 -- | 비밀번호 해싱/검증과 JWT 토큰 발급 헬퍼.
 module Luck.Auth
-    ( hashPassword
+    ( genVerificationCode
+    , hashPassword
     , issueToken
     , jwtSettingsFromSecret
     , verifyPassword
@@ -12,10 +13,13 @@ import           Crypto.BCrypt
     , validatePassword
     )
 import           Crypto.Hash          (SHA256 (..), hashWith)
+import           Crypto.Random        (getRandomBytes)
 import qualified Data.ByteArray       as BA
 import           Data.ByteString      (ByteString)
+import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BL
 import           Data.Text            (Text)
+import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as TE
 import           Data.Time            (addUTCTime, getCurrentTime, nominalDay)
 import           Luck.Types.Auth      (AuthUser)
@@ -25,6 +29,14 @@ import           Servant.Auth.Server
     , fromSecret
     , makeJWT
     )
+
+-- | 6자리 숫자 인증번호를 보안 난수로 생성한다. 앞자리 0 을 보존해 항상 6자리.
+--   (이메일 미연동 상태에서는 호출 측이 이 값을 콘솔에 출력한다.)
+genVerificationCode :: IO Text
+genVerificationCode = do
+  bytes <- getRandomBytes 4 :: IO ByteString
+  let n = BS.foldl' (\acc w -> acc * 256 + fromIntegral w) (0 :: Int) bytes
+  pure (T.justifyRight 6 '0' (T.pack (show (n `mod` 1000000))))
 
 -- | 평문 비밀번호를 bcrypt 해시(텍스트)로 만든다. 실패 시 'Nothing'.
 hashPassword :: Text -> IO (Maybe Text)
