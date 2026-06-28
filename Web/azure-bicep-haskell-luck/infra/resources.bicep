@@ -50,11 +50,11 @@ param adminEmails string = ''
 @description('연결할 커스텀 도메인(서브도메인). 기본값 lucky.mingyuchoo.com. apex(mingyuchoo.com)는 외부 DNS zone 이 관리하므로 Azure 에 DNS Zone 을 만들지 않는다 — 사용자가 외부 zone 에 CNAME/TXT 를 직접 추가한다. 비우면 커스텀 도메인 바인딩을 건너뛴다.')
 param customDomainName string = 'lucky.mingyuchoo.com'
 
-@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(bindingType: Disabled). 매니지드 인증서 발급의 전제 조건. 외부 zone 에 CNAME/asuid TXT 전파 완료 후 켤 것.')
-param addCustomHostname bool = false
+@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(bindingType: Disabled). 매니지드 인증서 발급의 전제 조건. DNS zone 에 CNAME/asuid TXT 전파 완료 후 켤 것.')
+param addCustomHostname bool = true
 
 @description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임이 등록된 뒤에 켤 것.')
-param bindCustomDomain bool = false
+param bindCustomDomain bool = true
 
 @allowed([
   'Asia Pacific'

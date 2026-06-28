@@ -45,10 +45,10 @@
       "value": "${CUSTOM_DOMAIN_NAME=lucky.mingyuchoo.com}"
     },
     "addCustomHostname": {
-      "value": "${ADD_CUSTOM_HOSTNAME=false}"
+      "value": "${ADD_CUSTOM_HOSTNAME=true}"
     },
     "bindCustomDomain": {
-      "value": "${BIND_CUSTOM_DOMAIN=false}"
+      "value": "${BIND_CUSTOM_DOMAIN=true}"
     }
   }
 }

@@ -50,11 +50,11 @@ param principalType string = 'User'
 @description('연결할 커스텀 도메인(서브도메인). 기본값 lucky.mingyuchoo.com — apex 는 외부 DNS zone 이 관리하므로 Azure 에 DNS Zone 을 만들지 않는다. 다른 도메인은 azd env set CUSTOM_DOMAIN_NAME <도메인>, 비활성화는 azd env set CUSTOM_DOMAIN_NAME "" 로 재정의.')
 param customDomainName string = 'lucky.mingyuchoo.com'
 
-@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(매니지드 인증서 발급의 전제 조건). 외부 zone 의 CNAME/TXT 전파 완료 후 켤 것. azd env set ADD_CUSTOM_HOSTNAME true')
-param addCustomHostname bool = false
+@description('2단계 플래그. true 이면 인증서 없이 호스트네임만 바인딩한다(매니지드 인증서 발급의 전제 조건). DNS zone 의 CNAME/TXT 전파 완료 후 켤 것. azd env set ADD_CUSTOM_HOSTNAME false 로 비활성화.')
+param addCustomHostname bool = true
 
-@description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN true')
-param bindCustomDomain bool = false
+@description('3단계 플래그. true 이면 매니지드 인증서 발급 + SNI/TLS 바인딩까지 수행한다. 2단계(addCustomHostname)로 호스트네임 등록 후 켤 것. azd env set BIND_CUSTOM_DOMAIN false 로 비활성화.')
+param bindCustomDomain bool = true
 
 @allowed([
   'Asia Pacific'
