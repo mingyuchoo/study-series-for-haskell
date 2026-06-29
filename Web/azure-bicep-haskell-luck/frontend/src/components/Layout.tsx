@@ -50,7 +50,12 @@ const Layout: Component<{ children?: JSX.Element }> = (props) => {
           </button>
         </div>
       </nav>
-      <main class="content">{props.children}</main>
+      <main class="content">
+        {/* 인증된 경우에만 자식을 마운트한다. 미인증 상태에서 Dashboard 등이
+            마운트돼 api/records 를 호출하면 401 이 새는 것을 막는다(리다이렉트는
+            위 createEffect 가 담당). */}
+        <Show when={auth.authed()}>{props.children}</Show>
+      </main>
     </div>
   );
 };
