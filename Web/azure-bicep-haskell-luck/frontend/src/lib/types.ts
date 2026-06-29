@@ -8,6 +8,7 @@ export interface UserDTO {
   timezone: string;
   isAdmin: boolean;
   createdAt: string;
+  themeKey: string;
 }
 
 export interface AuthResp {

@@ -56,6 +56,15 @@ export const theme = {
     localStorage.setItem(STORAGE_KEY, String(next));
     apply(next);
   },
+  /** key로 테마를 선택 + 저장 + 적용. 알 수 없는 key나 현재와 같으면 무시한다.
+   *  (프로필 선택/로그인 시 서버 themeKey 반영에 사용.) */
+  setByKey(key: string): void {
+    const i = THEMES.findIndex((t) => t.key === key);
+    if (i < 0 || i === index()) return;
+    setIndex(i);
+    localStorage.setItem(STORAGE_KEY, String(i));
+    apply(i);
+  },
   /** 저장된 테마를 DOM에 반영 (앱 시작 시 1회 호출). */
   init(): void {
     apply(index());

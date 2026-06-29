@@ -20,6 +20,7 @@ data UserDTO = UserDTO
   , udTimezone    :: Text
   , udIsAdmin     :: Bool
   , udCreatedAt   :: UTCTime
+  , udThemeKey    :: Text
   }
   deriving stock (Show, Generic)
 
@@ -34,6 +35,7 @@ data ProfileUpdate = ProfileUpdate
   { puDisplayName :: Text
   , puBio         :: Text
   , puTimezone    :: Text
+  , puThemeKey    :: Text
   }
   deriving stock (Show, Generic)
 

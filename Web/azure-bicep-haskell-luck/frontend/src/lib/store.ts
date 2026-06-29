@@ -2,6 +2,7 @@
 
 import { createSignal } from "solid-js";
 import { api } from "./api";
+import { theme } from "./theme";
 import { clearToken, getToken, setToken } from "./token";
 import type { UserDTO } from "./types";
 
@@ -15,6 +16,7 @@ export const auth = {
     setToken(token);
     setUserSignal(u);
     setAuthed(true);
+    theme.setByKey(u.themeKey);
   },
   setUser(u: UserDTO): void {
     setUserSignal(u);
@@ -29,7 +31,9 @@ export const auth = {
   async ensureLoaded(): Promise<void> {
     if (authed() && !user()) {
       try {
-        setUserSignal(await api.profile.me());
+        const u = await api.profile.me();
+        setUserSignal(u);
+        theme.setByKey(u.themeKey);
       } catch {
         // 무시
       }

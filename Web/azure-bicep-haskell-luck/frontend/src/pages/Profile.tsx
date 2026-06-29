@@ -1,8 +1,9 @@
-import { createSignal, onMount, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { api } from "../lib/api";
 import { ApiError } from "../lib/http";
 import { imeInput } from "../lib/ime";
 import { auth } from "../lib/store";
+import { THEMES, theme } from "../lib/theme";
 
 const TIMEZONES = [
   "Asia/Seoul",
@@ -18,6 +19,7 @@ export default function Profile() {
   const [displayName, setDisplayName] = createSignal("");
   const [bio, setBio] = createSignal("");
   const [timezone, setTimezone] = createSignal("Asia/Seoul");
+  const [themeKey, setThemeKey] = createSignal(theme.current().key);
   const [email, setEmail] = createSignal("");
   const [loading, setLoading] = createSignal(true);
   const [saving, setSaving] = createSignal(false);
@@ -31,6 +33,7 @@ export default function Profile() {
       setDisplayName(u.displayName);
       setBio(u.bio);
       setTimezone(u.timezone);
+      setThemeKey(u.themeKey);
       auth.setUser(u);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "프로필을 불러오지 못했습니다.");
@@ -39,13 +42,19 @@ export default function Profile() {
     }
   });
 
+  // 클릭 즉시 화면에 반영(미리보기). 영속화는 "변경 사항 저장"이 담당한다.
+  const pickTheme = (key: string) => {
+    setThemeKey(key);
+    theme.setByKey(key);
+  };
+
   const save = async (e: Event) => {
     e.preventDefault();
     setMsg("");
     setErr("");
     setSaving(true);
     try {
-      const u = await api.profile.update(displayName().trim(), bio(), timezone());
+      const u = await api.profile.update(displayName().trim(), bio(), timezone(), themeKey());
       auth.setUser(u);
       setMsg("저장되었습니다.");
     } catch (ex) {
@@ -84,6 +93,36 @@ export default function Profile() {
               ))}
             </select>
           </label>
+
+          <div class="field">
+            <span>색상 테마</span>
+            <div class="theme-swatches" role="radiogroup" aria-label="색상 테마">
+              <For each={THEMES}>
+                {(t) => (
+                  <button
+                    type="button"
+                    class="theme-swatch"
+                    classList={{ selected: themeKey() === t.key }}
+                    style={{ background: t.color }}
+                    role="radio"
+                    aria-checked={themeKey() === t.key}
+                    aria-label={t.label}
+                    title={t.label}
+                    onClick={() => pickTheme(t.key)}
+                  >
+                    <Show when={themeKey() === t.key}>
+                      <span class="theme-swatch-check" style={{ color: t.ink }}>
+                        ✓
+                      </span>
+                    </Show>
+                  </button>
+                )}
+              </For>
+            </div>
+            <span class="theme-swatch-hint">
+              선택: {THEMES.find((t) => t.key === themeKey())?.label ?? "—"}
+            </span>
+          </div>
 
           <Show when={err()}>
             <p class="form-error">{err()}</p>

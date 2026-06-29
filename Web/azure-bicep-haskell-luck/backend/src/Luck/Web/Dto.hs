@@ -25,6 +25,7 @@ userRowToDTO UserRow {..} =
     , udTimezone = urTimezone
     , udIsAdmin = urIsAdmin
     , udCreatedAt = urCreatedAt
+    , udThemeKey = urThemeKey
     }
 
 -- | 도메인 항목 → 공개 카탈로그 DTO (활성 여부는 노출하지 않는다).

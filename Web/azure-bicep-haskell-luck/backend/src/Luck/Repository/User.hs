@@ -34,12 +34,14 @@ data UserRow = UserRow
   , urTimezone     :: Text
   , urIsAdmin      :: Bool
   , urCreatedAt    :: UTCTime
+  , urThemeKey     :: Text
   }
 
 instance FromRow UserRow where
   fromRow =
     UserRow
       <$> field
+      <*> field
       <*> field
       <*> field
       <*> field
@@ -72,7 +74,7 @@ insertUser pool uid email pwHash displayName explicitAdmin firstUserFallback =
           c
           "INSERT INTO users (id, email, password_hash, display_name, is_admin)\
           \ VALUES (?, ?, ?, ?, (? OR (? AND (SELECT COUNT(*) = 0 FROM users))))\
-          \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at"
+          \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key"
           (uid, email, pwHash, displayName, explicitAdmin, firstUserFallback)
     case res of
       Left e
@@ -87,7 +89,7 @@ getUserByEmail pool email = withConn pool $ \c -> do
   rows <-
     query
       c
-      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at\
+      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key\
       \ FROM users WHERE email = ?"
       (Only email)
   pure (listToMaybe' rows)
@@ -105,22 +107,22 @@ getUserById pool uid = withConn pool $ \c -> do
   rows <-
     query
       c
-      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at\
+      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key\
       \ FROM users WHERE id = ?"
       (Only uid)
   pure (listToMaybe' rows)
 
 -- | 프로필 필드를 갱신하고 갱신된 행을 돌려준다.
 updateProfile
-  :: Pool Connection -> UUID -> Text -> Text -> Text -> IO (Maybe UserRow)
-updateProfile pool uid displayName bio timezone = withConn pool $ \c -> do
+  :: Pool Connection -> UUID -> Text -> Text -> Text -> Text -> IO (Maybe UserRow)
+updateProfile pool uid displayName bio timezone themeKey = withConn pool $ \c -> do
   rows <-
     query
       c
-      "UPDATE users SET display_name = ?, bio = ?, timezone = ?\
+      "UPDATE users SET display_name = ?, bio = ?, timezone = ?, theme_key = ?\
       \ WHERE id = ?\
-      \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at"
-      (displayName, bio, timezone, uid)
+      \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key"
+      (displayName, bio, timezone, themeKey, uid)
   pure (listToMaybe' rows)
 
 -- | ADMIN_EMAILS 로 지정된 이메일들을 관리자로 승격한다 (기동 시 호출, 멱등).

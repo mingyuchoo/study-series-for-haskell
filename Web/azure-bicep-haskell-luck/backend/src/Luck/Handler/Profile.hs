@@ -20,5 +20,5 @@ meH u = do
 
 updateMeH :: AuthUser -> ProfileUpdate -> AppM UserDTO
 updateMeH u ProfileUpdate {..} = do
-  mrow <- runDB (\p -> updateProfile p (auId u) puDisplayName puBio puTimezone)
+  mrow <- runDB (\p -> updateProfile p (auId u) puDisplayName puBio puTimezone puThemeKey)
   userRowToDTO <$> note404 "사용자를 찾을 수 없습니다." mrow

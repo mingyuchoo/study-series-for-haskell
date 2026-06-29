@@ -35,10 +35,10 @@ const profileApi = {
   me(): Promise<UserDTO> {
     return request("/me");
   },
-  update(displayName: string, bio: string, timezone: string): Promise<UserDTO> {
+  update(displayName: string, bio: string, timezone: string, themeKey: string): Promise<UserDTO> {
     return request("/me", {
       method: "PUT",
-      body: JSON.stringify({ displayName, bio, timezone }),
+      body: JSON.stringify({ displayName, bio, timezone, themeKey }),
     });
   },
 };
