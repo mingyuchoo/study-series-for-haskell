@@ -43,4 +43,5 @@ migrations =
   , Query $(embedFile "migrations/0002_admin_and_checklist.sql")
   , Query $(embedFile "migrations/0003_signup_verification.sql")
   , Query $(embedFile "migrations/0004_user_theme.sql")
+  , Query $(embedFile "migrations/0005_verification_attempts.sql")
   ]

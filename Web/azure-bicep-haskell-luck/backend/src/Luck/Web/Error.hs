@@ -22,6 +22,7 @@ toServerError = \case
   Forbidden m -> jsonErr err403 m
   Conflict m -> jsonErr err409 m
   NotFound m -> jsonErr err404 m
+  TooManyAttempts m -> jsonErr err429 m
   TokenFailure -> jsonErr err500 "토큰 발급에 실패했습니다."
   InternalError m -> jsonErr err500 m
 

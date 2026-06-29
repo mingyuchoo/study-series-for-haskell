@@ -28,6 +28,7 @@ import           Luck.Repository.Checklist     (listItems)
 import           Luck.Repository.User          (UserRow (..), getUserByEmail, insertUser)
 import           Luck.Repository.Verification
     ( VerificationRow (..)
+    , consumeVerificationAttempt
     , deleteVerification
     , getVerification
     , upsertVerification
@@ -48,6 +49,12 @@ import           Luck.Web.Error                (toServerError)
 --   메일 전송 지연·스팸함 확인 시간을 감안해 넉넉히 15분.
 verificationTtlSeconds :: Num a => a
 verificationTtlSeconds = 15 * 60
+
+-- | 코드 1건당 허용하는 최대 확인 시도 횟수. 초과하면 잠기고 재요청해야 한다.
+--   IP 레이트리밋과 별개로 계정(이메일)별 상한을 두어, IP 를 바꿔가며 시도해도
+--   6자리(100만 경우의 수) brute-force 가 불가능하게 한다(5회 → 우연 일치 ~5e-6).
+maxVerifyAttempts :: Int
+maxVerifyAttempts = 5
 
 -- | 1단계: 가입 정보를 검증하고 인증번호를 발급한다.
 --   비밀번호 해시·이름을 인증 대기 테이블에 임시 저장하고, 6자리 코드를
@@ -96,13 +103,23 @@ signupVerifyH :: VerifyReq -> AppM AuthResp
 signupVerifyH VerifyReq {..} = do
   let email = T.strip veEmail
       badCode = ValidationError "인증번호가 올바르지 않거나 만료되었습니다."
-  mrow <- runDB (\p -> getVerification p email)
+      lockedErr = TooManyAttempts "인증번호 확인 시도가 너무 많습니다. 인증번호를 다시 요청해 주세요."
+  -- 시도를 원자적으로 1회 소비한다(상한 초과면 Nothing). 계정별 brute-force 차단의 핵심.
+  mrow <- runDB (\p -> consumeVerificationAttempt p email maxVerifyAttempts)
   row <-
     case mrow of
       Just r -> pure r
       Nothing -> do
-        liftIO $ putStrLn ("[VERIFY] no pending row for " <> T.unpack email)
-        throwError (toServerError badCode)
+        -- 게이팅은 위 원자적 UPDATE 가 이미 끝냈다. 여기서는 미존재 vs 잠김을
+        -- 구분해 적절한 메시지/로그만 남긴다(보안 판단 아님).
+        stillPending <- runDB (\p -> getVerification p email)
+        case stillPending of
+          Just _ -> do
+            liftIO $ putStrLn ("[VERIFY] locked (max attempts) for " <> T.unpack email)
+            throwError (toServerError lockedErr)
+          Nothing -> do
+            liftIO $ putStrLn ("[VERIFY] no pending row for " <> T.unpack email)
+            throwError (toServerError badCode)
   now <- liftIO getCurrentTime
   let codeMismatch = vrCode row /= T.strip veCode
       expired = vrExpiresAt row < now

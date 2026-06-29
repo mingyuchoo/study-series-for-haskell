@@ -121,12 +121,22 @@ isAuthPath :: [Text] -> Bool
 isAuthPath ("api" : "auth" : _) = True
 isAuthPath _                    = False
 
--- | 클라이언트 식별 키. 프록시 뒤를 고려해 X-Forwarded-For 첫 IP를 우선 사용.
+-- | 클라이언트 식별 키. 프록시(ACA 인그레스) 뒤에서 동작하므로
+--   X-Forwarded-For 의 **맨 뒤** IP(= 신뢰 프록시가 직접 추가한 실제 접속 IP)를 쓴다.
+--
+--   맨 앞 값은 클라이언트가 임의로 주입할 수 있다(프록시는 실제 IP를 뒤에 덧붙임).
+--   따라서 첫 IP를 키로 쓰면 매 요청 다른 값을 넣어 레이트리밋을 통째로 우회할 수
+--   있으므로 절대 쓰지 않는다. XFF 가 없거나 비면 TCP 피어로 폴백한다.
 clientKey :: Request -> ByteString
 clientKey req =
-  case lookup "X-Forwarded-For" (requestHeaders req) of
-    Just v  -> BS.takeWhile (/= ',') (BS.dropWhile (== ' ') v)
+  case lookup "X-Forwarded-For" (requestHeaders req) >>= lastIp of
+    Just ip -> ip
     Nothing -> BS.pack (show (remoteHost req))
+  where
+    lastIp v =
+      case reverse (filter (not . BS.null) (map (BS.filter (/= ' ')) (BS.split ',' v))) of
+        (ip : _) -> Just ip
+        []       -> Nothing
 
 tooMany :: Response
 tooMany =

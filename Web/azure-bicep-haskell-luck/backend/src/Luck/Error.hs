@@ -20,6 +20,8 @@ data DomainError
     Conflict Text
   | -- | 리소스를 찾을 수 없음 (→ 404)
     NotFound Text
+  | -- | 시도 횟수 초과 (→ 429)
+    TooManyAttempts Text
   | -- | JWT 발급 실패 (→ 500)
     TokenFailure
   | -- | 기타 내부 오류 (→ 500)
