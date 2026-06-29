@@ -435,7 +435,9 @@ resource web 'Microsoft.App/containerApps@2024-03-01' = {
 }
 
 // ---------- 매니지드 인증서 (HTTPS, 3단계에서만) ----------
-// 외부 zone 의 asuid.<sub> TXT 로 소유권을 검증(domainControlValidation: 'TXT')한 뒤 무료 인증서를 발급한다.
+// CNAME 검증: 커스텀 도메인의 CNAME 이 이미 컨테이너 앱 FQDN 을 가리키면(1단계에서 추가) 별도 토큰 TXT 없이
+// 자동으로 소유권이 검증돼 무료 인증서가 발급된다. (TXT 검증은 인증서 생성 전에 _dnsauth.<sub> 토큰 TXT 를
+// 미리 넣어야 하는 순서 의존성이 있어 자동화에 취약 — 그래서 CNAME 으로 둔다.)
 // 호스트네임이 2단계(addCustomHostname=true)에서 이미 등록돼 있어야 발급에 성공한다.
 resource cert 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' = if (doBindCustomDomain) {
   parent: containerEnv
@@ -444,7 +446,7 @@ resource cert 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01'
   tags: tags
   properties: {
     subjectName: customDomainName
-    domainControlValidation: 'TXT'
+    domainControlValidation: 'CNAME'
   }
 }
 
