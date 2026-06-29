@@ -1,9 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
--- | 인증/카탈로그 핸들러 (회원가입, 로그인, 로그아웃, 체크리스트 목록).
+-- | 인증 핸들러 (회원가입, 로그인, 로그아웃). 공개 카탈로그는 'Luck.Handler.Catalog'.
 module Luck.Handler.Auth
-    ( catalogH
-    , loginH
+    ( loginH
     , logoutH
     , signupRequestH
     , signupVerifyH
@@ -24,7 +23,6 @@ import           Luck.Email                    (sendVerificationCode)
 import           Luck.Domain.Validation        (validateSignup)
 import           Luck.Error                    (DomainError (..))
 import           Luck.Handler.Util             (liftEither, runDB)
-import           Luck.Repository.Checklist     (listItems)
 import           Luck.Repository.User          (UserRow (..), getUserByEmail, insertUser)
 import           Luck.Repository.Verification
     ( VerificationRow (..)
@@ -40,9 +38,8 @@ import           Luck.Types.Auth
     , SignupReq (..)
     , VerifyReq (..)
     )
-import           Luck.Types.Checklist          (CatalogItem)
 import           Luck.Types.Common             (MessageResp (..))
-import           Luck.Web.Dto                  (checklistItemToCatalog, userRowToDTO)
+import           Luck.Web.Dto                  (userRowToDTO)
 import           Luck.Web.Error                (toServerError)
 
 -- | 인증번호 유효시간 (초). 이메일로 받은 6자리를 이 시간 안에 입력해야 한다.
@@ -150,9 +147,6 @@ loginH LoginReq {..} = do
 
 logoutH :: AppM MessageResp
 logoutH = pure (MessageResp "로그아웃되었습니다. 클라이언트에서 토큰을 삭제하세요.")
-
-catalogH :: AppM [CatalogItem]
-catalogH = map checklistItemToCatalog <$> runDB listItems
 
 -- | 토큰 + 사용자 DTO 응답을 만든다.
 mkAuthResp :: UserRow -> AppM AuthResp

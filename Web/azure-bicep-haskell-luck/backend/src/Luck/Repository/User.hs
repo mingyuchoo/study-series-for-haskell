@@ -20,7 +20,6 @@ import           Data.Time                          (UTCTime)
 import           Data.UUID                          (UUID)
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
-import           Database.PostgreSQL.Simple.Types   (In (..))
 import           Luck.DB                            (withConn)
 import           Luck.Error                         (DomainError (..))
 
@@ -50,6 +49,13 @@ instance FromRow UserRow where
       <*> field
       <*> field
 
+-- | users 행을 읽는 컬럼 목록(단일 출처). 순서는 위 'FromRow' 의 field 순서와
+--   반드시 일치해야 한다 — 둘을 나란히 두어 함께 바꾸도록 한다.
+--   모든 SELECT/RETURNING 이 이 상수를 재사용해, 컬럼 추가 시 한 곳만 고치면 된다.
+userColumns :: Query
+userColumns =
+  "id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key"
+
 -- | 새 사용자를 삽입한다. 이메일 중복(23505)이면 @Left EmailTaken@.
 --
 --   관리자 부여 규칙 (호출 측에서 정책 결정):
@@ -72,9 +78,9 @@ insertUser pool uid email pwHash displayName explicitAdmin firstUserFallback =
       try $
         query
           c
-          "INSERT INTO users (id, email, password_hash, display_name, is_admin)\
-          \ VALUES (?, ?, ?, ?, (? OR (? AND (SELECT COUNT(*) = 0 FROM users))))\
-          \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key"
+          ( "INSERT INTO users (id, email, password_hash, display_name, is_admin)\
+            \ VALUES (?, ?, ?, ?, (? OR (? AND (SELECT COUNT(*) = 0 FROM users))))\
+            \ RETURNING " <> userColumns )
           (uid, email, pwHash, displayName, explicitAdmin, firstUserFallback)
     case res of
       Left e
@@ -89,8 +95,7 @@ getUserByEmail pool email = withConn pool $ \c -> do
   rows <-
     query
       c
-      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key\
-      \ FROM users WHERE email = ?"
+      ( "SELECT " <> userColumns <> " FROM users WHERE email = ?" )
       (Only email)
   pure (listToMaybe' rows)
 
@@ -107,8 +112,7 @@ getUserById pool uid = withConn pool $ \c -> do
   rows <-
     query
       c
-      "SELECT id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key\
-      \ FROM users WHERE id = ?"
+      ( "SELECT " <> userColumns <> " FROM users WHERE id = ?" )
       (Only uid)
   pure (listToMaybe' rows)
 
@@ -119,9 +123,9 @@ updateProfile pool uid displayName bio timezone themeKey = withConn pool $ \c ->
   rows <-
     query
       c
-      "UPDATE users SET display_name = ?, bio = ?, timezone = ?, theme_key = ?\
-      \ WHERE id = ?\
-      \ RETURNING id, email, password_hash, display_name, bio, timezone, is_admin, created_at, theme_key"
+      ( "UPDATE users SET display_name = ?, bio = ?, timezone = ?, theme_key = ?\
+        \ WHERE id = ?\
+        \ RETURNING " <> userColumns )
       (displayName, bio, timezone, themeKey, uid)
   pure (listToMaybe' rows)
 

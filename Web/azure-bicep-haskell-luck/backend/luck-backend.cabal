@@ -56,6 +56,7 @@ library
     Luck.Api
     Luck.Handler.Util
     Luck.Handler.Auth
+    Luck.Handler.Catalog
     Luck.Handler.Profile
     Luck.Handler.Record
     Luck.Handler.Admin
