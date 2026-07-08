@@ -12,6 +12,9 @@ extra-source-files:
 synopsis: A transformer-based language model implemented in pure Haskell
 category: Machine Learning
 
+default-extensions:
+- ImportQualifiedPost
+
 description: |
   HaskellGPT is a complete Haskell port of RustGPT, implementing a transformer-based
   language model using pure functional programming. It includes pre-training and

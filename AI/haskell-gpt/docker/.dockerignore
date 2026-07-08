@@ -1,0 +1,40 @@
+# Build artifacts
+.stack-work/
+dist/
+dist-newstyle/
+
+# VCS
+.git/
+.gitignore
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Documentation (not needed for runtime)
+docs/
+
+# Development tools
+format.sh
+.stylish-haskell.yaml
+.projectile
+hie.yaml
+
+# Keep necessary files
+!README.md
+!CHANGELOG.md
+!LICENSE

@@ -21,7 +21,7 @@ import Control.Monad (foldM)
 
 import Data.Char (isAlphaNum, isPunctuation)
 import Data.List (foldl', intercalate)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 
 import HaskellGPT.Types (Layer (..), Matrix, SomeLayer (..), clipGradients, maxSeqLen)
 import HaskellGPT.Vocab (Vocab, decode, encode, vocabSize)
@@ -65,7 +65,7 @@ tokenize :: LLM -> String -> [Int]
 tokenize llm text =
   let vocab = llmVocab llm
       -- Split text into words and punctuation
-      tokens = tokenizeText text
+      tokens = tokenizeText vocab text
       -- Convert each token to ID, using [UNK] for unknown words
       unkId = fromMaybe 1 $ encode vocab "[UNK]" -- Default [UNK] is at index 1
       tokenIds = map (\token -> fromMaybe unkId $ encode vocab token) tokens
@@ -73,19 +73,30 @@ tokenize llm text =
 
 -- | Tokenize a single text string into words and punctuation
 -- Splits on whitespace and treats punctuation as separate tokens
-tokenizeText :: String -> [String]
-tokenizeText text = concatMap splitWord (words text)
+tokenizeText :: Vocab -> String -> [String]
+tokenizeText vocab text = concatMap (splitWord vocab) (words text)
 
 -- | Split a word into alphanumeric parts and punctuation
 -- "hello," -> ["hello", ","]
 -- "it's" -> ["it", "'", "s"]
-splitWord :: String -> [String]
-splitWord [] = []
-splitWord str =
-  let (alphanum, rest) = span isAlphaNum str
-      (punct, remaining) = span isPunctuation rest
-      result = filter (not . null) [alphanum, punct]
-   in result ++ splitWord remaining
+-- Special tokens present in the vocabulary (e.g. "</s>") are kept intact.
+splitWord :: Vocab -> String -> [String]
+splitWord _ [] = []
+splitWord vocab str
+  -- Keep known vocabulary tokens (including special tokens like "</s>")
+  -- intact rather than splitting them into pieces.
+  | isJust (encode vocab str) = [str]
+  | otherwise =
+      let (alphanum, rest) = span isAlphaNum str
+          (punct, remaining) = span isPunctuation rest
+       in case (alphanum, punct) of
+            -- Leading character is neither alphanumeric nor punctuation
+            -- (e.g. a symbol like '<'). Emit it as its own token so the
+            -- recursion always consumes input and terminates.
+            ("", "") -> [take 1 str] ++ splitWord vocab (drop 1 str)
+            _ ->
+              filter (not . null) [alphanum, punct]
+                ++ splitWord vocab remaining
 
 -- | Detokenize token IDs back to text
 -- Converts token IDs to words and joins them with spaces

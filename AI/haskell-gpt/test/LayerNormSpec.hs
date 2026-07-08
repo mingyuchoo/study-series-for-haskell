@@ -241,7 +241,8 @@ spec = do
         let (ln', output) = forward ln input
 
         -- Backward pass with non-uniform gradients
-        let grads = (3 >< 32) $ concat [[fromIntegral j * 0.1 | j <- [1 .. 32 :: Int]] | _ <- [0 .. 2 :: Int]]
+        let grads =
+              (3 >< 32) $ concat [[fromIntegral j * 0.1 | j <- [1 .. 32 :: Int]] | _ <- [0 .. 2 :: Int]]
         let lr = 0.01
         let (ln'', inputGrads) = backward ln' grads lr
 

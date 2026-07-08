@@ -16,7 +16,8 @@ main = do
 
   -- 1. Load pretraining and chat training data from JSON files
   putStrLn "Loading training data..."
-  datasetResult <- loadDataset "data/pretraining_data.json" "data/chat_training_data.json" JSON
+  datasetResult <-
+    loadDataset "data/pretraining_data.json" "data/chat_training_data.json" JSON
 
   case datasetResult of
     Left err -> do
@@ -113,11 +114,11 @@ createLLM vocab = do
 
   -- Wrap layers in SomeLayer existential type
   let network =
-        [ SomeLayer embeddings,
-          SomeLayer transformer1,
-          SomeLayer transformer2,
-          SomeLayer transformer3,
-          SomeLayer outputProj
+        [ SomeLayer embeddings
+        , SomeLayer transformer1
+        , SomeLayer transformer2
+        , SomeLayer transformer3
+        , SomeLayer outputProj
         ]
 
   return $ newLLM vocab network
