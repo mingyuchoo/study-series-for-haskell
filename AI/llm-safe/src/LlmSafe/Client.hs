@@ -134,17 +134,18 @@ extractContent bs = do
 --
 --   신뢰도가 설정의 최소 요구 수준 미만이면 재시도한다.
 --   최대 재시도 횟수를 초과하면 'RetryExhausted'를 반환한다.
-callLlmWithRetry :: LlmConfig -> (String -> IO ()) -> String -> IO (Either LlmError (LlmResponse String))
+callLlmWithRetry
+  :: LlmConfig -> (String -> IO ()) -> String -> IO (Either LlmError (LlmResponse String))
 callLlmWithRetry config logger prompt = go (configMaxRetries config)
- where
-  go 0 = pure $ Left (RetryExhausted (configMaxRetries config))
-  go n = do
-    response <- callLlm config logger prompt
-    if confidence response < configMinConfidence config
-      then do
-        logger $ "[재시도] 신뢰도 부족, 남은 횟수: " <> show (n - 1)
-        go (n - 1)
-      else pure $ Right response
+  where
+    go 0 = pure $ Left (RetryExhausted (configMaxRetries config))
+    go n = do
+      response <- callLlm config logger prompt
+      if confidence response < configMinConfidence config
+        then do
+          logger $ "[재시도] 신뢰도 부족, 남은 횟수: " <> show (n - 1)
+          go (n - 1)
+        else pure $ Right response
 
 -- | N개의 에이전트를 병렬로 실행하여 응답 목록을 수집한다.
 --
@@ -156,7 +157,7 @@ callLlmN config logger n prompt =
   where
     runAgent i =
       let agentLogger msg = logger $ "[에이전트 " <> show i <> "/" <> show n <> "] " <> msg
-      in  callLlm config agentLogger prompt
+       in callLlm config agentLogger prompt
 
 -- | 모의 LLM 호출. 테스트용으로 순수한 응답을 생성한다.
 mockCallLlm :: Confidence -> String -> String -> LlmResponse String
