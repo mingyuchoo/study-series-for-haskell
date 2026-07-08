@@ -43,7 +43,7 @@ ghcid: setup
 	ghcid --command "stack ghci test/Spec.hs"
 
 run: setup
-	time stack exec $(PROJECT_NAME)-exe
+	bash -c 'time stack exec $(PROJECT_NAME)-exe'
 
 release: setup
 	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS" --docker
