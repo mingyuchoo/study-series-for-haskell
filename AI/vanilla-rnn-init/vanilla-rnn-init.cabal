@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -36,7 +36,7 @@ library
   build-depends:
       base
     , random
-  default-language: GHC2024
+  default-language: Haskell2010
 
 executable vanilla-rnn-init-exe
   main-is: Main.hs
@@ -51,7 +51,7 @@ executable vanilla-rnn-init-exe
       base
     , random
     , vanilla-rnn-init
-  default-language: GHC2024
+  default-language: Haskell2010
 
 test-suite vanilla-rnn-init-test
   type: exitcode-stdio-1.0
@@ -67,4 +67,4 @@ test-suite vanilla-rnn-init-test
       base
     , random
     , vanilla-rnn-init
-  default-language: GHC2024
+  default-language: Haskell2010
