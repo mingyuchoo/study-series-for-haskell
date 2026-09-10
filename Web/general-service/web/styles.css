@@ -15,3 +15,26 @@ body { margin:0; background:var(--cream); color:var(--ink); font-family:Inter, P
 @media (min-width:1900px) { .content { grid-template-columns:minmax(460px, 540px) minmax(0, 1fr); margin-left:48px; margin-right:48px; }.hero { padding-left:48px; padding-right:48px; }.kanban-board { gap:18px; } }
 @media (max-width:1100px) { .priority-summary { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 @media (max-width:700px) { .hero { padding:28px 16px; }.content { margin:22px 16px 48px; gap:24px; }.form-grid { grid-template-columns:1fr; }.editor { padding:20px; }.board-heading { align-items:flex-start; flex-direction:column; gap:10px; }.swimlane-heading { align-items:flex-start; flex-direction:column; gap:4px; }.kanban-board { grid-template-columns:1fr; overflow:visible; padding-bottom:0; }.kanban-column { min-height:auto; }.kanban-cards { min-height:auto; }.row-actions { margin-right:-4px; }.live-dot { display:none; }.section-heading { align-items:flex-start; flex-direction:column; gap:4px; }.detail-panel { width:100vw; padding:20px 18px 28px; }.detail-grid { grid-template-columns:1fr; } }
+
+/* The editor uses the same right-hand drawer pattern as task details. */
+.content { display:block; }
+.editor { padding:0; }
+.editor.card { border:0; border-radius:0; background:transparent; box-shadow:none; }
+.editor-panel { width:min(620px, 100vw); }
+.editor .section-heading > div { display:flex; flex-direction:column; gap:4px; }
+.editor .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.board-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+.new-task-button { flex:none; white-space:nowrap; }
+
+@media (min-width:1400px) {
+  .content { display:block; }
+  .editor { position:static; max-height:none; overflow:visible; }
+  .editor .form-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width:700px) {
+  .editor { padding:0; }
+  .editor .section-heading { flex-direction:row; }
+  .editor .form-grid { grid-template-columns:1fr; }
+  .board-actions { width:100%; justify-content:space-between; }
+}

@@ -34,6 +34,7 @@ type alias Model =
     , session : Maybe Session
     , profileOpen : Bool
     , profileDraft : String
+    , editorOpen : Bool
     }
 
 
@@ -98,6 +99,8 @@ type Msg
     | EditTaskOwner String
     | EditOutcomeOwner String
     | EditExpectedResult String
+    | OpenNewTask
+    | CloseEditor
     | SubmitTask
     | StartEdit Task
     | CancelEdit
@@ -140,6 +143,7 @@ initialModel =
     , session = Nothing
     , profileOpen = False
     , profileDraft = ""
+    , editorOpen = False
     }
 
 
@@ -314,6 +318,12 @@ update msg model =
         EditExpectedResult expected ->
             ( updateForm (\form -> { form | expectedResult = expected }) model, [] )
 
+        OpenNewTask ->
+            ( { model | editorOpen = True, editing = Nothing, draft = Task.emptyInput, notice = Nothing }, [] )
+
+        CloseEditor ->
+            ( closeEditor model, [] )
+
         SubmitTask ->
             case Task.validateInput model.draft of
                 Err Task.TitleRequired ->
@@ -330,10 +340,10 @@ update msg model =
                             )
 
         StartEdit task ->
-            ( { model | editing = Just task, draft = toInput task, notice = Nothing } |> closePanel, [] )
+            ( { model | editing = Just task, draft = toInput task, editorOpen = True, notice = Nothing } |> closePanel, [] )
 
         CancelEdit ->
-            ( { model | editing = Nothing, draft = Task.emptyInput }, [] )
+            ( closeEditor model, [] )
 
         DeleteRequested taskId ->
             ( { model | loading = True, notice = Nothing } |> closePanel, [ DeleteTask taskId ] )
@@ -341,7 +351,7 @@ update msg model =
         Saved result ->
             case result of
                 Ok _ ->
-                    showNotice "업무가 저장되었습니다." { model | draft = Task.emptyInput, editing = Nothing }
+                    showNotice "업무가 저장되었습니다." (closeEditor model)
                         |> addEffect LoadTasks
 
                 Err error ->
@@ -490,6 +500,11 @@ updateForm transform model =
 closePanel : Model -> Model
 closePanel model =
     { model | selectedTaskId = Nothing, submissionDraft = "", reviewDraft = "" }
+
+
+closeEditor : Model -> Model
+closeEditor model =
+    { model | editorOpen = False, editing = Nothing, draft = Task.emptyInput }
 
 
 findTask : Int -> Model -> Maybe Task

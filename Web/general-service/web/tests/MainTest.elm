@@ -64,6 +64,25 @@ suite =
                         Expect.equal
                             ( Just "업무 제목을 입력해 주세요.", [ TaskBoard.ClearNoticeAfter 1 ] )
                             ( model.notice, effects )
+        , test "새 업무 등록을 열고 닫으면 입력 상태를 초기화한다" <|
+            \_ ->
+                let
+                    baseModel =
+                        TaskBoard.initialModel
+
+                    modelWithEditing =
+                        { baseModel | editing = Just sampleTask }
+
+                    openedModel =
+                        TaskBoard.update TaskBoard.OpenNewTask modelWithEditing
+                            |> Tuple.first
+
+                    ( closedModel, effects ) =
+                        TaskBoard.update TaskBoard.CloseEditor openedModel
+                in
+                Expect.equal
+                    { opened = True, openedEditing = Nothing, openedDraft = Task.emptyInput, closed = False, closedEditing = Nothing, closedDraft = Task.emptyInput, effects = [] }
+                    { opened = openedModel.editorOpen, openedEditing = openedModel.editing, openedDraft = openedModel.draft, closed = closedModel.editorOpen, closedEditing = closedModel.editing, closedDraft = closedModel.draft, effects = effects }
         , test "새 업무는 입력 상태와 관계없이 초안으로 저장한다" <|
             \_ ->
                 let
@@ -263,8 +282,8 @@ suite =
                         TaskBoard.update (TaskBoard.DeleteRequested 1) { boardModel | tasks = [ sampleTask ], selectedTaskId = Just 1 }
                 in
                 Expect.equal
-                    { editSelected = Nothing, editing = Just sampleTask, deleteSelected = Nothing, deleteEffects = [ TaskBoard.DeleteTask 1 ] }
-                    { editSelected = editModel.selectedTaskId, editing = editModel.editing, deleteSelected = deleteModel.selectedTaskId, deleteEffects = deleteEffects }
+                    { editSelected = Nothing, editing = Just sampleTask, editorOpen = True, deleteSelected = Nothing, deleteEffects = [ TaskBoard.DeleteTask 1 ] }
+                    { editSelected = editModel.selectedTaskId, editing = editModel.editing, editorOpen = editModel.editorOpen, deleteSelected = deleteModel.selectedTaskId, deleteEffects = deleteEffects }
         , test "오래된 타이머는 새 알림을 닫지 않는다" <|
             \_ ->
                 let

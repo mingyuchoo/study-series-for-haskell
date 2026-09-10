@@ -5339,7 +5339,7 @@ var $author$project$Domain$Task$Draft = {$: 'Draft'};
 var $author$project$Domain$Task$Important = {$: 'Important'};
 var $author$project$Domain$Task$NotUrgent = {$: 'NotUrgent'};
 var $author$project$Domain$Task$emptyInput = {description: '', expectedResult: '', importance: $author$project$Domain$Task$Important, outcomeOwner: '', status: $author$project$Domain$Task$Draft, taskOwner: '', title: '', urgency: $author$project$Domain$Task$NotUrgent};
-var $author$project$Application$TaskBoard$initialModel = {authDisplayName: '', authEmail: '', authMode: $author$project$Application$TaskBoard$SignIn, authPassword: '', draft: $author$project$Domain$Task$emptyInput, draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing, editing: $elm$core$Maybe$Nothing, loading: false, notice: $elm$core$Maybe$Nothing, noticeVersion: 0, profileDraft: '', profileOpen: false, reviewDraft: '', selectedTaskId: $elm$core$Maybe$Nothing, session: $elm$core$Maybe$Nothing, submissionDraft: '', tasks: _List_Nil};
+var $author$project$Application$TaskBoard$initialModel = {authDisplayName: '', authEmail: '', authMode: $author$project$Application$TaskBoard$SignIn, authPassword: '', draft: $author$project$Domain$Task$emptyInput, draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing, editing: $elm$core$Maybe$Nothing, editorOpen: false, loading: false, notice: $elm$core$Maybe$Nothing, noticeVersion: 0, profileDraft: '', profileOpen: false, reviewDraft: '', selectedTaskId: $elm$core$Maybe$Nothing, session: $elm$core$Maybe$Nothing, submissionDraft: '', tasks: _List_Nil};
 var $author$project$Application$TaskBoard$init = _Utils_Tuple2($author$project$Application$TaskBoard$initialModel, _List_Nil);
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
@@ -5424,6 +5424,11 @@ var $elm$core$List$any = F2(
 			}
 		}
 	});
+var $author$project$Application$TaskBoard$closeEditor = function (model) {
+	return _Utils_update(
+		model,
+		{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing, editorOpen: false});
+};
 var $author$project$Application$TaskBoard$closePanel = function (model) {
 	return _Utils_update(
 		model,
@@ -5920,6 +5925,16 @@ var $author$project$Application$TaskBoard$update = F2(
 						},
 						model),
 					_List_Nil);
+			case 'OpenNewTask':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing, editorOpen: true, notice: $elm$core$Maybe$Nothing}),
+					_List_Nil);
+			case 'CloseEditor':
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closeEditor(model),
+					_List_Nil);
 			case 'SubmitTask':
 				var _v12 = $author$project$Domain$Task$validateInput(model.draft);
 				if (_v12.$ === 'Err') {
@@ -5961,14 +5976,13 @@ var $author$project$Application$TaskBoard$update = F2(
 							{
 								draft: $author$project$Application$TaskBoard$toInput(task),
 								editing: $elm$core$Maybe$Just(task),
+								editorOpen: true,
 								notice: $elm$core$Maybe$Nothing
 							})),
 					_List_Nil);
 			case 'CancelEdit':
 				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing}),
+					$author$project$Application$TaskBoard$closeEditor(model),
 					_List_Nil);
 			case 'DeleteRequested':
 				var taskId = msg.a;
@@ -5990,9 +6004,7 @@ var $author$project$Application$TaskBoard$update = F2(
 						A2(
 							$author$project$Application$TaskBoard$showNotice,
 							'업무가 저장되었습니다.',
-							_Utils_update(
-								model,
-								{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing})));
+							$author$project$Application$TaskBoard$closeEditor(model)));
 				} else {
 					var error = result.a;
 					return A2(
@@ -7301,6 +7313,7 @@ var $author$project$Presentation$TaskBoard$detailView = function (model) {
 				]));
 	}
 };
+var $author$project$Application$TaskBoard$CloseEditor = {$: 'CloseEditor'};
 var $author$project$Application$TaskBoard$CancelEdit = {$: 'CancelEdit'};
 var $author$project$Application$TaskBoard$EditDescription = function (a) {
 	return {$: 'EditDescription', a: a};
@@ -7452,20 +7465,39 @@ var $author$project$Presentation$TaskBoard$formView = function (model) {
 				_List_fromArray(
 					[
 						A2(
-						$elm$html$Html$h2,
+						$elm$html$Html$div,
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text(
-								isEditing ? '업무 수정' : '새 업무 등록')
+								A2(
+								$elm$html$Html$h2,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										isEditing ? '업무 수정' : '새 업무 등록')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										isEditing ? '변경 내용을 저장하세요' : '업무를 흐름에 추가하세요')
+									]))
 							])),
 						A2(
-						$elm$html$Html$span,
-						_List_Nil,
+						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$text(
-								isEditing ? '변경 내용을 저장하세요' : '업무를 흐름에 추가하세요')
+								$elm$html$Html$Attributes$class('icon-button'),
+								$elm$html$Html$Attributes$type_('button'),
+								A2($elm$html$Html$Attributes$attribute, 'aria-label', '닫기'),
+								$elm$html$Html$Events$onClick($author$project$Application$TaskBoard$CloseEditor)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('×')
 							]))
 					])),
 				A2(
@@ -7690,6 +7722,7 @@ var $author$project$Presentation$TaskBoard$formView = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$class('button secondary'),
+								$elm$html$Html$Attributes$type_('button'),
 								$elm$html$Html$Events$onClick($author$project$Application$TaskBoard$CancelEdit)
 							]),
 						_List_fromArray(
@@ -7701,6 +7734,7 @@ var $author$project$Presentation$TaskBoard$formView = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$class('button primary'),
+								$elm$html$Html$Attributes$type_('button'),
 								$elm$html$Html$Attributes$disabled(model.loading),
 								$elm$html$Html$Events$onClick($author$project$Application$TaskBoard$SubmitTask)
 							]),
@@ -7711,6 +7745,41 @@ var $author$project$Presentation$TaskBoard$formView = function (model) {
 							]))
 					]))
 			]));
+};
+var $author$project$Presentation$TaskBoard$editorView = function (model) {
+	return model.editorOpen ? A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('detail-layer editor-layer')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('detail-backdrop'),
+						$elm$html$Html$Events$onClick($author$project$Application$TaskBoard$CloseEditor)
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$aside,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('detail-panel editor-panel'),
+						A2($elm$html$Html$Attributes$attribute, 'role', 'dialog'),
+						A2($elm$html$Html$Attributes$attribute, 'aria-modal', 'true'),
+						A2(
+						$elm$html$Html$Attributes$attribute,
+						'aria-label',
+						(!_Utils_eq(model.editing, $elm$core$Maybe$Nothing)) ? '업무 수정' : '새 업무 등록')
+					]),
+				_List_fromArray(
+					[
+						$author$project$Presentation$TaskBoard$formView(model)
+					]))
+			])) : $elm$html$Html$text('');
 };
 var $author$project$Application$TaskBoard$LogoutRequested = {$: 'LogoutRequested'};
 var $author$project$Application$TaskBoard$ToggleProfile = {$: 'ToggleProfile'};
@@ -7818,6 +7887,7 @@ var $author$project$Presentation$TaskBoard$headerView = function (model) {
 					]))
 			]));
 };
+var $author$project$Application$TaskBoard$OpenNewTask = {$: 'OpenNewTask'};
 var $elm$core$List$isEmpty = function (xs) {
 	if (!xs.b) {
 		return true;
@@ -8297,16 +8367,37 @@ var $author$project$Presentation$TaskBoard$kanbanBoard = function (model) {
 									]))
 							])),
 						A2(
-						$elm$html$Html$span,
+						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('board-total')
+								$elm$html$Html$Attributes$class('board-actions')
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(
-									$elm$core$List$length(model.tasks)) + '개 업무')
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('board-total')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										$elm$core$String$fromInt(
+											$elm$core$List$length(model.tasks)) + '개 업무')
+									])),
+								A2(
+								$elm$html$Html$button,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('button primary new-task-button'),
+										$elm$html$Html$Attributes$type_('button'),
+										$elm$html$Html$Events$onClick($author$project$Application$TaskBoard$OpenNewTask)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('새 업무 등록')
+									]))
 							]))
 					])),
 				$author$project$Presentation$TaskBoard$prioritySummary(model.tasks),
@@ -8526,9 +8617,9 @@ var $author$project$Presentation$TaskBoard$view = function (model) {
 						]),
 					_List_fromArray(
 						[
-							$author$project$Presentation$TaskBoard$formView(model),
 							$author$project$Presentation$TaskBoard$kanbanBoard(model)
 						])),
+					$author$project$Presentation$TaskBoard$editorView(model),
 					$author$project$Presentation$TaskBoard$detailView(model)
 				]));
 	}

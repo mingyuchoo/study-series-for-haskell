@@ -20,9 +20,8 @@ view model =
                 , headerView model
                 , profileView model
                 , div [ class "content" ]
-                    [ formView model
-                    , kanbanBoard model
-                    ]
+                    [ kanbanBoard model ]
+                , editorView model
                 , detailView model
                 ]
 
@@ -153,6 +152,30 @@ toastView model =
             text ""
 
 
+editorView : Model -> Html Msg
+editorView model =
+    if model.editorOpen then
+        div [ class "detail-layer editor-layer" ]
+            [ div [ class "detail-backdrop", onClick CloseEditor ] []
+            , aside
+                [ class "detail-panel editor-panel"
+                , attribute "role" "dialog"
+                , attribute "aria-modal" "true"
+                , attribute "aria-label"
+                    (if model.editing /= Nothing then
+                        "업무 수정"
+
+                     else
+                        "새 업무 등록"
+                    )
+                ]
+                [ formView model ]
+            ]
+
+    else
+        text ""
+
+
 formView : Model -> Html Msg
 formView model =
     let
@@ -161,24 +184,27 @@ formView model =
     in
     div [ class "card editor" ]
         [ div [ class "section-heading" ]
-            [ h2 []
-                [ text
-                    (if isEditing then
-                        "업무 수정"
+            [ div []
+                [ h2 []
+                    [ text
+                        (if isEditing then
+                            "업무 수정"
 
-                     else
-                        "새 업무 등록"
-                    )
-                ]
-            , span []
-                [ text
-                    (if isEditing then
-                        "변경 내용을 저장하세요"
+                         else
+                            "새 업무 등록"
+                        )
+                    ]
+                , span []
+                    [ text
+                        (if isEditing then
+                            "변경 내용을 저장하세요"
 
-                     else
-                        "업무를 흐름에 추가하세요"
-                    )
+                         else
+                            "업무를 흐름에 추가하세요"
+                        )
+                    ]
                 ]
+            , button [ class "icon-button", type_ "button", attribute "aria-label" "닫기", onClick CloseEditor ] [ text "×" ]
             ]
         , div [ class "form-grid" ]
             [ radioField
@@ -236,11 +262,11 @@ formView model =
             ]
         , div [ class "actions" ]
             [ if isEditing then
-                button [ class "button secondary", onClick CancelEdit ] [ text "취소" ]
+                button [ class "button secondary", type_ "button", onClick CancelEdit ] [ text "취소" ]
 
               else
                 text ""
-            , button [ class "button primary", disabled model.loading, onClick SubmitTask ]
+            , button [ class "button primary", type_ "button", disabled model.loading, onClick SubmitTask ]
                 [ text
                     (if isEditing then
                         "변경 저장"
@@ -284,7 +310,10 @@ kanbanBoard model =
                 [ h2 [] [ text "업무 보드" ]
                 , p [] [ text "실행 분류에서 업무를 찾고, 아래 상태 스윔레인에서 진행 단계를 관리하세요." ]
                 ]
-            , span [ class "board-total" ] [ text (String.fromInt (List.length model.tasks) ++ "개 업무") ]
+            , div [ class "board-actions" ]
+                [ span [ class "board-total" ] [ text (String.fromInt (List.length model.tasks) ++ "개 업무") ]
+                , button [ class "button primary new-task-button", type_ "button", onClick OpenNewTask ] [ text "새 업무 등록" ]
+                ]
             ]
         , prioritySummary model.tasks
         , div [ class "swimlane-heading" ]
