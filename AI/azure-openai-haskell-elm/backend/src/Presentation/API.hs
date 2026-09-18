@@ -1,7 +1,8 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Presentation.API
   ( API
@@ -12,12 +13,17 @@ module Presentation.API
   , server
   ) where
 
+import Control.Exception (SomeException, try)
 import Control.Lens ((&), (.~), (?~))
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Aeson
+import Data.ByteString.Lazy qualified as BL
 import Data.Swagger
 import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
+import Data.Text.IO qualified as TIO
 
 import Domain.Entities
 import Domain.Ports
@@ -39,7 +45,7 @@ data ChatRequest = ChatRequest
   deriving (Generic, Show)
 
 data ChatMessageDTO = ChatMessageDTO
-  { msgRole    :: Text
+  { msgRole :: Text
   , msgContent :: Text
   }
   deriving (Generic, Show)
@@ -92,8 +98,13 @@ server config =
     chatHandler :: ChatRequest -> Handler ChatResponse
     chatHandler req = do
       let messages = map fromDTO (chatMessages req)
-      result <- liftIO <| sendMessage config messages
-      result |> ChatResponse |> pure
+      resultEither <- liftIO <| try (sendMessage config messages)
+      case resultEither of
+        Left (err :: SomeException) -> do
+          liftIO <| TIO.putStrLn ("Chat handler error: " <> T.pack (show err))
+          throwError err500 {errBody = BL.fromStrict (TE.encodeUtf8 (T.pack (show err)))}
+        Right res ->
+          res |> ChatResponse |> pure
 
     healthHandler :: Handler HealthResponse
     healthHandler = "ok" |> HealthResponse |> pure
@@ -107,10 +118,10 @@ fromDTO dto =
     }
 
 parseRole :: Text -> ChatRole
-parseRole "system"    = SystemRole
-parseRole "user"      = UserRole
+parseRole "system" = SystemRole
+parseRole "user" = UserRole
 parseRole "assistant" = AssistantRole
-parseRole _           = UserRole
+parseRole _ = UserRole
 
 -- Swagger Documentation
 swaggerDoc :: Swagger

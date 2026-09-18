@@ -18,13 +18,13 @@ data ChatRole = SystemRole | UserRole | AssistantRole
   deriving (Eq, Generic, Show)
 
 data ChatMessage = ChatMessage
-  { messageRole    :: ChatRole
+  { messageRole :: ChatRole
   , messageContent :: Text
   }
   deriving (Generic, Show)
 
 data ChatSession = ChatSession
-  { sessionId       :: SessionId
+  { sessionId :: SessionId
   , sessionMessages :: [ChatMessage]
   }
   deriving (Generic, Show)

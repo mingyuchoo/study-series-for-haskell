@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Presentation.Server
@@ -10,6 +10,7 @@ import Configuration.Dotenv (defaultConfig, loadFile)
 
 import Control.Exception (SomeException, catch)
 
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 
@@ -25,6 +26,7 @@ import Servant
 
 import System.Environment (lookupEnv)
 import System.Exit (die)
+import Text.Read (readMaybe)
 
 loadConfigFromEnv :: IO ChatConfig
 loadConfigFromEnv = do
@@ -47,22 +49,37 @@ loadConfigFromEnv = do
     (Just k, Just e, Just d, Just v) ->
       ChatConfig
         { configApiKey = T.pack k
-        , configEndpoint = T.pack e
+        , configEndpoint = T.dropWhileEnd (== '/') (T.pack e)
         , configDeployment = T.pack d
         , configApiVersion = T.pack v
         , configSystemPrompt = maybe defaultPrompt T.pack systemPrompt'
         }
         |> pure
-    _ -> die "Missing required environment variables"
+    _ ->
+      let missing =
+            [ name
+            | (name, Nothing) <-
+                [ ("AZURE_OPENAI_API_KEY", apiKey')
+                , ("AZURE_OPENAI_ENDPOINT", endpoint')
+                , ("AZURE_OPENAI_DEPLOYMENT", deployment')
+                , ("AZURE_OPENAI_API_VERSION", apiVersion')
+                ]
+            ]
+       in die $
+            "Missing required environment variable(s): "
+              <> unwords missing
+              <> "\nPlease set them or configure backend/.env (see backend/.env.example)."
 
 runServer :: ChatConfig -> IO ()
 runServer config = do
-  let port = 8000
-  ("Starting server on http://localhost:" <> T.pack (show port)) |> TIO.putStrLn
+  portEnv <- lookupEnv "PORT"
+  let port = maybe 8000 (fromMaybe 8000 . readMaybe) portEnv
+  let portStr = T.pack (show port)
+  ("Starting server on http://localhost:" <> portStr) |> TIO.putStrLn
   TIO.putStrLn "Available endpoints:"
-  TIO.putStrLn "  - Web UI: http://localhost:8000/"
-  TIO.putStrLn "  - API: http://localhost:8000/api/chat"
-  TIO.putStrLn "  - Health: http://localhost:8000/health"
-  TIO.putStrLn "  - Swagger UI: http://localhost:8000/swagger-ui"
-  TIO.putStrLn "  - OpenAPI JSON: http://localhost:8000/openapi.json"
+  ("  - Web UI: http://localhost:" <> portStr <> "/") |> TIO.putStrLn
+  ("  - API: http://localhost:" <> portStr <> "/api/chat") |> TIO.putStrLn
+  ("  - Health: http://localhost:" <> portStr <> "/health") |> TIO.putStrLn
+  ("  - Swagger UI: http://localhost:" <> portStr <> "/swagger-ui") |> TIO.putStrLn
+  ("  - OpenAPI JSON: http://localhost:" <> portStr <> "/openapi.json") |> TIO.putStrLn
   run port (server config |> serve api)

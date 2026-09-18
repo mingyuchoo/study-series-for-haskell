@@ -16,6 +16,9 @@ license:        BSD-3-Clause
 build-type:     Simple
 extra-source-files:
     README.md
+data-files:
+    static/elm.js
+    static/index.html
 
 source-repository head
   type: git
@@ -36,6 +39,8 @@ library
       Paths_backend
   hs-source-dirs:
       src
+  default-extensions:
+      ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
@@ -69,6 +74,8 @@ executable backend-exe
       Paths_backend
   hs-source-dirs:
       app
+  default-extensions:
+      ImportQualifiedPost
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson

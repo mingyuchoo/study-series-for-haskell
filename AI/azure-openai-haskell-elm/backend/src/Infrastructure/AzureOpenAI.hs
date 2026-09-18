@@ -24,7 +24,8 @@ instance ChatService IO where
             { Azure.messages = azureMessages
             , Azure.model = configDeployment config
             , Azure.stream = False
-            , Azure.maxTokens = 4096
+            , Azure.maxTokens = Nothing
+            , Azure.maxCompletionTokens = Just 4096
             , Azure.temperature = 1.0
             , Azure.topP = 1.0
             }
@@ -39,7 +40,8 @@ instance ChatService IO where
             { Azure.messages = azureMessages
             , Azure.model = configDeployment config
             , Azure.stream = True
-            , Azure.maxTokens = 4096
+            , Azure.maxTokens = Nothing
+            , Azure.maxCompletionTokens = Just 4096
             , Azure.temperature = 1.0
             , Azure.topP = 1.0
             }
@@ -62,8 +64,8 @@ toAzureMessage msg =
     }
 
 toAzureRole :: ChatRole -> Azure.Role
-toAzureRole SystemRole    = Azure.System
-toAzureRole UserRole      = Azure.User
+toAzureRole SystemRole = Azure.System
+toAzureRole UserRole = Azure.User
 toAzureRole AssistantRole = Azure.Assistant
 
 createSystemMessage :: Text -> Azure.Message
