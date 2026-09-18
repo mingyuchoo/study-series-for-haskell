@@ -13,7 +13,7 @@ Full-stack application with Haskell backend and Elm frontend.
 ### Prerequisites
 
 - Stack (Haskell build tool)
-- Elm 0.19.1 or higher
+- Elm 0.19.2 or higher
 - Make
 
 ### Build and Run

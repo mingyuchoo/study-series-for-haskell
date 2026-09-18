@@ -4,7 +4,7 @@ React/TypeScript 프론트엔드를 Elm으로 포팅하고 Clean Architecture로
 
 ## 필수 요구사항
 
-- [Elm](https://guide.elm-lang.org/install/elm.html) 0.19.1 이상
+- [Elm](https://guide.elm-lang.org/install/elm.html) 0.19.2 이상
 
 ## 설치
 

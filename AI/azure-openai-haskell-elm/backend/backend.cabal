@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -16,9 +16,6 @@ license:        BSD-3-Clause
 build-type:     Simple
 extra-source-files:
     README.md
-data-files:
-    static/elm.js
-    static/index.html
 
 source-repository head
   type: git
@@ -62,7 +59,7 @@ library
     , uuid
     , wai
     , warp
-  default-language: GHC2024
+  default-language: Haskell2010
 
 executable backend-exe
   main-is: Main.hs
@@ -96,4 +93,4 @@ executable backend-exe
     , uuid
     , wai
     , warp
-  default-language: GHC2024
+  default-language: Haskell2010
