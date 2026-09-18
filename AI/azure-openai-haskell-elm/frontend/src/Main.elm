@@ -32,6 +32,7 @@ main =
 
 type alias Flags =
     { apiUrl : String
+    , theme : Maybe String
     }
 
 
@@ -43,7 +44,13 @@ type alias Model =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( { chatState = ChatState.init
+    let
+        initialTheme =
+            flags.theme
+                |> Maybe.map ChatState.stringToTheme
+                |> Maybe.withDefault ChatState.Dark
+    in
+    ( { chatState = ChatState.initWithTheme initialTheme
       , apiUrl = flags.apiUrl
       }
     , Cmd.none
@@ -60,6 +67,7 @@ type Msg
     | GotResponse (Result String String)
     | ClearChat
     | KeyDown Int
+    | ToggleTheme
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -104,6 +112,11 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        ToggleTheme ->
+            ( { model | chatState = ChatUseCase.toggleTheme model.chatState }
+            , Cmd.none
+            )
+
 
 
 -- SUBSCRIPTIONS
@@ -125,5 +138,7 @@ view model =
         , onSendMessage = SendMessage
         , onClearChat = ClearChat
         , onKeyDown = KeyDown
+        , onSelectPrompt = UpdateInput
+        , onToggleTheme = ToggleTheme
         }
         model.chatState

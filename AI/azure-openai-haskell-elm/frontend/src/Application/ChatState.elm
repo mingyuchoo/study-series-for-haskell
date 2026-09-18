@@ -1,15 +1,22 @@
 module Application.ChatState exposing
     ( ChatState
+    , Theme(..)
     , addMessage
     , clearError
     , clearMessages
     , getError
     , getInput
     , getMessages
+    , getTheme
     , init
+    , initWithTheme
     , isLoading
     , setError
     , setLoading
+    , setTheme
+    , stringToTheme
+    , themeToString
+    , toggleTheme
     , updateInput
     )
 
@@ -19,20 +26,32 @@ module Application.ChatState exposing
 import Domain.Message exposing (Message)
 
 
+type Theme
+    = Dark
+    | Light
+
+
 type alias ChatState =
     { messages : List Message
     , input : String
     , isLoading : Bool
     , error : Maybe String
+    , theme : Theme
     }
 
 
 init : ChatState
 init =
+    initWithTheme Dark
+
+
+initWithTheme : Theme -> ChatState
+initWithTheme defaultTheme =
     { messages = []
     , input = ""
     , isLoading = False
     , error = Nothing
+    , theme = defaultTheme
     }
 
 
@@ -84,3 +103,47 @@ isLoading state =
 getError : ChatState -> Maybe String
 getError state =
     state.error
+
+
+getTheme : ChatState -> Theme
+getTheme state =
+    state.theme
+
+
+setTheme : Theme -> ChatState -> ChatState
+setTheme newTheme state =
+    { state | theme = newTheme }
+
+
+toggleTheme : ChatState -> ChatState
+toggleTheme state =
+    let
+        nextTheme =
+            case state.theme of
+                Dark ->
+                    Light
+
+                Light ->
+                    Dark
+    in
+    { state | theme = nextTheme }
+
+
+themeToString : Theme -> String
+themeToString theme =
+    case theme of
+        Dark ->
+            "dark"
+
+        Light ->
+            "light"
+
+
+stringToTheme : String -> Theme
+stringToTheme str =
+    case String.toLower (String.trim str) of
+        "light" ->
+            Light
+
+        _ ->
+            Dark

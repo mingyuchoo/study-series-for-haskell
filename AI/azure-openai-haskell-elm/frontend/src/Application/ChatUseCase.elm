@@ -2,13 +2,15 @@ module Application.ChatUseCase exposing
     ( clearChat
     , handleResponse
     , sendUserMessage
+    , setTheme
+    , toggleTheme
     , updateInput
     )
 
 {-| 채팅 유스케이스 - 비즈니스 로직
 -}
 
-import Application.ChatState as ChatState exposing (ChatState)
+import Application.ChatState as ChatState exposing (ChatState, Theme)
 import Domain.Message as Message exposing (Message)
 
 
@@ -61,3 +63,13 @@ clearChat =
 updateInput : String -> ChatState -> ChatState
 updateInput =
     ChatState.updateInput
+
+
+toggleTheme : ChatState -> ChatState
+toggleTheme =
+    ChatState.toggleTheme
+
+
+setTheme : Theme -> ChatState -> ChatState
+setTheme =
+    ChatState.setTheme
