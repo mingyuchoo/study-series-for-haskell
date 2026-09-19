@@ -36,6 +36,11 @@ spec = do
       output `shouldNotSatisfy` Text.isInfixOf "https://"
       output `shouldNotSatisfy` Text.isInfixOf "//cdn"
 
+    it "Saniti 디자인의 네비게이션 바와 브랜드 점을 포함한다" $ do
+      let output = renderPage "할 일" mempty
+      output `shouldSatisfy` Text.isInfixOf "brand-dot"
+      output `shouldSatisfy` Text.isInfixOf "nav-bar-dark"
+
   describe "표시 문구" $ do
     it "모든 상태에 문구가 있다" $
       map statusLabel [minBound .. maxBound] `shouldBe` ["대기", "진행 중", "완료", "보관"]
@@ -50,6 +55,16 @@ spec = do
   describe "목록 화면" $ do
     it "새 할 일 폼을 담는다" $
       render (todoListSection mempty []) `shouldSatisfy` Text.isInfixOf "action=\"/todos\""
+
+    it "Saniti 디자인의 studio-window와 button-brand를 포함한다" $ do
+      let output = render (todoListSection mempty [])
+      output `shouldSatisfy` Text.isInfixOf "studio-window"
+      output `shouldSatisfy` Text.isInfixOf "button-brand"
+
+    it "상태와 우선순위 배지를 렌더링한다" $ do
+      let output = render (todoListSection mempty [sampleTodo 1])
+      output `shouldSatisfy` Text.isInfixOf "status-badge"
+      output `shouldSatisfy` Text.isInfixOf "priority-badge"
     it "할 일의 제목과 태그를 이스케이프한다" $ do
       let hostile =
             (sampleTodo 1)
