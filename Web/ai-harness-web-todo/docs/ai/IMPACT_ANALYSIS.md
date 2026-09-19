@@ -11,8 +11,8 @@
 ## Code
 
 - 어떤 패키지가 영향을 받습니까?
-- 규칙을 `todo-core`에 두는 대신 어댑터에 복제하고 있지는 않습니까?
-- 의존 방향이 바뀝니까? `todo-core`가 여전히 순수합니까?
+- 규칙을 `core`에 두는 대신 어댑터에 복제하고 있지는 않습니까?
+- 의존 방향이 바뀝니까? `core`가 여전히 순수합니까?
 - 기존 타입과 함수를 재사용할 수 있습니까?
 
 ## Data
@@ -56,9 +56,9 @@
 
 ## Tests
 
-- 단위 테스트 (`services/todo-core/tests`)
-- 통합 테스트 (`services/todo-store/tests`)
-- 계약 테스트 (`services/todo-api/tests`)
+- 단위 테스트 (`src/core/tests`)
+- 통합 테스트 (`src/store/tests`)
+- 계약 테스트 (`src/api/tests`)
 - 아키텍처 테스트 (`scripts/quality/architecture-check.sh`)
-- 보안 테스트 (`services/todo-api/tests`)
-- 회귀 테스트 (`services/todo-store/tests`)
+- 보안 테스트 (`src/api/tests`)
+- 회귀 테스트 (`src/store/tests`)

@@ -1,0 +1,62 @@
+cabal-version:      2.4
+name:               cli
+version:            0.1.0.0
+synopsis:           Todo 앱의 명령줄 표면
+description:        도메인 유스케이스를 명령줄로 노출하는 어댑터입니다.
+license:            MIT
+author:             Todo Maintainers
+maintainer:         maintainers@example.invalid
+category:           Application
+build-type:         Simple
+extra-source-files: README.md
+
+common warnings
+    ghc-options: -Wall
+                 -Wcompat
+                 -Widentities
+                 -Wincomplete-record-updates
+                 -Wincomplete-uni-patterns
+                 -Wpartial-fields
+                 -Wredundant-constraints
+
+library
+    import:           warnings
+    exposed-modules:  Todo.Cli.Options
+                      Todo.Cli.Render
+                      Todo.Cli.Run
+    hs-source-dirs:   src
+    build-depends:    base                 >=4.17 && <5
+                    , containers           >=0.6  && <0.9
+                    , optparse-applicative >=0.17 && <0.20
+                    , sqlite-simple        >=0.4  && <0.5
+                    , text                 >=2.0  && <2.2
+                    , time                 >=1.12 && <1.15
+                    , core
+                    , store
+    default-language: Haskell2010
+
+executable cli
+    import:           warnings
+    main-is:          Main.hs
+    hs-source-dirs:   app
+    build-depends:    base
+                    , optparse-applicative
+                    , cli
+    default-language: Haskell2010
+
+test-suite cli-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    other-modules:    Todo.Cli.OptionsSpec
+                      Todo.Cli.RenderSpec
+    hs-source-dirs:   tests
+    build-depends:    base
+                    , containers
+                    , hspec                >=2.10 && <2.12
+                    , optparse-applicative
+                    , text
+                    , time
+                    , cli
+                    , core
+    default-language: Haskell2010

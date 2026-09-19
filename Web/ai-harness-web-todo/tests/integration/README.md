@@ -2,7 +2,7 @@
 
 저장 어댑터가 실제 매체 위에서 도메인 계약을 지키는지 검증합니다.
 
-실행 위치: `../../services/todo-store/tests`
+실행 위치: `../../src/store/tests`
 
 ## 다루는 것
 

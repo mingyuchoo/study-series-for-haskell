@@ -9,7 +9,7 @@
 Haskell로 구현한 로컬 우선 Todo List 앱입니다. cabal 다중 패키지 프로젝트이며 다섯 개의 패키지로 이루어집니다. 저장은 SQLite이고 표면은 CLI, HTTP API, 브라우저 세 가지입니다. 세 표면 모두 사용자의 기계 안에서만 동작합니다.
 
 - 언어와 도구: GHC 9.10, cabal 3.16
-- 저장: SQLite (`services/todo-store/schema/schema.sql`) — 근거는 `docs/decisions/ADR-0001-storage.md`
+- 저장: SQLite (`src/store/schema/schema.sql`) — 근거는 `docs/decisions/ADR-0001-storage.md`
 - HTTP: Servant — 근거는 `docs/decisions/ADR-0003-api-boundary.md`
 - 브라우저: 서버 렌더링 HTML, 루프백 전용 — 근거는 `docs/decisions/ADR-0004-web-surface.md`
 
@@ -17,33 +17,33 @@ Haskell로 구현한 로컬 우선 Todo List 앱입니다. cabal 다중 패키�
 
 | 구성 요소 | 책임 | 소유 데이터 | 허용된 의존 대상 |
 |---|---|---|---|
-| todo-core | 도메인 규칙과 유스케이스 | 없음. 순수 계층 | 없음 |
-| todo-store | SQLite 저장과 마이그레이션 | 할 일과 태그 행, 스키마 버전 | todo-core |
-| todo-cli | 명령줄 표면 | 없음 | todo-core, todo-store |
-| todo-api | HTTP 표면 | 없음 | todo-core, todo-store |
-| todo-web | 브라우저 표면 | 없음 | todo-core, todo-store |
+| core | 도메인 규칙과 유스케이스 | 없음. 순수 계층 | 없음 |
+| store | SQLite 저장과 마이그레이션 | 할 일과 태그 행, 스키마 버전 | core |
+| cli | 명령줄 표면 | 없음 | core, store |
+| api | HTTP 표면 | 없음 | core, store |
+| web | 브라우저 표면 | 없음 | core, store |
 
 패키지 목록의 기계적 사실은 `docs/generated/service-map.md`에, 실제 의존 그래프는 `docs/generated/dependency-graph.md`에 있습니다. 두 문서 모두 cabal 파일에서 생성됩니다.
 
 ## 의존 규칙
 
 ```text
-todo-cli ──┐
-           │
-todo-api ──┼──> todo-store ──> todo-core
-           │
-todo-web ──┘
+cli ──────┐
+          │
+api ──────┼──> store ──> core
+          │
+web ──────┘
 ```
 
-1. `todo-core`는 다른 패키지에 의존하지 않습니다.
-2. 도메인은 `IO`를 모릅니다. `todo-core`는 `Control.Monad.IO.Class`, `Database.*`, `Network.*`, `System.IO`, `System.Environment`를 import하지 않습니다.
-3. 부수 효과는 어댑터만 수행합니다. 저장 인터페이스는 `todo-core`가 소유한 `TodoRepository` 타입클래스로 역전합니다.
+1. `core`는 다른 패키지에 의존하지 않습니다.
+2. 도메인은 `IO`를 모릅니다. `core`는 `Control.Monad.IO.Class`, `Database.*`, `Network.*`, `System.IO`, `System.Environment`를 import하지 않습니다.
+3. 부수 효과는 어댑터만 수행합니다. 저장 인터페이스는 `core`가 소유한 `TodoRepository` 타입클래스로 역전합니다.
 4. 시각은 포트가 아니라 인자입니다. 경계에서 읽어 유스케이스에 주입합니다.
-5. 표면 어댑터는 서로의 내부 모듈을 import하지 않습니다. `todo-cli`, `todo-api`, `todo-web`은 서로를 모릅니다. 특히 `todo-web`은 `todo-api`를 HTTP로 호출하지 않고 유스케이스를 직접 사용합니다.
+5. 표면 어댑터는 서로의 내부 모듈을 import하지 않습니다. `cli`, `api`, `web`은 서로를 모릅니다. 특히 `web`은 `api`를 HTTP로 호출하지 않고 유스케이스를 직접 사용합니다.
 6. 전송 표현과 저장 표현은 도메인 타입과 분리합니다. 도메인 타입에 JSON, SQL, HTML 인스턴스를 붙이지 않습니다.
 7. 순환 패키지 의존을 허용하지 않습니다.
 
-이 규칙들은 문장으로만 존재하지 않습니다. `scripts/quality/architecture-check.sh`가 cabal 파일의 `build-depends`와 `todo-core`의 import 목록을 파싱해 검사하며 CI에서 실행됩니다.
+이 규칙들은 문장으로만 존재하지 않습니다. `scripts/quality/architecture-check.sh`가 cabal 파일의 `build-depends`와 `core`의 import 목록을 파싱해 검사하며 CI에서 실행됩니다.
 
 ## 규칙이 한 곳에만 있어야 하는 이유
 
@@ -68,9 +68,9 @@ CLI, HTTP API, 브라우저는 같은 사용자에게 같은 데이터를 보여
 
 ## 운영 경계
 
-- 세 표면이 같은 SQLite 파일을 동시에 열 수 있습니다. 연결 설정은 `services/todo-store/docs/architecture.md`에 있고 근거는 `docs/incidents/INC-2026-001.md`입니다.
+- 세 표면이 같은 SQLite 파일을 동시에 열 수 있습니다. 연결 설정은 `src/store/docs/architecture.md`에 있고 근거는 `docs/incidents/INC-2026-001.md`입니다.
 - 네트워크를 여는 두 표면은 `127.0.0.1`에만 바인딩하며 수신 주소를 바꾸는 설정을 제공하지 않습니다. 인증이 없으므로 접근 경로 제한이 유일한 방어선입니다. 근거는 `docs/decisions/ADR-0004-web-surface.md`입니다.
-- 각 패키지는 실패 방식, 안전한 동작과 복구를 `services/*/docs/failure-modes.md`에 명시합니다.
+- 각 패키지는 실패 방식, 안전한 동작과 복구를 `src/*/docs/failure-modes.md`에 명시합니다.
 - 이 앱에는 원격 의존성이 없습니다. 사용자 데이터는 사용자가 지정한 로컬 파일 밖으로 나가지 않습니다. 브라우저 표면도 CDN이나 원격 자산을 참조하지 않고 정적 자산을 자체 서빙합니다.
 
 ## 관련 문서

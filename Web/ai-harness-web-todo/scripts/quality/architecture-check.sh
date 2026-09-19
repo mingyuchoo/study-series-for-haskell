@@ -7,10 +7,8 @@ cd "$repo_root"
 failed=0
 
 # 1. 패키지마다 지역 컨텍스트와 소스 및 테스트 위치가 있어야 합니다.
-for package in services/*; do
+for package in src/*; do
   [[ -d "$package" ]] || continue
-  # services/scripts는 패키지가 아니라 패키지 전체를 다루는 공용 스크립트 디렉터리입니다.
-  [[ "$(basename "$package")" == "scripts" ]] && continue
   for path in AGENTS.md CLAUDE.md README.md docs/invariants.md docs/architecture.md docs/failure-modes.md src tests; do
     if [[ ! -e "$package/$path" ]]; then
       printf '패키지 경계 문서 또는 디렉터리가 없습니다: %s/%s\n' "$package" "$path" >&2
@@ -38,14 +36,14 @@ errors: list[str] = []
 
 # ARCHITECTURE.md가 정의한 허용된 내부 의존입니다.
 ALLOWED = {
-    "todo-core": set(),
-    "todo-store": {"todo-core"},
-    "todo-cli": {"todo-core", "todo-store"},
-    "todo-api": {"todo-core", "todo-store"},
-    "todo-web": {"todo-core", "todo-store"},
+    "core": set(),
+    "store": {"core"},
+    "cli": {"core", "store"},
+    "api": {"core", "store"},
+    "web": {"core", "store"},
 }
 
-# todo-core는 순수 도메인이므로 효과를 다루는 모듈을 import하지 않습니다.
+# core는 순수 도메인이므로 효과를 다루는 모듈을 import하지 않습니다.
 FORBIDDEN_CORE_IMPORTS = (
     "Control.Concurrent",
     "Control.Monad.IO.Class",
@@ -57,9 +55,9 @@ FORBIDDEN_CORE_IMPORTS = (
     "System.Process",
 )
 
-cabal_files = sorted((root / "services").glob("*/*.cabal"))
+cabal_files = sorted((root / "src").glob("*/*.cabal"))
 if not cabal_files:
-    print("services 아래에서 cabal 파일을 찾지 못했습니다.", file=sys.stderr)
+    print("src 아래에서 cabal 파일을 찾지 못했습니다.", file=sys.stderr)
     raise SystemExit(1)
 
 package_names = {}
@@ -92,7 +90,7 @@ for cabal, name in package_names.items():
         errors.append(f"{name}: 허용되지 않은 의존 {name} --> {target}")
 
 # 도메인 계층의 순수성을 검사합니다.
-for module in sorted((root / "services/todo-core/src").rglob("*.hs")):
+for module in sorted((root / "src/core/src").rglob("*.hs")):
     for line in module.read_text(encoding="utf-8").splitlines():
         if not line.startswith("import "):
             continue
@@ -105,16 +103,16 @@ for module in sorted((root / "services/todo-core/src").rglob("*.hs")):
 
 # 어댑터가 다른 어댑터의 모듈을 직접 import하지 않는지 검사합니다.
 ADAPTER_PREFIX = {
-    "todo-store": "Todo.Store.",
-    "todo-cli": "Todo.Cli.",
-    "todo-api": "Todo.Api.",
-    "todo-web": "Todo.Web.",
+    "store": "Todo.Store.",
+    "cli": "Todo.Cli.",
+    "api": "Todo.Api.",
+    "web": "Todo.Web.",
 }
 for package, prefix in ADAPTER_PREFIX.items():
     for other, other_prefix in ADAPTER_PREFIX.items():
         if other == package or other in ALLOWED[package]:
             continue
-        for module in sorted((root / "services" / package).rglob("*.hs")):
+        for module in sorted((root / "src" / package).rglob("*.hs")):
             for line in module.read_text(encoding="utf-8").splitlines():
                 if line.startswith("import ") and other_prefix in line:
                     errors.append(

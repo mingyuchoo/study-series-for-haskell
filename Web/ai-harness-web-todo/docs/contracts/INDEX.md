@@ -10,8 +10,8 @@ Todo 앱의 표면과 저장 형식 중 외부가 의존하는 공개 약속을 
 
 | 계약 | 종류 | 소유 패키지 | 상태 |
 |---|---|---|---|
-| [Todo API v1](api/TODO-API-v1.md) | API | todo-api | Active |
-| [Todo Store v1](data/TODO-STORE-v1.md) | 데이터 | todo-store | Active |
+| [Todo API v1](api/TODO-API-v1.md) | API | api | Active |
+| [Todo Store v1](data/TODO-STORE-v1.md) | 데이터 | store | Active |
 
 이벤트 계약은 아직 없습니다. 필요해지기 전에 만들지 않습니다.
 

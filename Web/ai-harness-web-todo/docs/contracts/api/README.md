@@ -23,7 +23,7 @@ HTTP API의 요청, 응답, 오류와 호환성 정책을 저장합니다.
 ```text
 # API Contract: 이름
 - 상태: Active
-- 소유 패키지: todo-api
+- 소유 패키지: api
 - 소비자: 목록
 - 버전: v1
 ```

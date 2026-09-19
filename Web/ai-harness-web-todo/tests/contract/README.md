@@ -2,7 +2,7 @@
 
 생산자와 소비자가 `../../docs/contracts`의 공개 약속을 함께 지키는지 검증합니다.
 
-실행 위치: `../../services/todo-api/tests`
+실행 위치: `../../src/api/tests`
 
 ## 다루는 것
 

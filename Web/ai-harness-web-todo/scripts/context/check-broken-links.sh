@@ -15,7 +15,7 @@ root = Path(sys.argv[1]).resolve()
 errors: list[str] = []
 markdown_link = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 repository_path = re.compile(
-    r"`((?:\.\.?/|docs/|services/|scripts/|tests/)[^`\s]+|(?:AGENTS|CLAUDE|ARCHITECTURE|README)\.md|cabal\.project)`"
+    r"`((?:\.\.?/|docs/|src/|scripts/|tests/)[^`\s]+|(?:AGENTS|CLAUDE|ARCHITECTURE|README)\.md|cabal\.project)`"
 )
 
 for document in sorted(root.rglob("*.md")):

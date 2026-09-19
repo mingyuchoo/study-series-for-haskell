@@ -5,7 +5,7 @@ on:
     paths:
       - 'docs/contracts/**'
       - 'docs/generated/**'
-      - 'services/**'
+      - 'src/**'
       - 'tests/contract/**'
       - '.github/workflows/contracts.yml'
 
@@ -51,4 +51,4 @@ jobs:
           restore-keys: ${{ runner.os }}-ghc${{ steps.setup.outputs.ghc-version }}-
 
       - name: Run contract tests
-        run: cabal test todo-api
+        run: cabal test api

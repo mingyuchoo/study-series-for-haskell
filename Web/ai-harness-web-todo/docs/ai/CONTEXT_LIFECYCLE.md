@@ -66,7 +66,7 @@ Long-term Repository Memory
 2. 조치가 `Todo.Store.Migration.configureConnection`의 코드가 됩니다.
 3. 재발 방지가 `RegressionSpec`의 실행 가능한 테스트가 됩니다.
 4. 반복 가능한 부분만 `lessons.md`의 `LESSON-001`, `LESSON-002`로 승격합니다.
-5. 연결 설정이라는 운영 결정이 `services/todo-store/docs/architecture.md`에 남습니다.
+5. 연결 설정이라는 운영 결정이 `src/store/docs/architecture.md`에 남습니다.
 
 사고 문서 하나에 모든 것을 적어두는 것이 아니라, 각 조각이 어긋나면 실패하는 자리로 옮겨 간다는 점이 핵심입니다.
 

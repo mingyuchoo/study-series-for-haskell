@@ -18,9 +18,9 @@ root = Path(sys.argv[1])
 dependency_out = Path(sys.argv[2])
 service_out = Path(sys.argv[3])
 
-cabal_files = sorted((root / "services").glob("*/*.cabal"))
+cabal_files = sorted((root / "src").glob("*/*.cabal"))
 if not cabal_files:
-    print("services 아래에서 cabal 파일을 찾지 못했습니다.", file=sys.stderr)
+    print("src 아래에서 cabal 파일을 찾지 못했습니다.", file=sys.stderr)
     raise SystemExit(1)
 
 
@@ -79,7 +79,7 @@ dependency_out.write_text(
 )
 
 rows = "\n".join(
-    f"| {package['name']} | `services/{package['directory']}/README.md` | {package['synopsis']} |"
+    f"| {package['name']} | `src/{package['directory']}/README.md` | {package['synopsis']} |"
     for package in sorted(packages, key=lambda p: p["name"])
 )
 

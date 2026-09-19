@@ -7,8 +7,8 @@
 ## 다루는 것
 
 - 각 패키지의 `build-depends`가 `../../ARCHITECTURE.md`가 허용한 방향만 갖는지
-- `todo-core`가 `IO`, 데이터베이스, 네트워크, 환경 변수 모듈을 import하지 않는지
-- `todo-cli`와 `todo-api`가 서로의 내부 모듈을 참조하지 않는지
+- `core`가 `IO`, 데이터베이스, 네트워크, 환경 변수 모듈을 import하지 않는지
+- `cli`, `api`, `web`이 서로의 내부 모듈을 참조하지 않는지
 - 각 패키지에 지역 컨텍스트 문서와 cabal 파일이 있는지
 
 ## Haskell 테스트 스위트가 아닌 이유

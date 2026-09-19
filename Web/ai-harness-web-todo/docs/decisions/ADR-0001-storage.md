@@ -29,7 +29,7 @@
 
 ## Decision
 
-SQLite를 `sqlite-simple`로 직접 사용합니다. 스키마 원본은 `services/todo-store/schema/schema.sql` 하나이며 Haskell 코드가 컴파일 시점에 임베드합니다.
+SQLite를 `sqlite-simple`로 직접 사용합니다. 스키마 원본은 `src/store/schema/schema.sql` 하나이며 Haskell 코드가 컴파일 시점에 임베드합니다.
 
 연결마다 WAL 저널 모드, 5초 busy timeout, 외래 키를 켭니다.
 
@@ -65,8 +65,8 @@ SQLite는 서버 프로세스가 없고, 트랜잭션을 제공하며, 파일 �
 
 ## Verification
 
-- 왕복과 경계 조건: `services/todo-store/tests/Todo/Store/SqliteSpec.hs`
-- 동시 접근: `services/todo-store/tests/Todo/Store/RegressionSpec.hs`
+- 왕복과 경계 조건: `src/store/tests/Todo/Store/SqliteSpec.hs`
+- 동시 접근: `src/store/tests/Todo/Store/RegressionSpec.hs`
 - 생성 문서 일치: `scripts/context/generate-db-schema.sh --check`
 
 ## Revisit Conditions

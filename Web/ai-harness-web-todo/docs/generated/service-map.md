@@ -4,11 +4,11 @@
 
 | 패키지 | 지역 컨텍스트 | 책임 |
 |---|---|---|
-| todo-api | `services/todo-api/README.md` | Todo 앱의 HTTP 표면 |
-| todo-cli | `services/todo-cli/README.md` | Todo 앱의 명령줄 표면 |
-| todo-core | `services/todo-core/README.md` | Todo 도메인 규칙과 유스케이스 |
-| todo-store | `services/todo-store/README.md` | Todo 저장 포트의 SQLite 어댑터 |
-| todo-web | `services/todo-web/README.md` | Todo 앱의 브라우저 표면 |
+| api | `src/api/README.md` | Todo 앱의 HTTP 표면 |
+| cli | `src/cli/README.md` | Todo 앱의 명령줄 표면 |
+| core | `src/core/README.md` | Todo 도메인 규칙과 유스케이스 |
+| store | `src/store/README.md` | Todo 저장 포트의 SQLite 어댑터 |
+| web | `src/web/README.md` | Todo 앱의 브라우저 표면 |
 
 책임 설명은 각 패키지 cabal 파일의 synopsis에서 가져옵니다.
 이 파일을 직접 수정하지 마십시오.

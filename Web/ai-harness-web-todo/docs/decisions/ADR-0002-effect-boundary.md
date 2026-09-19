@@ -28,11 +28,11 @@ Haskell에서 이 경계를 표현하는 방법은 여러 가지이며, 선택�
 
 ## Decision
 
-`todo-core`가 `TodoRepository` 타입클래스를 소유하고 어댑터가 인스턴스를 제공합니다. 유스케이스는 `TodoRepository m => ... -> m a` 형태로 다형입니다.
+`core`가 `TodoRepository` 타입클래스를 소유하고 어댑터가 인스턴스를 제공합니다. 유스케이스는 `TodoRepository m => ... -> m a` 형태로 다형입니다.
 
 시각은 포트로 만들지 않습니다. 유스케이스가 `UTCTime`을 인자로 받고, 경계(CLI의 `Run`, API의 핸들러)에서 읽어 주입합니다.
 
-`todo-core`는 `IO`, 데이터베이스, 네트워크, 환경 변수 모듈을 import하지 않으며 이를 `scripts/quality/architecture-check.sh`가 검사합니다.
+`core`는 `IO`, 데이터베이스, 네트워크, 환경 변수 모듈을 import하지 않으며 이를 `scripts/quality/architecture-check.sh`가 검사합니다.
 
 ## Why
 
@@ -40,7 +40,7 @@ Haskell에서 이 경계를 표현하는 방법은 여러 가지이며, 선택�
 
 도메인이 직접 `IO`를 하면 테스트가 파일 시스템에 의존하고, 무엇보다 도메인이 저장 기술을 알게 되어 `ADR-0001`을 되돌리기 어려워집니다.
 
-시계를 포트로 만들지 않은 것은 별도의 판단입니다. 시각은 반환값이 필요할 뿐 상태가 없으므로, 포트를 만드는 대신 인자로 받으면 유스케이스가 완전한 순수 함수에 가까워집니다. 테스트에서 고정 시각을 넣기만 하면 되고 가짜 시계 구현이 필요 없습니다. 실제로 `todo-core`의 유스케이스 테스트는 `State` 기반 가짜 저장소 하나만으로 동작합니다.
+시계를 포트로 만들지 않은 것은 별도의 판단입니다. 시각은 반환값이 필요할 뿐 상태가 없으므로, 포트를 만드는 대신 인자로 받으면 유스케이스가 완전한 순수 함수에 가까워집니다. 테스트에서 고정 시각을 넣기만 하면 되고 가짜 시계 구현이 필요 없습니다. 실제로 `core`의 유스케이스 테스트는 `State` 기반 가짜 저장소 하나만으로 동작합니다.
 
 ## Consequences
 
@@ -59,14 +59,14 @@ Haskell에서 이 경계를 표현하는 방법은 여러 가지이며, 선택�
 
 ### Risks and Mitigations
 
-- 위험: 편의를 위해 `todo-core`에 `MonadIO` 제약을 추가하고 싶어집니다. 완화: 아키텍처 검사가 `Control.Monad.IO.Class` import를 거부합니다.
+- 위험: 편의를 위해 `core`에 `MonadIO` 제약을 추가하고 싶어집니다. 완화: 아키텍처 검사가 `Control.Monad.IO.Class` import를 거부합니다.
 - 위험: 포트가 커져 도메인이 저장 구조를 반영하게 됩니다. 완화: 포트 연산 추가 시 조회 의미를 `Todo.Core.Filter`에 두는지 먼저 확인합니다.
 
 ## Verification
 
 - 순수성 검사: `scripts/quality/architecture-check.sh`
-- 가짜 저장소 기반 유스케이스 테스트: `services/todo-core/tests/Todo/Core/UseCaseSpec.hs`
-- 같은 계약의 실제 구현 검증: `services/todo-store/tests/Todo/Store/SqliteSpec.hs`
+- 가짜 저장소 기반 유스케이스 테스트: `src/core/tests/Todo/Core/UseCaseSpec.hs`
+- 같은 계약의 실제 구현 검증: `src/store/tests/Todo/Store/SqliteSpec.hs`
 
 ## Revisit Conditions
 

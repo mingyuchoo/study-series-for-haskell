@@ -52,5 +52,5 @@ Task 도메인은 저장 방식과 표시 형식을 알지 못합니다. 시각�
 
 ## 검증
 
-- 상태 기계: `services/todo-core/tests/Todo/Core/StatusSpec.hs`
-- 멱등성과 유스케이스: `services/todo-core/tests/Todo/Core/UseCaseSpec.hs`
+- 상태 기계: `src/core/tests/Todo/Core/StatusSpec.hs`
+- 멱등성과 유스케이스: `src/core/tests/Todo/Core/UseCaseSpec.hs`

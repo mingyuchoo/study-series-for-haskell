@@ -58,12 +58,12 @@ Servant를 고른 것은 핸들러 목록이 라우트 타입과 어긋나면 �
 
 ### Risks and Mitigations
 
-- 위험: 편의를 위해 DTO를 없애고 도메인을 직접 직렬화하려는 압력이 생깁니다. 완화: 이 ADR과 `services/todo-api/AGENTS.md`에 금지 사유를 남깁니다.
+- 위험: 편의를 위해 DTO를 없애고 도메인을 직접 직렬화하려는 압력이 생깁니다. 완화: 이 ADR과 `src/api/AGENTS.md`에 금지 사유를 남깁니다.
 - 위험: 계약 문서와 구현이 벌어집니다. 완화: `ContractSpec`이 계약 문서의 각 약속을 검증합니다.
 
 ## Verification
 
-- 계약 테스트: `services/todo-api/tests/Todo/Api/ContractSpec.hs`
+- 계약 테스트: `src/api/tests/Todo/Api/ContractSpec.hs`
 - 라우트 사실: `docs/generated/route-map.md`
 - 사람이 읽는 계약: `../contracts/api/TODO-API-v1.md`
 

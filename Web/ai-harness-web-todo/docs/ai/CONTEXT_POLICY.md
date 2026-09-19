@@ -41,7 +41,7 @@
 
 | 지식의 종류 | 승격 대상 |
 |---|---|
-| 도메인 불변조건 | `todo-core`의 테스트 |
+| 도메인 불변조건 | `core`의 테스트 |
 | 경계 규칙 | `scripts/quality/architecture-check.sh` |
 | 표면 간 약속 | `../contracts` + 계약 테스트 |
 | 중요한 선택의 이유 | ADR |

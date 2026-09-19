@@ -34,5 +34,5 @@
 
 ## 검증
 
-- 정규화와 문자 규칙: `services/todo-core/tests/Todo/Core/ValidationSpec.hs`
-- 논리곱 검색: `services/todo-core/tests/Todo/Core/FilterSpec.hs`
+- 정규화와 문자 규칙: `src/core/tests/Todo/Core/ValidationSpec.hs`
+- 논리곱 검색: `src/core/tests/Todo/Core/FilterSpec.hs`

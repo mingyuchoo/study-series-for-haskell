@@ -1,8 +1,8 @@
 # Data Contract: Todo Store
 
 - 상태: Active
-- 소유 패키지: todo-store
-- 소비자: todo-cli, todo-api
+- 소유 패키지: store
+- 소비자: cli, api, web
 - 버전: v1
 - 분류: Confidential
 
@@ -10,7 +10,7 @@
 
 사용자의 할 일과 그 태그를 담는 로컬 SQLite 데이터베이스입니다. 사용자가 무엇을 언제까지 하려 하는지를 담으므로 개인 정보로 취급합니다.
 
-기계적 스키마는 `../../generated/db-schema.md`에 있고 원본은 `services/todo-store/schema/schema.sql`입니다. 이 문서는 스키마가 설명하지 못하는 의미와 정책을 담습니다.
+기계적 스키마는 `../../generated/db-schema.md`에 있고 원본은 `src/store/schema/schema.sql`입니다. 이 문서는 스키마가 설명하지 못하는 의미와 정책을 담습니다.
 
 ## Schema
 
@@ -46,8 +46,8 @@
 
 ## Ownership and Access
 
-- 쓰기 권한은 `todo-store`에만 있습니다. `todo-cli`와 `todo-api`는 `TodoRepository` 포트를 통해서만 접근합니다.
-- 세 표면이 같은 파일을 동시에 열 수 있습니다. 동시성 처리 방식은 `services/todo-store/docs/architecture.md`에 있습니다.
+- 쓰기 권한은 `store`에만 있습니다. `cli`, `api`, `web`은 `TodoRepository` 포트를 통해서만 접근합니다.
+- 세 표면이 같은 파일을 동시에 열 수 있습니다. 동시성 처리 방식은 `src/store/docs/architecture.md`에 있습니다.
 - 데이터베이스 파일 자체는 사용자의 로컬 파일 시스템에 있으며 별도의 접근 제어가 없습니다.
 
 ## Lifecycle
@@ -65,6 +65,6 @@
 
 ## Verification
 
-- 왕복과 경계 조건: `services/todo-store/tests/Todo/Store/SqliteSpec.hs`
-- 동시 접근 회귀: `services/todo-store/tests/Todo/Store/RegressionSpec.hs`
+- 왕복과 경계 조건: `src/store/tests/Todo/Store/SqliteSpec.hs`
+- 동시 접근 회귀: `src/store/tests/Todo/Store/RegressionSpec.hs`
 - 생성 문서 일치: `scripts/context/generate-db-schema.sh --check`

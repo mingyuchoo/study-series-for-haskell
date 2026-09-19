@@ -21,7 +21,7 @@
 | 상태 | `pending`, `in_progress`, `done`, `archived` |
 | 우선순위 | `low`, `normal`, `high`, `urgent` |
 
-이 이름들의 Canonical Source는 `services/todo-core`의 `Todo.Core.Types`입니다. 표면마다 다른 이름을 노출하면 사용자가 같은 개념을 두 번 배워야 합니다.
+이 이름들의 Canonical Source는 `src/core`의 `Todo.Core.Types`입니다. 표면마다 다른 이름을 노출하면 사용자가 같은 개념을 두 번 배워야 합니다.
 
 브라우저 표면에서는 값 이름을 사람이 읽는 문구로 바꾸고 싶은 압력이 생깁니다. `in_progress`를 "진행 중"으로 보여주는 것은 표시의 문제이므로 허용하지만, 그 문구가 저장되거나 질의 문자열에 실리지는 않습니다. 화면에 보이는 말과 계약에 실리는 값은 다른 층입니다.
 

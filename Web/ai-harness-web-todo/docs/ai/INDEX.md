@@ -40,7 +40,7 @@
 
 - 사고 기록 지도: `../incidents/INDEX.md`
 - 반복 가능한 교훈: `../incidents/lessons.md`
-- 패키지별 실패 방식: `../../services/`
+- 패키지별 실패 방식: `../../src/`
 
 ## 7. 기술 부채
 
@@ -62,10 +62,10 @@
 
 | 생성 문서 | 원본 |
 |---|---|
-| DB 스키마 | `../../services/todo-store/schema/schema.sql` |
+| DB 스키마 | `../../src/store/schema/schema.sql` |
 | API 인덱스 | `../contracts/api/` |
-| 라우트 지도 | `../../services/todo-api/src/Todo/Api/Routes.hs` |
-| 의존 그래프, 패키지 지도 | `../../services/` 아래 각 cabal 파일 |
+| 라우트 지도 | `../../src/api/src/Todo/Api/Routes.hs` |
+| 의존 그래프, 패키지 지도 | `../../src/` 아래 각 cabal 파일 |
 
 ## 9. 실행 계획
 

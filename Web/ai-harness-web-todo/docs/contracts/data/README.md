@@ -13,7 +13,7 @@
 
 ## 생성 문서와의 관계
 
-스키마 자체는 손으로 적지 않습니다. `services/todo-store/schema/schema.sql`이 원본이고 `../../generated/db-schema.md`가 거기에서 생성됩니다. 이 디렉터리의 문서는 스키마가 설명하지 못하는 것, 곧 의미와 정책을 담습니다.
+스키마 자체는 손으로 적지 않습니다. `src/store/schema/schema.sql`이 원본이고 `../../generated/db-schema.md`가 거기에서 생성됩니다. 이 디렉터리의 문서는 스키마가 설명하지 못하는 것, 곧 의미와 정책을 담습니다.
 
 ## 현재 계약
 

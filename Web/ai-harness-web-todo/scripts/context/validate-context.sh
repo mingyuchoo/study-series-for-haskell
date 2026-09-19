@@ -32,8 +32,8 @@ required_paths=(
   docs/generated/route-map.md
   docs/generated/dependency-graph.md
   docs/generated/service-map.md
-  services/todo-store/schema/schema.sql
-  services/todo-api/src/Todo/Api/Routes.hs
+  src/store/schema/schema.sql
+  src/api/src/Todo/Api/Routes.hs
 )
 
 failed=0
@@ -44,10 +44,8 @@ for path in "${required_paths[@]}"; do
   fi
 done
 
-for package in services/*; do
+for package in src/*; do
   [[ -d "$package" ]] || continue
-  # services/scripts는 패키지가 아니라 패키지 전체를 다루는 공용 스크립트 디렉터리입니다.
-  [[ "$(basename "$package")" == "scripts" ]] && continue
   for required in AGENTS.md CLAUDE.md README.md docs/invariants.md docs/architecture.md docs/failure-modes.md src tests; do
     if [[ ! -e "$package/$required" ]]; then
       printf '패키지 컨텍스트가 없습니다: %s/%s\n' "$package" "$required" >&2
@@ -93,9 +91,9 @@ size_limits = {
     root / "AGENTS.md": 100,
     root / "CLAUDE.md": 60,
 }
-for package_file in (root / "services").glob("*/AGENTS.md"):
+for package_file in (root / "src").glob("*/AGENTS.md"):
     size_limits[package_file] = 80
-for package_file in (root / "services").glob("*/CLAUDE.md"):
+for package_file in (root / "src").glob("*/CLAUDE.md"):
     size_limits[package_file] = 60
 
 for path, limit in size_limits.items():

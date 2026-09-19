@@ -2,7 +2,7 @@
 
 외부 시스템 없이 빠르게 실행되는 도메인 규칙과 순수 로직 테스트입니다.
 
-실행 위치: `../../services/todo-core/tests`, `../../services/todo-cli/tests`, `../../services/todo-web/tests`
+실행 위치: `../../src/core/tests`, `../../src/cli/tests`, `../../src/web/tests`
 
 ## 다루는 것
 

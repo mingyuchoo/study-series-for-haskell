@@ -1,0 +1,74 @@
+cabal-version:      2.4
+name:               web
+version:            0.1.0.0
+synopsis:           Todo 앱의 브라우저 표면
+description:        서버에서 HTML을 렌더링하는 루프백 전용 어댑터입니다.
+license:            MIT
+author:             Todo Maintainers
+maintainer:         maintainers@example.invalid
+category:           Web
+build-type:         Simple
+extra-source-files: README.md
+
+common warnings
+    ghc-options: -Wall
+                 -Wcompat
+                 -Widentities
+                 -Wincomplete-record-updates
+                 -Wincomplete-uni-patterns
+                 -Wpartial-fields
+                 -Wredundant-constraints
+
+library
+    import:           warnings
+    exposed-modules:  Todo.Web.Config
+                      Todo.Web.Form
+                      Todo.Web.Route
+                      Todo.Web.Security
+                      Todo.Web.Server
+                      Todo.Web.View
+    hs-source-dirs:   src
+    build-depends:    base          >=4.17 && <5
+                    , containers    >=0.6  && <0.9
+                    , bytestring    >=0.11 && <0.13
+                    , http-types    >=0.12 && <0.13
+                    , lucid         >=2.11 && <2.12
+                    , sqlite-simple >=0.4  && <0.5
+                    , text          >=2.0  && <2.2
+                    , time          >=1.12 && <1.15
+                    , core
+                    , store
+                    , wai           >=3.2  && <3.3
+    default-language: Haskell2010
+
+executable web
+    import:           warnings
+    main-is:          Main.hs
+    hs-source-dirs:   app
+    ghc-options:      -threaded
+    build-depends:    base
+                    , store
+                    , web
+                    , warp          >=3.3  && <3.5
+    default-language: Haskell2010
+
+test-suite web-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    main-is:          Main.hs
+    other-modules:    Todo.Web.ConfigSpec
+                      Todo.Web.FormSpec
+                      Todo.Web.Gen
+                      Todo.Web.RouteSpec
+                      Todo.Web.SecuritySpec
+                      Todo.Web.ViewSpec
+    hs-source-dirs:   tests
+    build-depends:    base
+                    , containers    >=0.6  && <0.9
+                    , hspec         >=2.10 && <2.12
+                    , lucid
+                    , text
+                    , time          >=1.12 && <1.15
+                    , core
+                    , web
+    default-language: Haskell2010

@@ -8,7 +8,7 @@ ran=0
 
 # 형식 검사. fourmolu가 없으면 건너뛰고 그 사실을 알립니다.
 if command -v fourmolu >/dev/null 2>&1; then
-  fourmolu --mode check $(find services -name '*.hs' -not -path '*/dist-newstyle/*')
+  fourmolu --mode check $(find src -name '*.hs' -not -path '*/dist-newstyle/*')
   printf 'fourmolu 형식 검사 통과\n'
   ran=1
 else
@@ -17,7 +17,7 @@ fi
 
 # 정적 제안 검사. hlint가 없으면 건너뜁니다.
 if command -v hlint >/dev/null 2>&1; then
-  hlint services
+  hlint src
   printf 'hlint 검사 통과\n'
   ran=1
 else
@@ -38,7 +38,7 @@ if [[ "$ran" -eq 0 ]]; then
 fi
 
 # 저장소의 모든 셸 스크립트를 문법 검사합니다. 패키지 지역 스크립트도 포함합니다.
-for script in scripts/context/*.sh scripts/quality/*.sh services/scripts/*.sh services/*/scripts/*.sh; do
+for script in scripts/*.sh scripts/context/*.sh scripts/quality/*.sh src/*/scripts/*.sh; do
   [[ -f "$script" ]] || continue
   bash -n "$script"
 done

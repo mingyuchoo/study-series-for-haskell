@@ -22,11 +22,11 @@
 
 ## 검증
 
-- [ ] 단위 테스트 (`services/todo-core/tests`)
-- [ ] 통합 테스트 (`services/todo-store/tests`)
-- [ ] 계약 테스트 (`services/todo-api/tests`)
-- [ ] 보안 테스트 (`services/todo-api/tests`)
-- [ ] 회귀 테스트 (`services/todo-store/tests`)
+- [ ] 단위 테스트 (`src/core/tests`)
+- [ ] 통합 테스트 (`src/store/tests`)
+- [ ] 계약 테스트 (`src/api/tests`)
+- [ ] 보안 테스트 (`src/api/tests`)
+- [ ] 회귀 테스트 (`src/store/tests`)
 - [ ] 아키텍처 검사 (`scripts/quality/architecture-check.sh`)
 - [ ] 무경고 빌드와 형식 검사 (`scripts/quality/lint.sh`)
 - [ ] 컨텍스트 무결성 검사 (`scripts/context/validate-context.sh`)

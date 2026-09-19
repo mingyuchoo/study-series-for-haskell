@@ -11,10 +11,8 @@ else
   for category in unit integration contract architecture security regression; do
     test -d "tests/$category"
   done
-  for package in services/*; do
+  for package in src/*; do
     [[ -d "$package" ]] || continue
-    # services/scripts는 패키지가 아니라 공용 스크립트 디렉터리입니다.
-    [[ "$(basename "$package")" == "scripts" ]] && continue
     test -d "$package/tests"
   done
 fi

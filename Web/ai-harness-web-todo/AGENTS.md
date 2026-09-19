@@ -20,12 +20,12 @@
 Haskell 다중 패키지 cabal 프로젝트입니다. 의존 방향은 한 방향입니다.
 
 ```text
-todo-cli, todo-api --> todo-store --> todo-core
+cli, api, web --> store --> core
 ```
 
-- `services/todo-core`는 순수 도메인입니다. `IO`를 알지 못합니다.
-- 규칙은 `todo-core`에 두고 CLI와 HTTP API에 복제하지 않습니다.
-- 저장은 SQLite이며 스키마 원본은 `services/todo-store/schema/schema.sql` 하나입니다.
+- `src/core`는 순수 도메인입니다. `IO`를 알지 못합니다.
+- 규칙은 `core`에 두고 CLI와 HTTP API에 복제하지 않습니다.
+- 저장은 SQLite이며 스키마 원본은 `src/store/schema/schema.sql` 하나입니다.
 
 ## Required Workflow
 
@@ -49,7 +49,7 @@ todo-cli, todo-api --> todo-store --> todo-core
 
 ## Do Not
 
-- `todo-core`에 `IO`, 데이터베이스, 네트워크, 환경 변수 접근을 도입하지 않습니다.
+- `core`에 `IO`, 데이터베이스, 네트워크, 환경 변수 접근을 도입하지 않습니다.
 - 도메인 타입에 JSON이나 SQL 인스턴스를 붙이지 않습니다. 전송과 저장 표현은 어댑터가 따로 소유합니다.
 - 조회 조건이나 상태 전이를 SQL이나 핸들러에서 다시 구현하지 않습니다.
 - 부분 함수를 사용하지 않습니다. 실패는 `Either`로 표현합니다.

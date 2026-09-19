@@ -39,5 +39,5 @@
 
 ## 검증
 
-- 과거 마감일 거부: `services/todo-core/tests/Todo/Core/ValidationSpec.hs`
-- 정렬 규칙: `services/todo-core/tests/Todo/Core/FilterSpec.hs`
+- 과거 마감일 거부: `src/core/tests/Todo/Core/ValidationSpec.hs`
+- 정렬 규칙: `src/core/tests/Todo/Core/FilterSpec.hs`

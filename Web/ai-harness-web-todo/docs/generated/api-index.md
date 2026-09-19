@@ -6,7 +6,7 @@
 
 | 계약 | 소유 패키지 | 버전 | 상태 | 소비자 |
 |---|---|---|---|---|
-| [Todo API](../contracts/api/TODO-API-v1.md) | todo-api | v1 | Active | 로컬 사용자 도구, 스크립트 |
+| [Todo API](../contracts/api/TODO-API-v1.md) | api | v1 | Active | 로컬 사용자 도구, 스크립트 |
 
 라우트 수준의 사실은 `docs/generated/route-map.md`에 있습니다.
 이 파일을 직접 수정하지 마십시오.

@@ -34,5 +34,5 @@
 
 ## 검증
 
-- 기본 목록: `services/todo-api/tests/Todo/Api/ContractSpec.hs`
-- 정규화 규칙: `services/todo-core/tests/Todo/Core/ValidationSpec.hs`
+- 기본 목록: `src/api/tests/Todo/Api/ContractSpec.hs`
+- 정규화 규칙: `src/core/tests/Todo/Core/ValidationSpec.hs`

@@ -1,13 +1,13 @@
 # API Contract: Todo API
 
 - 상태: Active
-- 소유 패키지: todo-api
+- 소유 패키지: api
 - 소비자: 로컬 사용자 도구, 스크립트
 - 버전: v1
 
 ## Purpose
 
-할 일의 생성, 조회, 수정, 상태 변경과 삭제를 HTTP로 제공합니다. `todo-cli`, `todo-web`과 같은 유스케이스를 호출하므로 모든 표면의 규칙이 같습니다.
+할 일의 생성, 조회, 수정, 상태 변경과 삭제를 HTTP로 제공합니다. `cli`, `web`과 같은 유스케이스를 호출하므로 모든 표면의 규칙이 같습니다.
 
 ## Authentication and Authorization
 
@@ -101,6 +101,6 @@
 
 ## Verification
 
-- 계약 테스트: `services/todo-api/tests/Todo/Api/ContractSpec.hs`
-- 입력 검증 테스트: `services/todo-api/tests/Todo/Api/SecuritySpec.hs`
+- 계약 테스트: `src/api/tests/Todo/Api/ContractSpec.hs`
+- 입력 검증 테스트: `src/api/tests/Todo/Api/SecuritySpec.hs`
 - 라우트 사실: `../../generated/route-map.md`

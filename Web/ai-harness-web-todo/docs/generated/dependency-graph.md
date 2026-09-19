@@ -5,14 +5,14 @@
 각 패키지의 `.cabal` build-depends에서 추출한 내부 의존입니다.
 
 ```text
-todo-api --> todo-core
-todo-api --> todo-store
-todo-cli --> todo-core
-todo-cli --> todo-store
-todo-core
-todo-store --> todo-core
-todo-web --> todo-core
-todo-web --> todo-store
+api --> core
+api --> store
+cli --> core
+cli --> store
+core
+store --> core
+web --> core
+web --> store
 ```
 
 허용된 방향은 `ARCHITECTURE.md`가 정의하고 `scripts/quality/architecture-check.sh`가 검사합니다.

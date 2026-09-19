@@ -6,12 +6,12 @@
 
 | 범주 | 문서 | 실행 위치 |
 |---|---|---|
-| 단위 | `unit/README.md` | `../services/todo-core/tests`, `../services/todo-cli/tests`, `../services/todo-web/tests` |
-| 통합 | `integration/README.md` | `../services/todo-store/tests` |
-| 계약 | `contract/README.md` | `../services/todo-api/tests` |
+| 단위 | `unit/README.md` | `../src/core/tests`, `../src/cli/tests`, `../src/web/tests` |
+| 통합 | `integration/README.md` | `../src/store/tests` |
+| 계약 | `contract/README.md` | `../src/api/tests` |
 | 아키텍처 | `architecture/README.md` | `../scripts/quality/architecture-check.sh` |
-| 보안 | `security/README.md` | `../services/todo-api/tests`, `../services/todo-web/tests` |
-| 회귀 | `regression/README.md` | `../services/todo-store/tests` |
+| 보안 | `security/README.md` | `../src/api/tests`, `../src/web/tests` |
+| 회귀 | `regression/README.md` | `../src/store/tests` |
 
 ## 전체 실행
 
