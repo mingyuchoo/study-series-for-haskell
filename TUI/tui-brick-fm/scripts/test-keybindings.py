@@ -171,4 +171,22 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         finally:
             terminal.close()
 
-print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all six themes, modal quit")
+    # Tabs must be painted as themed spaces, never sent as terminal cursor motion.
+    tab_left = base / "tab-left"
+    tab_left.mkdir()
+    (tab_left / "Makefile").write_text("target:\n\tstack build\n\t\n가\t값\nx\t\tz\n")
+    terminal = Terminal(tab_left, right, config)
+    try:
+        output = terminal.key(b"\x0ev")  # Select the Makefile and open the viewer.
+        assert b"stack build" in output, output.decode(errors="replace")
+        assert b"\t" not in output, "Viewer emitted a raw terminal tab"
+        for number in range(1, 7):
+            terminal.key(b"\x1bOR")
+            terminal.key(str(number).encode())
+            output = terminal.key(b"\r")
+            assert b"\t" not in output, "Theme redraw emitted a raw terminal tab"
+        terminal.quit()
+    finally:
+        terminal.close()
+
+print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all six themes, modal quit, themed tab rendering")

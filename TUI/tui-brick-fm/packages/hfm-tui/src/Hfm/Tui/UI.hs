@@ -15,6 +15,7 @@ import Hfm.Tui.I18n (translate, renderStatus)
 import Hfm.Tui.Name
 import Hfm.Application.State
 import Hfm.Domain.Selection
+import Hfm.Tui.Text (expandTabs)
 import Hfm.Tui.Layout (viewerHelpLines, prepareLayout)
 
 -- The main screen deliberately uses only a few fixed rows, leaving the rest to the lists.
@@ -137,4 +138,4 @@ renderViewer st path content offset =
     helpLines = viewerHelpLines st
     bodyHeight = max 0 (height - 1 - length helpLines)
     -- Empty lines must occupy a row, just like nonempty file lines.
-    renderLine line = txt (if T.null line then " " else line)
+    renderLine line = txt (if T.null line then " " else expandTabs line)

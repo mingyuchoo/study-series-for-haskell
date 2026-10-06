@@ -22,6 +22,7 @@ library
       Hfm.Tui.Name
       Hfm.Tui.SyntaxHighlight
       Hfm.Tui.Theme
+      Hfm.Tui.Text
       Hfm.Tui.Terminal
       Hfm.Tui.UI
   other-modules:

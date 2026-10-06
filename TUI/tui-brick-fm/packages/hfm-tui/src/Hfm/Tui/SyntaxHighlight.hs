@@ -17,6 +17,7 @@ import           System.FilePath (takeExtension)
 
 import           Text.Printf     (printf)
 
+import Hfm.Tui.Text (expandTabs)
 import Hfm.Tui.Name (Name)
 import Hfm.Application.State (maxPreviewLines)
 
@@ -57,7 +58,7 @@ renderPlainText textLines =
         [ withAttr
             (attrName "syntax.lineNumber")
             (str $ printf "%3d | " n)
-        , txt line
+        , txt (if T.null line then " " else expandTabs line)
         ]
 
 -- | 토큰 줄을 라인 번호와 함께 렌더링
@@ -77,7 +78,7 @@ renderTokenLine lineNum tokens =
 -- | 파일 내용을 구문 강조하여 렌더링
 renderHighlightedContent :: FilePath -> T.Text -> Widget Name
 renderHighlightedContent path content =
-  let contentLines = limitLines content
+  let contentLines = map expandTabs (limitLines content)
    in case detectLanguage path of
         Nothing -> renderPlainText contentLines
         Just syntax ->

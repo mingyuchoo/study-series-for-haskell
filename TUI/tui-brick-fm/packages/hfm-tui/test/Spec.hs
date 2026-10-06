@@ -142,6 +142,31 @@ spec = do
       viewerContentHeight st `shouldBe` 0
       length (viewerRows st) `shouldBe` 4
 
+  describe "Viewer tab rendering" $ do
+    it "renders Makefile indentation and blank tab lines with the active theme background" $ do
+      let content = "target:\n\tstack build\n\t\n가\t값\nx\t\tz"
+      mapM_ (\(theme, preview) -> do
+        let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (80, 40))
+                   { stTheme = theme, stMode = ViewFile "/tmp/Makefile" content 0
+                   , stThemePicker = if preview then Just (selectAt (fromEnum theme) (selection themes)) else Nothing }
+            attributes = themeAttributes (effectiveTheme st)
+            size = stTerminalSize st
+            ops = displayOpsForPic (renderWidget (Just attributes) (drawUI st) size) size
+            body = concatMap Vec.toList (take 5 (drop 2 (Vec.toList ops)))
+            background = V.attrBackColor (attrMapLookup (attrName "default") attributes)
+            text (TextSpan _ _ _ value) = TL.toStrict value
+            text (Skip count) = T.replicate count " "
+            text (RowEnd count) = T.replicate count " "
+            rows = map (T.concat . map text . Vec.toList) (Vec.toList ops)
+        rows !! 3 `shouldSatisfy` T.isPrefixOf "│        stack build"
+        rows !! 5 `shouldSatisfy` T.isPrefixOf "│가      값"
+        rows !! 6 `shouldSatisfy` T.isPrefixOf "│x               z"
+        mapM_ (\op -> case op of
+          TextSpan attribute _ _ value -> do
+            V.attrBackColor attribute `shouldBe` background
+            TL.any (== '\t') value `shouldBe` False
+          _ -> expectationFailure ("Unpainted viewer cells: " ++ show op)) body) [(theme, preview) | theme <- themes, preview <- [False, True]]
+
   SyntaxHighlightSpec.spec
 
   describe "VS Code theme rendering" $ do
