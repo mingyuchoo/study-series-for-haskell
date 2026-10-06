@@ -5,6 +5,7 @@ module UI (drawUI) where
 import Brick
 import Brick.Widgets.Border (border, borderWithLabel)
 import Brick.Widgets.List (listElements, listSelectedElement, renderList)
+import Config (KeyBindingStyle (..))
 import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import FileManager (Entry (..), EntryKind (..))
@@ -22,22 +23,32 @@ renderManager st = vBox
   , renderInput st
   , hBox [renderPanel st LeftSide (stLeft st) leftWidth, renderPanel st RightSide (stRight st) rightWidth]
   , renderStatus st
-  , withAttr (attrName "keys") $ padLeftRight 1 $ txt "Tab 패널  F3 보기  F5 복사  F6 이동  F7 폴더  F8 삭제  F9 숨김  F10 종료"
+  , withAttr (attrName "keys") $ padLeftRight 1 $ txt $ navigationHelp st <> "  Tab 패널  F3 보기  F5 복사  F6 이동  F7 폴더  F8 삭제"
   ]
   where
     width = fst (stTerminalSize st)
     leftWidth = max 1 (width `div` 2)
     rightWidth = max 1 (width - leftWidth)
 
+navigationHelp :: AppState -> T.Text
+navigationHelp st = case configKeyBinding (stConfig st) of
+  Emacs -> "C-p/n 이동  C-g 취소"
+  Vim -> "j/k 이동  F10 종료"
+
 renderInput :: AppState -> Widget Name
 renderInput st = withAttr (attrName "input") $ padLeftRight 1 $ txt $ case stMode st of
-  Browse -> "/ 검색  Enter 열기  Backspace 상위  Ctrl+R 새로고침"
-  Search -> "검색: " <> panelSearch (activePanel st) <> "_  (Enter 적용, Esc 해제)"
-  Prompt Copy value -> "복사 대상: " <> value <> "_  (Enter 실행, Esc 취소)"
-  Prompt Move value -> "이동/새 이름: " <> value <> "_  (Enter 실행, Esc 취소)"
-  Prompt Mkdir value -> "새 폴더: " <> value <> "_  (Enter 생성, Esc 취소)"
+  Browse -> "/ 검색  Enter 열기  Backspace 상위  C-r 새로고침"
+  Search -> "검색: " <> markInputCursor st (panelSearch (activePanel st)) <> "  (Enter 적용, C-g 취소)"
+  Prompt Copy value -> "복사 대상: " <> markInputCursor st value <> "  (Enter 실행, C-g 취소)"
+  Prompt Move value -> "이동/새 이름: " <> markInputCursor st value <> "  (Enter 실행, C-g 취소)"
+  Prompt Mkdir value -> "새 폴더: " <> markInputCursor st value <> "  (Enter 생성, C-g 취소)"
   ConfirmDelete -> "삭제 확인: " <> maybe "" (T.pack . entryName) (selectedEntry st) <> "  (y 삭제, 다른 키 취소)"
   ViewFile {} -> ""
+
+markInputCursor :: AppState -> T.Text -> T.Text
+markInputCursor st value =
+  let cursor = stInputCursor st
+  in T.take cursor value <> "_" <> T.drop cursor value
 
 renderPanel :: AppState -> Side -> Panel -> Int -> Widget Name
 renderPanel st side panel width =
@@ -74,6 +85,6 @@ renderViewer st path content offset =
     [ withAttr (attrName "header") $ padLeftRight 1 $ txt ("보기: " <> T.pack path)
     , vLimit (max 1 (height - 2)) $ border $ vBox $
         map txt $ take (max 1 (height - 4)) $ drop offset (T.lines content)
-    , withAttr (attrName "keys") $ padLeftRight 1 $ txt "↑↓/PgUp/PgDn 스크롤  Esc/F3/q 닫기  |  최대 64 KiB 표시"
+    , withAttr (attrName "keys") $ padLeftRight 1 $ txt "C-p/n 스크롤  C-v/M-v 페이지  C-g 닫기  |  최대 64 KiB 표시"
     ]
   where height = snd (stTerminalSize st)

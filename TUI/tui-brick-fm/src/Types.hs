@@ -49,6 +49,7 @@ data AppState = AppState
   , stRight :: Panel
   , stActive :: Side
   , stMode :: Mode
+  , stInputCursor :: Int
   , stShowHidden :: Bool
   , stStatus :: T.Text
   , stTerminalSize :: (Int, Int)
@@ -67,6 +68,7 @@ initialState left leftEntries right rightEntries cfg size = AppState
   , stRight = Panel RightList right (list RightList (Vec.fromList rightEntries) 1) rightEntries ""
   , stActive = LeftSide
   , stMode = Browse
+  , stInputCursor = 0
   , stShowHidden = False
   , stStatus = "준비"
   , stTerminalSize = size

@@ -4,7 +4,9 @@ import Control.Exception (bracket)
 import qualified Data.Vector as Vec
 import Brick.Widgets.List (listElements, listSelectedElement)
 import FileManager
+import Event (editText)
 import Fuzzy (filterItems, fuzzyMatchScore)
+import qualified Graphics.Vty as V
 import System.Directory
   ( createDirectory, doesDirectoryExist, doesFileExist, getTemporaryDirectory
   , removeFile, removePathForcibly
@@ -32,6 +34,20 @@ withFixture action = do
 
 spec :: Spec
 spec = do
+  describe "Emacs 입력 편집" $ do
+    it "커서를 이동해 중간에 입력하고 앞뒤 글자를 지운다" $ do
+      editText (V.EvKey (V.KChar 'b') [V.MCtrl]) "ab" 2 `shouldBe` Just ("ab", 1)
+      editText (V.EvKey (V.KChar 'x') []) "ab" 1 `shouldBe` Just ("axb", 2)
+      editText (V.EvKey (V.KChar 'h') [V.MCtrl]) "axb" 2 `shouldBe` Just ("ab", 1)
+      editText (V.EvKey (V.KChar 'd') [V.MCtrl]) "axb" 1 `shouldBe` Just ("ab", 1)
+    it "처음과 끝으로 이동하고 단어 및 커서 뒤를 지운다" $ do
+      editText (V.EvKey (V.KChar 'a') [V.MCtrl]) "alpha beta" 5 `shouldBe` Just ("alpha beta", 0)
+      editText (V.EvKey (V.KChar 'e') [V.MCtrl]) "alpha beta" 5 `shouldBe` Just ("alpha beta", 10)
+      editText (V.EvKey (V.KChar 'w') [V.MCtrl]) "alpha beta" 10 `shouldBe` Just ("alpha ", 6)
+      editText (V.EvKey (V.KChar 'w') [V.MCtrl]) "/tmp/file" 9 `shouldBe` Just ("/tmp/", 5)
+      editText (V.EvKey (V.KChar 'k') [V.MCtrl]) "alpha beta" 6 `shouldBe` Just ("alpha ", 6)
+      editText (V.EvKey (V.KChar 'u') [V.MCtrl]) "alpha beta" 4 `shouldBe` Just ("", 0)
+
   describe "패널 탐색" $ do
     it "디렉터리를 먼저 정렬하고 숨김 파일을 전환한다" $ withFixture $ \dir -> do
       createDirectory (dir </> "z-folder")

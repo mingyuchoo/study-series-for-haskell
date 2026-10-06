@@ -6,15 +6,12 @@ binding_style: emacs
 # Emacs 스타일 키바인딩:
 #   Ctrl+p: 위로 이동
 #   Ctrl+n: 아래로 이동
-#   Ctrl+a: 줄 처음으로
-#   Ctrl+e: 줄 끝으로
-#   Ctrl+u: 검색어 전체 삭제
-#   Ctrl+h: 한 글자 삭제 (백스페이스)
-#   Ctrl+g: 취소/종료
+#   Ctrl+v/Meta+v: 다음/이전 페이지
+#   Ctrl+g: 취소/닫기/종료
+#   검색·경로 입력: Ctrl+a/e/b/f 커서 이동, Ctrl+h/d 글자 삭제
+#   검색·경로 입력: Ctrl+k 뒤쪽 삭제, Ctrl+w 앞 단어 삭제, Ctrl+u 전체 삭제
+#   파일 보기: Ctrl+v/Meta+v 페이지 이동
 
 # VIM 스타일 키바인딩:
-#   Ctrl+k: 위로 이동
-#   Ctrl+j: 아래로 이동
-#   Ctrl+w: 단어 삭제
-#   Ctrl+u: 검색어 전체 삭제
-#   Ctrl+c: 취소/종료
+#   j/k: 아래/위로 이동
+#   h/l: 상위/선택 항목 열기
