@@ -1,0 +1,24 @@
+-- OPTIONS_GHC
+:set +m
+:set +s
+:set +t
+:set -Wall
+
+--  PROMPT
+:set prompt "\ESC[1;35m\x03BB> \ESC[m"
+:set prompt-cont "\ESC[1;35m > \ESC[m"
+
+-- INCLUDE DIRECTORIES
+:set -iapp
+:set -isrc
+:set -itest
+
+-- LANGUAGE EXTENSIONS
+:set -XExplicitForAll
+:set -XStandaloneKindSignatures
+
+-- HLINT
+:def hlint const . return <| ":! hlint \"src\""
+
+-- HOOGLE
+:def hoogle \x -> return <| ":! hoogle --count=20 \"" ++ x ++ "\""

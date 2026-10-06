@@ -1,0 +1,14 @@
+services:
+  ${PROJECT_NAME}:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        PROJECT_NAME: ${PROJECT_NAME}
+    container_name: ${PROJECT_NAME}-app
+    volumes:
+      - ../data:/app/data
+    restart: unless-stopped
+volumes:
+  data:
+    driver: local

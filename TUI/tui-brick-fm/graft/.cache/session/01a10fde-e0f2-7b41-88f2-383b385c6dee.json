@@ -1,0 +1,9 @@
+{
+  "lastQuery": "scripts 아래에 있는 스크립트를 변경된 코드베이스에 따라 동작하도록 업데이트하라.",
+  "perAgentQuery": {},
+  "graftReads": 0,
+  "sourceReads": 0,
+  "savedTokens": 0,
+  "injectedPointers": [],
+  "nudges": 0
+}

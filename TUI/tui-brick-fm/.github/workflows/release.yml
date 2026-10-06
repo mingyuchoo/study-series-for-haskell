@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+  build-binaries:
+    name: Build Binary for ${{ matrix.os }}
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: fzh-exe
+            asset_name: fzh-linux-x86_64
+          - os: macos-latest
+            artifact_name: fzh-exe
+            asset_name: fzh-macos-arm64
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Haskell Stack
+      uses: haskell-actions/setup@v2
+      with:
+        ghc-version: '9.10.3'
+        enable-stack: true
+        stack-version: 'latest'
+
+    - name: Cache Stack dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.stack
+          .stack-work
+        key: ${{ runner.os }}-stack-release-${{ hashFiles('stack.yaml', 'package.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-release-
+
+    - name: Build
+      run: stack build --copy-bins --local-bin-path ./bin
+
+    - name: Strip binary (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: strip ./bin/${{ matrix.artifact_name }}
+
+    - name: Compress binary
+      run: |
+        cd ./bin
+        tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+        cd ..
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./bin/${{ matrix.asset_name }}.tar.gz
+        asset_name: ${{ matrix.asset_name }}.tar.gz
+        asset_content_type: application/gzip

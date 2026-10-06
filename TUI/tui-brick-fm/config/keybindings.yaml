@@ -1,0 +1,20 @@
+# fzh 키바인딩 설정
+# binding_style: emacs 또는 vim
+
+binding_style: emacs
+
+# Emacs 스타일 키바인딩:
+#   Ctrl+p: 위로 이동
+#   Ctrl+n: 아래로 이동
+#   Ctrl+a: 줄 처음으로
+#   Ctrl+e: 줄 끝으로
+#   Ctrl+u: 검색어 전체 삭제
+#   Ctrl+h: 한 글자 삭제 (백스페이스)
+#   Ctrl+g: 취소/종료
+
+# VIM 스타일 키바인딩:
+#   Ctrl+k: 위로 이동
+#   Ctrl+j: 아래로 이동
+#   Ctrl+w: 단어 삭제
+#   Ctrl+u: 검색어 전체 삭제
+#   Ctrl+c: 취소/종료

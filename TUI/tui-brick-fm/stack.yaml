@@ -1,0 +1,26 @@
+# https://www.stackage.org/lts-24.21
+resolver: lts-24.40
+
+packages:
+- .
+
+extra-package-dbs: []
+extra-deps: []
+flags: {}
+
+notify-if-nix-on-path: false
+
+docker:
+  enable: false
+
+#nix:
+#  enable: true
+#  pure: true
+#  packages:
+#  - zlib
+#  - glpk
+#  - pcre
+#  #shell-file: shell.nix
+#  nix-shell-options: []
+#  path: []
+#  add-gc-roots: false
