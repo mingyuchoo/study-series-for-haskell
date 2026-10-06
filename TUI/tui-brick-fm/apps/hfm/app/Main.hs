@@ -1,14 +1,17 @@
 module Main (main) where
 
 import Brick (customMain)
-import Hfm.Infrastructure.Config (loadKeyBindingConfig)
-import Control.Exception (IOException, try)
-import Hfm.Infrastructure.FileSystem (readEntries)
 import qualified Graphics.Vty as V
-import Hfm.Tui.App (app, buildVtyFromTty)
-import Hfm.Application.State (configWithKeyBinding, initialState)
+import Hfm.Application.Startup (planStartup)
+import Hfm.Application.State (AppState (stTerminalSize), configWithKeyBinding)
+import Hfm.Application.UseCases (runProgram)
+import Hfm.Domain.Language (Language (Korean))
+import Hfm.Infrastructure.Config (loadKeyBindingConfig)
 import Hfm.Infrastructure.Ports (ioFileSystem)
-import System.Directory (canonicalizePath, getCurrentDirectory)
+import Hfm.Tui.App (app, buildVtyFromTty)
+import Hfm.Tui.I18n (renderFileError)
+import qualified Data.Text as T
+import System.Directory (getCurrentDirectory)
 import System.Environment (getArgs)
 import System.Exit (die)
 
@@ -21,18 +24,14 @@ main = do
     [left] -> pure (left, cwd)
     [left, right] -> pure (left, right)
     _ -> die "사용법: hfm-exe [왼쪽_디렉터리] [오른쪽_디렉터리]"
-  result <- try $ do
-    left <- canonicalizePath leftArg
-    right <- canonicalizePath rightArg
-    leftEntries <- readEntries False left
-    rightEntries <- readEntries False right
-    pure (left, leftEntries, right, rightEntries)
+  config <- configWithKeyBinding <$> loadKeyBindingConfig
+  -- Validate directories before acquiring the terminal.
+  result <- runProgram ioFileSystem (planStartup leftArg rightArg config (0, 0))
   case result of
-    Left e -> die ("디렉터리를 열 수 없습니다: " ++ show (e :: IOException))
-    Right (left, leftEntries, right, rightEntries) -> do
+    Left err -> die ("디렉터리를 열 수 없습니다: " ++ T.unpack (renderFileError Korean err))
+    Right state -> do
       vty <- buildVtyFromTty
       size <- V.displayBounds (V.outputIface vty)
-      config <- configWithKeyBinding <$> loadKeyBindingConfig
       _ <- customMain vty buildVtyFromTty Nothing (app ioFileSystem)
-        (initialState left leftEntries right rightEntries config size)
+        (state { stTerminalSize = size })
       pure ()

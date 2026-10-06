@@ -1,4 +1,4 @@
-module Hfm.Application.Ports (FileSystem (..), FileError (..), errorText) where
+module Hfm.Application.Ports (FileSystem (..), FileError (..)) where
 
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
@@ -16,10 +16,4 @@ data FileSystem m = FileSystem
   , moveEntry :: FilePath -> FilePath -> m (Either FileError ())
   , deleteEntry :: FilePath -> m (Either FileError ())
   , makeDirectory :: FilePath -> m (Either FileError ())
-  , destinationFor :: FilePath -> FilePath -> FilePath -> m (Either FileError FilePath)
   }
-
-errorText :: FileError -> T.Text
-errorText Missing = "파일이 존재하지 않습니다"
-errorText PermissionDenied = "파일 접근 권한이 없습니다"
-errorText (FileFailure value) = value

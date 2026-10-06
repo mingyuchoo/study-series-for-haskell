@@ -72,6 +72,7 @@ stack run hfm-exe -- /path/to/left /path/to/right
 ```bash
 stack test
 python3 scripts/check-architecture.py
+python3 scripts/test-architecture.py
 python3 scripts/test-keybindings.py
 ```
 
@@ -89,6 +90,6 @@ packages/hfm-infrastructure/  # 파일 시스템·설정의 실제 IO 구현
 packages/hfm-tui/             # Brick/Vty·렌더링·한국어/영어 표시
 ```
 
-내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application이 정의한 `FileSystem m` 포트를 `Main`에서 실제 구현과 연결하며, 테스트에서는 메모리 구현으로 교체합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다. 기존 평면 모듈 이름은 `Hfm.*` 네임스페이스로 변경되었습니다.
+내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application의 `planInput`·`planStartup`은 순수한 `Program` 실행 계획을 만들고, `runProgram`이 주입받은 `FileSystem m` 포트로 이를 실행합니다. `Main`에서 실제 IO 구현을 연결하며, 테스트에서는 실행 계획을 직접 검사하거나 메모리 구현으로 실행합니다. 경로 검증·대상 이름 계산은 domain, 상태 메시지의 한국어/영어 표시는 tui가 담당합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다. 기존 평면 모듈 이름은 `Hfm.*` 네임스페이스로 변경되었습니다.
 
 각 패키지의 `package.yaml`이 빌드 설정의 원본입니다. 수정 후 `stack build`로 `.cabal`을 갱신합니다. `stack test hfm-domain` 또는 `stack test hfm-application`처럼 특정 패키지만 테스트할 수도 있습니다.

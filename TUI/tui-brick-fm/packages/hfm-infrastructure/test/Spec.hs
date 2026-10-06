@@ -1,12 +1,9 @@
 module Main (main) where
 
 import Control.Exception (bracket)
-import qualified Data.Vector as Vec
 import Hfm.Domain.Config
-import Hfm.Domain.Selection
 import Hfm.Infrastructure.Config (decodeKeyBindingConfig)
 import Hfm.Infrastructure.FileSystem
-import Hfm.Application.State
 import System.Directory
   ( createDirectory, doesDirectoryExist, doesFileExist, getTemporaryDirectory
   , removeFile, removePathForcibly )
@@ -46,14 +43,6 @@ spec = do
       map entryName normal `shouldBe` ["..", "z-folder", "a.txt"]
       allEntries <- readEntries True dir
       map entryName allEntries `shouldBe` ["..", "z-folder", ".secret", "a.txt"]
-
-    it "검색에서 부모 항목을 유지하고 선택을 복원한다" $ do
-      let entries = [Entry ".." Parent 0, Entry "alpha" RegularFile 1, Entry "beta" RegularFile 1]
-          st = initialState "/tmp" entries "/tmp" entries defaultConfig (80, 24)
-          panel = stLeft st
-          filtered = refreshPanel entries (Just "beta") (panel { panelSearch = "BETA" })
-      map entryName (Vec.toList (selectionItems (panelEntries filtered))) `shouldBe` ["..", "beta"]
-      fmap (entryName . snd) (selectedElement (panelEntries filtered)) `shouldBe` Just "beta"
 
   describe "파일 작업" $ do
     it "디렉터리를 재귀 복사하고 심볼릭 링크를 그대로 복사한다" $ withFixture $ \dir -> do

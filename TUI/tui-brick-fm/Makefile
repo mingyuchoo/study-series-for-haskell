@@ -1,4 +1,4 @@
-.PHONY: test coverage install update-stack-yaml
+.PHONY: test coverage install update-stack-yaml check-architecture
 
 # Cabal package name (independent of checkout directory name)
 PROJECT_NAME := hfm
@@ -27,15 +27,17 @@ format: setup
 build: setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
 
-test: setup
+check-architecture:
 	python3 scripts/check-architecture.py
+	python3 scripts/test-architecture.py
+
+test: setup check-architecture
 	stack test --fast
 
 coverage: setup
 	stack test --coverage --fast --haddock
 
-watch-test: setup
-	python3 scripts/check-architecture.py
+watch-test: setup check-architecture
 	stack test --fast --file-watch --watch-all
 
 watch-coverage: setup

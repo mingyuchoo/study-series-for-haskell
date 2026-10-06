@@ -24,9 +24,17 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
+  - Hfm.Application.Program
+  - Hfm.Application.Startup
+  - Hfm.Application.Status
+  - Hfm.Application.Workflow
   - Hfm.Application.Ports
   - Hfm.Application.State
   - Hfm.Application.UseCases
+  other-modules:
+  - Hfm.Application.Internal.Action
+  - Hfm.Application.Internal.Files
+  - Hfm.Application.Internal.Interaction
 tests:
   hfm-application-test:
     main: Spec.hs

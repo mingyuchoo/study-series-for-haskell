@@ -14,12 +14,13 @@ module Hfm.Infrastructure.FileSystem
 
 import Control.Exception (IOException, catch, onException, throwIO)
 import Control.Monad (forM, unless, when)
+import Hfm.Domain.PathPolicy (requestedPath, destinationPath, isWithin)
 import Hfm.Domain.Entry
 import System.Directory
   ( canonicalizePath, copyFile, createDirectory, doesDirectoryExist
   , listDirectory, removeDirectory, removeFile, renamePath
   )
-import System.FilePath (isAbsolute, normalise, takeDirectory, takeFileName, (</>))
+import System.FilePath (normalise, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
 import System.Posix.Files
   ( createSymbolicLink, fileSize, getSymbolicLinkStatus, isDirectory
@@ -48,9 +49,9 @@ readEntries showHidden dir = do
 -- A destination may be a directory or a new path for a rename.
 destinationFor :: FilePath -> FilePath -> FilePath -> IO FilePath
 destinationFor cwd source input = do
-  let requested = if isAbsolute input then normalise input else normalise (cwd </> input)
+  let requested = requestedPath cwd input
   isDir <- doesDirectoryExist requested
-  pure (if isDir then requested </> takeFileName source else requested)
+  pure (destinationPath source requested isDir)
 
 ensureVacant :: FilePath -> FilePath -> IO ()
 ensureVacant source target = do
@@ -66,11 +67,8 @@ ensureVacant source target = do
     unless (isSymbolicLink status) $ do
       base <- canonicalizePath source
       parent <- canonicalizePath (takeDirectory target)
-      when (parent == base || isInside base parent) $
+      when (isWithin base parent) $
         ioError (userError "디렉터리를 자기 내부로 복사하거나 이동할 수 없습니다")
-  where
-    isInside base path = (base ++ "/") `prefixOf` path
-    prefixOf prefix path = take (length prefix) path == prefix
 
 copyEntry :: FilePath -> FilePath -> IO ()
 copyEntry source target = do

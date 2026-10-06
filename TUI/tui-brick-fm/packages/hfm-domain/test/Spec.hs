@@ -1,6 +1,7 @@
 module Main (main) where
 
 import qualified Data.Vector as Vec
+import Hfm.Domain.PathPolicy
 import Hfm.Domain.Input
 import Hfm.Domain.Editor
 import Hfm.Domain.Fuzzy
@@ -50,3 +51,21 @@ spec = do
       selectedElement (selectAt (-1) xs) `shouldBe` Just (2, 30)
       selectedElement (selectStep (-1) xs) `shouldBe` Just (0, 10)
       selectedElement (selectStep 99 xs) `shouldBe` Just (2, 30)
+
+  describe "Pure path policy" $ do
+    it "distinguishes filenames and directory destinations from supplied facts" $ do
+      requestedPath "/left" "new.txt" `shouldBe` "/left/new.txt"
+      requestedPath "/left" "/right" `shouldBe` "/right"
+      destinationPath "/left/file.txt" "/right" True `shouldBe` "/right/file.txt"
+      destinationPath "/left/file.txt" "/right/new.txt" False `shouldBe` "/right/new.txt"
+
+    it "requires a single relative name for mkdir, while allowing transfer paths" $ do
+      map validDirectoryName ["", ".", "..", "/absolute", "nested/folder"] `shouldBe` replicate 5 False
+      validDirectoryName "새 폴더" `shouldBe` True
+      validDestination "../other/file" `shouldBe` True
+
+    it "checks canonical containment by path boundaries, including root" $ do
+      isWithin "/source" "/source" `shouldBe` True
+      isWithin "/source/" "/source/nested" `shouldBe` True
+      isWithin "/source" "/source-other" `shouldBe` False
+      isWithin "/" "/anywhere" `shouldBe` True

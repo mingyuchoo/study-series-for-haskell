@@ -28,5 +28,4 @@ ioFileSystem = FileSystem
   , moveEntry = \source target -> capture (FS.moveEntry source target)
   , deleteEntry = capture . FS.deleteEntry
   , makeDirectory = capture . FS.makeDirectory
-  , destinationFor = \cwd source input -> capture (FS.destinationFor cwd source input)
   }

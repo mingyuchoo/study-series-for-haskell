@@ -46,7 +46,9 @@ jobs:
       run: stack build --test --no-run-tests
 
     - name: Check architecture boundaries
-      run: python3 scripts/check-architecture.py
+      run: |
+        python3 scripts/check-architecture.py
+        python3 scripts/test-architecture.py
 
     - name: Run tests
       run: stack test --coverage

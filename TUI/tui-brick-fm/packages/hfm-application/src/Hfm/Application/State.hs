@@ -26,6 +26,8 @@ module Hfm.Application.State
   , maxPreviewLines
   ) where
 
+import Hfm.Application.Status (Status (Ready))
+import System.FilePath ((</>))
 import Hfm.Domain.Theme
 import Hfm.Domain.Selection
 import Hfm.Domain.Config (KeyBindingConfig (..), KeyBindingStyle (..))
@@ -59,7 +61,7 @@ data AppState = AppState
   , stInputCursor :: Int
   , stPendingCtrlX :: Bool
   , stShowHidden :: Bool
-  , stStatus :: T.Text
+  , stStatus :: Status
   , stTerminalSize :: (Int, Int)
   , stViewerFooterRows :: Int
   , stConfig :: AppConfig
@@ -83,7 +85,7 @@ initialState left leftEntries right rightEntries cfg size = AppState
   , stInputCursor = 0
   , stPendingCtrlX = False
   , stShowHidden = False
-  , stStatus = "준비"
+  , stStatus = Ready
   , stTerminalSize = size
   , stViewerFooterRows = 1
   , stConfig = cfg
@@ -117,7 +119,7 @@ selectedPath :: AppState -> Maybe FilePath
 selectedPath st = do
   entry <- selectedEntry st
   if entryKind entry == Parent then Nothing
-    else Just (panelPath (activePanel st) ++ "/" ++ entryName entry)
+    else Just (panelPath (activePanel st) </> entryName entry)
 
 visibleEntries :: T.Text -> [Entry] -> [Entry]
 visibleEntries query = filter (\e -> entryKind e == Parent || T.toCaseFold query `T.isInfixOf` T.toCaseFold (T.pack (entryName e)))

@@ -1,8 +1,14 @@
+{-# LANGUAGE GADTs #-}
+
 module Main (main) where
 
 import Control.Monad.State.Strict (State, modify, runState)
 import Hfm.Application.Ports
 import Hfm.Application.State
+import Hfm.Application.Program
+import Hfm.Application.Startup (planStartup)
+import Hfm.Application.Workflow (planInput)
+import Hfm.Application.Status
 import Hfm.Application.UseCases
 import qualified Data.Vector as Vec
 import Hfm.Domain.Entry
@@ -28,13 +34,12 @@ memory :: FileSystem (State [String])
 memory = FileSystem
   { readEntries = \_ path -> record ("list " ++ path) [entry]
   , canonicalizePath = \path -> record ("resolve " ++ path) path
-  , doesDirectoryExist = \path -> record ("is-dir " ++ path) False
+  , doesDirectoryExist = \path -> record ("is-dir " ++ path) (path == "/right")
   , readPreview = \path -> record ("preview " ++ path) "text"
   , copyEntry = \source target -> record ("copy " ++ source ++ " " ++ target) ()
   , moveEntry = \source target -> record ("move " ++ source ++ " " ++ target) ()
   , deleteEntry = \path -> record ("delete " ++ path) ()
   , makeDirectory = \path -> record ("mkdir " ++ path) ()
-  , destinationFor = \_ source _ -> record ("destination " ++ source) "/right/file.txt"
   }
 
 run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
@@ -60,23 +65,23 @@ spec = do
           ((done, _), after) = run memory (KeyPress KEnter []) prompt
       before `shouldBe` []
       stMode prompt `shouldBe` Prompt Copy "/right"
-      after `shouldBe` ["destination /left/file.txt", "copy /left/file.txt /right/file.txt", "list /left", "list /right"]
+      after `shouldBe` ["is-dir /right", "copy /left/file.txt /right/file.txt", "list /left", "list /right"]
       stMode done `shouldBe` Browse
-      stStatus done `shouldBe` "복사했습니다"
+      stStatus done `shouldBe` Copied
 
     it "preserves the prompt and skips refresh on an operation failure" $ do
       let ports = memory { copyEntry = \_ _ -> pure (Left PermissionDenied) }
           st = initial { stMode = Prompt Copy "/right" }
           ((done, _), calls) = run ports (KeyPress KEnter []) st
-      calls `shouldBe` ["destination /left/file.txt"]
+      calls `shouldBe` ["is-dir /right"]
       stMode done `shouldBe` stMode st
-      stStatus done `shouldBe` "오류: 파일 접근 권한이 없습니다"
+      stStatus done `shouldBe` Failed PermissionDenied
 
     it "rejects invalid mkdir paths without effects" $ do
       mapM_ (\path -> do
         let ((done, _), calls) = run memory (KeyPress KEnter []) (initial { stMode = Prompt Mkdir path })
         calls `shouldBe` []
-        stStatus done `shouldBe` "유효한 대상 경로를 입력하세요") ["", ".", "..", "/absolute", "nested/folder"]
+        stStatus done `shouldBe` InvalidDestination) ["", ".", "..", "/absolute", "nested/folder"]
 
     it "requires explicit deletion confirmation and supports cancellation" $ do
       let ((pending, _), calls) = run memory (KeyPress (KChar 'D') []) initial
@@ -94,7 +99,7 @@ spec = do
           ((done, _), _) = run ports (KeyPress (KChar 'g') []) initial
       panelEntries (stLeft done) `shouldBe` panelEntries (stLeft initial)
       panelEntries (stRight done) `shouldBe` panelEntries (stRight initial)
-      stStatus done `shouldBe` "오류: 파일이 존재하지 않습니다"
+      stStatus done `shouldBe` Failed Missing
 
     it "filters search text without filesystem access" $ do
       let ((updated, _), calls) = run memory (KeyPress (KChar 'z') []) (initial { stMode = Search })
@@ -106,7 +111,7 @@ spec = do
       let ports = memory { readPreview = \_ -> pure (Right "text\0binary") }
           ((done, _), _) = run ports (KeyPress (KChar 'v') []) initial
       stMode done `shouldBe` Browse
-      stStatus done `shouldBe` "바이너리 파일은 미리 볼 수 없습니다"
+      stStatus done `shouldBe` BinaryPreviewUnsupported
 
     it "honors the quit prefix from every mode" $ do
       mapM_ (\mode -> do
@@ -171,3 +176,69 @@ spec = do
       stThemePicker english `shouldBe` stThemePicker opened
       quit `shouldBe` True
       calls `shouldBe` []
+
+  describe "Panel state" $ do
+    it "검색에서 부모 항목을 유지하고 선택을 복원한다" $ do
+      let entries = [Entry ".." Parent 0, Entry "alpha" RegularFile 1, Entry "beta" RegularFile 1]
+          st = initialState "/tmp" entries "/tmp" entries defaultConfig (80, 24)
+          panel = stLeft st
+          filtered = refreshPanel entries (Just "beta") (panel { panelSearch = "BETA" })
+      map entryName (Vec.toList (selectionItems (panelEntries filtered))) `shouldBe` ["..", "beta"]
+      fmap (entryName . snd) (selectedElement (panelEntries filtered)) `shouldBe` Just "beta"
+
+  describe "Pure plans and response-dependent workflows" $ do
+    it "finishes a search edit without even needing a port implementation" $ do
+      case planInput (KeyPress (KChar 'z') []) (initial { stMode = Search }) of
+        Done (state, quit) -> do
+          panelSearch (activePanel state) `shouldBe` "z"
+          quit `shouldBe` False
+        Await _ _ -> expectationFailure "Search requested a filesystem effect"
+
+    it "uses the directory response to choose a transfer target and stops on failure" $ do
+      let state = initial { stMode = Prompt Copy "/right" }
+      case planInput (KeyPress KEnter []) state of
+        Await (DirectoryExists path) resume -> do
+          path `shouldBe` "/right"
+          case resume (Right True) of
+            Await (CopyEntry source target) copied -> do
+              source `shouldBe` "/left/file.txt"
+              target `shouldBe` "/right/file.txt"
+              case copied (Left PermissionDenied) of
+                Done (failed, quit) -> do
+                  stStatus failed `shouldBe` Failed PermissionDenied
+                  stMode failed `shouldBe` stMode state
+                  quit `shouldBe` False
+                _ -> expectationFailure "Failed transfer requested another effect"
+            _ -> expectationFailure "Expected a copy after resolving the directory"
+          case resume (Right False) of
+            Await (CopyEntry _ target) _ -> target `shouldBe` "/right"
+            _ -> expectationFailure "Expected a copy to the requested new filename"
+        _ -> expectationFailure "Expected destination inspection before a transfer"
+
+    it "does not mutate or refresh when destination inspection fails" $ do
+      let ports = memory { doesDirectoryExist = \_ -> recordFailure }
+          recordFailure = modify (++ ["inspect failed"]) >> pure (Left PermissionDenied)
+          state = initial { stMode = Prompt Move "/right" }
+          ((done, _), calls) = run ports (KeyPress KEnter []) state
+      calls `shouldBe` ["inspect failed"]
+      stMode done `shouldBe` stMode state
+      stStatus done `shouldBe` Failed PermissionDenied
+
+    it "initializes through ports and uses canonical paths for listing" $ do
+      let ports = memory { canonicalizePath = \path -> record ("resolve " ++ path) ("/" ++ path) }
+          (result, calls) = runState (runProgram ports (planStartup "left" "right" defaultConfig (80, 24))) []
+      calls `shouldBe` ["resolve left", "resolve right", "list /left", "list /right"]
+      case result of
+        Right state -> do
+          panelPath (stLeft state) `shouldBe` "/left"
+          panelPath (stRight state) `shouldBe` "/right"
+          stStatus state `shouldBe` Ready
+        Left err -> expectationFailure (show err)
+
+    it "short-circuits startup without listing when path resolution fails" $ do
+      let ports = memory { canonicalizePath = \path -> modify (++ ["resolve " ++ path]) >> pure (Left Missing) }
+          (result, calls) = runState (runProgram ports (planStartup "left" "right" defaultConfig (80, 24))) []
+      calls `shouldBe` ["resolve left"]
+      case result of
+        Left err -> err `shouldBe` Missing
+        Right _ -> expectationFailure "Startup succeeded after resolution failure"

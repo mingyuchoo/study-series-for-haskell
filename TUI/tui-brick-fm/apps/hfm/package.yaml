@@ -22,6 +22,7 @@ dependencies:
 - brick
 - vty
 - directory
+- text
 executables:
   hfm-exe:
     main: Main.hs

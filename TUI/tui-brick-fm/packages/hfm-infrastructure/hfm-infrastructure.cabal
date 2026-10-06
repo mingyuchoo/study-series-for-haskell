@@ -64,7 +64,6 @@ test-suite hfm-infrastructure-test
     , hspec
     , text
     , unix
-    , vector
     , yaml
   default-language: GHC2024
   if os(darwin)

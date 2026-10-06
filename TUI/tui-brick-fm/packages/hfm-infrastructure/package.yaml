@@ -37,4 +37,3 @@ tests:
     dependencies:
     - hfm-infrastructure
     - hspec
-    - vector

@@ -14,13 +14,17 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Hfm.Application.Program
+      Hfm.Application.Startup
+      Hfm.Application.Status
+      Hfm.Application.Workflow
       Hfm.Application.Ports
       Hfm.Application.State
       Hfm.Application.UseCases
   other-modules:
-      Paths_hfm_application
-  autogen-modules:
-      Paths_hfm_application
+      Hfm.Application.Internal.Action
+      Hfm.Application.Internal.Files
+      Hfm.Application.Internal.Interaction
   hs-source-dirs:
       src
   default-extensions:

@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Hfm.Tui.I18n (translate) where
+module Hfm.Tui.I18n (translate, renderStatus, renderFileError) where
 
 import qualified Data.Text as T
 
+import Hfm.Application.Ports (FileError (..))
+import Hfm.Application.Status (Status (..))
 import Hfm.Domain.Language (Language (..))
 
 -- Translate application text only; paths, filenames and file contents stay intact.
@@ -16,6 +18,28 @@ translate English value = case lookup value translations of
     Nothing -> case T.stripPrefix "user error (" value >>= T.stripSuffix ")" of
       Just detail -> "user error (" <> translate English detail <> ")"
       Nothing -> value
+
+renderStatus :: Language -> Status -> T.Text
+renderStatus language status = case status of
+  CurrentDirectory path -> T.pack path
+  Failed err -> translate language "오류: " <> renderFileError language err
+  Ready -> translate language "준비"
+  UnknownCommand -> translate language "알 수 없는 C-x 명령"
+  Cancelled -> translate language "취소했습니다"
+  SpecialFileUnsupported -> translate language "특수 파일은 열 수 없습니다"
+  BinaryPreviewUnsupported -> translate language "바이너리 파일은 미리 볼 수 없습니다"
+  InvalidDestination -> translate language "유효한 대상 경로를 입력하세요"
+  DirectoryCreated -> translate language "디렉터리를 만들었습니다"
+  Copied -> translate language "복사했습니다"
+  Moved -> translate language "이동했습니다"
+  Deleted -> translate language "삭제했습니다"
+  DeletionCancelled -> translate language "삭제를 취소했습니다"
+
+renderFileError :: Language -> FileError -> T.Text
+renderFileError language err = translate language $ case err of
+  Missing -> "파일이 존재하지 않습니다"
+  PermissionDenied -> "파일 접근 권한이 없습니다"
+  FileFailure detail -> detail
 
 translations :: [(T.Text, T.Text)]
 translations =

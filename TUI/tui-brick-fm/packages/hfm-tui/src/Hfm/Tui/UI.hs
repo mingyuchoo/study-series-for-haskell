@@ -11,7 +11,7 @@ import qualified Data.Vector as Vec
 import Brick.Widgets.Center (centerLayer)
 import Hfm.Domain.Theme (themeName)
 import Hfm.Domain.Entry (Entry (..), EntryKind (..))
-import Hfm.Tui.I18n (translate)
+import Hfm.Tui.I18n (translate, renderStatus)
 import Hfm.Tui.Name
 import Hfm.Application.State
 import Hfm.Domain.Selection
@@ -53,7 +53,7 @@ renderManager st = vBox
   [ withAttr (attrName "header") $ padLeftRight 1 $ txt (translate (stLanguage st) "hfm  |  파일 관리자" <> "  |  " <> translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "F3 테마")
   , renderInput st
   , hBox [renderPanel st LeftSide (stLeft st) leftWidth, renderPanel st RightSide (stRight st) rightWidth]
-  , renderStatus st
+  , renderStatusBar st
   , withAttr (attrName "keys") $ padLeftRight 1 $ txt $ navigationHelp st
   ]
   where
@@ -115,13 +115,13 @@ brickList side panel =
       entries = list (if side == LeftSide then LeftList else RightList) (selectionItems selected) 1
   in maybe entries (`listMoveTo` entries) (selectionIndex selected)
 
-renderStatus :: AppState -> Widget Name
-renderStatus st = withAttr (attrName "status") $ padLeftRight 1 $ txt $ 
+renderStatusBar :: AppState -> Widget Name
+renderStatusBar st = withAttr (attrName "status") $ padLeftRight 1 $ txt $
   let panel = activePanel st
       count = Vec.length (selectionItems (panelEntries panel))
       position = maybe 0 ((+ 1) . fst) (selectedElement (panelEntries panel))
       hidden = if stShowHidden st then translate (stLanguage st) "보임" else translate (stLanguage st) "숨김"
-  in T.pack (show position) <> "/" <> T.pack (show count) <> translate (stLanguage st) "  숨김 파일: " <> hidden <> "  |  " <> translate (stLanguage st) (stStatus st) <> "  |  " <> themeName (stTheme st)
+  in T.pack (show position) <> "/" <> T.pack (show count) <> translate (stLanguage st) "  숨김 파일: " <> hidden <> "  |  " <> renderStatus (stLanguage st) (stStatus st) <> "  |  " <> themeName (stTheme st)
 
 renderViewer :: AppState -> FilePath -> T.Text -> Int -> Widget Name
 renderViewer st path content offset =

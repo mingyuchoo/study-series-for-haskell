@@ -18,6 +18,7 @@ library
       Hfm.Domain.Editor
       Hfm.Domain.Entry
       Hfm.Domain.Fuzzy
+      Hfm.Domain.PathPolicy
       Hfm.Domain.Input
       Hfm.Domain.Language
       Hfm.Domain.SearchPolicy

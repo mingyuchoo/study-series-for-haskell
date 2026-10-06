@@ -5,7 +5,9 @@ import Brick.Main (renderWidget)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Hfm.Tui.UI (drawUI)
-import Hfm.Tui.I18n (translate)
+import Hfm.Application.Status
+import Hfm.Application.Ports (FileError (..))
+import Hfm.Tui.I18n (translate, renderStatus)
 import Graphics.Vty.PictureToSpans (displayOpsForPic)
 import Graphics.Vty.Span (SpanOp (..))
 import Brick (attrName, attrMapLookup)
@@ -89,6 +91,17 @@ spec = do
           map T.strip (drop footerStart rows) `shouldBe` viewerHelpLines changed
           rows !! (footerStart - 2) `shouldSatisfy` T.isInfixOf "LINE-59")
           [toggleLanguage st, toggleLanguage (toggleLanguage st)]) [(40, 12), (60, 10), (80, 24)]
+
+  describe "Semantic status presentation" $ do
+    it "renders outcomes and typed errors in the selected language" $ do
+      renderStatus Korean Copied `shouldBe` "복사했습니다"
+      renderStatus English Copied `shouldBe` "Copied"
+      renderStatus Korean (Failed Missing) `shouldBe` "오류: 파일이 존재하지 않습니다"
+      renderStatus English (Failed PermissionDenied) `shouldBe` "Error: Permission denied"
+
+    it "never translates a path that happens to equal a status label" $ do
+      renderStatus English (CurrentDirectory "준비") `shouldBe` "준비"
+      renderStatus English (CurrentDirectory "/tmp/한글.txt") `shouldBe` "/tmp/한글.txt"
 
   describe "파일 보기 하단 렌더링" $ do
     it "좁은 터미널에서도 하단 안내의 종료 키까지 표시한다" $ do

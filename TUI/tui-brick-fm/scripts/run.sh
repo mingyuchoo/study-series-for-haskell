@@ -46,10 +46,16 @@ fi
 cd "$ROOT_DIR"
 case "$COMMAND" in
   build) exec stack build ;;
-  test) exec stack test ;;
+  test)
+    python3 scripts/check-architecture.py
+    python3 scripts/test-architecture.py
+    exec stack test
+    ;;
   run) exec stack run hfm-exe -- "$@" ;;
   all)
     stack build
+    python3 scripts/check-architecture.py
+    python3 scripts/test-architecture.py
     stack test
     exec stack run hfm-exe -- "$@"
     ;;

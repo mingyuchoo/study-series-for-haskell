@@ -31,6 +31,7 @@ executable hfm-exe
     , hfm-domain
     , hfm-infrastructure
     , hfm-tui
+    , text
     , vty
   default-language: GHC2024
   if os(darwin)
