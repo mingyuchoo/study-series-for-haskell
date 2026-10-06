@@ -32,11 +32,11 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: fzh-exe
-            asset_name: fzh-linux-x86_64
+            artifact_name: hfm-exe
+            asset_name: hfm-linux-x86_64
           - os: macos-latest
-            artifact_name: fzh-exe
-            asset_name: fzh-macos-arm64
+            artifact_name: hfm-exe
+            asset_name: hfm-macos-arm64
 
     steps:
     - name: Checkout code

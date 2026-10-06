@@ -4,13 +4,13 @@ cabal-version: 2.2
 --
 -- see: https://github.com/sol/hpack
 
-name:           fzh
+name:           hfm
 version:        0.1.0.0
 synopsis:       Haskell로 작성된 두 패널 터미널 파일 관리자
 description:    Brick 기반의 두 패널 터미널 파일 관리자. 탐색, 검색, 복사, 이동, 삭제, 디렉터리 생성을 지원합니다.
 category:       Tools
-homepage:       https://github.com/mingyuchoo/fzh#readme
-bug-reports:    https://github.com/mingyuchoo/fzh/issues
+homepage:       https://github.com/mingyuchoo/hfm#readme
+bug-reports:    https://github.com/mingyuchoo/hfm/issues
 author:         Mingyu Choo
 maintainer:     mingyuchoo@gmail.com
 copyright:      Mingyu Choo 2025
@@ -23,7 +23,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/mingyuchoo/fzh
+  location: https://github.com/mingyuchoo/hfm
 
 library
   exposed-modules:
@@ -38,9 +38,9 @@ library
       FileManager
       SyntaxHighlight
   other-modules:
-      Paths_fzh
+      Paths_hfm
   autogen-modules:
-      Paths_fzh
+      Paths_hfm
   hs-source-dirs:
       src
   default-extensions:
@@ -78,12 +78,12 @@ library
     , yaml
   default-language: GHC2024
 
-executable fzh-exe
+executable hfm-exe
   main-is: Main.hs
   other-modules:
-      Paths_fzh
+      Paths_hfm
   autogen-modules:
-      Paths_fzh
+      Paths_hfm
   hs-source-dirs:
       app
   default-extensions:
@@ -106,7 +106,7 @@ executable fzh-exe
     , filepath
     , flow
     , fuzzy
-    , fzh
+    , hfm
     , microlens
     , microlens-th
     , mtl
@@ -122,14 +122,14 @@ executable fzh-exe
     , yaml
   default-language: GHC2024
 
-test-suite fzh-test
+test-suite hfm-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
       SyntaxHighlightSpec
-      Paths_fzh
+      Paths_hfm
   autogen-modules:
-      Paths_fzh
+      Paths_hfm
   hs-source-dirs:
       test
   default-extensions:
@@ -154,7 +154,7 @@ test-suite fzh-test
     , filepath
     , flow
     , fuzzy
-    , fzh
+    , hfm
     , hspec
     , microlens
     , microlens-th

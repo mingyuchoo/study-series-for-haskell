@@ -4,9 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-PACKAGE_NAME="fzh"
-EXECUTABLE_NAME="fzh-exe"
-COMMAND_NAME="fzh"
+PACKAGE_NAME="hfm"
+EXECUTABLE_NAME="hfm-exe"
+COMMAND_NAME="hfm"
 VERSION="$(sed -n 's/^version:[[:space:]]*//p' "${ROOT_DIR}/package.yaml" | head -n 1)"
 LICENSE_NAME="$(sed -n 's/^license:[[:space:]]*//p' "${ROOT_DIR}/package.yaml" | head -n 1)"
 RELEASE_DIR="${ROOT_DIR}/dist/release"
@@ -52,10 +52,10 @@ write_linux_desktop_entry() {
   cat > "$desktop_path" <<EOF
 [Desktop Entry]
 Type=Application
-Name=fzh
+Name=hfm
 Comment=Two-panel terminal file manager
-Exec=/usr/local/bin/fzh
-Icon=fzh
+Exec=/usr/local/bin/hfm
+Icon=hfm
 Terminal=true
 Categories=Utility;FileTools;
 Keywords=file;manager;terminal;
@@ -134,7 +134,7 @@ build_deb() {
     -v "$VERSION" \
     --license "$LICENSE_NAME" \
     --description "Two-panel terminal file manager written in Haskell" \
-    --url "https://github.com/mingyuchoo/fzh" \
+    --url "https://github.com/mingyuchoo/hfm" \
     --architecture "$arch" \
     --after-install "$post_install_script" \
     --after-remove "$post_install_script" \
@@ -172,7 +172,7 @@ build_rpm() {
     --iteration 1 \
     --license "$LICENSE_NAME" \
     --description "Two-panel terminal file manager written in Haskell" \
-    --url "https://github.com/mingyuchoo/fzh" \
+    --url "https://github.com/mingyuchoo/hfm" \
     --architecture "$arch" \
     --after-install "$post_install_script" \
     --after-remove "$post_install_script" \
@@ -195,9 +195,9 @@ build_dmg() {
   local bin_path dmg_root app_root dmg_path launcher_path plist_path
   bin_path="$BUILD_BIN_DIR/${EXECUTABLE_NAME}"
   dmg_root="${ROOT_DIR}/dist/${PACKAGE_NAME}-${VERSION}-macos"
-  app_root="$dmg_root/fzh.app"
+  app_root="$dmg_root/hfm.app"
   dmg_path="$RELEASE_DIR/${PACKAGE_NAME}-${VERSION}.dmg"
-  launcher_path="$app_root/Contents/MacOS/fzh"
+  launcher_path="$app_root/Contents/MacOS/hfm"
   plist_path="$app_root/Contents/Info.plist"
 
   if [ ! -x "$bin_path" ]; then
@@ -211,13 +211,13 @@ build_dmg() {
   install -m 755 "$bin_path" "$app_root/Contents/Resources/$COMMAND_NAME"
   install -m 644 "$ROOT_DIR/README.md" "$dmg_root/README.md"
   install -m 644 "$ROOT_DIR/LICENSE" "$dmg_root/LICENSE"
-  write_app_icon "$app_root/Contents/Resources/fzh.svg"
+  write_app_icon "$app_root/Contents/Resources/hfm.svg"
   cat > "$launcher_path" <<'EOF'
 #!/bin/sh
 set -e
 
 APP_DIR="$(cd -- "$(dirname -- "$0")/.." && pwd)"
-BIN="$APP_DIR/Resources/fzh"
+BIN="$APP_DIR/Resources/hfm"
 
 osascript <<APPLESCRIPT
 tell application "Terminal"
@@ -233,13 +233,13 @@ EOF
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>fzh</string>
+  <string>hfm</string>
   <key>CFBundleIdentifier</key>
-  <string>com.mingyuchoo.fzh</string>
+  <string>com.mingyuchoo.hfm</string>
   <key>CFBundleName</key>
-  <string>fzh</string>
+  <string>hfm</string>
   <key>CFBundleDisplayName</key>
-  <string>fzh</string>
+  <string>hfm</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

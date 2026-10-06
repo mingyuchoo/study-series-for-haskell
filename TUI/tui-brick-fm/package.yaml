@@ -1,6 +1,6 @@
-name:                fzh
+name:                hfm
 version:             0.1.0.0
-github:              mingyuchoo/fzh
+github:              mingyuchoo/hfm
 license:             BSD-3-Clause
 author:              Mingyu Choo
 maintainer:          mingyuchoo@gmail.com
@@ -69,7 +69,7 @@ library:
     - SyntaxHighlight
 
 executables:
-  fzh-exe:
+  hfm-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -77,10 +77,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - fzh
+    - hfm
 
 tests:
-  fzh-test:
+  hfm-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -88,7 +88,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - fzh
+    - hfm
     - hspec
     - doctest
     - doctest-discover

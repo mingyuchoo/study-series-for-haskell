@@ -25,7 +25,7 @@ withFixture :: (FilePath -> IO a) -> IO a
 withFixture action = do
   temp <- getTemporaryDirectory
   bracket (do
-      (path, handle) <- openTempFile temp "fzh-test"
+      (path, handle) <- openTempFile temp "hfm-test"
       hClose handle
       removeFile path
       createDirectory path

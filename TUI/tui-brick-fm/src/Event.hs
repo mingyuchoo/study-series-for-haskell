@@ -91,12 +91,22 @@ openView path = attempt (withBinaryFile path ReadMode (\h -> BS.hGet h 65536)) $
 browseEvent :: V.Event -> EventM Name AppState ()
 browseEvent event = do
   st <- get
-  case event of
-    V.EvKey (V.KFun 10) [] -> halt
+  if stPendingCtrlX st
+    then do
+      modify (\s -> s { stPendingCtrlX = False })
+      case event of
+        V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
+        V.EvKey (V.KChar 'o') [] -> switchPanel
+        V.EvKey (V.KChar 'g') [V.MCtrl] -> pure ()
+        V.EvKey V.KEsc [] -> pure ()
+        _ -> modify (\s -> s { stStatus = "알 수 없는 C-x 명령" })
+    else browseKey st event
+
+browseKey :: AppState -> V.Event -> EventM Name AppState ()
+browseKey st event = case event of
+    V.EvKey (V.KChar 'x') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (\s -> s { stPendingCtrlX = True })
     V.EvKey (V.KChar 'q') [] -> halt
-    V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
-    V.EvKey (V.KChar 'g') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> halt
-    V.EvKey (V.KChar '\t') [] -> modify (\s -> s { stActive = if stActive s == LeftSide then RightSide else LeftSide })
+    V.EvKey (V.KChar '\t') [] -> switchPanel
     V.EvKey V.KUp [] -> modify (moveSelection False)
     V.EvKey V.KDown [] -> modify (moveSelection True)
     V.EvKey V.KPageUp [] -> modify (\s -> iterate (moveSelection False) s !! 10)
@@ -106,15 +116,18 @@ browseEvent event = do
     V.EvKey V.KEnter [] -> enterSelected
     V.EvKey V.KBS [] -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
     V.EvKey (V.KChar '/') [] -> modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
+    V.EvKey (V.KChar 's') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
     V.EvKey (V.KChar 'r') [V.MCtrl] -> refreshAll
-    V.EvKey (V.KFun 9) [] -> modify (\s -> s { stShowHidden = not (stShowHidden s) }) >> refreshAll
-    V.EvKey (V.KFun 3) [] -> case selectedEntry st of
+    V.EvKey (V.KChar 'g') [] -> refreshAll
+    V.EvKey (V.KChar '.') [] -> modify (\s -> s { stShowHidden = not (stShowHidden s) }) >> refreshAll
+    V.EvKey (V.KChar 'v') [] -> case selectedEntry st of
       Just e | entryKind e `elem` [RegularFile, SymbolicLink] -> maybe (pure ()) openView (selectedPath st)
       _ -> pure ()
-    V.EvKey (V.KFun 5) [] -> startPrompt Copy
-    V.EvKey (V.KFun 6) [] -> startPrompt Move
-    V.EvKey (V.KFun 7) [] -> modify (\s -> s { stMode = Prompt Mkdir "", stInputCursor = 0 })
-    V.EvKey (V.KFun 8) [] -> when (selectedPath st /= Nothing) $ modify (\s -> s { stMode = ConfirmDelete })
+    V.EvKey (V.KChar 'C') [] -> startPrompt Copy
+    V.EvKey (V.KChar 'R') [] -> startPrompt Move
+    V.EvKey (V.KChar '+') [] -> modify (\s -> s { stMode = Prompt Mkdir "", stInputCursor = 0 })
+    V.EvKey (V.KChar 'D') [] -> when (selectedPath st /= Nothing) $ modify (\s -> s { stMode = ConfirmDelete })
+    V.EvKey (V.KChar '^') [] -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
     V.EvKey (V.KChar 'p') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (moveSelection False)
     V.EvKey (V.KChar 'n') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (moveSelection True)
     V.EvKey (V.KChar 'k') [] | configKeyBinding (stConfig st) == Vim -> modify (moveSelection False)
@@ -122,6 +135,9 @@ browseEvent event = do
     V.EvKey (V.KChar 'h') [] | configKeyBinding (stConfig st) == Vim -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
     V.EvKey (V.KChar 'l') [] | configKeyBinding (stConfig st) == Vim -> enterSelected
     _ -> pure ()
+
+switchPanel :: EventM Name AppState ()
+switchPanel = modify (\s -> s { stActive = if stActive s == LeftSide then RightSide else LeftSide })
 
 movePage :: Bool -> AppState -> AppState
 movePage down st = iterate (moveSelection down) st !! max 1 (snd (stTerminalSize st) - 6)
@@ -239,7 +255,6 @@ viewEvent :: FilePath -> T.Text -> Int -> V.Event -> EventM Name AppState ()
 viewEvent path content offset event = case event of
   V.EvKey V.KEsc [] -> close
   V.EvKey (V.KChar 'g') [V.MCtrl] -> close
-  V.EvKey (V.KFun 3) [] -> close
   V.EvKey (V.KChar 'q') [] -> close
   V.EvKey V.KUp [] -> scroll (-1)
   V.EvKey V.KDown [] -> scroll 1

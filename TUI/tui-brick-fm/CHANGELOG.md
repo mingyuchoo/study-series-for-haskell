@@ -1,4 +1,4 @@
-# Changelog for `fzh`
+# Changelog for `hfm`
 
 ## Unreleased
 

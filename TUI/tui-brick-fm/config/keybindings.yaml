@@ -1,4 +1,4 @@
-# fzh 키바인딩 설정
+# hfm 키바인딩 설정
 # binding_style: emacs 또는 vim
 
 binding_style: emacs
@@ -7,7 +7,11 @@ binding_style: emacs
 #   Ctrl+p: 위로 이동
 #   Ctrl+n: 아래로 이동
 #   Ctrl+v/Meta+v: 다음/이전 페이지
-#   Ctrl+g: 취소/닫기/종료
+#   Ctrl+s: 현재 패널 검색
+#   Ctrl+x o: 패널 전환, Ctrl+x Ctrl+c: 종료
+#   Ctrl+g: 검색·입력 취소 또는 파일 보기 닫기
+#   v: 파일 보기, C: 복사, R: 이동·이름 변경, +: 폴더 만들기, D: 삭제
+#   .: 숨김 파일 전환, g: 새로고침, ^: 상위 디렉터리
 #   검색·경로 입력: Ctrl+a/e/b/f 커서 이동, Ctrl+h/d 글자 삭제
 #   검색·경로 입력: Ctrl+k 뒤쪽 삭제, Ctrl+w 앞 단어 삭제, Ctrl+u 전체 삭제
 #   파일 보기: Ctrl+v/Meta+v 페이지 이동
@@ -15,3 +19,4 @@ binding_style: emacs
 # VIM 스타일 키바인딩:
 #   j/k: 아래/위로 이동
 #   h/l: 상위/선택 항목 열기
+#   파일 작업은 위의 문자 키와 공통이며 q로 종료

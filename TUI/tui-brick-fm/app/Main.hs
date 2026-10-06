@@ -18,7 +18,7 @@ main = do
     [] -> pure (cwd, cwd)
     [left] -> pure (left, cwd)
     [left, right] -> pure (left, right)
-    _ -> die "사용법: fzh-exe [왼쪽_디렉터리] [오른쪽_디렉터리]"
+    _ -> die "사용법: hfm-exe [왼쪽_디렉터리] [오른쪽_디렉터리]"
   result <- try $ do
     left <- canonicalizePath leftArg
     right <- canonicalizePath rightArg

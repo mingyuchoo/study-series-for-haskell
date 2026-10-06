@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=fzh
+ARG PROJECT_NAME=hfm
 FROM fpco/stack-build:lts-24.21
 WORKDIR /app
 

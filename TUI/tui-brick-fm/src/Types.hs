@@ -50,6 +50,7 @@ data AppState = AppState
   , stActive :: Side
   , stMode :: Mode
   , stInputCursor :: Int
+  , stPendingCtrlX :: Bool
   , stShowHidden :: Bool
   , stStatus :: T.Text
   , stTerminalSize :: (Int, Int)
@@ -69,6 +70,7 @@ initialState left leftEntries right rightEntries cfg size = AppState
   , stActive = LeftSide
   , stMode = Browse
   , stInputCursor = 0
+  , stPendingCtrlX = False
   , stShowHidden = False
   , stStatus = "준비"
   , stTerminalSize = size

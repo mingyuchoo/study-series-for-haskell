@@ -19,11 +19,11 @@ drawUI st = [case stMode st of
 
 renderManager :: AppState -> Widget Name
 renderManager st = vBox
-  [ withAttr (attrName "header") $ padLeftRight 1 $ txt "fzh  |  파일 관리자"
+  [ withAttr (attrName "header") $ padLeftRight 1 $ txt "hfm  |  파일 관리자"
   , renderInput st
   , hBox [renderPanel st LeftSide (stLeft st) leftWidth, renderPanel st RightSide (stRight st) rightWidth]
   , renderStatus st
-  , withAttr (attrName "keys") $ padLeftRight 1 $ txt $ navigationHelp st <> "  Tab 패널  F3 보기  F5 복사  F6 이동  F7 폴더  F8 삭제"
+  , withAttr (attrName "keys") $ padLeftRight 1 $ txt $ navigationHelp st
   ]
   where
     width = fst (stTerminalSize st)
@@ -31,13 +31,17 @@ renderManager st = vBox
     rightWidth = max 1 (width - leftWidth)
 
 navigationHelp :: AppState -> T.Text
-navigationHelp st = case configKeyBinding (stConfig st) of
-  Emacs -> "C-p/n 이동  C-g 취소"
-  Vim -> "j/k 이동  F10 종료"
+navigationHelp st
+  | stPendingCtrlX st = "C-x: C-c 종료  o 패널  C-g 취소"
+  | otherwise = case configKeyBinding (stConfig st) of
+      Emacs -> "C-p/n 이동  v 보기  C 복사  R 이동  + 폴더  D 삭제  . 숨김  q 종료"
+      Vim -> "j/k 이동  v 보기  C 복사  R 이동  + 폴더  D 삭제  . 숨김  q 종료"
 
 renderInput :: AppState -> Widget Name
 renderInput st = withAttr (attrName "input") $ padLeftRight 1 $ txt $ case stMode st of
-  Browse -> "/ 검색  Enter 열기  Backspace 상위  C-r 새로고침"
+  Browse -> case configKeyBinding (stConfig st) of
+    Emacs -> "C-s 검색  Enter 열기  ^ 상위  g 새로고침  C-x 명령"
+    Vim -> "/ 검색  Enter 열기  ^ 상위  g 새로고침"
   Search -> "검색: " <> markInputCursor st (panelSearch (activePanel st)) <> "  (Enter 적용, C-g 취소)"
   Prompt Copy value -> "복사 대상: " <> markInputCursor st value <> "  (Enter 실행, C-g 취소)"
   Prompt Move value -> "이동/새 이름: " <> markInputCursor st value <> "  (Enter 실행, C-g 취소)"

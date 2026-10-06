@@ -68,10 +68,10 @@ defaultKeyBindingConfig =
     }
 
 -- | XDG 설정 디렉토리에서 설정 파일 경로를 반환 (Effect)
--- ~/.config/fzh/keybindings.yaml 경로를 반환
+-- ~/.config/hfm/keybindings.yaml 경로를 반환
 getConfigPath :: IO FilePath
 getConfigPath = do
-  xdgConfig <- getXdgDirectory XdgConfig "fzh"
+  xdgConfig <- getXdgDirectory XdgConfig "hfm"
   return <| xdgConfig </> "keybindings.yaml"
 
 -- | 설정 파일을 로드하여 KeyBindingConfig를 반환 (Effect)

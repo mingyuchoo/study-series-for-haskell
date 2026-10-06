@@ -1,7 +1,7 @@
 .PHONY: test coverage install update-stack-yaml
 
 # Cabal package name (independent of checkout directory name)
-PROJECT_NAME := fzh
+PROJECT_NAME := hfm
 
 all: clean setup build test run
 

@@ -623,7 +623,7 @@ stack run
 # Ctrl+p, Ctrl+n, Ctrl+g 등 테스트
 
 # Vim 키바인딩 테스트
-# ~/.config/fzh/keybindings.yaml에서 vim으로 변경 후
+# ~/.config/hfm/keybindings.yaml에서 vim으로 변경 후
 stack run
 # Ctrl+k, Ctrl+j, Ctrl+c 등 테스트
 

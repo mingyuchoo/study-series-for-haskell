@@ -9,7 +9,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/run.sh [build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]
 
-  build  Build fzh-exe
+  build  Build hfm-exe
   test   Run the test suite
   run    Build and open the file manager (default)
   all    Build, test, then open the file manager
