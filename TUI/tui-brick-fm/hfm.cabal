@@ -20,6 +20,7 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
+    scripts/link-macos.sh
 
 source-repository head
   type: git
@@ -77,6 +78,8 @@ library
     , vty-unix
     , yaml
   default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml scripts/link-macos.sh
 
 executable hfm-exe
   main-is: Main.hs
@@ -121,6 +124,8 @@ executable hfm-exe
     , vty-unix
     , yaml
   default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml scripts/link-macos.sh
 
 test-suite hfm-test
   type: exitcode-stdio-1.0
@@ -170,3 +175,5 @@ test-suite hfm-test
     , vty-unix
     , yaml
   default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml scripts/link-macos.sh

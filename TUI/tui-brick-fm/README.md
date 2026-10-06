@@ -49,4 +49,6 @@ stack run -- /path/to/left /path/to/right
 stack test
 ```
 
+macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커 옵션(`-U`와 `dynamic_lookup`, 반복된 `-lm`)을 정리합니다. 다른 링커 진단은 그대로 전달합니다.
+
 핵심 코드는 `src/FileManager.hs`(파일 시스템 작업), `src/Types.hs`(상태), `src/Event.hs`(키 처리), `src/UI.hs`(화면)에 있습니다.

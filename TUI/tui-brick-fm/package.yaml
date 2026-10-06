@@ -12,6 +12,7 @@ description:         Brick 기반의 두 패널 터미널 파일 관리자. 탐�
 extra-source-files:
 - README.md
 - CHANGELOG.md
+- scripts/link-macos.sh
 
 dependencies:
 - base >= 4.18 && < 5
@@ -53,6 +54,11 @@ ghc-options:
 - -haddock
 
 language: GHC2024
+
+when:
+- condition: os(darwin)
+  ghc-options:
+  - -pgml scripts/link-macos.sh
 
 library:
   source-dirs: src

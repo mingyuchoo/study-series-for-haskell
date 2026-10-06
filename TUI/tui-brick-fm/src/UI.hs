@@ -86,9 +86,9 @@ renderStatus st = withAttr (attrName "status") $ padLeftRight 1 $ txt $
 renderViewer :: AppState -> FilePath -> T.Text -> Int -> Widget Name
 renderViewer st path content offset =
   vBox
-    [ withAttr (attrName "header") $ padLeftRight 1 $ txt ("보기: " <> T.pack path)
-    , vLimit (max 1 (height - 2)) $ border $ vBox $
+    [ withAttr (attrName "header") $ padRight Max $ padLeftRight 1 $ txt ("보기: " <> T.pack path)
+    , vLimit (max 1 (height - 2)) $ border $ padRight Max $ padBottom Max $ vBox $
         map txt $ take (max 1 (height - 4)) $ drop offset (T.lines content)
-    , withAttr (attrName "keys") $ padLeftRight 1 $ txt "C-p/n 스크롤  C-v/M-v 페이지  C-g 닫기  |  최대 64 KiB 표시"
+    , withAttr (attrName "keys") $ padRight Max $ padLeftRight 1 $ txt "C-p/n 스크롤  C-v/M-v 페이지  C-g 닫기  |  최대 64 KiB 표시"
     ]
   where height = snd (stTerminalSize st)
