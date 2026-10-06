@@ -16,7 +16,7 @@ import Hfm.Application.State
 import Hfm.Domain.Editor (editText)
 import Hfm.Domain.Entry
 import Hfm.Domain.Input
-import Hfm.Domain.Selection (selectAt)
+import Hfm.Domain.Selection (selectAt, selectStep, selectedElement)
 import System.FilePath (isAbsolute, normalise, takeDirectory, takeFileName, (</>))
 
 type Action m = ExceptT () (StateT AppState (ReaderT (FileSystem m) m))
@@ -33,6 +33,7 @@ halt = throwError ()
 dispatch :: Monad m => Input -> Action m ()
 dispatch (Resize w h) = modify (\s -> s { stTerminalSize = (w, h) })
 dispatch (KeyPress (KFun 2) []) = modify toggleLanguage
+dispatch (KeyPress (KFun 3) []) = modify toggleThemePicker
 dispatch rawEvent = do
   st <- get
   let event = normalizeMeta rawEvent
@@ -41,8 +42,8 @@ dispatch rawEvent = do
       modify (\s -> s { stPendingCtrlX = False })
       case event of
         KeyPress (KChar 'c') [MCtrl] -> halt
-        KeyPress (KChar 'o') [] | stMode st == Browse -> switchPanel
-        KeyPress (KChar 'f') [MCtrl] | stMode st == Browse -> enterSelected
+        KeyPress (KChar 'o') [] | stMode st == Browse && stThemePicker st == Nothing -> switchPanel
+        KeyPress (KChar 'f') [MCtrl] | stMode st == Browse && stThemePicker st == Nothing -> enterSelected
         KeyPress (KChar 'k') [] -> cancelMode
         KeyPress (KChar 'g') [MCtrl] -> pure ()
         KeyPress KEsc [] -> pure ()
@@ -50,20 +51,44 @@ dispatch rawEvent = do
     else case event of
       KeyPress (KChar 'x') [MCtrl] -> modify (\s -> s { stPendingCtrlX = True })
       KeyPress (KChar 'g') [MCtrl] -> cancelMode
-      _ -> case stMode st of
-        Browse -> browseEvent event
-        Search -> searchEvent event
-        Prompt op value -> promptEvent op value event
-        ConfirmDelete -> confirmEvent event
-        ViewFile path content offset -> viewEvent path content offset event
+      _ -> case stThemePicker st of
+        Just _ -> themePickerEvent event
+        Nothing -> case stMode st of
+          Browse -> browseEvent event
+          Search -> searchEvent event
+          Prompt op value -> promptEvent op value event
+          ConfirmDelete -> confirmEvent event
+          ViewFile path content offset -> viewEvent path content offset event
 
 
 cancelMode :: Monad m => Action m ()
 cancelMode = do
   st <- get
-  when (stMode st == Search || stMode st == Browse) (setSearch "")
-  modify (\s -> s { stMode = Browse, stInputCursor = 0, stPendingCtrlX = False
-                   , stStatus = "취소했습니다" })
+  case stThemePicker st of
+    Just _ -> modify (\s -> s { stThemePicker = Nothing })
+    Nothing -> do
+      when (stMode st == Search || stMode st == Browse) (setSearch "")
+      modify (\s -> s { stMode = Browse, stInputCursor = 0, stPendingCtrlX = False
+                       , stStatus = "취소했습니다" })
+
+themePickerEvent :: Monad m => Input -> Action m ()
+themePickerEvent event = case event of
+  KeyPress KEsc [] -> modify (\s -> s { stThemePicker = Nothing })
+  KeyPress KEnter [] -> modify $ \s -> case stThemePicker s >>= selectedElement of
+    Just (_, theme) -> s { stTheme = theme, stThemePicker = Nothing }
+    Nothing -> s
+  KeyPress KUp [] -> selectTheme (selectStep (-1))
+  KeyPress KDown [] -> selectTheme (selectStep 1)
+  KeyPress (KChar 'p') [MCtrl] -> selectTheme (selectStep (-1))
+  KeyPress (KChar 'n') [MCtrl] -> selectTheme (selectStep 1)
+  KeyPress KHome [] -> selectTheme (selectAt 0)
+  KeyPress KEnd [] -> selectTheme (selectAt (-1))
+  KeyPress (KChar '<') [MMeta] -> selectTheme (selectAt 0)
+  KeyPress (KChar '>') [MMeta] -> selectTheme (selectAt (-1))
+  KeyPress (KChar digit) [] | digit >= '1' && digit <= '6' -> selectTheme (selectAt (fromEnum digit - fromEnum '1'))
+  _ -> pure ()
+  where
+    selectTheme change = modify (\s -> s { stThemePicker = change <$> stThemePicker s })
 
 attempt :: Monad m => (FileSystem m -> m (Either FileError a)) -> (a -> Action m ()) -> Action m ()
 attempt action onSuccess = do

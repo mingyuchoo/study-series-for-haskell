@@ -8,6 +8,11 @@ import Hfm.Tui.UI (drawUI)
 import Hfm.Tui.I18n (translate)
 import Graphics.Vty.PictureToSpans (displayOpsForPic)
 import Graphics.Vty.Span (SpanOp (..))
+import Brick (attrName, attrMapLookup)
+import qualified Graphics.Vty as V
+import Hfm.Tui.Theme (themeAttributes, effectiveTheme)
+import Hfm.Domain.Theme (themes, themeName)
+import Hfm.Domain.Selection (selection, selectAt)
 import Hfm.Domain.Entry
 import Test.Hspec
 import Hfm.Application.State hiding (initialState, toggleLanguage)
@@ -125,3 +130,33 @@ spec = do
       length (viewerRows st) `shouldBe` 4
 
   SyntaxHighlightSpec.spec
+
+  describe "VS Code theme rendering" $ do
+    it "uses each theme's editor colors across the full screen" $ do
+      let rgbColor :: Int -> Int -> Int -> V.Color
+          rgbColor = V.rgbColor
+          backgrounds = [rgbColor 255 255 255, rgbColor 30 30 30, rgbColor 39 40 34,
+                         rgbColor 253 246 227, rgbColor 0 43 54, rgbColor 0 36 81]
+      mapM_ (\(theme, background) -> do
+        let attributes = themeAttributes theme
+            normal = attrMapLookup (attrName "default") attributes
+            selected = attrMapLookup (attrName "selected") attributes
+        V.attrBackColor normal `shouldBe` V.SetTo background
+        V.attrBackColor selected `shouldNotBe` V.attrBackColor normal
+        V.attrForeColor selected `shouldNotBe` V.attrBackColor selected) (zip themes backgrounds)
+
+    it "renders every choice, current theme, and bilingual controls" $ do
+      mapM_ (\language -> do
+        let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (80, 24))
+                   { stLanguage = language, stThemePicker = Just (selectAt 2 (selection themes)) }
+            rendered = T.unlines (viewerRows st)
+        mapM_ (\theme -> rendered `shouldSatisfy` T.isInfixOf (themeName theme)) themes
+        rendered `shouldSatisfy` T.isInfixOf (if language == Korean then "테마 선택" else "Select theme")
+        effectiveTheme st `shouldBe` Monokai
+        effectiveTheme (st { stThemePicker = Nothing }) `shouldBe` Dark) [Korean, English]
+
+    it "renders a scrollable picker safely on small terminals" $ do
+      mapM_ (\size -> do
+        let st = (initialState "/tmp" [] "/tmp" [] defaultConfig size)
+                   { stThemePicker = Just (selectAt 5 (selection themes)) }
+        length (viewerRows st) `shouldBe` snd size) [(40, 12), (30, 8), (20, 4)]

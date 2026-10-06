@@ -3,6 +3,8 @@
 module Hfm.Application.State
   ( AppConfig (..)
   , AppState (..)
+  , Theme (..)
+  , toggleThemePicker
   , Language (..)
   , toggleLanguage
   , Side (..)
@@ -24,6 +26,7 @@ module Hfm.Application.State
   , maxPreviewLines
   ) where
 
+import Hfm.Domain.Theme
 import Hfm.Domain.Selection
 import Hfm.Domain.Config (KeyBindingConfig (..), KeyBindingStyle (..))
 import Control.Applicative ((<|>))
@@ -49,6 +52,8 @@ data AppState = AppState
   { stLeft :: Panel
   , stRight :: Panel
   , stActive :: Side
+  , stTheme :: Theme
+  , stThemePicker :: Maybe (Selection Theme)
   , stLanguage :: Language
   , stMode :: Mode
   , stInputCursor :: Int
@@ -71,6 +76,8 @@ initialState left leftEntries right rightEntries cfg size = AppState
   { stLeft = Panel left (selection leftEntries) leftEntries ""
   , stRight = Panel right (selection rightEntries) rightEntries ""
   , stActive = LeftSide
+  , stTheme = Dark
+  , stThemePicker = Nothing
   , stLanguage = Korean
   , stMode = Browse
   , stInputCursor = 0
@@ -87,6 +94,13 @@ toggleLanguage :: AppState -> AppState
 toggleLanguage st = st { stLanguage = case stLanguage st of
                           Korean -> English
                           English -> Korean }
+
+-- The picker is independent of the current file operation or viewer mode.
+-- Canceling a preview never changes the committed theme.
+toggleThemePicker :: AppState -> AppState
+toggleThemePicker st = st { stThemePicker = case stThemePicker st of
+  Just _ -> Nothing
+  Nothing -> Just (selectAt (fromEnum (stTheme st)) (selection themes)) }
 
 activePanel :: AppState -> Panel
 activePanel st = if stActive st == LeftSide then stLeft st else stRight st

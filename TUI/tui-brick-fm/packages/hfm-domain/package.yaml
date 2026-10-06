@@ -28,6 +28,7 @@ library:
   - Hfm.Domain.Input
   - Hfm.Domain.Language
   - Hfm.Domain.SearchPolicy
+  - Hfm.Domain.Theme
   - Hfm.Domain.Selection
 tests:
   hfm-domain-test:

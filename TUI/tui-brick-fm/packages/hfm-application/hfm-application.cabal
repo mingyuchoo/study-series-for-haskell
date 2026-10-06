@@ -60,6 +60,7 @@ test-suite hfm-application-test
     , mtl
     , text
     , transformers
+    , vector
   default-language: GHC2024
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh

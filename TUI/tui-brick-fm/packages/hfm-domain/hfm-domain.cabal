@@ -21,6 +21,7 @@ library
       Hfm.Domain.Input
       Hfm.Domain.Language
       Hfm.Domain.SearchPolicy
+      Hfm.Domain.Theme
       Hfm.Domain.Selection
   other-modules:
       Paths_hfm_domain

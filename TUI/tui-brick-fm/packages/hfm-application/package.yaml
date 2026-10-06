@@ -34,3 +34,4 @@ tests:
     dependencies:
     - hfm-application
     - hspec
+    - vector

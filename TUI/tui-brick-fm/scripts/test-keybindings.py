@@ -139,6 +139,29 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         finally:
             terminal.close()
 
+    # Select each palette, preview it, and apply it in a real Vty session.
+    terminal = Terminal(left, right, config)
+    try:
+        for number, theme in enumerate([
+            "Light", "Dark", "Monokai", "Solarized Light", "Solarized Dark", "Tomorrow Night Blue"
+        ], start=1):
+            terminal.expect(b"\x1bOR", "테마 선택")  # xterm F3
+            terminal.expect(str(number).encode(), "미리보기: " + theme)
+            terminal.expect(b"\r", theme)
+        # The overlay does not submit a pending operation; Esc restores its input.
+        terminal.key(b"+draft")
+        terminal.expect(b"\x1bOR", "테마 선택")
+        terminal.expect(b"3", "Monokai")
+        terminal.expect(b"\x1b", "draft")
+        terminal.key(b"\x07")
+        terminal.expect(b"\x1bOR", "테마 선택")
+        terminal.expect(b"\x1bOQ", "Select theme")
+        terminal.key(b"\x07")
+        terminal.quit()
+        assert not (left / "draft").exists(), "Theme selection must not execute a prompt"
+    finally:
+        terminal.close()
+
     # The global quit prefix must work from every modal screen.
     for mode_keys in [b"\x13", b"+draft", b"\x0eD", b"\x0ev"]:
         terminal = Terminal(left, right, config)
@@ -148,4 +171,4 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         finally:
             terminal.close()
 
-print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, modal quit")
+print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all six themes, modal quit")

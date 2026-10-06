@@ -8,6 +8,8 @@ import qualified Brick.Widgets.List
 import Brick.Widgets.List (list, listMoveTo, renderList)
 import qualified Data.Text as T
 import qualified Data.Vector as Vec
+import Brick.Widgets.Center (centerLayer)
+import Hfm.Domain.Theme (themeName)
 import Hfm.Domain.Entry (Entry (..), EntryKind (..))
 import Hfm.Tui.I18n (translate)
 import Hfm.Tui.Name
@@ -17,13 +19,38 @@ import Hfm.Tui.Layout (viewerHelpLines, prepareLayout)
 
 -- The main screen deliberately uses only a few fixed rows, leaving the rest to the lists.
 drawUI :: AppState -> [Widget Name]
-drawUI state = let st = prepareLayout state in [case stMode st of
-  ViewFile path content offset -> renderViewer st path content offset
-  _ -> renderManager st]
+drawUI state =
+  let st = prepareLayout state
+      screen = withAttr (attrName "default") $ padRight Max $ padBottom Max $ case stMode st of
+        ViewFile path content offset -> renderViewer st path content offset
+        _ -> renderManager st
+  in case stThemePicker st of
+    Just choices -> [renderThemePicker st choices, screen]
+    Nothing -> [screen]
+
+renderThemePicker :: AppState -> Selection Theme -> Widget Name
+renderThemePicker st choices = centerLayer $
+  hLimit (max 1 (min 54 (fst (stTerminalSize st) - 2))) $
+  vLimit (max 1 (min 12 (snd (stTerminalSize st) - 2))) $
+  withAttr (attrName "active") $
+  borderWithLabel (txt (translate (stLanguage st) "테마 선택")) $
+  vBox
+    [ renderList drawTheme True entries
+    , withAttr (attrName "input") $ txtWrap (translate (stLanguage st) "미리보기: " <> maybe "" (themeName . snd) (selectedElement choices))
+    , withAttr (attrName "keys") $ txtWrap help
+    ]
+  where
+    entries = maybe base (`listMoveTo` base) (selectionIndex choices)
+    base = list ThemeList (Vec.imap (\i theme -> (i, theme)) (selectionItems choices)) 1
+    drawTheme selected (i, theme) = withAttr (attrName (if selected then "selected" else "active")) $
+      txt (T.pack (show (i + 1)) <> " " <> (if theme == stTheme st then "* " else "  ") <> themeName theme)
+    help
+      | stPendingCtrlX st = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
+      | otherwise = translate (stLanguage st) "↑/↓ C-p/n 이동  1-6 선택  RET 적용  Esc/C-g 취소"
 
 renderManager :: AppState -> Widget Name
 renderManager st = vBox
-  [ withAttr (attrName "header") $ padLeftRight 1 $ txt (translate (stLanguage st) "hfm  |  파일 관리자" <> "  |  " <> translate (stLanguage st) "F2 한국어")
+  [ withAttr (attrName "header") $ padLeftRight 1 $ txt (translate (stLanguage st) "hfm  |  파일 관리자" <> "  |  " <> translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "F3 테마")
   , renderInput st
   , hBox [renderPanel st LeftSide (stLeft st) leftWidth, renderPanel st RightSide (stRight st) rightWidth]
   , renderStatus st
@@ -94,12 +121,12 @@ renderStatus st = withAttr (attrName "status") $ padLeftRight 1 $ txt $
       count = Vec.length (selectionItems (panelEntries panel))
       position = maybe 0 ((+ 1) . fst) (selectedElement (panelEntries panel))
       hidden = if stShowHidden st then translate (stLanguage st) "보임" else translate (stLanguage st) "숨김"
-  in T.pack (show position) <> "/" <> T.pack (show count) <> translate (stLanguage st) "  숨김 파일: " <> hidden <> "  |  " <> translate (stLanguage st) (stStatus st)
+  in T.pack (show position) <> "/" <> T.pack (show count) <> translate (stLanguage st) "  숨김 파일: " <> hidden <> "  |  " <> translate (stLanguage st) (stStatus st) <> "  |  " <> themeName (stTheme st)
 
 renderViewer :: AppState -> FilePath -> T.Text -> Int -> Widget Name
 renderViewer st path content offset =
   vBox
-    [ withAttr (attrName "header") $ padRight Max $ padLeftRight 1 $ txt (translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "보기: " <> T.pack path)
+    [ withAttr (attrName "header") $ padRight Max $ padLeftRight 1 $ txt (translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "F3 테마" <> "  |  " <> translate (stLanguage st) "보기: " <> T.pack path)
     , vLimit bodyHeight $ border $ padRight Max $ padBottom Max $ vBox $
         map renderLine $ take (viewerContentHeight st) $ drop (clampViewerOffset st content offset) (T.lines content)
     , vLimit (max 0 (height - 1)) $ withAttr (attrName "keys") $ padRight Max $ padLeftRight 1 $

@@ -4,8 +4,10 @@ import Control.Monad.State.Strict (State, modify, runState)
 import Hfm.Application.Ports
 import Hfm.Application.State
 import Hfm.Application.UseCases
+import qualified Data.Vector as Vec
 import Hfm.Domain.Entry
 import Hfm.Domain.Input
+import Hfm.Domain.Theme (themes)
 import Hfm.Domain.Selection
 import Test.Hspec hiding (before, after, pending)
 
@@ -112,3 +114,60 @@ spec = do
             ((_, quit), calls) = run memory (KeyPress (KChar 'c') [MCtrl]) pending
         quit `shouldBe` True
         calls `shouldBe` []) [Browse, Search, Prompt Mkdir "x", ConfirmDelete, ViewFile "p" "t" 0]
+
+  describe "Theme picker without effects" $ do
+    it "offers all six themes and commits only when Enter is pressed" $ do
+      mapM_ (\theme -> do
+        let ((opened, _), openCalls) = run memory (KeyPress (KFun 3) []) initial
+            ((preview, _), previewCalls) = run memory (KeyPress (KChar (toEnum (fromEnum '1' + fromEnum theme))) []) opened
+            ((applied, _), applyCalls) = run memory (KeyPress KEnter []) preview
+        fmap (Vec.toList . selectionItems) (stThemePicker opened) `shouldBe` Just themes
+        stTheme preview `shouldBe` Dark
+        fmap snd (stThemePicker preview >>= selectedElement) `shouldBe` Just theme
+        stTheme applied `shouldBe` theme
+        stThemePicker applied `shouldBe` Nothing
+        openCalls ++ previewCalls ++ applyCalls `shouldBe` []) themes
+
+    it "cancels preview with Esc, C-g, or F3 while preserving the active operation" $ do
+      mapM_ (\key -> do
+        let st = initial { stMode = Prompt Copy "한글/대상", stInputCursor = 3 }
+            ((opened, _), _) = run memory (KeyPress (KFun 3) []) st
+            ((preview, _), _) = run memory (KeyPress (KChar '3') []) opened
+            ((cancelled, _), calls) = run memory key preview
+        stTheme cancelled `shouldBe` Dark
+        stThemePicker cancelled `shouldBe` Nothing
+        stMode cancelled `shouldBe` stMode st
+        stInputCursor cancelled `shouldBe` 3
+        selectedEntry cancelled `shouldBe` selectedEntry st
+        calls `shouldBe` []) [KeyPress KEsc [], KeyPress (KChar 'g') [MCtrl], KeyPress (KFun 3) []]
+
+    it "preserves every mode, its input and selected files when applying a theme" $ do
+      mapM_ (\mode -> do
+        let st = initial { stMode = mode, stInputCursor = 2 }
+            ((opened, _), _) = run memory (KeyPress (KFun 3) []) st
+            ((preview, _), _) = run memory (KeyPress KEnd []) opened
+            ((done, _), calls) = run memory (KeyPress KEnter []) preview
+        stTheme done `shouldBe` TomorrowNightBlue
+        stMode done `shouldBe` mode
+        stInputCursor done `shouldBe` 2
+        panelEntries (stLeft done) `shouldBe` panelEntries (stLeft st)
+        panelSearch (activePanel done) `shouldBe` panelSearch (activePanel st)
+        calls `shouldBe` []) [Browse, Search, Prompt Copy "a", Prompt Move "b", Prompt Mkdir "c", ConfirmDelete, ViewFile "p" "text" 1]
+
+    it "keeps theme navigation within the six choices and supports Emacs keys" $ do
+      let ((opened, _), _) = run memory (KeyPress (KFun 3) []) initial
+          ((first, _), _) = run memory (KeyPress KHome []) opened
+          ((clamped, _), _) = run memory (KeyPress (KChar 'p') [MCtrl]) first
+          ((next, _), _) = run memory (KeyPress (KChar 'n') [MCtrl]) clamped
+      fmap snd (stThemePicker clamped >>= selectedElement) `shouldBe` Just Light
+      fmap snd (stThemePicker next >>= selectedElement) `shouldBe` Just Dark
+
+    it "allows language changes and the global quit prefix inside the picker" $ do
+      let ((opened, _), _) = run memory (KeyPress (KFun 3) []) initial
+          ((english, _), _) = run memory (KeyPress (KFun 2) []) opened
+          ((prefix, _), _) = run memory (KeyPress (KChar 'x') [MCtrl]) english
+          ((_, quit), calls) = run memory (KeyPress (KChar 'c') [MCtrl]) prefix
+      stLanguage english `shouldBe` English
+      stThemePicker english `shouldBe` stThemePicker opened
+      quit `shouldBe` True
+      calls `shouldBe` []
