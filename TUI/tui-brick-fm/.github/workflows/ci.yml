@@ -33,7 +33,9 @@ jobs:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'package.yaml') }}
+          packages/*/.stack-work
+          apps/*/.stack-work
+        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'packages/**/package.yaml', 'apps/**/package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-stack-
 
@@ -43,8 +45,14 @@ jobs:
     - name: Build
       run: stack build --test --no-run-tests
 
+    - name: Check architecture boundaries
+      run: python3 scripts/check-architecture.py
+
     - name: Run tests
       run: stack test --coverage
+
+    - name: Exercise terminal input
+      run: python3 scripts/test-keybindings.py
 
     - name: Generate Haddock documentation
       run: stack haddock --no-haddock-deps
@@ -74,7 +82,9 @@ jobs:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-lint-${{ hashFiles('stack.yaml', 'package.yaml') }}
+          packages/*/.stack-work
+          apps/*/.stack-work
+        key: ${{ runner.os }}-lint-${{ hashFiles('stack.yaml', 'packages/**/package.yaml', 'apps/**/package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-lint-
 
@@ -82,5 +92,5 @@ jobs:
       run: stack install hlint
 
     - name: Run HLint
-      run: hlint src app test
+      run: hlint packages apps
       continue-on-error: true

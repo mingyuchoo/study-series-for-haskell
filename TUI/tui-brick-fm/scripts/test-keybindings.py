@@ -13,8 +13,8 @@ import termios
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = subprocess.check_output(["stack", "path", "--dist-dir"], cwd=ROOT, text=True).strip()
-BINARY = ROOT / DIST / "build/hfm-exe/hfm-exe"
+INSTALL = subprocess.check_output(["stack", "path", "--local-install-root"], cwd=ROOT, text=True).strip()
+BINARY = Path(INSTALL) / "bin/hfm-exe"
 
 
 class Terminal:
@@ -118,6 +118,27 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
     finally:
         terminal.close()
 
+    # F2 is global, including pending prefixes and destructive confirmation.
+    for mode_keys, english_label in [
+        (b"", "File manager"), (b"\x13file-", "Search:"),
+        (b"+draft", "New folder:"), (b"\x0eC", "Copy to:"),
+        (b"\x0eR", "Move/rename to:"), (b"\x0eD", "Confirm delete:"),
+        (b"\x0ev", "View:"), (b"\x18", "C-x:"),
+    ]:
+        terminal = Terminal(left, right, config)
+        try:
+            terminal.key(mode_keys)
+            terminal.expect(b"\x1bOQ", english_label)  # xterm F2
+            terminal.expect(b"\x1bOQ", "한국어")
+            if mode_keys == b"\x18":
+                terminal.key(b"\x07")
+            terminal.key(b"\x07")
+            terminal.quit()
+            assert not (left / "draft").exists(), "F2 must not execute a prompt"
+            assert (left / "file-02.txt").exists(), "F2 must not confirm deletion"
+        finally:
+            terminal.close()
+
     # The global quit prefix must work from every modal screen.
     for mode_keys in [b"\x13", b"+draft", b"\x0eD", b"\x0ev"]:
         terminal = Terminal(left, right, config)
@@ -127,4 +148,4 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         finally:
             terminal.close()
 
-print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, modal quit")
+print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, modal quit")

@@ -9,16 +9,18 @@
 :set prompt-cont "\ESC[1;35m > \ESC[m"
 
 -- INCLUDE DIRECTORIES
-:set -iapp
-:set -isrc
-:set -itest
+:set -ipackages/hfm-domain/src
+:set -ipackages/hfm-application/src
+:set -ipackages/hfm-infrastructure/src
+:set -ipackages/hfm-tui/src
+:set -iapps/hfm/app
 
 -- LANGUAGE EXTENSIONS
 :set -XExplicitForAll
 :set -XStandaloneKindSignatures
 
 -- HLINT
-:def hlint const . return <| ":! hlint \"src\""
+:def hlint const . return $ ":! hlint packages apps"
 
 -- HOOGLE
-:def hoogle \x -> return <| ":! hoogle --count=20 \"" ++ x ++ "\""
+:def hoogle \x -> return $ ":! hoogle --count=20 \"" ++ x ++ "\""

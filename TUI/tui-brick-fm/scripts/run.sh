@@ -47,11 +47,11 @@ cd "$ROOT_DIR"
 case "$COMMAND" in
   build) exec stack build ;;
   test) exec stack test ;;
-  run) exec stack run -- "$@" ;;
+  run) exec stack run hfm-exe -- "$@" ;;
   all)
     stack build
     stack test
-    exec stack run -- "$@"
+    exec stack run hfm-exe -- "$@"
     ;;
   clean) exec stack clean ;;
 esac

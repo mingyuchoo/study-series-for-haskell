@@ -55,7 +55,9 @@ jobs:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-stack-release-${{ hashFiles('stack.yaml', 'package.yaml') }}
+          packages/*/.stack-work
+          apps/*/.stack-work
+        key: ${{ runner.os }}-stack-release-${{ hashFiles('stack.yaml', 'packages/**/package.yaml', 'apps/**/package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-stack-release-
 

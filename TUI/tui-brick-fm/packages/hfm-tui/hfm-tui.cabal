@@ -1,0 +1,84 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           hfm-tui
+version:        0.1.0.0
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Hfm.Tui.App
+      Hfm.Tui.Event
+      Hfm.Tui.I18n
+      Hfm.Tui.Input
+      Hfm.Tui.Layout
+      Hfm.Tui.Name
+      Hfm.Tui.SyntaxHighlight
+      Hfm.Tui.Terminal
+      Hfm.Tui.UI
+  other-modules:
+      Paths_hfm_tui
+  autogen-modules:
+      Paths_hfm_tui
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , brick
+    , filepath
+    , hfm-application
+    , hfm-domain
+    , mtl
+    , skylighting
+    , skylighting-core
+    , text
+    , unix
+    , vector
+    , vty
+    , vty-unix
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+
+test-suite hfm-tui-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      SyntaxHighlightSpec
+      Paths_hfm_tui
+  autogen-modules:
+      Paths_hfm_tui
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , brick
+    , filepath
+    , hfm-application
+    , hfm-domain
+    , hfm-tui
+    , hspec
+    , mtl
+    , skylighting
+    , skylighting-core
+    , text
+    , unix
+    , vector
+    , vty
+    , vty-unix
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh

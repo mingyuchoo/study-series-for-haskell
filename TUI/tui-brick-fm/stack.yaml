@@ -2,7 +2,11 @@
 resolver: lts-24.40
 
 packages:
-- .
+- packages/hfm-domain
+- packages/hfm-application
+- packages/hfm-infrastructure
+- packages/hfm-tui
+- apps/hfm
 
 extra-package-dbs: []
 extra-deps: []

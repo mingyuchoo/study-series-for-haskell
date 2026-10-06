@@ -22,25 +22,27 @@ setup: update-stack-yaml
 	stack test --only-dependencies
 
 format: setup
-	stylish-haskell --config .stylish-haskell.yaml -r -i ./**/*.hs
+	rg --files packages apps -g '*.hs' | xargs stylish-haskell --config .stylish-haskell.yaml -i
 
 build: setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
 
 test: setup
+	python3 scripts/check-architecture.py
 	stack test --fast
 
 coverage: setup
 	stack test --coverage --fast --haddock
 
 watch-test: setup
+	python3 scripts/check-architecture.py
 	stack test --fast --file-watch --watch-all
 
 watch-coverage: setup
 	stack test --coverage --fast --file-watch --watch-all --haddock
 
 ghcid: setup
-	ghcid --command "stack ghci test/Spec.hs"
+	ghcid --command "stack ghci hfm-application:test:hfm-application-test"
 
 run: build
 	time stack exec $(PROJECT_NAME)-exe

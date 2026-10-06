@@ -1,0 +1,38 @@
+name: hfm-domain
+version: 0.1.0.0
+license: BSD-3-Clause
+license-file: LICENSE
+author: Mingyu Choo
+maintainer: mingyuchoo@gmail.com
+language: GHC2024
+default-extensions:
+- OverloadedStrings
+ghc-options:
+- -Wall
+- -O2
+when:
+- condition: os(darwin)
+  ghc-options: -pgml ../../scripts/link-macos.sh
+dependencies:
+- base >= 4.18 && < 5
+- text
+- vector
+- filepath
+library:
+  source-dirs: src
+  exposed-modules:
+  - Hfm.Domain.Config
+  - Hfm.Domain.Editor
+  - Hfm.Domain.Entry
+  - Hfm.Domain.Fuzzy
+  - Hfm.Domain.Input
+  - Hfm.Domain.Language
+  - Hfm.Domain.SearchPolicy
+  - Hfm.Domain.Selection
+tests:
+  hfm-domain-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hfm-domain
+    - hspec

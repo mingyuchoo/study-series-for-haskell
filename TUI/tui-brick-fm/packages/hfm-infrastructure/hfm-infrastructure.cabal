@@ -1,0 +1,71 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           hfm-infrastructure
+version:        0.1.0.0
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Hfm.Infrastructure.Config
+      Hfm.Infrastructure.FileSearch
+      Hfm.Infrastructure.FileSystem
+      Hfm.Infrastructure.Ports
+  other-modules:
+      Paths_hfm_infrastructure
+  autogen-modules:
+      Paths_hfm_infrastructure
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , bytestring
+    , directory
+    , filepath
+    , hfm-application
+    , hfm-domain
+    , text
+    , unix
+    , yaml
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+
+test-suite hfm-infrastructure-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hfm_infrastructure
+  autogen-modules:
+      Paths_hfm_infrastructure
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , bytestring
+    , directory
+    , filepath
+    , hfm-application
+    , hfm-domain
+    , hfm-infrastructure
+    , hspec
+    , text
+    , unix
+    , vector
+    , yaml
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh

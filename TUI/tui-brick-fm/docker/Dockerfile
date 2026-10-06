@@ -3,11 +3,11 @@ FROM fpco/stack-build:lts-24.21
 WORKDIR /app
 
 ARG PROJECT_NAME
-COPY stack.yaml stack.yaml.lock package.yaml ${PROJECT_NAME}.cabal Setup.hs ./
+COPY stack.yaml stack.yaml.lock cabal.project ./
 COPY README.md CHANGELOG.md LICENSE ./
-COPY src/ src/
-COPY app/ app/
-COPY test/ test/
+COPY packages/ packages/
+COPY apps/ apps/
+COPY scripts/link-macos.sh scripts/link-macos.sh
 
 RUN stack setup --no-docker && stack build --dependencies-only --no-docker
 

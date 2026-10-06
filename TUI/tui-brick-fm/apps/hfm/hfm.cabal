@@ -1,0 +1,37 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           hfm
+version:        0.1.0.0
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+executable hfm-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_hfm
+  autogen-modules:
+      Paths_hfm
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.18 && <5
+    , brick
+    , directory
+    , hfm-application
+    , hfm-domain
+    , hfm-infrastructure
+    , hfm-tui
+    , vty
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh

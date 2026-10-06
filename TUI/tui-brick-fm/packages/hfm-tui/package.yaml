@@ -1,0 +1,48 @@
+name: hfm-tui
+version: 0.1.0.0
+license: BSD-3-Clause
+license-file: LICENSE
+author: Mingyu Choo
+maintainer: mingyuchoo@gmail.com
+language: GHC2024
+default-extensions:
+- OverloadedStrings
+ghc-options:
+- -Wall
+- -O2
+when:
+- condition: os(darwin)
+  ghc-options: -pgml ../../scripts/link-macos.sh
+dependencies:
+- base >= 4.18 && < 5
+- hfm-domain
+- hfm-application
+- brick
+- vty
+- vty-unix
+- text
+- vector
+- unix
+- filepath
+- skylighting
+- skylighting-core
+- mtl
+library:
+  source-dirs: src
+  exposed-modules:
+  - Hfm.Tui.App
+  - Hfm.Tui.Event
+  - Hfm.Tui.I18n
+  - Hfm.Tui.Input
+  - Hfm.Tui.Layout
+  - Hfm.Tui.Name
+  - Hfm.Tui.SyntaxHighlight
+  - Hfm.Tui.Terminal
+  - Hfm.Tui.UI
+tests:
+  hfm-tui-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hfm-tui
+    - hspec

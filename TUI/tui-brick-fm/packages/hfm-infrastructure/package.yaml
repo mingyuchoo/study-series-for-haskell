@@ -1,0 +1,40 @@
+name: hfm-infrastructure
+version: 0.1.0.0
+license: BSD-3-Clause
+license-file: LICENSE
+author: Mingyu Choo
+maintainer: mingyuchoo@gmail.com
+language: GHC2024
+default-extensions:
+- OverloadedStrings
+ghc-options:
+- -Wall
+- -O2
+when:
+- condition: os(darwin)
+  ghc-options: -pgml ../../scripts/link-macos.sh
+dependencies:
+- base >= 4.18 && < 5
+- hfm-domain
+- hfm-application
+- text
+- bytestring
+- directory
+- filepath
+- unix
+- yaml
+library:
+  source-dirs: src
+  exposed-modules:
+  - Hfm.Infrastructure.Config
+  - Hfm.Infrastructure.FileSearch
+  - Hfm.Infrastructure.FileSystem
+  - Hfm.Infrastructure.Ports
+tests:
+  hfm-infrastructure-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hfm-infrastructure
+    - hspec
+    - vector

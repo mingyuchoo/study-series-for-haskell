@@ -1,0 +1,64 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           hfm-domain
+version:        0.1.0.0
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Hfm.Domain.Config
+      Hfm.Domain.Editor
+      Hfm.Domain.Entry
+      Hfm.Domain.Fuzzy
+      Hfm.Domain.Input
+      Hfm.Domain.Language
+      Hfm.Domain.SearchPolicy
+      Hfm.Domain.Selection
+  other-modules:
+      Paths_hfm_domain
+  autogen-modules:
+      Paths_hfm_domain
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , filepath
+    , text
+    , vector
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+
+test-suite hfm-domain-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hfm_domain
+  autogen-modules:
+      Paths_hfm_domain
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -O2
+  build-depends:
+      base >=4.18 && <5
+    , filepath
+    , hfm-domain
+    , hspec
+    , text
+    , vector
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
