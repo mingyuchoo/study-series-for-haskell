@@ -5,6 +5,8 @@ import qualified Data.Vector as Vec
 import Brick.Widgets.List (listElements, listSelectedElement)
 import FileManager
 import Event (editText)
+import Config (KeyBindingStyle (..))
+import Data.Yaml (ParseException, decodeEither')
 import Fuzzy (filterItems, fuzzyMatchScore)
 import qualified Graphics.Vty as V
 import System.Directory
@@ -46,7 +48,24 @@ spec = do
       editText (V.EvKey (V.KChar 'w') [V.MCtrl]) "alpha beta" 10 `shouldBe` Just ("alpha ", 6)
       editText (V.EvKey (V.KChar 'w') [V.MCtrl]) "/tmp/file" 9 `shouldBe` Just ("/tmp/", 5)
       editText (V.EvKey (V.KChar 'k') [V.MCtrl]) "alpha beta" 6 `shouldBe` Just ("alpha ", 6)
-      editText (V.EvKey (V.KChar 'u') [V.MCtrl]) "alpha beta" 4 `shouldBe` Just ("", 0)
+      editText (V.EvKey (V.KChar 'u') [V.MCtrl]) "alpha beta" 4 `shouldBe` Nothing
+    it "Meta 단어 이동과 삭제를 Alt로도 처리한다" $ do
+      editText (V.EvKey (V.KChar 'b') [V.MMeta]) "alpha beta" 10 `shouldBe` Just ("alpha beta", 6)
+      editText (V.EvKey (V.KChar 'f') [V.MAlt]) "/tmp/file" 0 `shouldBe` Just ("/tmp/file", 4)
+      editText (V.EvKey (V.KChar 'd') [V.MAlt]) "alpha beta" 5 `shouldBe` Just ("alpha", 5)
+      editText (V.EvKey V.KBS [V.MMeta]) "/tmp/file" 9 `shouldBe` Just ("/tmp/", 5)
+    it "입력 경계와 한글 커서를 처리한다" $ do
+      editText (V.EvKey (V.KChar 'b') [V.MMeta]) "" 0 `shouldBe` Just ("", 0)
+      editText (V.EvKey (V.KChar 'f') [V.MMeta]) "abc" 3 `shouldBe` Just ("abc", 3)
+      editText (V.EvKey (V.KChar 'd') [V.MCtrl]) "가나다" 1 `shouldBe` Just ("가다", 1)
+      editText (V.EvKey V.KHome []) "abc" 2 `shouldBe` Just ("abc", 0)
+      editText (V.EvKey V.KEnd []) "abc" 1 `shouldBe` Just ("abc", 3)
+
+  describe "Emacs 설정 통일" $ do
+    it "이전 Vim 설정과 알 수 없는 설정을 Emacs로 읽는다" $ do
+      (decodeEither' "\"vim\"" :: Either ParseException KeyBindingStyle) `shouldSatisfy` either (const False) (== Emacs)
+      (decodeEither' "\"vi\"" :: Either ParseException KeyBindingStyle) `shouldSatisfy` either (const False) (== Emacs)
+      (decodeEither' "\"other\"" :: Either ParseException KeyBindingStyle) `shouldSatisfy` either (const False) (== Emacs)
 
   describe "패널 탐색" $ do
     it "디렉터리를 먼저 정렬하고 숨김 파일을 전환한다" $ withFixture $ \dir -> do

@@ -10,7 +10,6 @@ module Config
     ) where
 
 import           Data.Text        (Text)
-import qualified Data.Text        as T
 import           Data.Yaml        (FromJSON (..), decodeFileEither, withObject,
                                    (.!=), (.:?))
 
@@ -23,22 +22,19 @@ import           System.Directory (XdgDirectory (..), doesFileExist,
 import           System.FilePath  ((</>))
 
 -- | 키바인딩 스타일을 나타내는 타입
--- Emacs 또는 Vim 스타일의 키바인딩을 선택할 수 있음
-data KeyBindingStyle = Emacs | Vim
+-- 모든 화면에서 Emacs 스타일을 사용
+data KeyBindingStyle = Emacs
      deriving (Eq, Generic, Show)
 
 -- | KeyBindingStyle의 JSON 파싱을 위한 타입클래스 인스턴스
--- 텍스트 값을 파싱하여 Vim 또는 Emacs로 변환
+-- 이전 설정 파일의 스타일 값도 Emacs로 정규화
 instance FromJSON KeyBindingStyle where
   parseJSON v = parseBindingStyle <$> parseJSON v
 
 -- | 텍스트를 KeyBindingStyle로 변환하는 함수 (Pure)
--- "vim" 또는 "vi"는 Vim으로, 그 외는 Emacs로 변환
+-- 기존 vim/vi 설정 파일도 계속 읽되 Emacs 키바인딩으로 전환
 parseBindingStyle :: Text -> KeyBindingStyle
-parseBindingStyle t = case T.toLower t of
-  "vim" -> Vim
-  "vi"  -> Vim
-  _     -> Emacs
+parseBindingStyle _ = Emacs
 
 -- | 키바인딩 설정을 담는 레코드 타입
 -- bindingStyle 필드로 키바인딩 스타일을 저장

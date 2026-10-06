@@ -21,8 +21,9 @@ buildVtyFromTty = do
   termName <- fromMaybe "xterm" <$> lookupEnv "TERM"
   let unixSettings =
         VtyUnixSettings.UnixSettings
-          { VtyUnixSettings.settingVmin = 1
-          , VtyUnixSettings.settingVtime = 100
+          { -- Let the input read return while Vty shuts down after C-x C-c.
+            VtyUnixSettings.settingVmin = 0
+          , VtyUnixSettings.settingVtime = 1
           , VtyUnixSettings.settingInputFd = ttyFd
           , VtyUnixSettings.settingOutputFd = ttyFd
           , VtyUnixSettings.settingTermName = termName

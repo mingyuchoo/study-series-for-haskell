@@ -16,10 +16,10 @@ flowchart LR
 
 - `app/Main.hs`: 시작 디렉터리 인자 0~2개를 해석하고 두 패널을 초기화합니다.
 - `src/Types.hs`: 패널, 활성 패널, 검색·입력·삭제 확인·보기 모드의 상태를 정의합니다.
-- `src/Event.hs`: 키를 모드에 따라 처리하며 I/O 오류를 상태 표시줄에 전달합니다.
+- `src/Event.hs`: 공통 Emacs 접두 명령과 취소를 먼저 처리한 뒤 모드별 Emacs/Dired 키를 처리하며 I/O 오류를 상태 표시줄에 전달합니다.
 - `src/UI.hs`: 터미널 크기에 맞춰 두 패널과 명령 입력줄, 상태줄을 그립니다.
 - `src/FileManager.hs`: 정렬된 디렉터리 목록, 복사, 이동, 삭제, 디렉터리 생성을 수행합니다.
-- `src/Config.hs`: Emacs/Vim 탐색 키 설정을 로드합니다.
+- `src/Config.hs`: 기존 키 설정 파일을 읽고 모든 스타일을 Emacs로 정규화합니다.
 - `src/Vty.hs`: `/dev/tty`에서 터미널을 엽니다.
 
 ## 파일 작업 규칙

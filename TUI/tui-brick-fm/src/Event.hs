@@ -3,7 +3,7 @@
 module Event (handleEvent, formatFileError, editText) where
 
 import Brick (BrickEvent (..), EventM, get, halt, modify)
-import Config (KeyBindingStyle (..))
+import Brick.Widgets.List (listMoveTo)
 import Control.Exception (IOException, try)
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
@@ -28,15 +28,46 @@ formatFileError e
 
 handleEvent :: BrickEvent Name e -> EventM Name AppState ()
 handleEvent (VtyEvent (V.EvResize w h)) = modify (\s -> s { stTerminalSize = (w, h) })
-handleEvent (VtyEvent event) = do
+handleEvent (VtyEvent rawEvent) = do
   st <- get
-  case stMode st of
-    Browse -> browseEvent event
-    Search -> searchEvent event
-    Prompt op value -> promptEvent op value event
-    ConfirmDelete -> confirmEvent event
-    ViewFile path content offset -> viewEvent path content offset event
+  let event = normalizeMeta rawEvent
+  if stPendingCtrlX st
+    then do
+      modify (\s -> s { stPendingCtrlX = False })
+      case event of
+        V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
+        V.EvKey (V.KChar 'o') [] | stMode st == Browse -> switchPanel
+        V.EvKey (V.KChar 'f') [V.MCtrl] | stMode st == Browse -> enterSelected
+        V.EvKey (V.KChar 'k') [] -> cancelMode
+        V.EvKey (V.KChar 'g') [V.MCtrl] -> pure ()
+        V.EvKey V.KEsc [] -> pure ()
+        _ -> modify (\s -> s { stStatus = "알 수 없는 C-x 명령" })
+    else case event of
+      V.EvKey (V.KChar 'x') [V.MCtrl] -> modify (\s -> s { stPendingCtrlX = True })
+      V.EvKey (V.KChar 'g') [V.MCtrl] -> cancelMode
+      _ -> case stMode st of
+        Browse -> browseEvent event
+        Search -> searchEvent event
+        Prompt op value -> promptEvent op value event
+        ConfirmDelete -> confirmEvent event
+        ViewFile path content offset -> viewEvent path content offset event
+
 handleEvent _ = pure ()
+
+-- Terminals can report Alt as either MAlt or MMeta.
+normalizeMeta :: V.Event -> V.Event
+normalizeMeta (V.EvKey key modifiers) = V.EvKey key (map normalize modifiers)
+  where
+    normalize V.MAlt = V.MMeta
+    normalize modifier = modifier
+normalizeMeta event = event
+
+cancelMode :: EventM Name AppState ()
+cancelMode = do
+  st <- get
+  when (stMode st == Search || stMode st == Browse) (setSearch "")
+  modify (\s -> s { stMode = Browse, stInputCursor = 0, stPendingCtrlX = False
+                   , stStatus = "취소했습니다" })
 
 attempt :: IO a -> (a -> EventM Name AppState ()) -> EventM Name AppState ()
 attempt action onSuccess = do
@@ -91,35 +122,25 @@ openView path = attempt (withBinaryFile path ReadMode (\h -> BS.hGet h 65536)) $
 browseEvent :: V.Event -> EventM Name AppState ()
 browseEvent event = do
   st <- get
-  if stPendingCtrlX st
-    then do
-      modify (\s -> s { stPendingCtrlX = False })
-      case event of
-        V.EvKey (V.KChar 'c') [V.MCtrl] -> halt
-        V.EvKey (V.KChar 'o') [] -> switchPanel
-        V.EvKey (V.KChar 'g') [V.MCtrl] -> pure ()
-        V.EvKey V.KEsc [] -> pure ()
-        _ -> modify (\s -> s { stStatus = "알 수 없는 C-x 명령" })
-    else browseKey st event
-
-browseKey :: AppState -> V.Event -> EventM Name AppState ()
-browseKey st event = case event of
-    V.EvKey (V.KChar 'x') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (\s -> s { stPendingCtrlX = True })
-    V.EvKey (V.KChar 'q') [] -> halt
-    V.EvKey (V.KChar '\t') [] -> switchPanel
+  case event of
     V.EvKey V.KUp [] -> modify (moveSelection False)
     V.EvKey V.KDown [] -> modify (moveSelection True)
-    V.EvKey V.KPageUp [] -> modify (\s -> iterate (moveSelection False) s !! 10)
-    V.EvKey V.KPageDown [] -> modify (\s -> iterate (moveSelection True) s !! 10)
-    V.EvKey (V.KChar 'v') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (movePage True)
-    V.EvKey (V.KChar 'v') [V.MMeta] | configKeyBinding (stConfig st) == Emacs -> modify (movePage False)
+    V.EvKey (V.KChar 'p') [V.MCtrl] -> modify (moveSelection False)
+    V.EvKey (V.KChar 'n') [V.MCtrl] -> modify (moveSelection True)
+    V.EvKey V.KPageUp [] -> modify (movePage False)
+    V.EvKey V.KPageDown [] -> modify (movePage True)
+    V.EvKey (V.KChar 'v') [V.MCtrl] -> modify (movePage True)
+    V.EvKey (V.KChar 'v') [V.MMeta] -> modify (movePage False)
+    V.EvKey (V.KChar '<') [V.MMeta] -> modify (moveBoundary False)
+    V.EvKey (V.KChar '>') [V.MMeta] -> modify (moveBoundary True)
+    V.EvKey V.KHome [] -> modify (moveBoundary False)
+    V.EvKey V.KEnd [] -> modify (moveBoundary True)
     V.EvKey V.KEnter [] -> enterSelected
-    V.EvKey V.KBS [] -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
-    V.EvKey (V.KChar '/') [] -> modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
-    V.EvKey (V.KChar 's') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
-    V.EvKey (V.KChar 'r') [V.MCtrl] -> refreshAll
+    V.EvKey (V.KChar 'f') [] -> enterSelected
+    V.EvKey (V.KChar 's') [V.MCtrl] -> startSearch
+    V.EvKey (V.KChar 'r') [V.MCtrl] -> startSearch
     V.EvKey (V.KChar 'g') [] -> refreshAll
-    V.EvKey (V.KChar '.') [] -> modify (\s -> s { stShowHidden = not (stShowHidden s) }) >> refreshAll
+    V.EvKey (V.KChar 'o') [V.MMeta] -> modify (\s -> s { stShowHidden = not (stShowHidden s) }) >> refreshAll
     V.EvKey (V.KChar 'v') [] -> case selectedEntry st of
       Just e | entryKind e `elem` [RegularFile, SymbolicLink] -> maybe (pure ()) openView (selectedPath st)
       _ -> pure ()
@@ -128,13 +149,14 @@ browseKey st event = case event of
     V.EvKey (V.KChar '+') [] -> modify (\s -> s { stMode = Prompt Mkdir "", stInputCursor = 0 })
     V.EvKey (V.KChar 'D') [] -> when (selectedPath st /= Nothing) $ modify (\s -> s { stMode = ConfirmDelete })
     V.EvKey (V.KChar '^') [] -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
-    V.EvKey (V.KChar 'p') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (moveSelection False)
-    V.EvKey (V.KChar 'n') [V.MCtrl] | configKeyBinding (stConfig st) == Emacs -> modify (moveSelection True)
-    V.EvKey (V.KChar 'k') [] | configKeyBinding (stConfig st) == Vim -> modify (moveSelection False)
-    V.EvKey (V.KChar 'j') [] | configKeyBinding (stConfig st) == Vim -> modify (moveSelection True)
-    V.EvKey (V.KChar 'h') [] | configKeyBinding (stConfig st) == Vim -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
-    V.EvKey (V.KChar 'l') [] | configKeyBinding (stConfig st) == Vim -> enterSelected
     _ -> pure ()
+  where
+    startSearch = modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
+
+moveBoundary :: Bool -> AppState -> AppState
+moveBoundary end st =
+  let panel = activePanel st
+  in replaceActivePanel (panel { panelEntries = listMoveTo (if end then -1 else 0) (panelEntries panel) }) st
 
 switchPanel :: EventM Name AppState ()
 switchPanel = modify (\s -> s { stActive = if stActive s == LeftSide then RightSide else LeftSide })
@@ -167,6 +189,12 @@ searchEvent event = case event of
   V.EvKey (V.KChar 'v') [V.MMeta] -> modify (movePage False)
   V.EvKey (V.KChar 'p') [V.MCtrl] -> modify (moveSelection False)
   V.EvKey (V.KChar 'n') [V.MCtrl] -> modify (moveSelection True)
+  V.EvKey (V.KChar 's') [V.MCtrl] -> modify (moveSelection True)
+  V.EvKey (V.KChar 'r') [V.MCtrl] -> modify (moveSelection False)
+  V.EvKey V.KPageUp [] -> modify (movePage False)
+  V.EvKey V.KPageDown [] -> modify (movePage True)
+  V.EvKey (V.KChar '<') [V.MMeta] -> modify (moveBoundary False)
+  V.EvKey (V.KChar '>') [V.MMeta] -> modify (moveBoundary True)
   _ -> do
     st <- get
     case editText event (panelSearch (activePanel st)) (stInputCursor st) of
@@ -188,16 +216,21 @@ promptEvent op value event = case event of
 
 -- | Edit a one-line input. Cursor positions count Text characters, not bytes.
 editText :: V.Event -> T.Text -> Int -> Maybe (T.Text, Int)
-editText event value rawCursor = case event of
+editText event value rawCursor = case normalizeMeta event of
   V.EvKey (V.KChar 'a') [V.MCtrl] -> Just (value, 0)
   V.EvKey (V.KChar 'e') [V.MCtrl] -> Just (value, T.length value)
   V.EvKey (V.KChar 'b') [V.MCtrl] -> Just (value, max 0 (cursor - 1))
   V.EvKey (V.KChar 'f') [V.MCtrl] -> Just (value, min (T.length value) (cursor + 1))
+  V.EvKey (V.KChar 'b') [V.MMeta] -> Just (value, wordStart)
+  V.EvKey (V.KChar 'f') [V.MMeta] -> Just (value, wordEnd)
+  V.EvKey V.KHome [] -> Just (value, 0)
+  V.EvKey V.KEnd [] -> Just (value, T.length value)
   V.EvKey V.KLeft [] -> Just (value, max 0 (cursor - 1))
   V.EvKey V.KRight [] -> Just (value, min (T.length value) (cursor + 1))
-  V.EvKey (V.KChar 'u') [V.MCtrl] -> Just ("", 0)
   V.EvKey (V.KChar 'k') [V.MCtrl] -> Just (T.take cursor value, cursor)
   V.EvKey (V.KChar 'w') [V.MCtrl] -> Just (T.take wordStart value <> T.drop cursor value, wordStart)
+  V.EvKey V.KBS [V.MMeta] -> Just (T.take wordStart value <> T.drop cursor value, wordStart)
+  V.EvKey (V.KChar 'd') [V.MMeta] -> Just (T.take cursor value <> T.drop wordEnd value, cursor)
   V.EvKey (V.KChar 'h') [V.MCtrl] -> deleteBackward
   V.EvKey V.KBS [] -> deleteBackward
   V.EvKey (V.KChar 'd') [V.MCtrl] -> deleteForward
@@ -214,6 +247,8 @@ editText event value rawCursor = case event of
       | otherwise = Just (T.take cursor value <> T.drop (cursor + 1) value, cursor)
     beforeCursor = T.take cursor value
     wordStart = T.length (T.dropWhileEnd isWordChar (T.dropWhileEnd (not . isWordChar) beforeCursor))
+    afterCursor = T.drop cursor value
+    wordEnd = T.length value - T.length (T.dropWhile isWordChar (T.dropWhile (not . isWordChar) afterCursor))
     isWordChar c = isAlphaNum c || c == '_'
 
 runOperation :: Operation -> T.Text -> EventM Name AppState ()
@@ -258,16 +293,22 @@ viewEvent path content offset event = case event of
   V.EvKey (V.KChar 'q') [] -> close
   V.EvKey V.KUp [] -> scroll (-1)
   V.EvKey V.KDown [] -> scroll 1
-  V.EvKey V.KPageUp [] -> scroll (-10)
-  V.EvKey V.KPageDown [] -> scroll 10
+  V.EvKey V.KPageUp [] -> scrollPage (-1)
+  V.EvKey V.KPageDown [] -> scrollPage 1
   V.EvKey (V.KChar 'p') [V.MCtrl] -> scroll (-1)
   V.EvKey (V.KChar 'n') [V.MCtrl] -> scroll 1
   V.EvKey (V.KChar 'v') [V.MCtrl] -> scrollPage 1
   V.EvKey (V.KChar 'v') [V.MMeta] -> scrollPage (-1)
+  V.EvKey (V.KChar '<') [V.MMeta] -> scrollTo 0
+  V.EvKey (V.KChar '>') [V.MMeta] -> scrollTo maxOffset
+  V.EvKey V.KHome [] -> scrollTo 0
+  V.EvKey V.KEnd [] -> scrollTo maxOffset
   _ -> pure ()
   where
     close = modify (\s -> s { stMode = Browse })
-    scroll step = modify (\s -> s { stMode = ViewFile path content (max 0 (min (length (T.lines content)) (offset + step))) })
+    maxOffset = max 0 (length (T.lines content) - 1)
+    scrollTo target = modify (\s -> s { stMode = ViewFile path content (max 0 (min maxOffset target)) })
+    scroll step = scrollTo (offset + step)
     scrollPage direction = do
       st <- get
       scroll (direction * max 1 (snd (stTerminalSize st) - 4))
