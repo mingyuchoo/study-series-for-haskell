@@ -1,0 +1,9 @@
+{
+  "lastQuery": "현재 코드베이스를 분석해서 어떤 라이브러리를 이용해서 TUI 를 그리는지 알려줘.",
+  "perAgentQuery": {},
+  "graftReads": 0,
+  "sourceReads": 0,
+  "savedTokens": 0,
+  "injectedPointers": [],
+  "nudges": 0
+}
