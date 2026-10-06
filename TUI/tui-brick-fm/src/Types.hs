@@ -18,9 +18,13 @@ module Types
   , visibleEntries
   , refreshPanel
   , moveSelection
+  , viewerHelpLines
+  , viewerContentHeight
+  , clampViewerOffset
   , maxPreviewLines
   ) where
 
+import Brick (textWidth)
 import Brick.Widgets.List (List, list, listMoveDown, listMoveUp, listSelectedElement, listMoveTo)
 import Config (KeyBindingConfig (..), KeyBindingStyle (..))
 import Control.Applicative ((<|>))
@@ -112,6 +116,28 @@ moveSelection down st =
       entries = panelEntries panel
       moved = if down then listMoveDown entries else listMoveUp entries
   in replaceActivePanel (panel { panelEntries = moved }) st
+
+-- Keep rendering and scrolling in sync with the footer's display-cell width.
+viewerHelpLines :: AppState -> [T.Text]
+viewerHelpLines st = case T.words help of
+  [] -> []
+  word : rest -> wrap word rest
+  where
+    width = max 1 (fst (stTerminalSize st) - 2)
+    help
+      | stPendingCtrlX st = "C-x: C-c 종료  k 닫기  C-g 명령 취소"
+      | otherwise = "C-p/n 스크롤  C-v/M-v 페이지  M-</> 처음/끝  C-g/C-x k 닫기  C-x C-c 종료"
+    wrap line [] = [line]
+    wrap line (word : rest)
+      | textWidth (line <> " " <> word) <= width = wrap (line <> " " <> word) rest
+      | otherwise = line : wrap word rest
+
+viewerContentHeight :: AppState -> Int
+viewerContentHeight st = max 0 (snd (stTerminalSize st) - 3 - length (viewerHelpLines st))
+
+clampViewerOffset :: AppState -> T.Text -> Int -> Int
+clampViewerOffset st content offset =
+  max 0 (min (max 0 (length (T.lines content) - max 1 (viewerContentHeight st))) offset)
 
 maxPreviewLines :: Int
 maxPreviewLines = 100

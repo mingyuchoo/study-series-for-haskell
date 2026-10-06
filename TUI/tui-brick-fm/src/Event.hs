@@ -27,7 +27,11 @@ formatFileError e
   | otherwise = T.pack (show e)
 
 handleEvent :: BrickEvent Name e -> EventM Name AppState ()
-handleEvent (VtyEvent (V.EvResize w h)) = modify (\s -> s { stTerminalSize = (w, h) })
+handleEvent (VtyEvent (V.EvResize w h)) = modify $ \s ->
+  let resized = s { stTerminalSize = (w, h) }
+  in case stMode resized of
+    ViewFile path content offset -> resized { stMode = ViewFile path content (clampViewerOffset resized content offset) }
+    _ -> resized
 handleEvent (VtyEvent rawEvent) = do
   st <- get
   let event = normalizeMeta rawEvent
@@ -300,15 +304,14 @@ viewEvent path content offset event = case event of
   V.EvKey (V.KChar 'v') [V.MCtrl] -> scrollPage 1
   V.EvKey (V.KChar 'v') [V.MMeta] -> scrollPage (-1)
   V.EvKey (V.KChar '<') [V.MMeta] -> scrollTo 0
-  V.EvKey (V.KChar '>') [V.MMeta] -> scrollTo maxOffset
+  V.EvKey (V.KChar '>') [V.MMeta] -> scrollTo (length (T.lines content))
   V.EvKey V.KHome [] -> scrollTo 0
-  V.EvKey V.KEnd [] -> scrollTo maxOffset
+  V.EvKey V.KEnd [] -> scrollTo (length (T.lines content))
   _ -> pure ()
   where
     close = modify (\s -> s { stMode = Browse })
-    maxOffset = max 0 (length (T.lines content) - 1)
-    scrollTo target = modify (\s -> s { stMode = ViewFile path content (max 0 (min maxOffset target)) })
+    scrollTo target = modify (\s -> s { stMode = ViewFile path content (clampViewerOffset s content target) })
     scroll step = scrollTo (offset + step)
     scrollPage direction = do
       st <- get
-      scroll (direction * max 1 (snd (stTerminalSize st) - 4))
+      scroll (direction * max 1 (viewerContentHeight st))

@@ -2,6 +2,12 @@
 
 import Control.Exception (bracket)
 import qualified Data.Vector as Vec
+import Brick.Main (renderWidget)
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import UI (drawUI)
+import Graphics.Vty.PictureToSpans (displayOpsForPic)
+import Graphics.Vty.Span (SpanOp (..))
 import Brick.Widgets.List (listElements, listSelectedElement)
 import FileManager
 import Event (editText)
@@ -34,8 +40,56 @@ withFixture action = do
       pure path)
     removePathForcibly action
 
+viewerRows :: AppState -> [T.Text]
+viewerRows st =
+  let size = stTerminalSize st
+      picture = renderWidget Nothing (drawUI st) size
+      spanText (TextSpan _ _ _ value) = TL.toStrict value
+      spanText (Skip count) = T.replicate count " "
+      spanText (RowEnd count) = T.replicate count " "
+  in map (T.concat . map spanText . Vec.toList) (Vec.toList (displayOpsForPic picture size))
+
 spec :: Spec
 spec = do
+  describe "파일 보기 하단 렌더링" $ do
+    it "좁은 터미널에서도 하단 안내의 종료 키까지 표시한다" $ do
+      let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (40, 12))
+                 { stMode = ViewFile "/tmp/test.txt" "first\nlast" 0 }
+      T.unlines (viewerRows st) `shouldSatisfy` T.isInfixOf "종료"
+
+    it "화면 크기와 접두 명령에 관계없이 안내 문구와 마지막 줄을 분리한다" $ do
+      let content = T.unlines ["LINE-" <> T.pack (show n) | n <- [0 :: Int .. 59]]
+      mapM_ (\(size, prefixPending) -> do
+        let st = (initialState "/tmp" [] "/tmp" [] defaultConfig size)
+                   { stMode = ViewFile "/tmp/test.txt" content 999, stPendingCtrlX = prefixPending }
+            rows = viewerRows st
+            footerStart = snd size - length (viewerHelpLines st)
+        map T.strip (drop footerStart rows) `shouldBe` viewerHelpLines st
+        rows !! (footerStart - 2) `shouldSatisfy` T.isInfixOf "LINE-59"
+        rows !! (footerStart - 1) `shouldSatisfy` T.isPrefixOf "└")
+        [(size, prefixPending) | size <- [(40, 12), (60, 10), (80, 24), (120, 30)], prefixPending <- [False, True]]
+    it "빈 줄도 한 행을 차지해 파일 줄 위치를 보존한다" $ do
+      let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (40, 12))
+                 { stMode = ViewFile "/tmp/test.txt" "first\n\nthird" 0 }
+          rows = viewerRows st
+      rows !! 2 `shouldSatisfy` T.isInfixOf "first"
+      T.strip (rows !! 3) `shouldBe` "│                                      │"
+      rows !! 4 `shouldSatisfy` T.isInfixOf "third"
+    it "크기를 늘려도 마지막 페이지 위쪽이 비지 않고 끝까지 보인다" $ do
+      let content = T.unlines ["LINE-" <> T.pack (show n) | n <- [0 :: Int .. 59]]
+          small = initialState "/tmp" [] "/tmp" [] defaultConfig (40, 12)
+          oldOffset = clampViewerOffset small content 999
+          large = small { stTerminalSize = (80, 24), stMode = ViewFile "/tmp/test.txt" content oldOffset }
+          rows = viewerRows large
+      rows !! 2 `shouldSatisfy` T.isInfixOf "LINE-40"
+      rows !! 21 `shouldSatisfy` T.isInfixOf "LINE-59"
+      clampViewerOffset large content 999 `shouldBe` 40
+    it "내용 영역이 없는 작은 높이에서도 음수 크기로 렌더링하지 않는다" $ do
+      let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (40, 4))
+                 { stMode = ViewFile "/tmp/test.txt" "last" 0 }
+      viewerContentHeight st `shouldBe` 0
+      length (viewerRows st) `shouldBe` 4
+
   describe "Emacs 입력 편집" $ do
     it "커서를 이동해 중간에 입력하고 앞뒤 글자를 지운다" $ do
       editText (V.EvKey (V.KChar 'b') [V.MCtrl]) "ab" 2 `shouldBe` Just ("ab", 1)

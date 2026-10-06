@@ -88,8 +88,14 @@ renderViewer :: AppState -> FilePath -> T.Text -> Int -> Widget Name
 renderViewer st path content offset =
   vBox
     [ withAttr (attrName "header") $ padRight Max $ padLeftRight 1 $ txt ("보기: " <> T.pack path)
-    , vLimit (max 1 (height - 2)) $ border $ padRight Max $ padBottom Max $ vBox $
-        map txt $ take (max 1 (height - 4)) $ drop offset (T.lines content)
-    , withAttr (attrName "keys") $ padRight Max $ padLeftRight 1 $ txt (if stPendingCtrlX st then navigationHelp st else "C-p/n 스크롤  C-v/M-v 페이지  M-</> 처음/끝  C-g/C-x k 닫기  C-x C-c 종료")
+    , vLimit bodyHeight $ border $ padRight Max $ padBottom Max $ vBox $
+        map renderLine $ take (viewerContentHeight st) $ drop (clampViewerOffset st content offset) (T.lines content)
+    , vLimit (max 0 (height - 1)) $ withAttr (attrName "keys") $ padRight Max $ padLeftRight 1 $
+        vBox (map txt helpLines)
     ]
-  where height = snd (stTerminalSize st)
+  where
+    height = snd (stTerminalSize st)
+    helpLines = viewerHelpLines st
+    bodyHeight = max 0 (height - 1 - length helpLines)
+    -- Empty lines must occupy a row, just like nonempty file lines.
+    renderLine line = txt (if T.null line then " " else line)
