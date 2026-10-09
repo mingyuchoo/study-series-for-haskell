@@ -5,6 +5,7 @@ import qualified Data.ByteString as BS
 import qualified Data.Text
 import Hfm.Application.Ports
 import qualified Hfm.Infrastructure.FileSystem as FS
+import qualified Hfm.Infrastructure.Process as Process
 import qualified System.Directory as Directory
 import System.IO (IOMode (ReadMode), withBinaryFile)
 import System.IO.Error (isDoesNotExistError, isPermissionError)
@@ -28,4 +29,6 @@ ioFileSystem = FileSystem
   , moveEntry = \source target -> capture (FS.moveEntry source target)
   , deleteEntry = capture . FS.deleteEntry
   , makeDirectory = capture . FS.makeDirectory
+  , editFile = \cwd path -> capture (Process.editFile cwd path)
+  , runCommand = \cwd command -> capture (Process.runCommand cwd command)
   }

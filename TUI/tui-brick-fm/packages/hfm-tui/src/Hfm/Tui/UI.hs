@@ -32,7 +32,7 @@ drawUI state =
 renderThemePicker :: AppState -> Selection Theme -> Widget Name
 renderThemePicker st choices = centerLayer $
   hLimit (max 1 (min 54 (fst (stTerminalSize st) - 2))) $
-  vLimit (max 1 (min 12 (snd (stTerminalSize st) - 2))) $
+  vLimit (max 1 (min 14 (snd (stTerminalSize st) - 2))) $
   withAttr (attrName "active") $
   borderWithLabel (txt (translate (stLanguage st) "테마 선택")) $
   vBox
@@ -47,7 +47,7 @@ renderThemePicker st choices = centerLayer $
       txt (T.pack (show (i + 1)) <> " " <> (if theme == stTheme st then "* " else "  ") <> themeName theme)
     help
       | stPendingCtrlX st = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
-      | otherwise = translate (stLanguage st) "↑/↓ C-p/n 이동  1-6 선택  RET 적용  Esc/C-g 취소"
+      | otherwise = translate (stLanguage st) "↑/↓ C-p/n 이동  1-8 선택  RET 적용  Esc/C-g 취소"
 
 renderManager :: AppState -> Widget Name
 renderManager st = vBox
@@ -75,12 +75,14 @@ navigationHelp st
 
 renderInput :: AppState -> Widget Name
 renderInput st = withAttr (attrName "input") $ padLeftRight 1 $ txt $ case stMode st of
-  Browse -> translate (stLanguage st) "C-s/r 검색  RET 열기  ^ 상위  v 보기  C 복사  R 이동  + 폴더  D 삭제  M-o 숨김  g 갱신"
+  Browse -> translate (stLanguage st) "C-s 검색  RET 열기  v 보기  e 편집  C 복사  R 이동  r 이름  + 폴더  D 삭제  ! 명령"
   Search -> translate (stLanguage st) "검색: " <> markInputCursor st (panelSearch (activePanel st)) <> translate (stLanguage st) "  (RET 적용, C-g 취소)"
   Prompt Copy value -> translate (stLanguage st) "복사 대상: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
   Prompt Move value -> translate (stLanguage st) "이동/새 이름: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
+  Prompt Rename value -> translate (stLanguage st) "새 이름: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
   Prompt Mkdir value -> translate (stLanguage st) "새 폴더: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 생성, C-g 취소)"
-  ConfirmDelete -> translate (stLanguage st) "삭제 확인: " <> maybe "" (T.pack . entryName) (selectedEntry st) <> translate (stLanguage st) "  (y 삭제, 다른 키 취소)"
+  Prompt Command value -> translate (stLanguage st) "명령어: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
+  ConfirmDelete -> translate (stLanguage st) "삭제 확인: " <> maybe "" (T.pack . entryName) (selectedEntry st) <> translate (stLanguage st) "  (하위 내용 포함, y 삭제, 다른 키 취소)"
   ViewFile {} -> ""
 
 markInputCursor :: AppState -> T.Text -> T.Text

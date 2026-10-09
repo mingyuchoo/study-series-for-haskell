@@ -24,6 +24,8 @@ runProgram ports (Await effect resume) = do
     execute (MoveEntry source target) = moveEntry ports source target
     execute (DeleteEntry path) = deleteEntry ports path
     execute (MakeDirectory path) = makeDirectory ports path
+    execute (EditFile cwd path) = editFile ports cwd path
+    execute (RunCommand cwd command) = runCommand ports cwd command
 
 handleInput :: Monad m => FileSystem m -> Input -> AppState -> m (AppState, Bool)
 handleInput ports input = runProgram ports . planInput input

@@ -28,6 +28,7 @@ dependencies:
 - bytestring
 - directory
 - filepath
+- process
 - yaml
 library:
   source-dirs: src
@@ -36,6 +37,7 @@ library:
   - Hfm.Infrastructure.FileSearch
   - Hfm.Infrastructure.FileSystem
   - Hfm.Infrastructure.Ports
+  - Hfm.Infrastructure.Process
 tests:
   hfm-infrastructure-test:
     main: Spec.hs

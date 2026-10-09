@@ -71,6 +71,8 @@ handleInput :: Monad m => FileSystem m -> Input -> AppState -> m (AppState, Bool
 
 `UseCases`는 요청을 `FileSystem m` 레코드의 대응 함수에 전달하는 작은 실행기입니다. 정책이나 키 분기가 없습니다. `handleInput`은 기존 TUI 호출 인터페이스를 유지하는 편의 함수입니다. 실제 IO는 `Main`이 주입한 infrastructure 포트에서만 발생하며, 테스트에서는 `State [String]` 메모리 포트로 호출 순서를 기록합니다.
 
+`EditFile`과 `RunCommand`도 타입이 정해진 요청이며 실행 결과는 종료 코드 `Int`입니다. `Infrastructure.Process`는 편집기 실행 파일을 `proc`로 호출하여 파일 경로를 한 인자로 전달하고, 셸 명령은 Windows PowerShell 또는 Unix `/bin/sh`에서 실행합니다. 프로세스의 `cwd`를 활성 패널 경로로 지정하므로 앱 전역 작업 디렉터리는 바뀌지 않습니다. TUI는 일반 파일 포트를 `liftIO`로, 편집기·명령 포트는 Brick의 `suspendAndResume'`로 감싸서 같은 실행기를 사용합니다. 명령 출력 확인까지 터미널을 외부 프로세스에 맡긴 뒤 TUI를 복원하고 파일 목록을 새로고칩니다. 이름 변경은 기존 `MoveEntry`의 덮어쓰기 방지 검사를 재사용합니다.
+
 ## application 내부의 응집도
 
 | 모듈 | 책임 |

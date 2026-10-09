@@ -46,6 +46,8 @@ memory = FileSystem
   , moveEntry = \source target -> record ("move " ++ source ++ " " ++ target) ()
   , deleteEntry = \path -> record ("delete " ++ path) ()
   , makeDirectory = \path -> record ("mkdir " ++ path) ()
+  , editFile = \cwd path -> record ("edit " ++ cwd ++ " " ++ path) 0
+  , runCommand = \cwd command -> record ("command " ++ cwd ++ " " ++ T.unpack command) 0
   }
 
 run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
@@ -53,6 +55,82 @@ run ports input state = runState (handleInput ports input state) []
 
 spec :: Spec
 spec = do
+  describe "Editing, directory renaming and shell commands" $ do
+    it "edits the selected file and refreshes both panels" $ do
+      let ((done, _), calls) = run memory (KeyPress (KChar 'e') []) initial
+      calls `shouldBe` ["edit " ++ testPath "left" ++ " " ++ testPath ("left" </> "file.txt"),
+                        "list " ++ testPath "left", "list " ++ testPath "right"]
+      stMode done `shouldBe` Browse
+      stStatus done `shouldBe` EditorFinished 0
+
+    it "renames a directory in place from either r or e" $ do
+      let folder = initialState (testPath "left") [Entry "folder" Directory 0] (testPath "right") [] defaultConfig (80, 24)
+      mapM_ (\key -> do
+        let ((prompt, _), calls) = run memory (KeyPress (KChar key) []) folder
+            ((done, _), renamed) = run memory (KeyPress KEnter []) (prompt { stMode = Prompt Rename "new-folder" })
+        stMode prompt `shouldBe` Prompt Rename "folder"
+        stInputCursor prompt `shouldBe` 6
+        calls `shouldBe` []
+        renamed `shouldBe` ["move " ++ testPath ("left" </> "folder") ++ " " ++ testPath ("left" </> "new-folder"),
+                            "list " ++ testPath "left", "list " ++ testPath "right"]
+        stStatus done `shouldBe` Moved) ['r', 'e']
+
+    it "protects parent and special entries from editing and renaming" $ do
+      mapM_ (\kind -> mapM_ (\key -> do
+        let state = initialState (testPath "left") [Entry ".." kind 0] (testPath "right") [] defaultConfig (80, 24)
+            ((done, _), calls) = run memory (KeyPress (KChar key) []) state
+        stMode done `shouldBe` Browse
+        calls `shouldBe` []) ['e', 'r']) [Parent, Special]
+
+    it "rejects rename paths and retains the prompt after a collision" $ do
+      mapM_ (\name -> do
+        let ((done, _), calls) = run memory (KeyPress KEnter []) (initial { stMode = Prompt Rename name })
+        stStatus done `shouldBe` InvalidDestination
+        calls `shouldBe` []) ["", ".", "..", "folder/name", T.pack (testPath "absolute")]
+      let ports = memory { moveEntry = \_ _ -> pure (Left PermissionDenied) }
+          state = initial { stMode = Prompt Rename "taken" }
+          ((done, _), calls) = run ports (KeyPress KEnter []) state
+      stMode done `shouldBe` stMode state
+      stStatus done `shouldBe` Failed PermissionDenied
+      calls `shouldBe` []
+
+    it "opens a command prompt even without a selection and cancels without effects" $ do
+      let empty = initialState (testPath "left") [] (testPath "right") [] defaultConfig (80, 24)
+      mapM_ (\input -> do
+        let ((prompt, _), calls) = run memory input empty
+            ((cancelled, _), cancelledCalls) = run memory (KeyPress (KChar 'g') [MCtrl]) prompt
+        stMode prompt `shouldBe` Prompt Command ""
+        calls `shouldBe` []
+        stMode cancelled `shouldBe` Browse
+        cancelledCalls `shouldBe` []) [KeyPress (KChar '!') [], KeyPress (KChar '!') [MMeta], KeyPress (KChar '!') [MAlt]]
+
+    it "runs the unchanged command in the active panel and reports a nonzero exit" $ do
+      let command = "  echo '한글 이름' > output.txt  "
+          ports = memory { runCommand = \cwd value -> record ("command " ++ cwd ++ " " ++ T.unpack value) 7 }
+          state = initial { stActive = RightSide, stMode = Prompt Command command }
+          ((done, _), calls) = run ports (KeyPress KEnter []) state
+      calls `shouldBe` ["command " ++ testPath "right" ++ " " ++ T.unpack command,
+                        "list " ++ testPath "left", "list " ++ testPath "right"]
+      stStatus done `shouldBe` CommandFinished 7
+      stMode done `shouldBe` Browse
+
+    it "rejects empty and NUL commands before requesting an effect" $ do
+      mapM_ (\command -> do
+        let ((done, _), calls) = run memory (KeyPress KEnter []) (initial { stMode = Prompt Command command })
+        stStatus done `shouldBe` InvalidCommand
+        calls `shouldBe` []) ["", " \t ", "echo\0bad"]
+
+    it "shows launch errors without losing the command input or refreshing" $ do
+      let ports = memory { runCommand = \_ _ -> pure (Left Missing), editFile = \_ _ -> pure (Left PermissionDenied) }
+          state = initial { stMode = Prompt Command "command" }
+          ((failed, _), calls) = run ports (KeyPress KEnter []) state
+          ((editorFailed, _), editCalls) = run ports (KeyPress (KChar 'e') []) initial
+      stMode failed `shouldBe` stMode state
+      stStatus failed `shouldBe` Failed Missing
+      stStatus editorFailed `shouldBe` Failed PermissionDenied
+      calls `shouldBe` []
+      editCalls `shouldBe` []
+
   describe "Use cases with memory ports" $ do
     it "toggles language in every mode without effects" $ do
       mapM_ (\mode -> do
@@ -127,7 +205,7 @@ spec = do
         calls `shouldBe` []) [Browse, Search, Prompt Mkdir "x", ConfirmDelete, ViewFile "p" "t" 0]
 
   describe "Theme picker without effects" $ do
-    it "offers all six themes and commits only when Enter is pressed" $ do
+    it "offers all eight themes and commits only when Enter is pressed" $ do
       mapM_ (\theme -> do
         let ((opened, _), openCalls) = run memory (KeyPress (KFun 3) []) initial
             ((preview, _), previewCalls) = run memory (KeyPress (KChar (toEnum (fromEnum '1' + fromEnum theme))) []) opened
@@ -158,20 +236,23 @@ spec = do
             ((opened, _), _) = run memory (KeyPress (KFun 3) []) st
             ((preview, _), _) = run memory (KeyPress KEnd []) opened
             ((done, _), calls) = run memory (KeyPress KEnter []) preview
-        stTheme done `shouldBe` TomorrowNightBlue
+        stTheme done `shouldBe` GruvboxLight
         stMode done `shouldBe` mode
         stInputCursor done `shouldBe` 2
         panelEntries (stLeft done) `shouldBe` panelEntries (stLeft st)
         panelSearch (activePanel done) `shouldBe` panelSearch (activePanel st)
         calls `shouldBe` []) [Browse, Search, Prompt Copy "a", Prompt Move "b", Prompt Mkdir "c", ConfirmDelete, ViewFile "p" "text" 1]
 
-    it "keeps theme navigation within the six choices and supports Emacs keys" $ do
+    it "keeps theme navigation within the eight choices and supports Emacs keys" $ do
       let ((opened, _), _) = run memory (KeyPress (KFun 3) []) initial
           ((first, _), _) = run memory (KeyPress KHome []) opened
           ((clamped, _), _) = run memory (KeyPress (KChar 'p') [MCtrl]) first
           ((next, _), _) = run memory (KeyPress (KChar 'n') [MCtrl]) clamped
+          ((lastChoice, _), _) = run memory (KeyPress KEnd []) opened
+          ((clampedLast, _), _) = run memory (KeyPress (KChar 'n') [MCtrl]) lastChoice
       fmap snd (stThemePicker clamped >>= selectedElement) `shouldBe` Just Light
       fmap snd (stThemePicker next >>= selectedElement) `shouldBe` Just Dark
+      fmap snd (stThemePicker clampedLast >>= selectedElement) `shouldBe` Just GruvboxLight
 
     it "allows language changes and the global quit prefix inside the picker" $ do
       let ((opened, _), _) = run memory (KeyPress (KFun 3) []) initial

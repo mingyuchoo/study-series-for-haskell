@@ -54,7 +54,8 @@ spec = do
           base = initialState "/tmp" entries "/tmp" entries defaultConfig (160, 24)
           cases = [(Browse, "File manager"), (Search, "Search: "),
                    (Prompt Copy "한글/대상", "Copy to: "), (Prompt Move "한글/대상", "Move/rename to: "),
-                   (Prompt Mkdir "한글/대상", "New folder: "), (ConfirmDelete, "Confirm delete: "),
+                   (Prompt Mkdir "한글/대상", "New folder: "), (Prompt Rename "새 이름", "New name: "),
+                   (Prompt Command "echo 한글", "Command: "), (ConfirmDelete, "Confirm delete: "),
                    (ViewFile "/tmp/한글.txt" "한글 내용" 0, "View: ")]
       mapM_ (\(mode, label) -> do
         let st = base { stMode = mode, stInputCursor = 2, stPendingCtrlX = True }
@@ -98,6 +99,8 @@ spec = do
       renderStatus English Copied `shouldBe` "Copied"
       renderStatus Korean (Failed Missing) `shouldBe` "오류: 파일이 존재하지 않습니다"
       renderStatus English (Failed PermissionDenied) `shouldBe` "Error: Permission denied"
+      renderStatus English (CommandFinished 7) `shouldBe` "Command exit code: 7"
+      renderStatus Korean (EditorFinished 0) `shouldBe` "편집기 종료 코드: 0"
 
     it "never translates a path that happens to equal a status label" $ do
       renderStatus English (CurrentDirectory "준비") `shouldBe` "준비"
@@ -169,12 +172,14 @@ spec = do
 
   SyntaxHighlightSpec.spec
 
-  describe "VS Code theme rendering" $ do
+  describe "Theme rendering" $ do
     it "uses each theme's editor colors across the full screen" $ do
       let rgbColor :: Int -> Int -> Int -> V.Color
           rgbColor = V.rgbColor
           backgrounds = [rgbColor 255 255 255, rgbColor 30 30 30, rgbColor 39 40 34,
-                         rgbColor 253 246 227, rgbColor 0 43 54, rgbColor 0 36 81]
+                         rgbColor 253 246 227, rgbColor 0 43 54, rgbColor 0 36 81,
+                         rgbColor 40 40 40, rgbColor 251 241 199]
+      length backgrounds `shouldBe` length themes
       mapM_ (\(theme, background) -> do
         let attributes = themeAttributes theme
             normal = attrMapLookup (attrName "default") attributes
@@ -190,11 +195,12 @@ spec = do
             rendered = T.unlines (viewerRows st)
         mapM_ (\theme -> rendered `shouldSatisfy` T.isInfixOf (themeName theme)) themes
         rendered `shouldSatisfy` T.isInfixOf (if language == Korean then "테마 선택" else "Select theme")
+        rendered `shouldSatisfy` T.isInfixOf "1-8"
         effectiveTheme st `shouldBe` Monokai
         effectiveTheme (st { stThemePicker = Nothing }) `shouldBe` Dark) [Korean, English]
 
     it "renders a scrollable picker safely on small terminals" $ do
       mapM_ (\size -> do
         let st = (initialState "/tmp" [] "/tmp" [] defaultConfig size)
-                   { stThemePicker = Just (selectAt 5 (selection themes)) }
+                   { stThemePicker = Just (selectAt 7 (selection themes)) }
         length (viewerRows st) `shouldBe` snd size) [(40, 12), (30, 8), (20, 4)]

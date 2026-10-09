@@ -7,6 +7,7 @@ module Hfm.Application.Program
   ) where
 
 import qualified Data.ByteString as BS
+import qualified Data.Text as T
 import Hfm.Application.Ports (FileError)
 import Hfm.Domain.Entry (Entry)
 
@@ -20,6 +21,8 @@ data FileRequest a where
   MoveEntry :: FilePath -> FilePath -> FileRequest ()
   DeleteEntry :: FilePath -> FileRequest ()
   MakeDirectory :: FilePath -> FileRequest ()
+  EditFile :: FilePath -> FilePath -> FileRequest Int
+  RunCommand :: FilePath -> T.Text -> FileRequest Int
 
 -- Continuations allow later requests to depend on earlier results, including failure.
 data Program a where

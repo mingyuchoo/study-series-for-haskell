@@ -16,4 +16,6 @@ data FileSystem m = FileSystem
   , moveEntry :: FilePath -> FilePath -> m (Either FileError ())
   , deleteEntry :: FilePath -> m (Either FileError ())
   , makeDirectory :: FilePath -> m (Either FileError ())
+  , editFile :: FilePath -> FilePath -> m (Either FileError Int)
+  , runCommand :: FilePath -> T.Text -> m (Either FileError Int)
   }

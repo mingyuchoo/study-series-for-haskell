@@ -34,6 +34,9 @@ renderStatus language status = case status of
   Moved -> translate language "이동했습니다"
   Deleted -> translate language "삭제했습니다"
   DeletionCancelled -> translate language "삭제를 취소했습니다"
+  EditorFinished code -> translate language "편집기 종료 코드: " <> T.pack (show code)
+  CommandFinished code -> translate language "명령 종료 코드: " <> T.pack (show code)
+  InvalidCommand -> translate language "유효한 명령어를 입력하세요"
 
 renderFileError :: Language -> FileError -> T.Text
 renderFileError language err = translate language $ case err of
@@ -50,16 +53,23 @@ translations =
   , ("C-a/e 처음/끝  C-b/f 문자  M-b/f 단어  C-k/M-d 삭제", "C-a/e Start/End  C-b/f Char  M-b/f Word  C-k/M-d Delete")
   , ("y 삭제  n/C-g 취소", "y Delete  n/C-g Cancel")
   , ("C-p/n 이동  C-v/M-v 페이지  M-</> 처음/끝  C-x o 패널  C-x C-c 종료", "C-p/n Move  C-v/M-v Page  M-</> Start/End  C-x o Panel  C-x C-c Quit")
-  , ("C-s/r 검색  RET 열기  ^ 상위  v 보기  C 복사  R 이동  + 폴더  D 삭제  M-o 숨김  g 갱신", "C-s/r Search  RET Open  ^ Parent  v View  C Copy  R Move  + Folder  D Delete  M-o Hidden  g Refresh")
+  , ("C-s 검색  RET 열기  v 보기  e 편집  C 복사  R 이동  r 이름  + 폴더  D 삭제  ! 명령", "C-s Search  RET Open  v View  e Edit  C Copy  R Move  r Rename  + Folder  D Delete  ! Command")
   , ("검색: ", "Search: ")
   , ("  (RET 적용, C-g 취소)", "  (RET Apply, C-g Cancel)")
   , ("복사 대상: ", "Copy to: ")
   , ("이동/새 이름: ", "Move/rename to: ")
+  , ("새 이름: ", "New name: ")
+  , ("명령어: ", "Command: ")
   , ("새 폴더: ", "New folder: ")
   , ("  (RET 실행, C-g 취소)", "  (RET Run, C-g Cancel)")
   , ("  (RET 생성, C-g 취소)", "  (RET Create, C-g Cancel)")
   , ("삭제 확인: ", "Confirm delete: ")
-  , ("  (y 삭제, 다른 키 취소)", "  (y Delete, other key Cancel)")
+  , ("  (하위 내용 포함, y 삭제, 다른 키 취소)", "  (including contents, y Delete, other key Cancel)")
+  , ("Enter를 누르면 파일 관리자로 돌아갑니다.", "Press Enter to return to the file manager.")
+  , ("편집기 종료 코드: ", "Editor exit code: ")
+  , ("명령 종료 코드: ", "Command exit code: ")
+  , ("유효한 명령어를 입력하세요", "Enter a valid command")
+  , ("편집할 일반 파일이 없습니다", "No regular file to edit")
   , ("보임", "Shown")
   , ("숨김", "Hidden")
   , ("  숨김 파일: ", "  Hidden files: ")
@@ -68,7 +78,7 @@ translations =
   , ("F3 테마", "F3 Theme")
   , ("테마 선택", "Select theme")
   , ("미리보기: ", "Preview: ")
-  , ("↑/↓ C-p/n 이동  1-6 선택  RET 적용  Esc/C-g 취소", "↑/↓ C-p/n Move  1-6 Select  RET Apply  Esc/C-g Cancel")
+  , ("↑/↓ C-p/n 이동  1-8 선택  RET 적용  Esc/C-g 취소", "↑/↓ C-p/n Move  1-8 Select  RET Apply  Esc/C-g Cancel")
   , ("F2 한국어", "F2 English")
   , ("준비", "Ready")
   , ("알 수 없는 C-x 명령", "Unknown C-x command")

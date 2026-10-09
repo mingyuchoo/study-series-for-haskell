@@ -38,7 +38,7 @@ import Hfm.Domain.Entry (Entry (..), EntryKind (..))
 import Hfm.Domain.Language (Language (..))
 
 data Side = LeftSide | RightSide deriving (Eq, Show)
-data Operation = Copy | Move | Mkdir deriving (Eq, Show)
+data Operation = Copy | Move | Rename | Mkdir | Command deriving (Eq, Show)
 data Mode = Browse | Search | Prompt Operation T.Text | ConfirmDelete | ViewFile FilePath T.Text Int deriving (Eq, Show)
 
 data Panel = Panel

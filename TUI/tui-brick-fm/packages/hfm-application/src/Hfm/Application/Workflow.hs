@@ -66,7 +66,7 @@ themePickerEvent event = case event of
   KeyPress KEnd [] -> selectTheme (selectAt (-1))
   KeyPress (KChar '<') [MMeta] -> selectTheme (selectAt 0)
   KeyPress (KChar '>') [MMeta] -> selectTheme (selectAt (-1))
-  KeyPress (KChar digit) [] | digit >= '1' && digit <= '6' -> selectTheme (selectAt (fromEnum digit - fromEnum '1'))
+  KeyPress (KChar digit) [] | digit >= '1' && digit <= '8' -> selectTheme (selectAt (fromEnum digit - fromEnum '1'))
   _ -> pure ()
   where
     selectTheme change = modify (\s -> s { stThemePicker = change <$> stThemePicker s })
@@ -98,10 +98,16 @@ browseEvent event = do
       _ -> pure ()
     KeyPress (KChar 'C') [] -> startPrompt Copy
     KeyPress (KChar 'R') [] -> startPrompt Move
+    KeyPress (KChar 'r') [] -> startPrompt Rename
+    KeyPress (KChar 'e') [] -> case selectedEntry st of
+      Just entry | entryKind entry == Directory -> startPrompt Rename
+      _ -> openEditor
+    KeyPress (KChar '!') [] -> startCommand
+    KeyPress (KChar '!') [MMeta] -> startCommand
     KeyPress (KChar '+') [] -> modify (\s -> s { stMode = Prompt Mkdir "", stInputCursor = 0 })
     KeyPress (KChar 'D') [] -> when (selectedPath st /= Nothing) $ modify (\s -> s { stMode = ConfirmDelete })
     KeyPress (KChar '^') [] -> changeDir (takeDirectory (panelPath (activePanel st))) (Just (takeFileName (panelPath (activePanel st))))
     _ -> pure ()
   where
     startSearch = modify (\s -> s { stMode = Search, stInputCursor = T.length (panelSearch (activePanel s)) })
-
+    startCommand = modify (\s -> s { stMode = Prompt Command "", stInputCursor = 0 })

@@ -18,11 +18,13 @@ BINARY = Path(INSTALL) / "bin/hfm-exe"
 
 
 class Terminal:
-    def __init__(self, left, right, config):
+    def __init__(self, left, right, config, editor=None):
         self.pid, self.fd = pty.fork()
         if self.pid == 0:
             os.environ["TERM"] = "xterm-256color"
             os.environ["XDG_CONFIG_HOME"] = str(config)
+            if editor is not None:
+                os.environ["VISUAL"] = str(editor)
             os.execv(str(BINARY), [str(BINARY), str(left), str(right)])
         fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 160, 0, 0))
         self.output = b""
@@ -118,6 +120,38 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
     finally:
         terminal.close()
 
+    # External programs get the terminal, then restore the manager and its input.
+    external_left, external_right = base / "external-left", base / "external-right"
+    external_left.mkdir()
+    external_right.mkdir()
+    edit_file = external_left / "edit file ' &.txt"
+    edit_file.write_text("original")
+    editor = base / "test editor"
+    editor.write_text('#!/bin/sh\nprintf edited > "$1"\nprintf editor > editor-cwd.txt\n')
+    editor.chmod(0o700)
+    terminal = Terminal(external_left, external_right, config, editor=editor)
+    try:
+        terminal.expect(b"\x0ee", "편집기 종료 코드: 0")
+        assert edit_file.read_text() == "edited"
+        assert (external_left / "editor-cwd.txt").read_text() == "editor"
+        terminal.expect(b"!printf SHELL-OK; printf command > command.txt\r", "SHELL-OK")
+        assert (external_left / "command.txt").read_text() == "command"
+        terminal.expect(b"\r", "명령 종료 코드: 0")
+        terminal.key(b"!read value; printf '%s' \"$value\" > input.txt\r")
+        terminal.expect(b"interactive-input\r", "Enter")
+        terminal.expect(b"\r", "명령 종료 코드: 0")
+        assert (external_left / "input.txt").read_text() == "interactive-input"
+        terminal.expect(b"!exit 7\r", "Enter")
+        terminal.expect(b"\r", "명령 종료 코드: 7")
+        terminal.key(b"+old-folder\r\x13old-folder\x0e\re\x01\x0bnew-folder\r")
+        assert (external_left / "new-folder").is_dir()
+        assert not (external_left / "old-folder").exists()
+        terminal.key(b"\x07\x13new-folder\x0e\rDy")
+        assert not (external_left / "new-folder").exists()
+        terminal.quit()
+    finally:
+        terminal.close()
+
     # F2 is global, including pending prefixes and destructive confirmation.
     for mode_keys, english_label in [
         (b"", "File manager"), (b"\x13file-", "Search:"),
@@ -143,7 +177,8 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
     terminal = Terminal(left, right, config)
     try:
         for number, theme in enumerate([
-            "Light", "Dark", "Monokai", "Solarized Light", "Solarized Dark", "Tomorrow Night Blue"
+            "Light", "Dark", "Monokai", "Solarized Light", "Solarized Dark", "Tomorrow Night Blue",
+            "Gruvbox Dark", "Gruvbox Light"
         ], start=1):
             terminal.expect(b"\x1bOR", "테마 선택")  # xterm F3
             terminal.expect(str(number).encode(), "미리보기: " + theme)
@@ -180,7 +215,7 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         output = terminal.key(b"\x0ev")  # Select the Makefile and open the viewer.
         assert b"stack build" in output, output.decode(errors="replace")
         assert b"\t" not in output, "Viewer emitted a raw terminal tab"
-        for number in range(1, 7):
+        for number in range(1, 9):
             terminal.key(b"\x1bOR")
             terminal.key(str(number).encode())
             output = terminal.key(b"\r")
@@ -189,4 +224,4 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
     finally:
         terminal.close()
 
-print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all six themes, modal quit, themed tab rendering")
+print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all eight themes, modal quit, themed tab rendering")

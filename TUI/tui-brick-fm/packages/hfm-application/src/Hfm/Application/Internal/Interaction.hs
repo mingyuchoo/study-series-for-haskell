@@ -41,7 +41,7 @@ startPrompt op = do
   st <- get
   when (maybe False ((/= Special) . entryKind) (selectedEntry st) && selectedPath st /= Nothing) $ do
     let other = if stActive st == LeftSide then stRight st else stLeft st
-    let value = T.pack (panelPath other)
+    let value = T.pack (if op == Rename then maybe "" entryName (selectedEntry st) else panelPath other)
     modify (\s -> s { stMode = Prompt op value, stInputCursor = T.length value })
 
 setSearch :: T.Text -> Action ()

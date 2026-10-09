@@ -2,12 +2,18 @@
 
 module Hfm.Tui.Terminal
     ( buildVtyFromTty
+    , waitForReturn
     ) where
 
 import qualified Graphics.Vty                        as V
+import           Control.Exception                   (IOException, catch)
+import qualified Data.Text                           as T
+import qualified Data.Text.IO                        as T
 #if defined(mingw32_HOST_OS)
 import           Graphics.Vty.Platform.Windows       (mkVty)
+import           System.IO                           (hFlush, stdin, stdout, hGetLine)
 #else
+import           System.IO                           (IOMode (..), hFlush, hGetLine, withFile)
 import           Data.Maybe                          (fromMaybe)
 import           Graphics.Vty.Platform.Unix          (mkVtyWithSettings)
 import qualified Graphics.Vty.Platform.Unix.Settings as VtyUnixSettings
@@ -16,6 +22,26 @@ import           System.Environment                  (lookupEnv)
 import           System.Posix.IO                     (OpenMode (..),
                                                       defaultFileFlags, openFd)
 #endif
+
+-- Vty has restored cooked input before the user acknowledges command output.
+waitForReturn :: T.Text -> IO ()
+waitForReturn message = wait `catch` ignoreIO
+  where
+#if defined(mingw32_HOST_OS)
+    wait = do
+      T.hPutStrLn stdout ("\n" <> message)
+      hFlush stdout
+      _ <- hGetLine stdin
+      pure ()
+#else
+    wait = withFile "/dev/tty" ReadWriteMode $ \terminal -> do
+      T.hPutStrLn terminal ("\n" <> message)
+      hFlush terminal
+      _ <- hGetLine terminal
+      pure ()
+#endif
+    ignoreIO :: IOException -> IO ()
+    ignoreIO _ = pure ()
 
 -- | Windows 콘솔 또는 Unix /dev/tty에서 Vty를 초기화한다.
 buildVtyFromTty :: IO V.Vty

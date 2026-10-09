@@ -15,6 +15,9 @@ data Status
   | Moved
   | Deleted
   | DeletionCancelled
+  | EditorFinished Int
+  | CommandFinished Int
+  | InvalidCommand
   | CurrentDirectory FilePath
   | Failed FileError
   deriving (Eq, Show)
