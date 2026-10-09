@@ -22,7 +22,7 @@ VIAddVersionKey "LegalCopyright" "Mingyu Choo"
 
 Section "hfm"
   SetOutPath "$INSTDIR"
-  File /oname=hfm.exe "${BIN_DIR}\hfm-exe.exe"
+  File /oname=hfm.exe "${BIN_DIR}\hfm.exe"
   File "${ROOT_DIR}\README.md"
   File "${ROOT_DIR}\LICENSE"
   WriteUninstaller "$INSTDIR\uninstall.exe"

@@ -65,8 +65,8 @@ try {
     New-Item -ItemType Directory -Path $BuildBinDir, $ReleaseDir -Force | Out-Null
     & stack build --copy-bins --local-bin-path $BuildBinDir
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    if (-not (Test-Path -LiteralPath (Join-Path $BuildBinDir 'hfm-exe.exe') -PathType Leaf)) {
-        throw "Built executable not found: $BuildBinDir/hfm-exe.exe"
+    if (-not (Test-Path -LiteralPath (Join-Path $BuildBinDir 'hfm.exe') -PathType Leaf)) {
+        throw "Built executable not found: $BuildBinDir/hfm.exe"
     }
     & $Nsis '/V2' "/DVERSION=$Version" "/DBIN_DIR=$BuildBinDir" "/DROOT_DIR=$RootDir" "/DOUTPUT=$Installer" (Join-Path $PSScriptRoot 'windows-installer.nsi')
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

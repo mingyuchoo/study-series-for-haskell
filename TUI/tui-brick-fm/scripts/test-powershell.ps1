@@ -42,7 +42,7 @@ function stack {
     if ($global:LASTEXITCODE -eq 0 -and $args -contains '--copy-bins') {
         $bin = $args[[array]::IndexOf($args, '--local-bin-path') + 1]
         New-Item -ItemType Directory -Path $bin -Force | Out-Null
-        Set-Content -LiteralPath (Join-Path $bin 'hfm-exe.exe') -Value 'fixture executable'
+        Set-Content -LiteralPath (Join-Path $bin 'hfm.exe') -Value 'fixture executable'
     }
 }
 function python { Record-Call 'python' $args }
