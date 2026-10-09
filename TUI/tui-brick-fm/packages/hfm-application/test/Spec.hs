@@ -3,13 +3,14 @@
 module Main (main) where
 
 import Control.Monad.State.Strict (State, modify, runState)
-import Hfm.Application.Ports
+import Hfm.Application.Effects.Ports
+import Hfm.Application.Error
 import Hfm.Application.State
 import Hfm.Application.Program
 import Hfm.Application.Startup (planStartup)
 import Hfm.Application.Workflow (planInput)
 import Hfm.Application.Status
-import Hfm.Application.UseCases
+import Hfm.Application.Effects.Runtime
 import qualified Data.Vector as Vec
 import qualified Data.Text as T
 import Hfm.Domain.Entry
@@ -46,15 +47,39 @@ memory = FileSystem
   , moveEntry = \source target -> record ("move " ++ source ++ " " ++ target) ()
   , deleteEntry = \path -> record ("delete " ++ path) ()
   , makeDirectory = \path -> record ("mkdir " ++ path) ()
-  , editFile = \cwd path -> record ("edit " ++ cwd ++ " " ++ path) 0
+  }
+
+memoryProcesses :: Processes (State [String])
+memoryProcesses = Processes
+  { editFile = \cwd path -> record ("edit " ++ cwd ++ " " ++ path) 0
   , runCommand = \cwd command -> record ("command " ++ cwd ++ " " ++ T.unpack command) 0
   }
 
 run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
-run ports input state = runState (handleInput ports input state) []
+run files = runWith files memoryProcesses
+
+runWith :: FileSystem (State [String]) -> Processes (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
+runWith files processes input state = runState (handleInput files processes input state) []
 
 spec :: Spec
 spec = do
+  describe "Independent effect ports" $ do
+    it "runs a file plan without accessing process ports" $ do
+      let unavailable = Processes
+            { editFile = \_ _ -> error "Unexpected editor request"
+            , runCommand = \_ _ -> error "Unexpected command request"
+            }
+          ((done, _), calls) = runWith memory unavailable (KeyPress (KChar 'g') []) initial
+      calls `shouldBe` ["list " ++ testPath "left", "list " ++ testPath "right"]
+      stStatus done `shouldBe` Ready
+
+    it "runs a process request without accessing file ports" $ do
+      let (result, calls) = runState
+            (runProgram (error "Unexpected file port access") memoryProcesses
+              (request (RunCommand (testPath "left") "exit 0"))) []
+      result `shouldBe` Right 0
+      calls `shouldBe` ["command " ++ testPath "left" ++ " exit 0"]
+
   describe "Editing, directory renaming and shell commands" $ do
     it "edits the selected file and refreshes both panels" $ do
       let ((done, _), calls) = run memory (KeyPress (KChar 'e') []) initial
@@ -106,9 +131,9 @@ spec = do
 
     it "runs the unchanged command in the active panel and reports a nonzero exit" $ do
       let command = "  echo '한글 이름' > output.txt  "
-          ports = memory { runCommand = \cwd value -> record ("command " ++ cwd ++ " " ++ T.unpack value) 7 }
+          ports = memoryProcesses { runCommand = \cwd value -> record ("command " ++ cwd ++ " " ++ T.unpack value) 7 }
           state = initial { stActive = RightSide, stMode = Prompt Command command }
-          ((done, _), calls) = run ports (KeyPress KEnter []) state
+          ((done, _), calls) = runWith memory ports (KeyPress KEnter []) state
       calls `shouldBe` ["command " ++ testPath "right" ++ " " ++ T.unpack command,
                         "list " ++ testPath "left", "list " ++ testPath "right"]
       stStatus done `shouldBe` CommandFinished 7
@@ -121,10 +146,10 @@ spec = do
         calls `shouldBe` []) ["", " \t ", "echo\0bad"]
 
     it "shows launch errors without losing the command input or refreshing" $ do
-      let ports = memory { runCommand = \_ _ -> pure (Left Missing), editFile = \_ _ -> pure (Left PermissionDenied) }
+      let ports = memoryProcesses { runCommand = \_ _ -> pure (Left Missing), editFile = \_ _ -> pure (Left PermissionDenied) }
           state = initial { stMode = Prompt Command "command" }
-          ((failed, _), calls) = run ports (KeyPress KEnter []) state
-          ((editorFailed, _), editCalls) = run ports (KeyPress (KChar 'e') []) initial
+          ((failed, _), calls) = runWith memory ports (KeyPress KEnter []) state
+          ((editorFailed, _), editCalls) = runWith memory ports (KeyPress (KChar 'e') []) initial
       stMode failed `shouldBe` stMode state
       stStatus failed `shouldBe` Failed Missing
       stStatus editorFailed `shouldBe` Failed PermissionDenied
@@ -313,7 +338,7 @@ spec = do
 
     it "initializes through ports and uses canonical paths for listing" $ do
       let ports = memory { canonicalizePath = \path -> record ("resolve " ++ path) (testPath path) }
-          (result, calls) = runState (runProgram ports (planStartup "left" "right" defaultConfig (80, 24))) []
+          (result, calls) = runState (runProgram ports memoryProcesses (planStartup "left" "right" defaultConfig (80, 24))) []
       calls `shouldBe` ["resolve left", "resolve right", "list " ++ testPath "left", "list " ++ testPath "right"]
       case result of
         Right state -> do
@@ -324,7 +349,7 @@ spec = do
 
     it "short-circuits startup without listing when path resolution fails" $ do
       let ports = memory { canonicalizePath = \path -> modify (++ ["resolve " ++ path]) >> pure (Left Missing) }
-          (result, calls) = runState (runProgram ports (planStartup "left" "right" defaultConfig (80, 24))) []
+          (result, calls) = runState (runProgram ports memoryProcesses (planStartup "left" "right" defaultConfig (80, 24))) []
       calls `shouldBe` ["resolve left"]
       case result of
         Left err -> err `shouldBe` Missing

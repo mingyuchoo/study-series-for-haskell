@@ -6,7 +6,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Hfm.Tui.UI (drawUI)
 import Hfm.Application.Status
-import Hfm.Application.Ports (FileError (..))
+import Hfm.Application.Error (FileError (..))
 import Hfm.Tui.I18n (translate, renderStatus)
 import Graphics.Vty.PictureToSpans (displayOpsForPic)
 import Graphics.Vty.Span (SpanOp (..))

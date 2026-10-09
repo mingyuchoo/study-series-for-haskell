@@ -7,7 +7,8 @@ import Control.Monad (when)
 import Control.Monad.State.Strict (get, modify)
 import qualified Data.Text as T
 import Hfm.Application.Internal.Action
-import Hfm.Application.Internal.Files (runOperation, deleteSelected)
+import Hfm.Application.Internal.Files (runFileOperation, deleteSelected)
+import Hfm.Application.Internal.Process (executeCommand)
 import Hfm.Application.State
 import Hfm.Application.Status
 import Hfm.Domain.Editor (editText)
@@ -79,7 +80,9 @@ promptEvent :: Operation -> T.Text -> Input -> Action ()
 promptEvent op value event = case event of
   KeyPress KEsc [] -> modify (\s -> s { stMode = Browse })
   KeyPress (KChar 'g') [MCtrl] -> modify (\s -> s { stMode = Browse })
-  KeyPress KEnter [] -> runOperation op value
+  KeyPress KEnter [] -> case op of
+    Command -> executeCommand value
+    _ -> runFileOperation op value
   _ -> do
     st <- get
     case editText event value (stInputCursor st) of

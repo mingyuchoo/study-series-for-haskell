@@ -1,6 +1,6 @@
 module Hfm.Application.Status (Status (..)) where
 
-import Hfm.Application.Ports (FileError)
+import Hfm.Application.Error (FileError)
 
 -- Semantic outcomes. A presentation adapter owns wording and localization.
 data Status

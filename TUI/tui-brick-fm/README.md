@@ -119,11 +119,11 @@ macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커
 ```text
 apps/hfm/                     # 실행 파일과 의존성 조립
 packages/hfm-domain/          # 순수 타입·선택·입력 편집·정책
-packages/hfm-application/     # 상태·유스케이스·파일 시스템 포트
-packages/hfm-infrastructure/  # 파일 시스템·설정의 실제 IO 구현
+packages/hfm-application/     # 순수 상태·실행 계획, Effects의 포트·실행기
+packages/hfm-infrastructure/  # 파일 시스템·프로세스·설정의 실제 IO 구현
 packages/hfm-tui/             # Brick/Vty·렌더링·한국어/영어 표시
 ```
 
-내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application의 `planInput`·`planStartup`은 순수한 `Program` 실행 계획을 만들고, `runProgram`이 주입받은 `FileSystem m` 포트로 이를 실행합니다. `Main`에서 실제 IO 구현을 연결하며, 테스트에서는 실행 계획을 직접 검사하거나 메모리 구현으로 실행합니다. 경로 검증·대상 이름 계산은 domain, 상태 메시지의 한국어/영어 표시는 tui가 담당합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다. 기존 평면 모듈 이름은 `Hfm.*` 네임스페이스로 변경되었습니다.
+내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application의 `planInput`·`planStartup`은 순수한 `Program` 실행 계획을 만들고, `Effects.Runtime.runProgram`이 주입받은 `FileSystem m`과 `Processes m` 포트로 이를 실행합니다. 순수 모듈은 `Effects`를 import하지 않으며 오류도 독립된 순수 타입입니다. `Main`에서 파일·프로세스 IO 구현을 각각 연결하고, TUI는 프로세스 실행에 필요한 터미널 중단·복귀를 담당합니다. 테스트에서는 실행 계획을 직접 검사하거나 두 포트의 메모리 구현을 따로 주입합니다. 경로 검증·대상 이름 계산은 domain, 상태 메시지의 한국어/영어 표시는 tui가 담당합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법 및 Haskell 인터페이스 변경은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다.
 
 각 패키지의 `package.yaml`이 빌드 설정의 원본입니다. 수정 후 `stack build`로 `.cabal`을 갱신합니다. `stack test hfm-domain` 또는 `stack test hfm-application`처럼 특정 패키지만 테스트할 수도 있습니다.

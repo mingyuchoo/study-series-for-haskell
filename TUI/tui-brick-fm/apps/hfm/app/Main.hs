@@ -4,10 +4,10 @@ import Brick (customMain)
 import qualified Graphics.Vty as V
 import Hfm.Application.Startup (planStartup)
 import Hfm.Application.State (AppState (stTerminalSize), configWithKeyBinding)
-import Hfm.Application.UseCases (runProgram)
+import Hfm.Application.Effects.Runtime (runProgram)
 import Hfm.Domain.Language (Language (Korean))
 import Hfm.Infrastructure.Config (loadKeyBindingConfig)
-import Hfm.Infrastructure.Ports (ioFileSystem)
+import Hfm.Infrastructure.Ports (ioFileSystem, ioProcesses)
 import Hfm.Tui.App (app, buildVtyFromTty)
 import Hfm.Tui.I18n (renderFileError)
 import qualified Data.Text as T
@@ -26,12 +26,12 @@ main = do
     _ -> die "사용법: hfm-exe [왼쪽_디렉터리] [오른쪽_디렉터리]"
   config <- configWithKeyBinding <$> loadKeyBindingConfig
   -- Validate directories before acquiring the terminal.
-  result <- runProgram ioFileSystem (planStartup leftArg rightArg config (0, 0))
+  result <- runProgram ioFileSystem ioProcesses (planStartup leftArg rightArg config (0, 0))
   case result of
     Left err -> die ("디렉터리를 열 수 없습니다: " ++ T.unpack (renderFileError Korean err))
     Right state -> do
       vty <- buildVtyFromTty
       size <- V.displayBounds (V.outputIface vty)
-      _ <- customMain vty buildVtyFromTty Nothing (app ioFileSystem)
+      _ <- customMain vty buildVtyFromTty Nothing (app ioFileSystem ioProcesses)
         (state { stTerminalSize = size })
       pure ()

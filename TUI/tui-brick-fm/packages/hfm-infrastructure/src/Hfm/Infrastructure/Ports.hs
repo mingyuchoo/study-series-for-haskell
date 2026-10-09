@@ -1,9 +1,10 @@
-module Hfm.Infrastructure.Ports (ioFileSystem, capture, formatFileError) where
+module Hfm.Infrastructure.Ports (ioFileSystem, ioProcesses, capture, formatFileError) where
 
 import Control.Exception (IOException, try)
 import qualified Data.ByteString as BS
 import qualified Data.Text
-import Hfm.Application.Ports
+import Hfm.Application.Effects.Ports
+import Hfm.Application.Error
 import qualified Hfm.Infrastructure.FileSystem as FS
 import qualified Hfm.Infrastructure.Process as Process
 import qualified System.Directory as Directory
@@ -29,6 +30,10 @@ ioFileSystem = FileSystem
   , moveEntry = \source target -> capture (FS.moveEntry source target)
   , deleteEntry = capture . FS.deleteEntry
   , makeDirectory = capture . FS.makeDirectory
-  , editFile = \cwd path -> capture (Process.editFile cwd path)
+  }
+
+ioProcesses :: Processes IO
+ioProcesses = Processes
+  { editFile = \cwd path -> capture (Process.editFile cwd path)
   , runCommand = \cwd command -> capture (Process.runCommand cwd command)
   }

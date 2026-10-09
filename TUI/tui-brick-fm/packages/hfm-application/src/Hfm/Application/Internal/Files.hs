@@ -1,5 +1,5 @@
 module Hfm.Application.Internal.Files
-  ( refreshAll, changeDir, enterSelected, openView, openEditor, runOperation, deleteSelected, finish ) where
+  ( refreshAll, changeDir, enterSelected, openView, runFileOperation, deleteSelected, finish ) where
 
 import Control.Monad.Except (ExceptT (..), runExceptT)
 import Control.Monad.State.Strict (get, modify)
@@ -58,21 +58,9 @@ openView path = attempt (request (ReadPreview path)) $ \bytes ->
     then modify (\s -> s { stStatus = BinaryPreviewUnsupported })
     else modify (\s -> s { stMode = ViewFile path (decodeUtf8With lenientDecode bytes) 0 })
 
-openEditor :: Action ()
-openEditor = do
-  st <- get
-  case (selectedEntry st, selectedPath st) of
-    (Just entry, Just path) | entryKind entry `elem` [RegularFile, SymbolicLink] ->
-      attempt (request (EditFile (panelPath (activePanel st)) path)) (finish . EditorFinished)
-    _ -> pure ()
-
-runOperation :: Operation -> T.Text -> Action ()
-runOperation Command raw = do
-  st <- get
-  if T.null (T.strip raw) || T.any (== '\0') raw
-    then modify (\s -> s { stStatus = InvalidCommand })
-    else attempt (request (RunCommand (panelPath (activePanel st)) raw)) (finish . CommandFinished)
-runOperation op raw = do
+runFileOperation :: Operation -> T.Text -> Action ()
+runFileOperation Command _ = pure ()
+runFileOperation op raw = do
   st <- get
   let input = T.unpack (T.strip raw)
       cwd = panelPath (activePanel st)
@@ -86,7 +74,7 @@ runOperation op raw = do
         Just source -> attempt (request (MoveEntry source (cwd </> input))) $ \_ -> finish Moved
         Nothing -> pure ()
 
-runTransfer :: (FilePath -> FilePath -> FileRequest ()) -> Status -> FilePath -> FilePath -> AppState -> Action ()
+runTransfer :: (FilePath -> FilePath -> Request ()) -> Status -> FilePath -> FilePath -> AppState -> Action ()
 runTransfer operation message cwd input st = case selectedPath st of
   Nothing -> pure ()
   Just source -> attempt (runExceptT $ do

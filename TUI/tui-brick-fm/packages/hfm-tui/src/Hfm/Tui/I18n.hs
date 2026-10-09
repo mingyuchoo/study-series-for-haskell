@@ -4,7 +4,7 @@ module Hfm.Tui.I18n (translate, renderStatus, renderFileError) where
 
 import qualified Data.Text as T
 
-import Hfm.Application.Ports (FileError (..))
+import Hfm.Application.Error (FileError (..))
 import Hfm.Application.Status (Status (..))
 import Hfm.Domain.Language (Language (..))
 

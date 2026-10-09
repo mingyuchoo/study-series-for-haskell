@@ -1,7 +1,7 @@
 module Hfm.Application.Startup (planStartup) where
 
 import Control.Monad.Except (ExceptT (..), runExceptT)
-import Hfm.Application.Ports (FileError)
+import Hfm.Application.Error (FileError)
 import Hfm.Application.Program
 import Hfm.Application.State
 

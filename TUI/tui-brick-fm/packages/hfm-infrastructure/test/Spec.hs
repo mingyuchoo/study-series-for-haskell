@@ -5,8 +5,8 @@ import Hfm.Domain.Config
 import Hfm.Infrastructure.Config (decodeKeyBindingConfig)
 import Hfm.Infrastructure.FileSystem
 import qualified Hfm.Infrastructure.Process as Process
-import Hfm.Infrastructure.Ports (ioFileSystem)
-import qualified Hfm.Application.Ports as Ports
+import Hfm.Infrastructure.Ports (ioProcesses)
+import qualified Hfm.Application.Effects.Ports as Ports
 import System.Directory
   ( createDirectory, doesDirectoryExist, doesFileExist, getTemporaryDirectory, getCurrentDirectory
   , removeFile, removePathForcibly, createFileLink, createDirectoryLink
@@ -58,7 +58,7 @@ spec = do
       getCurrentDirectory `shouldReturn` originalDirectory
 
     it "captures launch failures and rejects empty or NUL commands" $ withFixture $ \dir -> do
-      result <- Ports.runCommand ioFileSystem (dir </> "missing") "exit 0"
+      result <- Ports.runCommand ioProcesses (dir </> "missing") "exit 0"
       result `shouldSatisfy` either (const True) (const False)
       mapM_ (\command -> Process.runCommand dir command `shouldThrow` anyIOException) ["", " \t ", "echo\0bad"]
 
@@ -85,7 +85,7 @@ spec = do
       let path = dir </> "file.txt"
       writeFile path "keep"
       withEnvironment "VISUAL" (Just (dir </> "missing-editor")) $ do
-        result <- Ports.editFile ioFileSystem dir path
+        result <- Ports.editFile ioProcesses dir path
         result `shouldSatisfy` either (const True) (const False)
       readFile path `shouldReturn` "keep"
 

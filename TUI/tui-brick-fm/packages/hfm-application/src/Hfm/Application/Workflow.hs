@@ -7,6 +7,7 @@ import qualified Data.Text as T
 import Hfm.Application.Internal.Action
 import Hfm.Application.Internal.Files
 import Hfm.Application.Internal.Interaction
+import Hfm.Application.Internal.Process (openEditor)
 import Hfm.Application.Program
 import Hfm.Application.State
 import Hfm.Application.Status
