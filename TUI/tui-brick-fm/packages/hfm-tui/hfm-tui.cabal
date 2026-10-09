@@ -44,11 +44,16 @@ library
     , skylighting
     , skylighting-core
     , text
-    , unix
     , vector
     , vty
-    , vty-unix
   default-language: GHC2024
+  if os(windows)
+    build-depends:
+        vty-windows
+  else
+    build-depends:
+        unix
+      , vty-unix
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh
 
@@ -77,10 +82,15 @@ test-suite hfm-tui-test
     , skylighting
     , skylighting-core
     , text
-    , unix
     , vector
     , vty
-    , vty-unix
   default-language: GHC2024
+  if os(windows)
+    build-depends:
+        vty-windows
+  else
+    build-depends:
+        unix
+      , vty-unix
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh

@@ -6,10 +6,10 @@ import Hfm.Infrastructure.Config (decodeKeyBindingConfig)
 import Hfm.Infrastructure.FileSystem
 import System.Directory
   ( createDirectory, doesDirectoryExist, doesFileExist, getTemporaryDirectory
-  , removeFile, removePathForcibly )
+  , removeFile, removePathForcibly, createFileLink, createDirectoryLink
+  , getSymbolicLinkTarget, withCurrentDirectory )
 import System.FilePath ((</>))
 import System.IO (hClose, openTempFile)
-import System.Posix.Files (createSymbolicLink, readSymbolicLink)
 import Test.Hspec
 
 main :: IO ()
@@ -44,16 +44,46 @@ spec = do
       allEntries <- readEntries True dir
       map entryName allEntries `shouldBe` ["..", "z-folder", ".secret", "a.txt"]
 
+    it "keeps the parent entry when listing the relative current directory" $ withFixture $ \dir ->
+      withCurrentDirectory dir $ do
+        entries <- readEntries False "."
+        map entryName entries `shouldBe` [".."]
+
   describe "파일 작업" $ do
     it "디렉터리를 재귀 복사하고 심볼릭 링크를 그대로 복사한다" $ withFixture $ \dir -> do
       let source = dir </> "source"
           target = dir </> "target"
       createDirectory source
       writeFile (source </> "file.txt") "contents"
-      createSymbolicLink "file.txt" (source </> "link")
+      createFileLink "file.txt" (source </> "link")
       copyEntry source target
       readFile (target </> "file.txt") `shouldReturn` "contents"
-      readSymbolicLink (target </> "link") `shouldReturn` "file.txt"
+      getSymbolicLinkTarget (target </> "link") `shouldReturn` "file.txt"
+
+    it "dangling links occupy destinations and deletion preserves directory link targets" $ withFixture $ \dir -> do
+      let folder = dir </> "folder"
+          link = dir </> "link"
+          broken = dir </> "broken"
+      createDirectory folder
+      writeFile (folder </> "keep.txt") "keep"
+      createDirectoryLink folder link
+      createFileLink "missing.txt" broken
+      pathExists broken `shouldReturn` True
+      copyEntry (folder </> "keep.txt") broken `shouldThrow` anyIOException
+      deleteEntry link
+      readFile (folder </> "keep.txt") `shouldReturn` "keep"
+      deleteEntry broken
+      pathExists broken `shouldReturn` False
+
+    it "copies and deletes dangling directory links without following them" $ withFixture $ \dir -> do
+      let source = dir </> "source-link"
+          target = dir </> "target-link"
+      createDirectoryLink "missing-folder" source
+      copyEntry source target
+      getSymbolicLinkTarget target `shouldReturn` "missing-folder"
+      deleteEntry source
+      deleteEntry target
+      pathExists target `shouldReturn` False
 
     it "기존 대상은 덮어쓰지 않는다" $ withFixture $ \dir -> do
       let source = dir </> "source"
@@ -84,4 +114,3 @@ spec = do
     it "디렉터리 대상 입력은 원본 이름을 붙인다" $ withFixture $ \dir -> do
       let source = dir </> "file.txt"
       destinationFor dir source dir `shouldReturn` (dir </> "file.txt")
-

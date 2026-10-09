@@ -2,8 +2,7 @@ module Hfm.Domain.PathPolicy
   ( validDestination, validDirectoryName, requestedPath, destinationPath, isWithin ) where
 
 import System.FilePath
-  ( addTrailingPathSeparator, isAbsolute, normalise, takeFileName, (</>) )
-import Data.List (isPrefixOf)
+  ( equalFilePath, isAbsolute, normalise, splitDirectories, takeFileName, (</>) )
 
 validDestination :: FilePath -> Bool
 validDestination input = not (null input) && input /= "." && input /= ".."
@@ -22,6 +21,6 @@ destinationPath source requested isDirectory =
 -- Canonical paths must be supplied by the adapter for symlink-safe checks.
 isWithin :: FilePath -> FilePath -> Bool
 isWithin base path =
-  let parent = normalise base
-      candidate = normalise path
-  in candidate == parent || addTrailingPathSeparator parent `isPrefixOf` candidate
+  let parent = splitDirectories (normalise base)
+      candidate = splitDirectories (normalise path)
+  in length parent <= length candidate && and (zipWith equalFilePath parent candidate)

@@ -13,7 +13,18 @@ stack run hfm-exe -- /path/to/left /path/to/right
 ./scripts/run.sh run /path/to/left /path/to/right
 ```
 
-인자가 없으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 실행에는 대화형 터미널(`/dev/tty`)이 필요합니다.
+Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직접 실행합니다. WSL이나 Bash는 필요하지 않습니다.
+
+```powershell
+.\scripts\run.ps1                  # 빌드 후 실행
+.\scripts\run.ps1 run C:\Users C:\Temp
+.\scripts\run.ps1 build
+.\scripts\run.ps1 test             # Python도 필요
+.\scripts\run.ps1 all              # 빌드, 검사, 테스트, 실행
+.\scripts\run.ps1 clean
+```
+
+인자가 없으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 스크립트는 프로젝트 루트에서 Stack을 실행하므로 인자를 생략하면 프로젝트 루트가 시작 위치입니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 스크립트에 전달한 상대 경로는 호출한 위치를 기준으로 해석합니다. 실행에는 대화형 터미널이 필요하며, Windows는 네이티브 콘솔을, Unix는 `/dev/tty`를 사용합니다. Windows에서 심볼릭 링크 복사에는 개발자 모드 또는 링크 생성 권한이 필요합니다.
 
 ## 키
 
@@ -65,7 +76,17 @@ stack run hfm-exe -- /path/to/left /path/to/right
 
 ## 배포 스크립트
 
-`./scripts/release.sh deb` 또는 `./scripts/release.sh rpm`으로 Linux 패키지를 만듭니다. `auto`는 Linux에서 두 패키지를 모두 만들고 macOS에서는 DMG를 만듭니다. 생성물은 `dist/release/`에 저장하며 `./scripts/release.sh clean`으로 지울 수 있습니다. PowerShell 래퍼(`scripts/run.ps1`, `scripts/release.ps1`)는 Windows에서 WSL로 실행합니다. 현재 프로그램은 `/dev/tty`와 `System.Posix`를 사용하므로 네이티브 Windows MSI는 지원하지 않습니다.
+`./scripts/release.sh deb` 또는 `./scripts/release.sh rpm`으로 Linux 패키지를 만듭니다. `auto`는 Linux에서 두 패키지를 모두 만들고 macOS에서는 DMG를 만듭니다. 생성물은 `dist/release/`에 저장하며 `./scripts/release.sh clean`으로 지울 수 있습니다.
+
+Windows에서는 [NSIS 3](https://nsis.sourceforge.io/Download)을 설치하고 PowerShell 스크립트를 사용합니다. `makensis.exe`는 PATH 또는 NSIS의 기본 설치 위치에서 찾습니다.
+
+```powershell
+.\scripts\release.ps1              # auto: NSIS 설치 파일 생성
+.\scripts\release.ps1 nsis
+.\scripts\release.ps1 clean        # dist/release와 dist/build-bin 삭제
+```
+
+`apps/hfm/package.yaml`의 버전으로 `dist/release/hfm-0.1.0.0-windows-setup.exe`를 만듭니다. 설치 파일은 현재 사용자의 `%LOCALAPPDATA%\Programs\hfm`에 `hfm.exe`, README와 LICENSE를 설치하고 시작 메뉴 및 앱 제거 항목을 등록합니다. 관리자 권한이나 PATH 변경은 필요하지 않습니다. PowerShell 스크립트는 `.sh` 파일을 호출하지 않으며, Linux/macOS 패키지는 해당 OS에서 `release.sh`로 만듭니다.
 
 ## 개발
 
@@ -75,6 +96,8 @@ python3 scripts/check-architecture.py
 python3 scripts/test-architecture.py
 python3 scripts/test-keybindings.py
 ```
+
+PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백 경로, 명령 순서, 종료 코드, NSIS 호출과 정리 범위를 검사합니다. `test-keybindings.py`는 Unix PTY 테스트이므로 Windows에서 직접 실행하지 않습니다.
 
 macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커 옵션(`-U`와 `dynamic_lookup`, 반복된 `-lm`)을 정리합니다. 다른 링커 진단은 그대로 전달합니다.
 

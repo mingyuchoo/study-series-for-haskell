@@ -11,6 +11,14 @@ ghc-options:
 - -Wall
 - -O2
 when:
+- condition: os(windows)
+  then:
+    dependencies:
+    - vty-windows
+  else:
+    dependencies:
+    - vty-unix
+    - unix
 - condition: os(darwin)
   ghc-options: -pgml ../../scripts/link-macos.sh
 dependencies:
@@ -19,10 +27,8 @@ dependencies:
 - hfm-application
 - brick
 - vty
-- vty-unix
 - text
 - vector
-- unix
 - filepath
 - skylighting
 - skylighting-core

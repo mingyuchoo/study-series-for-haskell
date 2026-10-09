@@ -7,6 +7,8 @@ import Hfm.Domain.Editor
 import Hfm.Domain.Fuzzy
 import Hfm.Domain.Selection
 import Test.Hspec
+import System.FilePath (normalise, (</>))
+import System.Info (os)
 
 main :: IO ()
 main = hspec spec
@@ -54,13 +56,17 @@ spec = do
 
   describe "Pure path policy" $ do
     it "distinguishes filenames and directory destinations from supplied facts" $ do
-      requestedPath "/left" "new.txt" `shouldBe` "/left/new.txt"
-      requestedPath "/left" "/right" `shouldBe` "/right"
-      destinationPath "/left/file.txt" "/right" True `shouldBe` "/right/file.txt"
-      destinationPath "/left/file.txt" "/right/new.txt" False `shouldBe` "/right/new.txt"
+      let root = if os == "mingw32" then "C:\\" else "/"
+          left = root </> "left"
+          right = root </> "right"
+      requestedPath left "new.txt" `shouldBe` left </> "new.txt"
+      requestedPath left right `shouldBe` right
+      destinationPath (left </> "file.txt") right True `shouldBe` right </> "file.txt"
+      destinationPath (left </> "file.txt") (right </> "new.txt") False `shouldBe` right </> "new.txt"
 
     it "requires a single relative name for mkdir, while allowing transfer paths" $ do
-      map validDirectoryName ["", ".", "..", "/absolute", "nested/folder"] `shouldBe` replicate 5 False
+      let absolute = if os == "mingw32" then "C:\\absolute" else "/absolute"
+      map validDirectoryName ["", ".", "..", absolute, "nested/folder"] `shouldBe` replicate 5 False
       validDirectoryName "새 폴더" `shouldBe` True
       validDestination "../other/file" `shouldBe` True
 
@@ -69,3 +75,8 @@ spec = do
       isWithin "/source/" "/source/nested" `shouldBe` True
       isWithin "/source" "/source-other" `shouldBe` False
       isWithin "/" "/anywhere" `shouldBe` True
+
+    it "uses the platform's path case rules and separators" $ do
+      isWithin "Source" ("Source" </> "nested") `shouldBe` True
+      isWithin "Source" ("source" </> "nested") `shouldBe` (os == "mingw32")
+      isWithin (normalise "Source") (normalise "Source-other") `shouldBe` False

@@ -1,34 +1,79 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("auto", "linux", "deb", "rpm", "dmg", "msi", "clean", "help")]
+    [ValidateSet("auto", "nsis", "clean", "help")]
     [string]$Target = "auto"
 )
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ShellScript = Join-Path $ScriptDir "release.sh"
+$PSNativeCommandUseErrorActionPreference = $false
+$RootDir = Split-Path -Parent $PSScriptRoot
+$ReleaseDir = Join-Path $RootDir 'dist/release'
+$BuildBinDir = Join-Path $RootDir 'dist/build-bin'
 
 if ($Target -eq "help") {
-    Write-Host "Usage: scripts/release.ps1 [auto|linux|deb|rpm|dmg|clean|help]"
-    Write-Host "Windows uses WSL to build Linux packages. Native MSI is unsupported by this Unix-only app."
+    Write-Host 'Usage: scripts/release.ps1 [auto|nsis|clean|help]'
+    Write-Host 'Build a native Windows installer with Stack and NSIS 3 (makensis.exe).'
+    Write-Host 'Output: dist/release/hfm-VERSION-windows-setup.exe'
     exit 0
 }
-if ($Target -eq "msi") {
-    throw "MSI is unsupported: this app uses System.Posix and /dev/tty. Build Linux packages in WSL instead."
+if ($Target -eq 'clean') {
+    $DistDir = [IO.Path]::GetFullPath((Join-Path $RootDir 'dist'))
+    foreach ($path in @($DistDir, $ReleaseDir, $BuildBinDir)) {
+        if (Test-Path -LiteralPath $path) {
+            if ((Get-Item -LiteralPath $path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw "Refusing to clean through a filesystem link: $path"
+            }
+        }
+    }
+    foreach ($path in @($ReleaseDir, $BuildBinDir)) {
+        $absolute = [IO.Path]::GetFullPath($path)
+        if (-not $absolute.StartsWith($DistDir + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Refusing to remove a path outside dist: $absolute"
+        }
+        if (Test-Path -LiteralPath $absolute) { Remove-Item -LiteralPath $absolute -Recurse -Force }
+    }
+    exit 0
 }
 
-if ($env:OS -eq "Windows_NT") {
-    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
-        throw "WSL is required to package this Unix-only app."
-    }
-    $convertedScript = & wsl.exe wslpath -a -u $ShellScript
-    if ($LASTEXITCODE -ne 0 -or -not $convertedScript) {
-        throw "Could not resolve the release script path inside WSL"
-    }
-    $linuxScript = ($convertedScript | Select-Object -Last 1).Trim()
-    & wsl.exe bash $linuxScript $Target
+if ($env:OS -ne 'Windows_NT') { throw 'This script builds Windows installers. Run it on Windows.' }
+if (-not (Get-Command stack -ErrorAction SilentlyContinue)) {
+    throw 'Stack is required. Install the Windows Haskell toolchain and add stack to PATH.'
+}
+$Nsis = Get-Command makensis -ErrorAction SilentlyContinue
+if ($Nsis) {
+    $Nsis = $Nsis.Name
 }
 else {
-    & bash $ShellScript $Target
+    $Nsis = @(
+        foreach ($folder in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+            if ($folder) {
+                $candidate = Join-Path $folder 'NSIS/makensis.exe'
+                if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidate }
+            }
+        }
+    ) | Select-Object -First 1
 }
-exit $LASTEXITCODE
+if (-not $Nsis) { throw 'NSIS 3 is required. Install NSIS or add makensis.exe to PATH.' }
+
+$VersionLine = Select-String -LiteralPath (Join-Path $RootDir 'apps/hfm/package.yaml') -Pattern '^version:\s*(\d+\.\d+\.\d+\.\d+)\s*$'
+if (-not $VersionLine -or @($VersionLine).Count -ne 1) { throw 'Expected one four-part version in apps/hfm/package.yaml' }
+$Version = $VersionLine.Matches[0].Groups[1].Value
+$Installer = Join-Path $ReleaseDir "hfm-$Version-windows-setup.exe"
+
+Push-Location -LiteralPath $RootDir
+try {
+    New-Item -ItemType Directory -Path $BuildBinDir, $ReleaseDir -Force | Out-Null
+    & stack build --copy-bins --local-bin-path $BuildBinDir
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if (-not (Test-Path -LiteralPath (Join-Path $BuildBinDir 'hfm-exe.exe') -PathType Leaf)) {
+        throw "Built executable not found: $BuildBinDir/hfm-exe.exe"
+    }
+    & $Nsis '/V2' "/DVERSION=$Version" "/DBIN_DIR=$BuildBinDir" "/DROOT_DIR=$RootDir" "/DOUTPUT=$Installer" (Join-Path $PSScriptRoot 'windows-installer.nsi')
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if (-not (Test-Path -LiteralPath $Installer -PathType Leaf)) { throw "Installer not found: $Installer" }
+    Write-Host "Created $Installer"
+}
+finally {
+    Pop-Location
+}
+exit 0

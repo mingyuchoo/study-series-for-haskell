@@ -35,9 +35,14 @@ library
     , hfm-application
     , hfm-domain
     , text
-    , unix
     , yaml
   default-language: GHC2024
+  if os(windows)
+    build-depends:
+        Win32
+  else
+    build-depends:
+        unix
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh
 
@@ -63,8 +68,13 @@ test-suite hfm-infrastructure-test
     , hfm-infrastructure
     , hspec
     , text
-    , unix
     , yaml
   default-language: GHC2024
+  if os(windows)
+    build-depends:
+        Win32
+  else
+    build-depends:
+        unix
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh

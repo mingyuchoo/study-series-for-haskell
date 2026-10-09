@@ -11,11 +11,14 @@ import Hfm.Application.Workflow (planInput)
 import Hfm.Application.Status
 import Hfm.Application.UseCases
 import qualified Data.Vector as Vec
+import qualified Data.Text as T
 import Hfm.Domain.Entry
 import Hfm.Domain.Input
 import Hfm.Domain.Theme (themes)
 import Hfm.Domain.Selection
 import Test.Hspec hiding (before, after, pending)
+import System.FilePath ((</>))
+import System.Info (os)
 
 main :: IO ()
 main = hspec spec
@@ -24,7 +27,10 @@ entry :: Entry
 entry = Entry "file.txt" RegularFile 4
 
 initial :: AppState
-initial = initialState "/left" [entry] "/right" [] defaultConfig (80, 24)
+initial = initialState (testPath "left") [entry] (testPath "right") [] defaultConfig (80, 24)
+
+testPath :: FilePath -> FilePath
+testPath path = (if os == "mingw32" then "C:\\" else "/") </> path
 
 record :: String -> a -> State [String] (Either FileError a)
 record call result = modify (++ [call]) >> pure (Right result)
@@ -34,7 +40,7 @@ memory :: FileSystem (State [String])
 memory = FileSystem
   { readEntries = \_ path -> record ("list " ++ path) [entry]
   , canonicalizePath = \path -> record ("resolve " ++ path) path
-  , doesDirectoryExist = \path -> record ("is-dir " ++ path) (path == "/right")
+  , doesDirectoryExist = \path -> record ("is-dir " ++ path) (path == testPath "right")
   , readPreview = \path -> record ("preview " ++ path) "text"
   , copyEntry = \source target -> record ("copy " ++ source ++ " " ++ target) ()
   , moveEntry = \source target -> record ("move " ++ source ++ " " ++ target) ()
@@ -64,16 +70,16 @@ spec = do
       let ((prompt, _), before) = run memory (KeyPress (KChar 'C') []) initial
           ((done, _), after) = run memory (KeyPress KEnter []) prompt
       before `shouldBe` []
-      stMode prompt `shouldBe` Prompt Copy "/right"
-      after `shouldBe` ["is-dir /right", "copy /left/file.txt /right/file.txt", "list /left", "list /right"]
+      stMode prompt `shouldBe` Prompt Copy (T.pack (testPath "right"))
+      after `shouldBe` ["is-dir " ++ testPath "right", "copy " ++ testPath ("left" </> "file.txt") ++ " " ++ testPath ("right" </> "file.txt"), "list " ++ testPath "left", "list " ++ testPath "right"]
       stMode done `shouldBe` Browse
       stStatus done `shouldBe` Copied
 
     it "preserves the prompt and skips refresh on an operation failure" $ do
       let ports = memory { copyEntry = \_ _ -> pure (Left PermissionDenied) }
-          st = initial { stMode = Prompt Copy "/right" }
+          st = initial { stMode = Prompt Copy (T.pack (testPath "right")) }
           ((done, _), calls) = run ports (KeyPress KEnter []) st
-      calls `shouldBe` ["is-dir /right"]
+      calls `shouldBe` ["is-dir " ++ testPath "right"]
       stMode done `shouldBe` stMode st
       stStatus done `shouldBe` Failed PermissionDenied
 
@@ -81,7 +87,7 @@ spec = do
       mapM_ (\path -> do
         let ((done, _), calls) = run memory (KeyPress KEnter []) (initial { stMode = Prompt Mkdir path })
         calls `shouldBe` []
-        stStatus done `shouldBe` InvalidDestination) ["", ".", "..", "/absolute", "nested/folder"]
+        stStatus done `shouldBe` InvalidDestination) ["", ".", "..", T.pack (testPath "absolute"), "nested/folder"]
 
     it "requires explicit deletion confirmation and supports cancellation" $ do
       let ((pending, _), calls) = run memory (KeyPress (KChar 'D') []) initial
@@ -91,11 +97,11 @@ spec = do
       calls `shouldBe` []
       cancelCalls `shouldBe` []
       stMode cancelled `shouldBe` Browse
-      deleteCalls `shouldBe` ["delete /left/file.txt", "list /left", "list /right"]
+      deleteCalls `shouldBe` ["delete " ++ testPath ("left" </> "file.txt"), "list " ++ testPath "left", "list " ++ testPath "right"]
       stMode deleted `shouldBe` Browse
 
     it "preserves both panels if refreshing the second panel fails" $ do
-      let ports = memory { readEntries = \_ path -> if path == "/right" then pure (Left Missing) else pure (Right []) }
+      let ports = memory { readEntries = \_ path -> if path == testPath "right" then pure (Left Missing) else pure (Right []) }
           ((done, _), _) = run ports (KeyPress (KChar 'g') []) initial
       panelEntries (stLeft done) `shouldBe` panelEntries (stLeft initial)
       panelEntries (stRight done) `shouldBe` panelEntries (stRight initial)
@@ -195,14 +201,14 @@ spec = do
         Await _ _ -> expectationFailure "Search requested a filesystem effect"
 
     it "uses the directory response to choose a transfer target and stops on failure" $ do
-      let state = initial { stMode = Prompt Copy "/right" }
+      let state = initial { stMode = Prompt Copy (T.pack (testPath "right")) }
       case planInput (KeyPress KEnter []) state of
         Await (DirectoryExists path) resume -> do
-          path `shouldBe` "/right"
+          path `shouldBe` testPath "right"
           case resume (Right True) of
             Await (CopyEntry source target) copied -> do
-              source `shouldBe` "/left/file.txt"
-              target `shouldBe` "/right/file.txt"
+              source `shouldBe` testPath ("left" </> "file.txt")
+              target `shouldBe` testPath ("right" </> "file.txt")
               case copied (Left PermissionDenied) of
                 Done (failed, quit) -> do
                   stStatus failed `shouldBe` Failed PermissionDenied
@@ -211,27 +217,27 @@ spec = do
                 _ -> expectationFailure "Failed transfer requested another effect"
             _ -> expectationFailure "Expected a copy after resolving the directory"
           case resume (Right False) of
-            Await (CopyEntry _ target) _ -> target `shouldBe` "/right"
+            Await (CopyEntry _ target) _ -> target `shouldBe` testPath "right"
             _ -> expectationFailure "Expected a copy to the requested new filename"
         _ -> expectationFailure "Expected destination inspection before a transfer"
 
     it "does not mutate or refresh when destination inspection fails" $ do
       let ports = memory { doesDirectoryExist = \_ -> recordFailure }
           recordFailure = modify (++ ["inspect failed"]) >> pure (Left PermissionDenied)
-          state = initial { stMode = Prompt Move "/right" }
+          state = initial { stMode = Prompt Move (T.pack (testPath "right")) }
           ((done, _), calls) = run ports (KeyPress KEnter []) state
       calls `shouldBe` ["inspect failed"]
       stMode done `shouldBe` stMode state
       stStatus done `shouldBe` Failed PermissionDenied
 
     it "initializes through ports and uses canonical paths for listing" $ do
-      let ports = memory { canonicalizePath = \path -> record ("resolve " ++ path) ("/" ++ path) }
+      let ports = memory { canonicalizePath = \path -> record ("resolve " ++ path) (testPath path) }
           (result, calls) = runState (runProgram ports (planStartup "left" "right" defaultConfig (80, 24))) []
-      calls `shouldBe` ["resolve left", "resolve right", "list /left", "list /right"]
+      calls `shouldBe` ["resolve left", "resolve right", "list " ++ testPath "left", "list " ++ testPath "right"]
       case result of
         Right state -> do
-          panelPath (stLeft state) `shouldBe` "/left"
-          panelPath (stRight state) `shouldBe` "/right"
+          panelPath (stLeft state) `shouldBe` testPath "left"
+          panelPath (stRight state) `shouldBe` testPath "right"
           stStatus state `shouldBe` Ready
         Left err -> expectationFailure (show err)
 

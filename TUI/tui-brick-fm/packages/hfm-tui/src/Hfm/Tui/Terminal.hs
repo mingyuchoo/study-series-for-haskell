@@ -1,21 +1,27 @@
+{-# LANGUAGE CPP #-}
+
 module Hfm.Tui.Terminal
     ( buildVtyFromTty
     ) where
 
-import           Data.Maybe                          (fromMaybe)
-
 import qualified Graphics.Vty                        as V
+#if defined(mingw32_HOST_OS)
+import           Graphics.Vty.Platform.Windows       (mkVty)
+#else
+import           Data.Maybe                          (fromMaybe)
 import           Graphics.Vty.Platform.Unix          (mkVtyWithSettings)
 import qualified Graphics.Vty.Platform.Unix.Settings as VtyUnixSettings
 
 import           System.Environment                  (lookupEnv)
 import           System.Posix.IO                     (OpenMode (..),
                                                       defaultFileFlags, openFd)
+#endif
 
--- | /dev/tty를 사용하는 커스텀 Vty 빌더 (Effect)
--- stdin이 파이프일 때도 터미널 입출력을 위해 /dev/tty 직접 사용
--- 파일 디스크립터를 열고 Vty 설정을 구성하여 Vty 인스턴스 생성
+-- | Windows 콘솔 또는 Unix /dev/tty에서 Vty를 초기화한다.
 buildVtyFromTty :: IO V.Vty
+#if defined(mingw32_HOST_OS)
+buildVtyFromTty = mkVty V.defaultConfig
+#else
 buildVtyFromTty = do
   ttyFd <- openFd "/dev/tty" ReadWrite defaultFileFlags
   termName <- fromMaybe "xterm" <$> lookupEnv "TERM"
@@ -37,3 +43,4 @@ buildVtyFromTty = do
           , V.configTermWidthMaps = []
           }
   mkVtyWithSettings userConfig unixSettings
+#endif

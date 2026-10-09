@@ -11,6 +11,13 @@ ghc-options:
 - -Wall
 - -O2
 when:
+- condition: os(windows)
+  then:
+    dependencies:
+    - Win32
+  else:
+    dependencies:
+    - unix
 - condition: os(darwin)
   ghc-options: -pgml ../../scripts/link-macos.sh
 dependencies:
@@ -21,7 +28,6 @@ dependencies:
 - bytestring
 - directory
 - filepath
-- unix
 - yaml
 library:
   source-dirs: src

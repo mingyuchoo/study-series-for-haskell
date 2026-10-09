@@ -9,12 +9,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ShellScript = Join-Path $ScriptDir "run.sh"
+$PSNativeCommandUseErrorActionPreference = $false
+$RootDir = Split-Path -Parent $PSScriptRoot
 
 if ($Command -eq "help") {
     Write-Host "Usage: scripts/run.ps1 [build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]"
-    Write-Host "On Windows, commands run inside WSL because the app uses /dev/tty."
+    Write-Host "Build and run natively with Stack. Tests also require Python. Run in an interactive terminal."
     exit 0
 }
 
@@ -25,30 +25,46 @@ if ($Directories.Count -gt 2) {
     throw "At most two starting directories are supported"
 }
 
-if ($env:OS -eq "Windows_NT") {
-    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
-        throw "WSL is required: the app uses Unix /dev/tty. Install WSL and Stack inside it."
-    }
+if (-not (Get-Command stack -ErrorAction SilentlyContinue)) {
+    throw "Stack is required. Install the Windows Haskell toolchain and add stack to PATH."
+}
 
-    $convertedScript = & wsl.exe wslpath -a -u $ShellScript
-    if ($LASTEXITCODE -ne 0 -or -not $convertedScript) {
-        throw "Could not resolve the script path inside WSL"
-    }
-    $linuxScript = ($convertedScript | Select-Object -Last 1).Trim()
-
-    $linuxDirectories = @(
-        foreach ($directory in $Directories) {
-            $resolved = (Resolve-Path -LiteralPath $directory).Path
-            $convertedPath = & wsl.exe wslpath -a -u $resolved
-            if ($LASTEXITCODE -ne 0 -or -not $convertedPath) {
-                throw "Could not resolve directory inside WSL: $directory"
-            }
-            ($convertedPath | Select-Object -Last 1).Trim()
+# Resolve relative arguments from the caller's location before entering the project.
+$StartingDirectories = @(
+    foreach ($directory in $Directories) {
+        $item = Get-Item -LiteralPath $directory
+        if (-not $item.PSIsContainer -or $item.PSProvider.Name -ne 'FileSystem') {
+            throw "Not a filesystem directory: $directory"
         }
-    )
-    & wsl.exe bash $linuxScript $Command @linuxDirectories
+        $item.FullName
+    }
+)
+
+function Invoke-Checked($Tool, [string[]]$Arguments) {
+    & $Tool @Arguments
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-else {
-    & bash $ShellScript $Command @Directories
+
+$PreviousPythonUtf8 = $env:PYTHONUTF8
+Push-Location -LiteralPath $RootDir
+try {
+    if ($Command -in @('build', 'all')) { Invoke-Checked stack @('build') }
+    if ($Command -in @('test', 'all')) {
+        if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+            throw "Python is required for architecture checks. Add python to PATH."
+        }
+        $env:PYTHONUTF8 = '1'
+        Invoke-Checked python @('scripts/check-architecture.py')
+        Invoke-Checked python @('scripts/test-architecture.py')
+        Invoke-Checked stack @('test')
+    }
+    if ($Command -in @('run', 'all')) {
+        Invoke-Checked stack (@('run', 'hfm-exe', '--') + $StartingDirectories)
+    }
+    if ($Command -eq 'clean') { Invoke-Checked stack @('clean') }
 }
-exit $LASTEXITCODE
+finally {
+    Pop-Location
+    $env:PYTHONUTF8 = $PreviousPythonUtf8
+}
+exit 0
