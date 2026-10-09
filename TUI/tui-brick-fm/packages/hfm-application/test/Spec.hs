@@ -14,6 +14,7 @@ import Hfm.Application.Effects.Runtime
 import qualified Data.Vector as Vec
 import qualified Data.Text as T
 import Hfm.Domain.Entry
+import Hfm.Domain.Config (Settings (..), defaultSettings)
 import Hfm.Domain.Input
 import Hfm.Domain.Theme (themes)
 import Hfm.Domain.Selection
@@ -51,7 +52,7 @@ memory = FileSystem
 
 memoryProcesses :: Processes (State [String])
 memoryProcesses = Processes
-  { editFile = \cwd path -> record ("edit " ++ cwd ++ " " ++ path) 0
+  { editFile = \_ cwd path -> record ("edit " ++ cwd ++ " " ++ path) 0
   , runCommand = \cwd command -> record ("command " ++ cwd ++ " " ++ T.unpack command) 0
   }
 
@@ -59,14 +60,101 @@ run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Bool), [S
 run files = runWith files memoryProcesses
 
 runWith :: FileSystem (State [String]) -> Processes (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
-runWith files processes input state = runState (handleInput files processes input state) []
+runWith files processes input state = runState (handleInput files processes (const (pure (Right ()))) input state) []
 
 spec :: Spec
 spec = do
+  describe "Saved application settings" $ do
+    it "restores the editor, language and theme at startup" $ do
+      let settings = Settings (Just "nvim.exe") English Monokai
+          config = defaultConfig { configSettings = settings }
+          state = initialState "left" [] "right" [] config (80, 24)
+      currentSettings state `shouldBe` settings
+      stLanguage state `shouldBe` English
+      stTheme state `shouldBe` Monokai
+
+    it "opens F4 with the current executable and supports editing, saving and resetting" $ do
+      let configured = applySettings (defaultSettings { settingsEditor = Just "vi" }) initial
+          ((opened, _), _) = run memory (KeyPress (KFun 4) []) configured
+          ((edited, _), _) = run memory (KeyPress (KChar 'm') []) opened
+          save settings = record (show settings) ()
+          ((done, _), calls) = runState (handleInput memory memoryProcesses save (KeyPress KEnter []) edited) []
+          ((reset, _), resetCalls) = runState
+            (handleInput memory memoryProcesses save (KeyPress KEnter []) (done { stMode = EditorPrompt "  " })) []
+      stMode opened `shouldBe` EditorPrompt "vi"
+      stMode edited `shouldBe` EditorPrompt "vim"
+      settingsEditor (currentSettings done) `shouldBe` Just "vim"
+      calls `shouldBe` [show (currentSettings done)]
+      stStatus done `shouldBe` SettingsSaved
+      settingsEditor (currentSettings reset) `shouldBe` Nothing
+      resetCalls `shouldBe` [show (currentSettings reset)]
+
+    it "passes the saved executable through the process port" $ do
+      let settings = defaultSettings { settingsEditor = Just "C:\\한글 폴더\\editor.exe" }
+          state = applySettings settings initial
+          ports = memoryProcesses { editFile = \editor _ _ -> record (show editor) 0 }
+          ((_, _), calls) = runWith memory ports (KeyPress (KChar 'e') []) state
+      take 1 calls `shouldBe` [show (settingsEditor settings)]
+
+    it "writes an explicitly confirmed editor even when it matches the defaults" $ do
+      let save settings = record (show settings) ()
+          ((done, _), calls) = runState
+            (handleInput memory memoryProcesses save (KeyPress KEnter []) (initial { stMode = EditorPrompt "" })) []
+      calls `shouldBe` [show defaultSettings]
+      stStatus done `shouldBe` SettingsSaved
+
+    it "saves language immediately and saves only the committed theme" $ do
+      let save settings = record (show settings) ()
+          step key state = runState (handleInput memory memoryProcesses save key state) []
+          ((english, _), languageCalls) = step (KeyPress (KFun 2) []) initial
+          ((opened, _), openCalls) = step (KeyPress (KFun 3) []) english
+          ((preview, _), previewCalls) = step (KeyPress (KChar '3') []) opened
+          ((done, _), themeCalls) = step (KeyPress KEnter []) preview
+          ((cancelled, _), cancelCalls) = step (KeyPress KEsc []) preview
+      languageCalls `shouldBe` [show (Settings Nothing English Dark)]
+      openCalls ++ previewCalls ++ cancelCalls `shouldBe` []
+      themeCalls `shouldBe` [show (Settings Nothing English Monokai)]
+      currentSettings cancelled `shouldBe` currentSettings english
+      currentSettings done `shouldBe` Settings Nothing English Monokai
+
+    it "does not save a theme preview when switching language" $ do
+      let save settings = record (show settings) ()
+          state = initial { stThemePicker = Just (selectAt 2 (selection themes)) }
+          ((done, _), calls) = runState (handleInput memory memoryProcesses save (KeyPress (KFun 2) []) state) []
+      calls `shouldBe` [show (Settings Nothing English Dark)]
+      stThemePicker done `shouldBe` stThemePicker state
+
+    it "restores previous settings and retains the prompt or picker on a failed save" $ do
+      let save _ = pure (Left PermissionDenied)
+          states = [(initial, KeyPress (KFun 2) []),
+                    (initial { stMode = EditorPrompt "nvim", stInputCursor = 4 }, KeyPress KEnter []),
+                    (initial { stThemePicker = Just (selectAt 2 (selection themes)) }, KeyPress KEnter [])]
+      mapM_ (\(state, key) -> do
+        let ((done, quit), _) = runState (handleInput memory memoryProcesses save key state) []
+        currentSettings done `shouldBe` currentSettings state
+        stMode done `shouldBe` stMode state
+        stInputCursor done `shouldBe` stInputCursor state
+        stThemePicker done `shouldBe` stThemePicker state
+        stStatus done `shouldBe` SettingsSaveFailed PermissionDenied
+        quit `shouldBe` False) states
+
+    it "cancels editor changes and rejects NUL or newline input without saving" $ do
+      let save _ = error "Unexpected settings write"
+          step key state = runState (handleInput memory memoryProcesses save key state) []
+          prompt = initial { stMode = EditorPrompt "nvim" }
+      mapM_ (\key -> do
+        let ((done, _), _) = step key prompt
+        currentSettings done `shouldBe` defaultSettings
+        stMode done `shouldBe` Browse) [KeyPress KEsc [], KeyPress (KChar 'g') [MCtrl]]
+      mapM_ (\value -> do
+        let ((done, _), _) = step (KeyPress KEnter []) (initial { stMode = EditorPrompt value })
+        stStatus done `shouldBe` InvalidEditor
+        stMode done `shouldBe` EditorPrompt value) ["bad\0editor", "bad\neditor", "bad\reditor"]
+
   describe "Independent effect ports" $ do
     it "runs a file plan without accessing process ports" $ do
       let unavailable = Processes
-            { editFile = \_ _ -> error "Unexpected editor request"
+            { editFile = \_ _ _ -> error "Unexpected editor request"
             , runCommand = \_ _ -> error "Unexpected command request"
             }
           ((done, _), calls) = runWith memory unavailable (KeyPress (KChar 'g') []) initial
@@ -146,7 +234,7 @@ spec = do
         calls `shouldBe` []) ["", " \t ", "echo\0bad"]
 
     it "shows launch errors without losing the command input or refreshing" $ do
-      let ports = memoryProcesses { runCommand = \_ _ -> pure (Left Missing), editFile = \_ _ -> pure (Left PermissionDenied) }
+      let ports = memoryProcesses { runCommand = \_ _ -> pure (Left Missing), editFile = \_ _ _ -> pure (Left PermissionDenied) }
           state = initial { stMode = Prompt Command "command" }
           ((failed, _), calls) = runWith memory ports (KeyPress KEnter []) state
           ((editorFailed, _), editCalls) = runWith memory ports (KeyPress (KChar 'e') []) initial
@@ -157,7 +245,7 @@ spec = do
       editCalls `shouldBe` []
 
   describe "Use cases with memory ports" $ do
-    it "toggles language in every mode without effects" $ do
+    it "toggles language in every mode without file or process requests" $ do
       mapM_ (\mode -> do
         let st = initial { stMode = mode, stPendingCtrlX = True, stInputCursor = 2 }
             ((updated, quit), calls) = run memory (KeyPress (KFun 2) []) st
@@ -167,7 +255,7 @@ spec = do
         stInputCursor updated `shouldBe` 2
         calls `shouldBe` []
         quit `shouldBe` False)
-        [Browse, Search, Prompt Copy "한글", Prompt Move "target", Prompt Mkdir "folder", ConfirmDelete, ViewFile "path" "text" 0]
+        [Browse, Search, Prompt Copy "한글", Prompt Move "target", Prompt Mkdir "folder", EditorPrompt "nvim", ConfirmDelete, ViewFile "path" "text" 0]
 
     it "resolves and copies only after confirmation, then refreshes both panels" $ do
       let ((prompt, _), before) = run memory (KeyPress (KChar 'C') []) initial
@@ -227,9 +315,9 @@ spec = do
         let ((pending, _), _) = run memory (KeyPress (KChar 'x') [MCtrl]) (initial { stMode = mode })
             ((_, quit), calls) = run memory (KeyPress (KChar 'c') [MCtrl]) pending
         quit `shouldBe` True
-        calls `shouldBe` []) [Browse, Search, Prompt Mkdir "x", ConfirmDelete, ViewFile "p" "t" 0]
+        calls `shouldBe` []) [Browse, Search, Prompt Mkdir "x", EditorPrompt "nvim", ConfirmDelete, ViewFile "p" "t" 0]
 
-  describe "Theme picker without effects" $ do
+  describe "Theme picker without file or process requests" $ do
     it "offers all eight themes and commits only when Enter is pressed" $ do
       mapM_ (\theme -> do
         let ((opened, _), openCalls) = run memory (KeyPress (KFun 3) []) initial
@@ -266,7 +354,7 @@ spec = do
         stInputCursor done `shouldBe` 2
         panelEntries (stLeft done) `shouldBe` panelEntries (stLeft st)
         panelSearch (activePanel done) `shouldBe` panelSearch (activePanel st)
-        calls `shouldBe` []) [Browse, Search, Prompt Copy "a", Prompt Move "b", Prompt Mkdir "c", ConfirmDelete, ViewFile "p" "text" 1]
+        calls `shouldBe` []) [Browse, Search, Prompt Copy "a", Prompt Move "b", Prompt Mkdir "c", EditorPrompt "nvim", ConfirmDelete, ViewFile "p" "text" 1]
 
     it "keeps theme navigation within the eight choices and supports Emacs keys" $ do
       let ((opened, _), _) = run memory (KeyPress (KFun 3) []) initial

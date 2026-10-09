@@ -34,6 +34,6 @@ ioFileSystem = FileSystem
 
 ioProcesses :: Processes IO
 ioProcesses = Processes
-  { editFile = \cwd path -> capture (Process.editFile cwd path)
+  { editFile = \editor cwd path -> capture (Process.editFile editor cwd path)
   , runCommand = \cwd command -> capture (Process.runCommand cwd command)
   }

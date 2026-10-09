@@ -29,9 +29,10 @@ class Terminal:
         fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 160, 0, 0))
         self.output = b""
         deadline = time.monotonic() + 10
-        while "파일 관리자".encode() not in self.output and time.monotonic() < deadline:
+        labels = ["파일 관리자".encode(), b"File manager"]
+        while not any(label in self.output for label in labels) and time.monotonic() < deadline:
             self.read()
-        if "파일 관리자".encode() not in self.output:
+        if not any(label in self.output for label in labels):
             self.close()
             raise AssertionError(self.output.decode(errors="replace"))
 
@@ -198,13 +199,42 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
         terminal.close()
 
     # The global quit prefix must work from every modal screen.
-    for mode_keys in [b"\x13", b"+draft", b"\x0eD", b"\x0ev"]:
+    for mode_keys in [b"\x13", b"+draft", b"\x0eD", b"\x0ev", b"\x1bOS"]:
         terminal = Terminal(left, right, config)
         try:
             terminal.key(mode_keys)
             terminal.quit()
         finally:
             terminal.close()
+
+    # Editor, language and committed theme survive a restart and override VISUAL.
+    saved_config = base / "saved-config"
+    terminal = Terminal(external_left, external_right, saved_config, editor="missing-editor")
+    try:
+        terminal.expect(b"\x1bOS", "편집기:")  # xterm F4
+        terminal.expect(str(editor).encode() + b"\r", "설정을 저장했습니다")
+        terminal.expect(b"\x1bOQ", "File manager")
+        terminal.key(b"\x1bOR3\r")
+        terminal.quit()
+    finally:
+        terminal.close()
+    settings_file = saved_config / "hfm/settings.yaml"
+    contents = settings_file.read_text()
+    assert "language: en" in contents and "theme: monokai" in contents, contents
+    assert str(editor) in contents, contents
+    terminal = Terminal(external_left, external_right, saved_config, editor="missing-editor")
+    try:
+        assert b"File manager" in terminal.output and b"Monokai" in terminal.output
+        terminal.expect(b"\x1bOS", str(editor))
+        terminal.key(b"\x07")
+        edit_file.write_text("original")
+        terminal.expect(b"\x13edit file\x0e\re", "Editor exit code: 0")
+        assert edit_file.read_text() == "edited"
+        terminal.key(b"\x07\x1bOS\x01\x0b\r")
+        assert "editor: null" in settings_file.read_text()
+        terminal.quit()
+    finally:
+        terminal.close()
 
     # Tabs must be painted as themed spaces, never sent as terminal cursor motion.
     tab_left = base / "tab-left"
@@ -224,4 +254,4 @@ with tempfile.TemporaryDirectory(prefix="hfm-keys-") as temporary:
     finally:
         terminal.close()
 
-print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, language toggle, all eight themes, modal quit, themed tab rendering")
+print("PTY keybindings passed: legacy config, navigation, viewer, search, file operations, saved editor/language/theme, all eight themes, modal quit, themed tab rendering")

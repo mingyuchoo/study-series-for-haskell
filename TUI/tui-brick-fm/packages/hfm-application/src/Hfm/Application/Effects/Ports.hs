@@ -19,6 +19,6 @@ data FileSystem m = FileSystem
 
 -- Processes require terminal suspension; file operations do not.
 data Processes m = Processes
-  { editFile :: FilePath -> FilePath -> m (Either FileError Int)
+  { editFile :: Maybe FilePath -> FilePath -> FilePath -> m (Either FileError Int)
   , runCommand :: FilePath -> T.Text -> m (Either FileError Int)
   }

@@ -51,6 +51,7 @@ Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직�
 | `g` | 두 패널 새로고침 |
 | `F2` | 한국어/영어 메뉴 전환 |
 | `F3` | 테마 선택 메뉴 열기·닫기 |
+| `F4` | 탐색 화면에서 편집기 설정 입력·저장 |
 | `C-x C-c` | 모든 화면에서 종료 |
 | `C-g` | 검색 해제, 입력·삭제 취소, 파일 보기 닫기, 접두 명령 취소 |
 | `C-x k` | 현재 검색·입력·보기 닫기 |
@@ -65,7 +66,9 @@ Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직�
 
 ## 편집과 명령 실행
 
-`e`는 `VISUAL`, `EDITOR` 순으로 설정된 편집기를 실행합니다. 두 변수가 없으면 Windows에서는 `notepad.exe`, Linux/macOS에서는 `vi`를 사용합니다. 변수에는 인자 없이 실행 파일 이름 또는 전체 경로를 넣습니다. 공백·한글이 들어간 파일 경로도 하나의 인자로 전달합니다. 편집기에서 저장하고 종료하면 두 패널을 새로고칩니다. 파일 보기의 64 KiB 제한은 편집에 적용되지 않습니다. 디렉터리 편집은 `r` 또는 `e`로 이름을 변경하고, `RET`로 열어 내부 파일을 편집하는 방식입니다.
+탐색 화면에서 `F4`를 누르면 편집기 설정 입력창이 열립니다. `nvim.exe` 같은 PATH에 있는 실행 파일 이름 또는 `C:\Tools\Neovim\bin\nvim.exe` 같은 전체 경로를 입력하고 `RET`로 저장합니다. 공백이 있는 경로도 따옴표 없이 입력합니다. `C-a C-k`로 입력을 비우고 저장하면 환경 변수와 기본 편집기를 사용하는 설정으로 돌아갑니다. Esc·`C-g`로 취소할 수 있고, 입력 편집에는 기존 Emacs 키를 사용합니다. 실행 인자는 지원하지 않으므로 `code --wait`처럼 입력하지 마세요.
+
+`e`는 앱에 저장한 편집기, `VISUAL`, `EDITOR` 순으로 편집기를 선택합니다. 모두 비어 있으면 Windows에서는 `notepad.exe`, Linux/macOS에서는 `vi`를 사용합니다. 환경 변수에도 인자 없이 실행 파일 이름 또는 전체 경로를 넣습니다. 공백·한글이 들어간 파일 경로도 하나의 인자로 전달합니다. 편집기에서 저장하고 종료하면 두 패널을 새로고칩니다. 파일 보기의 64 KiB 제한은 편집에 적용되지 않습니다. 디렉터리 편집은 `r` 또는 `e`로 이름을 변경하고, `RET`로 열어 내부 파일을 편집하는 방식입니다.
 
 `!` 또는 `M-!`로 명령을 입력하고 `RET`로 실행합니다. Windows는 PowerShell(`powershell.exe -NoProfile`), Linux/macOS는 `/bin/sh`를 사용합니다. 실행 위치는 활성 패널 디렉터리이며 표준 입력·출력·오류를 터미널에서 직접 사용합니다. 명령이 끝나면 출력 확인 후 Enter로 파일 관리자로 돌아갑니다. 편집기와 명령의 종료 코드를 상태줄에 표시하며, 복귀 시 양쪽 파일 목록을 새로고칩니다. `C-g` 또는 Esc로 실행 전 입력을 취소할 수 있습니다. 명령마다 새 셸을 실행하므로 `cd`와 환경 변수 변경은 다음 명령이나 패널에 유지되지 않습니다.
 
@@ -75,13 +78,25 @@ Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직�
 
 기본 메뉴 언어는 한국어입니다. `F2`를 누르면 한국어 ↔ 영어로 즉시 전환하며, 상단에 현재 언어와 전환 키를 표시합니다. 탐색, 검색, 복사·이동·폴더 생성 입력, 삭제 확인, 파일 보기와 `C-x` 접두 명령 대기 중에도 사용할 수 있습니다.
 
-메뉴, 단축키 안내, 상태 메시지가 함께 전환됩니다. 검색어와 입력 경로, 파일명, 파일 내용, 선택 항목은 유지됩니다. 언어 선택은 현재 실행 중에만 유지되며 다시 실행하면 한국어로 시작합니다. macOS에서 F2가 시스템 기능 키로 설정되어 있다면 `fn+F2`를 사용하세요.
+메뉴, 단축키 안내, 상태 메시지가 함께 전환됩니다. 검색어와 입력 경로, 파일명, 파일 내용, 선택 항목은 유지됩니다. 언어 선택은 즉시 저장되며 다음 실행에도 복원됩니다. macOS에서 F2가 시스템 기능 키로 설정되어 있다면 `fn+F2`를 사용하세요.
 
 ## 테마 선택
 
 `F3`로 테마 메뉴를 엽니다. `↑`/`↓` 또는 `C-p`/`C-n`으로 이동하거나 `1`~`8`으로 선택하면 화면 색상을 즉시 미리 볼 수 있습니다. `RET`로 적용하고, Esc·`C-g`·`F3`로 취소하면 기존 테마로 돌아갑니다. 메뉴의 `*`는 적용된 테마이며, 선택한 항목은 색상으로 강조합니다.
 
-지원 테마는 **Light, Dark, Monokai, Solarized Light, Solarized Dark, Tomorrow Night Blue, Gruvbox Dark, Gruvbox Light**입니다. Gruvbox Dark는 `7`, Gruvbox Light는 `8`로 선택합니다. 기본값은 Dark이며 선택은 현재 실행 중에 유지됩니다. 파일 목록·선택 강조·입력줄·상태줄·파일 보기·테마 메뉴에 같은 팔레트를 적용합니다. 검색, 파일 작업 입력, 삭제 확인과 파일 보기 중에도 열 수 있으며 기존 입력과 선택을 보존합니다. 테마 메뉴 안에서도 `F2`로 언어를 바꾸고 `C-x C-c`로 종료할 수 있습니다. macOS 시스템 기능 키 설정에 따라 `fn+F3`를 사용하세요.
+지원 테마는 **Light, Dark, Monokai, Solarized Light, Solarized Dark, Tomorrow Night Blue, Gruvbox Dark, Gruvbox Light**입니다. Gruvbox Dark는 `7`, Gruvbox Light는 `8`로 선택합니다. 기본값은 Dark이며 `RET`로 적용한 선택은 저장되어 다음 실행에도 복원됩니다. 미리보기와 취소는 저장하지 않습니다. 파일 목록·선택 강조·입력줄·상태줄·파일 보기·테마 메뉴에 같은 팔레트를 적용합니다. 검색, 파일 작업 입력, 삭제 확인과 파일 보기 중에도 열 수 있으며 기존 입력과 선택을 보존합니다. 테마 메뉴 안에서도 `F2`로 언어를 바꾸고 `C-x C-c`로 종료할 수 있습니다. macOS 시스템 기능 키 설정에 따라 `fn+F3`를 사용하세요.
+
+## 설정 저장
+
+편집기·언어·테마는 기존 `keybindings.yaml`과 같은 설정 디렉터리의 `settings.yaml`에 자동 저장합니다. 기본 경로는 Windows에서 `%APPDATA%\hfm\settings.yaml`, Linux/macOS에서 `~/.config/hfm/settings.yaml`입니다. `XDG_CONFIG_HOME`이 지정되어 있으면 그 아래 `hfm/settings.yaml`을 사용합니다. 기존 키 바인딩 파일은 변경하지 않습니다.
+
+```yaml
+editor: nvim.exe
+language: en
+theme: monokai
+```
+
+편집기 기본값은 `null`, 언어는 `ko` 또는 `en`, 테마 식별자는 `light`, `dark`, `monokai`, `solarizedlight`, `solarizeddark`, `tomorrownightblue`, `gruvboxdark`, `gruvboxlight`입니다. 설정 파일이 없으면 기본값으로 시작합니다. 잘못된 YAML·언어·테마는 시작 오류로 표시하고 원본 파일을 보존하므로 해당 파일을 수정한 뒤 다시 실행하세요. 저장은 임시 파일을 완성한 후 교체하며, 실패하면 상태줄에 오류를 표시하고 이전 설정과 입력창·테마 메뉴를 유지합니다.
 
 색상은 [VS Code 기본 테마 소스](https://github.com/microsoft/vscode/tree/main/extensions)와 [Gruvbox 원본 팔레트](https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim)를 바탕으로 터미널 UI에 맞춰 구성했습니다. Light/Dark는 Visual Studio 기본 테마 기준이며, Gruvbox는 기본 대비(medium) 기준입니다. RGB를 사용하며, 256색 터미널에서는 Vty가 지원 색상으로 변환합니다. VS Code의 투명도 색상은 터미널에서 표시 가능한 불투명 색상으로 바꿨습니다.
 

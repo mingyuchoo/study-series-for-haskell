@@ -37,6 +37,9 @@ renderStatus language status = case status of
   EditorFinished code -> translate language "편집기 종료 코드: " <> T.pack (show code)
   CommandFinished code -> translate language "명령 종료 코드: " <> T.pack (show code)
   InvalidCommand -> translate language "유효한 명령어를 입력하세요"
+  InvalidEditor -> translate language "편집기 경로에는 줄바꿈이나 NUL을 넣을 수 없습니다"
+  SettingsSaved -> translate language "설정을 저장했습니다"
+  SettingsSaveFailed err -> translate language "설정 저장 실패: " <> renderFileError language err
 
 renderFileError :: Language -> FileError -> T.Text
 renderFileError language err = translate language $ case err of
@@ -76,6 +79,13 @@ translations =
   , ("보기: ", "View: ")
   , ("C-p/n 스크롤  C-v/M-v 페이지  M-</> 처음/끝  C-g/C-x k 닫기  C-x C-c 종료", "C-p/n Scroll  C-v/M-v Page  M-</> Start/End  C-g/C-x k Close  C-x C-c Quit")
   , ("F3 테마", "F3 Theme")
+  , ("F4 편집기", "F4 Editor")
+  , ("편집기: ", "Editor: ")
+  , ("  (RET 저장, C-g 취소)", "  (RET Save, C-g Cancel)")
+  , ("실행 파일 이름/전체 경로만 입력 (인자 제외). 비우면 환경 변수/기본 편집기 사용", "Executable name/full path only (no arguments). Empty uses environment/default editor")
+  , ("편집기 경로에는 줄바꿈이나 NUL을 넣을 수 없습니다", "Editor path cannot contain newlines or NUL")
+  , ("설정을 저장했습니다", "Settings saved")
+  , ("설정 저장 실패: ", "Failed to save settings: ")
   , ("테마 선택", "Select theme")
   , ("미리보기: ", "Preview: ")
   , ("↑/↓ C-p/n 이동  1-8 선택  RET 적용  Esc/C-g 취소", "↑/↓ C-p/n Move  1-8 Select  RET Apply  Esc/C-g Cancel")

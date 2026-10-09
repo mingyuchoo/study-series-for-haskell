@@ -18,6 +18,9 @@ data Status
   | EditorFinished Int
   | CommandFinished Int
   | InvalidCommand
+  | InvalidEditor
+  | SettingsSaved
+  | SettingsSaveFailed FileError
   | CurrentDirectory FilePath
   | Failed FileError
   deriving (Eq, Show)

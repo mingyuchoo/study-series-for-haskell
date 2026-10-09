@@ -13,13 +13,13 @@ import System.Process (CreateProcess (..), proc, waitForProcess, withCreateProce
 import System.Process (shell)
 #endif
 
-editFile :: FilePath -> FilePath -> IO Int
-editFile cwd path = do
+editFile :: Maybe FilePath -> FilePath -> FilePath -> IO Int
+editFile preferred cwd path = do
   exists <- doesFileExist path
   unless exists $ ioError (userError "편집할 일반 파일이 없습니다")
   visual <- lookupEnv "VISUAL"
   editor <- lookupEnv "EDITOR"
-  let configured = filter (not . null) [value | Just value <- [visual, editor]]
+  let configured = filter (not . null) [value | Just value <- [preferred, visual, editor]]
 #if defined(mingw32_HOST_OS)
       fallback = "notepad.exe"
 #else

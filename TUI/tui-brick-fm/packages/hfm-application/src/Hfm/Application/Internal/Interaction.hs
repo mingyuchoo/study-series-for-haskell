@@ -1,6 +1,6 @@
 module Hfm.Application.Internal.Interaction
   ( cancelMode, moveBoundary, switchPanel, movePage, startPrompt
-  , searchEvent, promptEvent, confirmEvent, viewEvent
+  , searchEvent, promptEvent, editorPromptEvent, confirmEvent, viewEvent
   ) where
 
 import Control.Monad (when)
@@ -12,6 +12,7 @@ import Hfm.Application.Internal.Process (executeCommand)
 import Hfm.Application.State
 import Hfm.Application.Status
 import Hfm.Domain.Editor (editText)
+import Hfm.Domain.Config (Settings (..), validEditor)
 import Hfm.Domain.Entry
 import Hfm.Domain.Input
 import Hfm.Domain.Selection (selectAt)
@@ -87,6 +88,22 @@ promptEvent op value event = case event of
     st <- get
     case editText event value (stInputCursor st) of
       Just (newValue, cursor) -> modify (\s -> s { stMode = Prompt op newValue, stInputCursor = cursor })
+      Nothing -> pure ()
+
+editorPromptEvent :: T.Text -> Input -> Action ()
+editorPromptEvent value event = case event of
+  KeyPress KEsc [] -> cancelMode
+  KeyPress KEnter []
+    | not (validEditor value) -> modify (\s -> s { stStatus = InvalidEditor })
+    | otherwise -> modify $ \s ->
+        let executable = T.strip value
+            settings = (currentSettings s)
+              { settingsEditor = if T.null executable then Nothing else Just (T.unpack executable) }
+        in (applySettings settings s) { stMode = Browse, stInputCursor = 0, stStatus = SettingsSaved }
+  _ -> do
+    st <- get
+    case editText event value (stInputCursor st) of
+      Just (newValue, cursor) -> modify (\s -> s { stMode = EditorPrompt newValue, stInputCursor = cursor })
       Nothing -> pure ()
 
 confirmEvent :: Input -> Action ()

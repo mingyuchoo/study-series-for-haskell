@@ -13,6 +13,8 @@ module Hfm.Application.State
   , Operation (..)
   , defaultConfig
   , configWithKeyBinding
+  , currentSettings
+  , applySettings
   , initialState
   , activePanel
   , replaceActivePanel
@@ -30,7 +32,7 @@ import Hfm.Application.Status (Status (Ready))
 import System.FilePath ((</>))
 import Hfm.Domain.Theme
 import Hfm.Domain.Selection
-import Hfm.Domain.Config (KeyBindingConfig (..), KeyBindingStyle (..))
+import Hfm.Domain.Config (KeyBindingConfig (..), KeyBindingStyle (..), Settings (..), defaultSettings)
 import Control.Applicative ((<|>))
 import Data.List (findIndex)
 import qualified Data.Text as T
@@ -39,7 +41,7 @@ import Hfm.Domain.Language (Language (..))
 
 data Side = LeftSide | RightSide deriving (Eq, Show)
 data Operation = Copy | Move | Rename | Mkdir | Command deriving (Eq, Show)
-data Mode = Browse | Search | Prompt Operation T.Text | ConfirmDelete | ViewFile FilePath T.Text Int deriving (Eq, Show)
+data Mode = Browse | Search | Prompt Operation T.Text | EditorPrompt T.Text | ConfirmDelete | ViewFile FilePath T.Text Int deriving (Eq, Show)
 
 data Panel = Panel
   { panelPath :: FilePath
@@ -48,7 +50,10 @@ data Panel = Panel
   , panelSearch :: T.Text
   }
 
-data AppConfig = AppConfig { configKeyBinding :: KeyBindingStyle }
+data AppConfig = AppConfig
+  { configKeyBinding :: KeyBindingStyle
+  , configSettings :: Settings
+  }
 
 data AppState = AppState
   { stLeft :: Panel
@@ -68,19 +73,30 @@ data AppState = AppState
   }
 
 defaultConfig :: AppConfig
-defaultConfig = AppConfig Emacs
+defaultConfig = AppConfig Emacs defaultSettings
 
 configWithKeyBinding :: KeyBindingConfig -> AppConfig
-configWithKeyBinding cfg = AppConfig (bindingStyle cfg)
+configWithKeyBinding cfg = defaultConfig { configKeyBinding = bindingStyle cfg }
+
+currentSettings :: AppState -> Settings
+currentSettings st = (configSettings (stConfig st))
+  { settingsLanguage = stLanguage st, settingsTheme = stTheme st }
+
+applySettings :: Settings -> AppState -> AppState
+applySettings settings st = st
+  { stConfig = (stConfig st) { configSettings = settings }
+  , stLanguage = settingsLanguage settings
+  , stTheme = settingsTheme settings
+  }
 
 initialState :: FilePath -> [Entry] -> FilePath -> [Entry] -> AppConfig -> (Int, Int) -> AppState
 initialState left leftEntries right rightEntries cfg size = AppState
   { stLeft = Panel left (selection leftEntries) leftEntries ""
   , stRight = Panel right (selection rightEntries) rightEntries ""
   , stActive = LeftSide
-  , stTheme = Dark
+  , stTheme = settingsTheme (configSettings cfg)
   , stThemePicker = Nothing
-  , stLanguage = Korean
+  , stLanguage = settingsLanguage (configSettings cfg)
   , stMode = Browse
   , stInputCursor = 0
   , stPendingCtrlX = False

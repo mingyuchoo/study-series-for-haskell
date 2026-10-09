@@ -55,7 +55,7 @@ spec = do
           cases = [(Browse, "File manager"), (Search, "Search: "),
                    (Prompt Copy "한글/대상", "Copy to: "), (Prompt Move "한글/대상", "Move/rename to: "),
                    (Prompt Mkdir "한글/대상", "New folder: "), (Prompt Rename "새 이름", "New name: "),
-                   (Prompt Command "echo 한글", "Command: "), (ConfirmDelete, "Confirm delete: "),
+                   (Prompt Command "echo 한글", "Command: "), (EditorPrompt "한글/editor.exe", "Editor: "), (ConfirmDelete, "Confirm delete: "),
                    (ViewFile "/tmp/한글.txt" "한글 내용" 0, "View: ")]
       mapM_ (\(mode, label) -> do
         let st = base { stMode = mode, stInputCursor = 2, stPendingCtrlX = True }
@@ -94,6 +94,16 @@ spec = do
           [toggleLanguage st, toggleLanguage (toggleLanguage st)]) [(40, 12), (60, 10), (80, 24)]
 
   describe "Semantic status presentation" $ do
+    it "renders editor configuration and save failures in both languages" $ do
+      let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (160, 24))
+            { stMode = EditorPrompt "C:\\한글\\nvim.exe", stInputCursor = 0 }
+      T.unlines (viewerRows st) `shouldSatisfy` T.isInfixOf "편집기: "
+      T.unlines (viewerRows (toggleLanguage st)) `shouldSatisfy` T.isInfixOf "Editor: "
+      T.unlines (viewerRows (toggleLanguage st)) `shouldSatisfy` T.isInfixOf "C:\\한글\\nvim.exe"
+      renderStatus English SettingsSaved `shouldBe` "Settings saved"
+      renderStatus Korean (SettingsSaveFailed PermissionDenied) `shouldBe` "설정 저장 실패: 파일 접근 권한이 없습니다"
+      renderStatus English (SettingsSaveFailed PermissionDenied) `shouldBe` "Failed to save settings: Permission denied"
+
     it "renders outcomes and typed errors in the selected language" $ do
       renderStatus Korean Copied `shouldBe` "복사했습니다"
       renderStatus English Copied `shouldBe` "Copied"

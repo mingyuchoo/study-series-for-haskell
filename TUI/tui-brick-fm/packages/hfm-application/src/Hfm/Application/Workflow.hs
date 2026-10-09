@@ -12,6 +12,7 @@ import Hfm.Application.Program
 import Hfm.Application.State
 import Hfm.Application.Status
 import Hfm.Domain.Entry
+import Hfm.Domain.Config (settingsEditor)
 import Hfm.Domain.Input
 import Hfm.Domain.Selection (selectAt, selectStep, selectedElement)
 import System.FilePath (takeDirectory, takeFileName)
@@ -26,6 +27,11 @@ dispatch :: Input -> Action ()
 dispatch (Resize w h) = modify (\s -> s { stTerminalSize = (w, h) })
 dispatch (KeyPress (KFun 2) []) = modify toggleLanguage
 dispatch (KeyPress (KFun 3) []) = modify toggleThemePicker
+dispatch (KeyPress (KFun 4) []) = modify $ \s ->
+  if stMode s == Browse && stThemePicker s == Nothing
+    then let value = maybe "" T.pack (settingsEditor (currentSettings s))
+         in s { stMode = EditorPrompt value, stInputCursor = T.length value, stPendingCtrlX = False }
+    else s
 dispatch rawEvent = do
   st <- get
   let event = normalizeMeta rawEvent
@@ -49,6 +55,7 @@ dispatch rawEvent = do
           Browse -> browseEvent event
           Search -> searchEvent event
           Prompt op value -> promptEvent op value event
+          EditorPrompt value -> editorPromptEvent value event
           ConfirmDelete -> confirmEvent event
           ViewFile path content offset -> viewEvent path content offset event
 

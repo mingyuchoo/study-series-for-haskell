@@ -2,13 +2,17 @@ module Main (main) where
 
 import Control.Exception (bracket)
 import Hfm.Domain.Config
-import Hfm.Infrastructure.Config (decodeKeyBindingConfig)
+import Hfm.Infrastructure.Config
+  ( decodeKeyBindingConfig, decodeSettings, loadSettingsFrom, saveSettingsTo
+  , getSettingsPath, loadSettings, saveSettings )
+import Hfm.Domain.Language (Language (..))
+import Hfm.Domain.Theme (Theme (Monokai), themes)
 import Hfm.Infrastructure.FileSystem
 import qualified Hfm.Infrastructure.Process as Process
 import Hfm.Infrastructure.Ports (ioProcesses)
 import qualified Hfm.Application.Effects.Ports as Ports
 import System.Directory
-  ( createDirectory, doesDirectoryExist, doesFileExist, getTemporaryDirectory, getCurrentDirectory
+  ( createDirectory, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, getTemporaryDirectory, getCurrentDirectory, listDirectory
   , removeFile, removePathForcibly, createFileLink, createDirectoryLink
   , getSymbolicLinkTarget, withCurrentDirectory )
 import System.FilePath ((</>))
@@ -45,6 +49,60 @@ withFixture action = do
 
 spec :: Spec
 spec = do
+  describe "Persisted editor, language and theme" $ do
+    it "uses the configured directory and preserves the legacy keybinding file" $ withFixture $ \dir ->
+      withEnvironment "XDG_CONFIG_HOME" (Just dir) $ do
+        let folder = dir </> "hfm"
+            legacy = folder </> "keybindings.yaml"
+            settings = Settings (Just "nvim.exe") English Monokai
+        createDirectoryIfMissing True folder
+        writeFile legacy "binding_style: vim\n"
+        getSettingsPath `shouldReturn` (folder </> "settings.yaml")
+        loadSettings `shouldReturn` Right defaultSettings
+        saveSettings settings `shouldReturn` Right ()
+        loadSettings `shouldReturn` Right settings
+        readFile legacy `shouldReturn` "binding_style: vim\n"
+
+    it "uses defaults when settings are missing or optional fields are omitted" $ withFixture $ \dir -> do
+      loadSettingsFrom (dir </> "missing" </> "settings.yaml") `shouldReturn` Right defaultSettings
+      decodeSettings "{}" `shouldSatisfy` either (const False) (== defaultSettings)
+      decodeSettings "editor: '  '\nlanguage: en" `shouldSatisfy`
+        either (const False) (== defaultSettings { settingsLanguage = English })
+
+    it "round-trips all themes and languages, Unicode paths, and repeated replacement" $ withFixture $ \dir -> do
+      let path = dir </> "config" </> "settings.yaml"
+      mapM_ (\(theme, language) -> do
+        let settings = Settings (Just "C:\\한글 공백\\editor.exe") language theme
+        saveSettingsTo path settings `shouldReturn` Right ()
+        loadSettingsFrom path `shouldReturn` Right settings) [(theme, language) | theme <- themes, language <- [Korean, English]]
+      saveSettingsTo path defaultSettings `shouldReturn` Right ()
+      loadSettingsFrom path `shouldReturn` Right defaultSettings
+      listDirectory (dir </> "config") `shouldReturn` ["settings.yaml"]
+
+    it "reports malformed or unsupported settings without overwriting them" $ withFixture $ \dir -> do
+      let path = dir </> "settings.yaml"
+      mapM_ (\contents -> do
+        writeFile path contents
+        result <- loadSettingsFrom path
+        result `shouldSatisfy` either (const True) (const False)
+        readFile path `shouldReturn` contents)
+        ["[", "language: fr", "theme: unknown", "editor: 42", "editor: \"bad\\0editor\""]
+
+    it "preserves previous settings on failed validation and cleans a failed replacement" $ withFixture $ \dir -> do
+      let path = dir </> "settings.yaml"
+      saveSettingsTo path defaultSettings `shouldReturn` Right ()
+      failed <- saveSettingsTo path (defaultSettings { settingsEditor = Just "bad\0editor" })
+      failed `shouldSatisfy` either (const True) (const False)
+      loadSettingsFrom path `shouldReturn` Right defaultSettings
+      let blocked = dir </> "blocked.yaml"
+      createDirectory blocked
+      writeFile (blocked </> "keep") "keep"
+      replaced <- saveSettingsTo blocked defaultSettings
+      replaced `shouldSatisfy` either (const True) (const False)
+      readFile (blocked </> "keep") `shouldReturn` "keep"
+      remaining <- listDirectory dir
+      remaining `shouldMatchList` ["settings.yaml", "blocked.yaml"]
+
   describe "External editor and shell process ports" $ do
     it "runs commands in the supplied directory and preserves the app cwd" $ withFixture $ \dir -> do
       originalDirectory <- getCurrentDirectory
@@ -69,23 +127,33 @@ spec = do
       withEnvironment "VISUAL" (Just executable) $
         withEnvironment "EDITOR" (Just "missing-editor") $
         withEnvironment "HFM_TEST_EDITOR" (Just "0") $
-          Process.editFile dir path `shouldReturn` 0
+          Process.editFile Nothing dir path `shouldReturn` 0
       readFile path `shouldReturn` "edited"
       withEnvironment "VISUAL" Nothing $
         withEnvironment "EDITOR" (Just executable) $
         withEnvironment "HFM_TEST_EDITOR" (Just "7") $
-          Process.editFile dir path `shouldReturn` 7
+          Process.editFile Nothing dir path `shouldReturn` 7
 
     it "does not create a missing file or treat a directory as a file" $ withFixture $ \dir -> do
-      Process.editFile dir (dir </> "missing") `shouldThrow` anyIOException
-      Process.editFile dir dir `shouldThrow` anyIOException
+      Process.editFile Nothing dir (dir </> "missing") `shouldThrow` anyIOException
+      Process.editFile Nothing dir dir `shouldThrow` anyIOException
       doesFileExist (dir </> "missing") `shouldReturn` False
+
+    it "uses the saved editor ahead of VISUAL and EDITOR" $ withFixture $ \dir -> do
+      executable <- getExecutablePath
+      let path = dir </> "한글 공백.txt"
+      writeFile path "original"
+      withEnvironment "VISUAL" (Just "missing-visual") $
+        withEnvironment "EDITOR" (Just "missing-editor") $
+        withEnvironment "HFM_TEST_EDITOR" (Just "0") $
+          Process.editFile (Just executable) dir path `shouldReturn` 0
+      readFile path `shouldReturn` "edited"
 
     it "reports a missing editor without changing the file" $ withFixture $ \dir -> do
       let path = dir </> "file.txt"
       writeFile path "keep"
       withEnvironment "VISUAL" (Just (dir </> "missing-editor")) $ do
-        result <- Ports.editFile ioProcesses dir path
+        result <- Ports.editFile ioProcesses Nothing dir path
         result `shouldSatisfy` either (const True) (const False)
       readFile path `shouldReturn` "keep"
 

@@ -64,6 +64,7 @@ planStartup :: FilePath -> FilePath -> AppConfig -> (Int, Int)
             -> Program (Either FileError AppState)
 runProgram :: Monad m => FileSystem m -> Processes m -> Program a -> m a
 handleInput :: Monad m => FileSystem m -> Processes m
+            -> (Settings -> m (Either FileError ()))
             -> Input -> AppState -> m (AppState, Bool)
 ```
 
@@ -73,9 +74,11 @@ handleInput :: Monad m => FileSystem m -> Processes m
 
 복사는 먼저 `DirectoryExists` 요청으로 대상의 파일 시스템 정보를 얻고, domain의 `destinationPath`로 파일명을 계산한 뒤 `CopyEntry`를 요청합니다. 복사가 실패하면 프롬프트를 유지하며 갱신 요청을 만들지 않습니다. 성공하면 두 패널을 읽고 둘 다 성공한 경우 함께 갱신합니다. 두 번째 패널 읽기가 실패하면 기존 패널들을 유지합니다.
 
-`Effects.Runtime`은 요청을 `FileSystem m` 또는 `Processes m` 레코드의 대응 함수에 전달하는 실행기입니다. 정책이나 키 분기가 없습니다. `handleInput`은 계획 생성과 실행을 연결합니다. `Main`이 두 IO 구현을 각각 주입하고, 테스트에서는 `State [String]` 메모리 포트로 호출 순서를 기록합니다. 파일 계획에는 프로세스 구현이 호출되지 않으며, 프로세스 요청을 실행할 때도 파일 포트에 접근하지 않습니다. 프로세스 작업 성공 후의 목록 갱신은 별도 파일 요청으로 계획에 나타납니다.
+`Effects.Runtime`은 요청을 `FileSystem m` 또는 `Processes m` 레코드의 대응 함수에 전달하는 실행기입니다. 키 분기는 순수한 계획에 있습니다. `handleInput`은 계획 생성과 실행을 연결하고, 적용한 `Settings`가 바뀌면 주입된 저장 함수를 호출합니다. 테마 미리보기는 적용한 테마와 분리되어 저장 대상에 포함되지 않습니다. 저장 실패 시 이전 설정과 입력창·테마 메뉴를 복구하고 의미적 오류 상태를 설정합니다. `Main`이 두 IO 구현과 `Infrastructure.Config.saveSettings`를 주입하며, 테스트에서는 `State [String]` 메모리 포트와 저장 함수로 호출 순서를 기록합니다. 파일 계획에는 프로세스 구현이 호출되지 않으며, 프로세스 요청을 실행할 때도 파일 포트에 접근하지 않습니다. 프로세스 작업 성공 후의 목록 갱신은 별도 파일 요청으로 계획에 나타납니다.
 
 `EditFile`과 `RunCommand`도 타입이 정해진 요청이며 실행 결과는 종료 코드 `Int`입니다. `Infrastructure.Process`는 편집기 실행 파일을 `proc`로 호출하여 파일 경로를 한 인자로 전달하고, 셸 명령은 Windows PowerShell 또는 Unix `/bin/sh`에서 실행합니다. 프로세스의 `cwd`를 활성 패널 경로로 지정하므로 앱 전역 작업 디렉터리는 바뀌지 않습니다. TUI는 `FileSystem`을 `liftIO`로, `Processes`를 Brick의 `suspendAndResume'`로 감싸서 같은 실행기를 사용합니다. 명령 출력 확인까지 터미널을 외부 프로세스에 맡긴 뒤 TUI를 복원하고 파일 목록을 새로고칩니다. 이름 변경은 기존 `MoveEntry`의 덮어쓰기 방지 검사를 재사용합니다.
+
+`Domain.Config.Settings`는 편집기 실행 파일(`Maybe FilePath`), 언어, 테마를 담습니다. `Main`이 `settings.yaml`을 읽어 `AppConfig`에 넣고 `initialState`가 언어와 테마를 복원합니다. `F4`의 편집기 입력에는 기존 `Domain.Editor.editText`를 사용합니다. `EditFile` 요청과 프로세스 포트는 저장한 편집기를 첫 인자로 전달하며, 없을 때는 `VISUAL`·`EDITOR`·OS 기본 편집기를 사용합니다. 설정 어댑터는 기존 YAML 의존성으로 직렬화하고 같은 디렉터리의 임시 파일을 완성한 뒤 교체합니다. 설정이 없으면 기본값으로 시작하지만 읽기·파싱 오류는 숨기거나 원본을 덮어쓰지 않습니다.
 
 ## application 내부의 응집도
 

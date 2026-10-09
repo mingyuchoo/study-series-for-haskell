@@ -51,7 +51,7 @@ renderThemePicker st choices = centerLayer $
 
 renderManager :: AppState -> Widget Name
 renderManager st = vBox
-  [ withAttr (attrName "header") $ padLeftRight 1 $ txt (translate (stLanguage st) "hfm  |  파일 관리자" <> "  |  " <> translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "F3 테마")
+  [ withAttr (attrName "header") $ padLeftRight 1 $ txt (translate (stLanguage st) "hfm  |  파일 관리자" <> "  |  " <> translate (stLanguage st) "F2 한국어" <> "  |  " <> translate (stLanguage st) "F3 테마" <> "  |  " <> translate (stLanguage st) "F4 편집기")
   , renderInput st
   , hBox [renderPanel st LeftSide (stLeft st) leftWidth, renderPanel st RightSide (stRight st) rightWidth]
   , renderStatusBar st
@@ -70,6 +70,7 @@ navigationHelp st
   | otherwise = case stMode st of
       Search -> translate (stLanguage st) "C-s/r 다음/이전  C-p/n 이동  C-v/M-v 페이지  C-g 취소"
       Prompt {} -> translate (stLanguage st) "C-a/e 처음/끝  C-b/f 문자  M-b/f 단어  C-k/M-d 삭제"
+      EditorPrompt {} -> translate (stLanguage st) "실행 파일 이름/전체 경로만 입력 (인자 제외). 비우면 환경 변수/기본 편집기 사용"
       ConfirmDelete -> translate (stLanguage st) "y 삭제  n/C-g 취소"
       _ -> translate (stLanguage st) "C-p/n 이동  C-v/M-v 페이지  M-</> 처음/끝  C-x o 패널  C-x C-c 종료"
 
@@ -82,6 +83,7 @@ renderInput st = withAttr (attrName "input") $ padLeftRight 1 $ txt $ case stMod
   Prompt Rename value -> translate (stLanguage st) "새 이름: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
   Prompt Mkdir value -> translate (stLanguage st) "새 폴더: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 생성, C-g 취소)"
   Prompt Command value -> translate (stLanguage st) "명령어: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 실행, C-g 취소)"
+  EditorPrompt value -> translate (stLanguage st) "편집기: " <> markInputCursor st value <> translate (stLanguage st) "  (RET 저장, C-g 취소)"
   ConfirmDelete -> translate (stLanguage st) "삭제 확인: " <> maybe "" (T.pack . entryName) (selectedEntry st) <> translate (stLanguage st) "  (하위 내용 포함, y 삭제, 다른 키 취소)"
   ViewFile {} -> ""
 

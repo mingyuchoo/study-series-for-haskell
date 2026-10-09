@@ -21,7 +21,7 @@ data Request a where
   MoveEntry :: FilePath -> FilePath -> Request ()
   DeleteEntry :: FilePath -> Request ()
   MakeDirectory :: FilePath -> Request ()
-  EditFile :: FilePath -> FilePath -> Request Int
+  EditFile :: Maybe FilePath -> FilePath -> FilePath -> Request Int
   RunCommand :: FilePath -> T.Text -> Request Int
 
 -- Continuations allow later requests to depend on earlier results, including failure.
