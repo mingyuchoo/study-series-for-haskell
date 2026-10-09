@@ -17,6 +17,11 @@ and this project adheres to the
 - 상세한 README (사용법, 키바인딩, 설정 방법)
 
 ### Changed
+- GHC 9.14.1 및 Nightly 2026-10-09 기반으로 모든 직접 의존성을 Hackage 최신 호환 릴리스로 갱신 (`time`은 Aeson 제약으로 1.15 사용)
+- Brick 3.0, Vty 6.6, vty-unix 0.4.0.0, Skylighting 0.15, Hspec 2.11.18 사용
+- CI, Docker, Nix의 GHC 버전 통일 및 GitHub Actions 의존성 갱신
+- 유지보수가 중단된 릴리스 액션을 GitHub CLI로 교체
+- 사용하지 않으며 GHC 9.14.1 빌드를 막던 doctest 및 doctest-discover 의존성 제거
 - FileSearch 모듈 분리 및 에러 핸들링 강화
 - 메타데이터 개선 (synopsis, category, description)
 - 테스트 커버리지 향상 (Fuzzy, Types, FileSearch, Event, UI 모듈)

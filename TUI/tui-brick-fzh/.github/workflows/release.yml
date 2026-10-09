@@ -5,23 +5,20 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+        GH_TOKEN: ${{ github.token }}
+        RELEASE_TAG: ${{ github.ref_name }}
+        RELEASE_REPOSITORY: ${{ github.repository }}
+      run: gh release create "$RELEASE_TAG" --repo "$RELEASE_REPOSITORY" --title "Release $RELEASE_TAG" --notes "" --verify-tag
 
   build-binaries:
     name: Build Binary for ${{ matrix.os }}
@@ -40,22 +37,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
 
     - name: Setup Haskell Stack
-      uses: haskell-actions/setup@v2
+      uses: haskell-actions/setup@v2.12.1
       with:
-        ghc-version: '9.10.3'
+        ghc-version: '9.14.1'
         enable-stack: true
         stack-version: 'latest'
 
     - name: Cache Stack dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-stack-release-${{ hashFiles('stack.yaml', 'package.yaml') }}
+        key: ${{ runner.os }}-stack-release-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-stack-release-
 
@@ -73,11 +70,9 @@ jobs:
         cd ..
 
     - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./bin/${{ matrix.asset_name }}.tar.gz
-        asset_name: ${{ matrix.asset_name }}.tar.gz
-        asset_content_type: application/gzip
+        GH_TOKEN: ${{ github.token }}
+        RELEASE_TAG: ${{ github.ref_name }}
+        RELEASE_REPOSITORY: ${{ github.repository }}
+        RELEASE_ASSET: ./bin/${{ matrix.asset_name }}.tar.gz
+      run: gh release upload "$RELEASE_TAG" "$RELEASE_ASSET" --repo "$RELEASE_REPOSITORY"

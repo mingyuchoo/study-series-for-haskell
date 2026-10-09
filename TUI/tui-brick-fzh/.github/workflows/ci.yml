@@ -14,26 +14,26 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        ghc: ['9.10.3']
+        ghc: ['9.14.1']
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
 
     - name: Setup Haskell Stack
-      uses: haskell-actions/setup@v2
+      uses: haskell-actions/setup@v2.12.1
       with:
         ghc-version: ${{ matrix.ghc }}
         enable-stack: true
         stack-version: 'latest'
 
     - name: Cache Stack dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'package.yaml') }}
+        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-stack-
 
@@ -60,21 +60,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7.0.1
 
     - name: Setup Haskell Stack
-      uses: haskell-actions/setup@v2
+      uses: haskell-actions/setup@v2.12.1
       with:
+        ghc-version: '9.14.1'
         enable-stack: true
         stack-version: 'latest'
 
     - name: Cache Stack dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         path: |
           ~/.stack
           .stack-work
-        key: ${{ runner.os }}-lint-${{ hashFiles('stack.yaml', 'package.yaml') }}
+        key: ${{ runner.os }}-lint-${{ hashFiles('stack.yaml', 'stack.yaml.lock', 'package.yaml') }}
         restore-keys: |
           ${{ runner.os }}-lint-
 

@@ -20,9 +20,26 @@
 
 ## 요구사항
 
+- **운영체제**: Linux 또는 macOS (Windows에서는 WSL 사용)
+- **컴파일러**: GHC 9.14.1 (`base` 4.22.0.0)
+- **빌드 도구**: Stack 3.11.1 이상
 - **최소 터미널 크기**: 80x24
 - 더 작은 크기에서는 경고 메시지가 표시되나 계속 사용 가능
 - 최적의 사용을 위해 100x30 이상 권장
+
+의존성은 [Stackage Nightly 2026-10-09](https://www.stackage.org/nightly-2026-10-09)를
+기준으로 하며, 직접 의존성은 2026-10-10에 확인한 Hackage 최신 호환 릴리스를 사용합니다.
+스냅샷보다 최신인 패키지는 `stack.yaml`의 `extra-deps`에 지정하고,
+`stack.yaml.lock`으로 정확한 패키지 리비전과 해시를 고정합니다.
+주요 라이브러리는 Brick 3.0, Vty 6.6, vty-unix 0.4.0.0, Skylighting 0.15,
+Hspec 2.11.18입니다. Nix는 `haskell.compiler.ghc9141`을 제공하는 nixpkgs가 필요합니다.
+`time`은 최신 Aeson과 time-compat의 `time < 1.16` 제약으로 1.15를 사용합니다.
+간접 의존성의 tagged는 Aeson과 indexed-traversable-instances의 `tagged < 0.9` 제약으로
+0.8.11을 사용합니다. 의존성 상한을 강제로 무시하지 않습니다.
+Stack 3.11.1의 custom setup 코드가 Cabal 3.18 API와 호환되지 않아,
+Cabal과 Cabal-syntax는 3.16.1.0으로 고정합니다.
+사용하지 않던 doctest와 doctest-discover 의존성은 제거했습니다.
+doctest 0.25.0.2는 GHC 9.14.1에서 컴파일되지 않으며, 실제 테스트는 Hspec으로 실행합니다.
 
 ## 설치
 
@@ -38,6 +55,16 @@ stack build
 
 # 설치 (선택 사항)
 stack install
+```
+
+### Nix 개발 셸
+
+`default.nix`는 GHC와 개발 도구를 제공하는 셸입니다. 라이브러리는 Stack의
+동일한 lock 파일로 관리하여 nixpkgs의 이전 패키지 버전이 선택되는 것을 방지합니다.
+
+```bash
+nix-shell --run 'stack build --system-ghc'
+nix-shell --run 'stack test --system-ghc'
 ```
 
 ## 사용 방법

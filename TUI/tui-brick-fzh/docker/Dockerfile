@@ -1,5 +1,5 @@
 ARG PROJECT_NAME=fzh
-FROM fpco/stack-build:lts-24.21
+FROM haskell:9.14.1-slim-bookworm
 WORKDIR /app
 
 ARG PROJECT_NAME

@@ -1,12 +1,58 @@
-# https://www.stackage.org/lts-24.21
-resolver: lts-24.40
+# https://www.stackage.org/nightly-2026-10-09
+resolver: nightly-2026-10-09
+compiler: ghc-9.14.1
 
 packages:
 - .
 
 extra-package-dbs: []
-extra-deps: []
-flags: {}
+extra-deps:
+- containers-0.8.1
+- directory-1.3.11.0
+- filepath-1.5.5.0
+- microlens-0.5.0.0
+- microlens-th-0.4.3.18
+- mtl-2.3.2
+- skylighting-0.15
+- skylighting-core-0.15
+- text-2.1.4
+# shortcut: time 1.15; upgrade when aeson and time-compat support time 1.16.
+- time-1.15
+- unix-2.8.8.0
+- aeson-2.3.2.0
+- microlens-ghc-0.4.15.2
+- microlens-mtl-0.2.1.1
+- microlens-platform-0.4.4.2
+- text-iso8601-0.2.0.0
+- time-compat-1.9.9
+# shortcut: tagged 0.8.11; upgrade when aeson and indexed-traversable-instances support tagged 0.9.
+- tagged-0.8.11
+# shortcut: Cabal 3.16.1.0; upgrade when Stack's setup shim supports Cabal 3.18.
+- Cabal-3.16.1.0
+- binary-0.8.9.3
+- exceptions-0.10.12
+- file-io-0.2.0
+- os-string-2.0.11
+- parsec-3.1.18.0
+- process-1.6.30.0
+- Cabal-syntax-3.16.1.0
+- deepseq-1.5.2.0
+- megaparsec-9.8.3
+- QuickCheck-2.19.0.0
+- semialign-1.4
+- transformers-0.6.3.0
+- transformers-compat-0.8
+- bytestring-0.12.2.0
+- pretty-1.1.3.6
+- template-haskell-2.24.0.0
+- ghc-boot-th-9.14.1
+flags:
+  file-io:
+    os-string: true
+  process:
+    os-string: true
+  unix:
+    os-string: true
 
 notify-if-nix-on-path: false
 

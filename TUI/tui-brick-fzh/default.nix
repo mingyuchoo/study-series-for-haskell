@@ -1,22 +1,17 @@
-# default.nix
 let
   pkgs = import <nixpkgs> {};
-  compilerVersion = "ghc9122";
-  compiler = pkgs.haskell.packages."${compilerVersion}";
 in
-  compiler.developPackage {
-  root = ./.;
-  modifier = drv:
-    pkgs.haskell.lib.addBuildTools drv (
-      with pkgs.haskellPackages;
-      [ stack
-        cabal-install
-        stylish-haskell
-        haskell-language-server
-        hindent
-        hlint
-        hoogle
-        ghcid
-      ]
-    );
+pkgs.mkShell {
+  packages = with pkgs; [
+    haskell.compiler.ghc9141
+    stack
+    cabal-install
+    haskellPackages.stylish-haskell
+    haskell-language-server
+    haskellPackages.hindent
+    hlint
+    haskellPackages.hoogle
+    haskellPackages.ghcid
+  ];
+  buildInputs = with pkgs; [ gmp ncurses zlib ];
 }
