@@ -6,8 +6,8 @@ Brick으로 만든 두 패널 터미널 파일 관리자입니다. Midnight Comm
 
 ```bash
 stack build
-stack run hfm-exe
-stack run hfm-exe -- /path/to/left /path/to/right
+stack run hfm
+stack run hfm -- /path/to/left /path/to/right
 
 # 같은 실행을 scripts에서
 ./scripts/run.sh run /path/to/left /path/to/right

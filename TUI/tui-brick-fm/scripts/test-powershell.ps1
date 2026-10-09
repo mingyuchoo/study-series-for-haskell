@@ -49,6 +49,11 @@ function python { Record-Call 'python' $args }
 function makensis {
     Record-Call 'makensis' $args
     if ($global:LASTEXITCODE -eq 0) {
+        $bin = ($args | Where-Object { $_ -like '/DBIN_DIR=*' }).Substring(10)
+        $source = Select-String -LiteralPath $args[-1] -Pattern '^\s*File /oname=hfm\.exe "\$\{BIN_DIR\}\\([^"]+)"$'
+        if (-not $source -or -not (Test-Path -LiteralPath (Join-Path $bin $source.Matches[0].Groups[1].Value) -PathType Leaf)) {
+            throw 'NSIS must package the built executable as hfm.exe'
+        }
         $out = ($args | Where-Object { $_ -like '/DOUTPUT=*' }).Substring(9)
         Set-Content -LiteralPath $out -Value 'fixture installer'
     }
@@ -60,7 +65,7 @@ exit $LASTEXITCODE
     $result = Invoke-Fixture 'run.ps1' 'run' @('.', '..')
     Assert ($result.Code -eq 0) "Native run failed: $($result.Output)"
     Assert ($result.Calls.Count -eq 1 -and $result.Calls[0].Name -eq 'stack') 'Run must call Stack directly'
-    Assert (($result.Calls[0].Args[0..3] -join '|') -eq 'run|hfm-exe|--|' + (Get-Location).Path) 'Starting directory must resolve before changing location'
+    Assert (($result.Calls[0].Args[0..3] -join '|') -eq 'run|hfm|--|' + (Get-Location).Path) 'Starting directory must resolve before changing location'
     Assert ($result.Calls[0].Cwd -eq $Fixture) 'Stack must run from the project root'
 
     foreach ($command in 'build', 'clean') {

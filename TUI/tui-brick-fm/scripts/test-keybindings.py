@@ -14,7 +14,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALL = subprocess.check_output(["stack", "path", "--local-install-root"], cwd=ROOT, text=True).strip()
-BINARY = Path(INSTALL) / "bin/hfm-exe"
+BINARY = Path(INSTALL) / "bin/hfm"
 
 
 class Terminal:

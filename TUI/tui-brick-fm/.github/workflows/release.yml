@@ -32,10 +32,10 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: hfm-exe
+            artifact_name: hfm
             asset_name: hfm-linux-x86_64
           - os: macos-latest
-            artifact_name: hfm-exe
+            artifact_name: hfm
             asset_name: hfm-macos-arm64
 
     steps:

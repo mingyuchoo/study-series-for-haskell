@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
 PACKAGE_NAME="hfm"
-EXECUTABLE_NAME="hfm-exe"
+EXECUTABLE_NAME="hfm"
 COMMAND_NAME="hfm"
 VERSION="$(sed -n 's/^version:[[:space:]]*//p' "${ROOT_DIR}/apps/hfm/package.yaml" | head -n 1)"
 LICENSE_NAME="$(sed -n 's/^license:[[:space:]]*//p' "${ROOT_DIR}/apps/hfm/package.yaml" | head -n 1)"

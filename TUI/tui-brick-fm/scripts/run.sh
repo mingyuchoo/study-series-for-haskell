@@ -9,7 +9,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/run.sh [build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]
 
-  build  Build hfm-exe
+  build  Build hfm
   test   Run the test suite
   run    Build and open the file manager (default)
   all    Build, test, then open the file manager
@@ -51,13 +51,13 @@ case "$COMMAND" in
     python3 scripts/test-architecture.py
     exec stack test
     ;;
-  run) exec stack run hfm-exe -- "$@" ;;
+  run) exec stack run hfm -- "$@" ;;
   all)
     stack build
     python3 scripts/check-architecture.py
     python3 scripts/test-architecture.py
     stack test
-    exec stack run hfm-exe -- "$@"
+    exec stack run hfm -- "$@"
     ;;
   clean) exec stack clean ;;
 esac

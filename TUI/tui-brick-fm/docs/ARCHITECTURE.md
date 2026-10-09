@@ -136,7 +136,7 @@ stack build
 stack test --fast --ghc-options=-Werror
 make check-architecture
 python3 scripts/test-keybindings.py
-stack run hfm-exe -- /path/to/left /path/to/right
+stack run hfm -- /path/to/left /path/to/right
 ```
 
 `make test`, `scripts/run.sh test`, `scripts/run.ps1 test`와 CI는 아키텍처 검사와 그 회귀 테스트를 실행합니다. `check-architecture.py`는 Stack/Cabal 워크스페이스 등록 일치, 패키지·모듈 의존성 방향, 내부 계층의 의존성 허용 목록과 구체적 IO 사용, 순수 계획의 `Effects` import를 검사합니다. 조건부·library 의존성도 검사하며 실행 포트 사용 허용은 파일명이 아니라 두 `Effects` 모듈의 전체 소스 경로로 판정합니다. 정적 규칙 검사이며 전체 Haskell/YAML 문법을 해석하는 도구는 아니므로 컴파일·동작 테스트를 함께 사용합니다.

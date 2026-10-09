@@ -23,7 +23,7 @@ main = do
     [] -> pure (cwd, cwd)
     [left] -> pure (left, cwd)
     [left, right] -> pure (left, right)
-    _ -> die "사용법: hfm-exe [왼쪽_디렉터리] [오른쪽_디렉터리]"
+    _ -> die "사용법: hfm [왼쪽_디렉터리] [오른쪽_디렉터리]"
   bindings <- configWithKeyBinding <$> loadKeyBindingConfig
   settingsResult <- loadSettings
   settings <- either (die . ("설정을 읽을 수 없습니다: " ++) . T.unpack . renderFileError Korean) pure settingsResult

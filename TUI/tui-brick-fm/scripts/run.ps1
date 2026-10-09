@@ -59,7 +59,7 @@ try {
         Invoke-Checked stack @('test')
     }
     if ($Command -in @('run', 'all')) {
-        Invoke-Checked stack (@('run', 'hfm-exe', '--') + $StartingDirectories)
+        Invoke-Checked stack (@('run', 'hfm', '--') + $StartingDirectories)
     }
     if ($Command -eq 'clean') { Invoke-Checked stack @('clean') }
 }
