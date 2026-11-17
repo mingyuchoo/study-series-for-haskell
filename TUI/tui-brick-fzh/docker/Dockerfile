@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=fzh
+ARG PROJECT_NAME=tui-brick-fzh
 FROM haskell:9.14.1-slim-bookworm
 WORKDIR /app
 

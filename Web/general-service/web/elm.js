@@ -77,272 +77,7 @@ function A9(fun, a, b, c, d, e, f, g, h, i) {
   return fun.a === 9 ? fun.f(a, b, c, d, e, f, g, h, i) : fun(a)(b)(c)(d)(e)(f)(g)(h)(i);
 }
 
-console.warn('Compiled in DEV mode. Follow the advice at https://elm-lang.org/0.19.2/optimize for better performance and smaller assets.');
-
-
-// EQUALITY
-
-function _Utils_eq(x, y)
-{
-	for (
-		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
-		isEqual && (pair = stack.pop());
-		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
-		)
-	{}
-
-	return isEqual;
-}
-
-function _Utils_eqHelp(x, y, depth, stack)
-{
-	if (x === y)
-	{
-		return true;
-	}
-
-	if (typeof x !== 'object' || x === null || y === null)
-	{
-		typeof x === 'function' && _Debug_crash(5);
-		return false;
-	}
-
-	if (depth > 100)
-	{
-		stack.push(_Utils_Tuple2(x,y));
-		return true;
-	}
-
-	/**/
-	if (x.$ === 'Set_elm_builtin')
-	{
-		x = $elm$core$Set$toList(x);
-		y = $elm$core$Set$toList(y);
-	}
-	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	/**_UNUSED/
-	if (x.$ < 0)
-	{
-		x = $elm$core$Dict$toList(x);
-		y = $elm$core$Dict$toList(y);
-	}
-	//*/
-
-	for (var key in x)
-	{
-		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-var _Utils_equal = F2(_Utils_eq);
-var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
-
-
-
-// COMPARISONS
-
-// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
-// the particular integer values assigned to LT, EQ, and GT.
-
-function _Utils_cmp(x, y, ord)
-{
-	if (typeof x !== 'object')
-	{
-		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
-	}
-
-	/**/
-	if (x instanceof String)
-	{
-		var a = x.valueOf();
-		var b = y.valueOf();
-		return a === b ? 0 : a < b ? -1 : 1;
-	}
-	//*/
-
-	/**_UNUSED/
-	if (typeof x.$ === 'undefined')
-	//*/
-	/**/
-	if (x.$[0] === '#')
-	//*/
-	{
-		return (ord = _Utils_cmp(x.a, y.a))
-			? ord
-			: (ord = _Utils_cmp(x.b, y.b))
-				? ord
-				: _Utils_cmp(x.c, y.c);
-	}
-
-	// traverse conses until end of a list or a mismatch
-	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
-	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
-}
-
-var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
-var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
-var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
-var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
-
-var _Utils_compare = F2(function(x, y)
-{
-	var n = _Utils_cmp(x, y);
-	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
-});
-
-
-// COMMON VALUES
-
-var _Utils_Tuple0_UNUSED = 0;
-var _Utils_Tuple0 = { $: '#0' };
-
-function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
-function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
-
-function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
-function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
-
-function _Utils_chr_UNUSED(c) { return c; }
-function _Utils_chr(c) { return new String(c); }
-
-
-// RECORDS
-
-function _Utils_update(oldRecord, updatedFields)
-{
-	var newRecord = {};
-
-	for (var key in oldRecord)
-	{
-		newRecord[key] = oldRecord[key];
-	}
-
-	for (var key in updatedFields)
-	{
-		newRecord[key] = updatedFields[key];
-	}
-
-	return newRecord;
-}
-
-
-// APPEND
-
-var _Utils_append = F2(_Utils_ap);
-
-function _Utils_ap(xs, ys)
-{
-	// append Strings
-	if (typeof xs === 'string')
-	{
-		return xs + ys;
-	}
-
-	// append Lists
-	if (!xs.b)
-	{
-		return ys;
-	}
-	var root = _List_Cons(xs.a, ys);
-	xs = xs.b
-	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		curr = curr.b = _List_Cons(xs.a, ys);
-	}
-	return root;
-}
-
-
-
-var _List_Nil_UNUSED = { $: 0 };
-var _List_Nil = { $: '[]' };
-
-function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
-function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
-
-
-var _List_cons = F2(_List_Cons);
-
-function _List_fromArray(arr)
-{
-	var out = _List_Nil;
-	for (var i = arr.length; i--; )
-	{
-		out = _List_Cons(arr[i], out);
-	}
-	return out;
-}
-
-function _List_toArray(xs)
-{
-	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		out.push(xs.a);
-	}
-	return out;
-}
-
-var _List_map2 = F3(function(f, xs, ys)
-{
-	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
-	{
-		arr.push(A2(f, xs.a, ys.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map3 = F4(function(f, xs, ys, zs)
-{
-	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A3(f, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map4 = F5(function(f, ws, xs, ys, zs)
-{
-	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
-{
-	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_sortBy = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		return _Utils_cmp(f(a), f(b));
-	}));
-});
-
-var _List_sortWith = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		var ord = A2(f, a, b);
-		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
-	}));
-});
-
+console.warn('Compiled in DEV mode. Follow the advice at https://elm-lang.org/0.19.3/optimize for better performance and smaller assets.');
 
 
 var _JsArray_empty = [];
@@ -790,6 +525,271 @@ function _Debug_regionToString(region)
 	}
 	return 'on lines ' + region.start.line + ' through ' + region.end.line;
 }
+
+
+
+// EQUALITY
+
+function _Utils_eq(x, y)
+{
+	for (
+		var pair, stack = [], isEqual = _Utils_eqHelp(x, y, 0, stack);
+		isEqual && (pair = stack.pop());
+		isEqual = _Utils_eqHelp(pair.a, pair.b, 0, stack)
+		)
+	{}
+
+	return isEqual;
+}
+
+function _Utils_eqHelp(x, y, depth, stack)
+{
+	if (x === y)
+	{
+		return true;
+	}
+
+	if (typeof x !== 'object' || x === null || y === null)
+	{
+		typeof x === 'function' && _Debug_crash(5);
+		return false;
+	}
+
+	if (depth > 100)
+	{
+		stack.push(_Utils_Tuple2(x,y));
+		return true;
+	}
+
+	/**/
+	if (x.$ === 'Set_elm_builtin')
+	{
+		x = $elm$core$Set$toList(x);
+		y = $elm$core$Set$toList(y);
+	}
+	if (x.$ === 'RBNode_elm_builtin' || x.$ === 'RBEmpty_elm_builtin')
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	/**_UNUSED/
+	if (x.$ < 0)
+	{
+		x = $elm$core$Dict$toList(x);
+		y = $elm$core$Dict$toList(y);
+	}
+	//*/
+
+	for (var key in x)
+	{
+		if (!_Utils_eqHelp(x[key], y[key], depth + 1, stack))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+var _Utils_equal = F2(_Utils_eq);
+var _Utils_notEqual = F2(function(a, b) { return !_Utils_eq(a,b); });
+
+
+
+// COMPARISONS
+
+// Code in Generate/JavaScript.hs, Basics.js, and List.js depends on
+// the particular integer values assigned to LT, EQ, and GT.
+
+function _Utils_cmp(x, y, ord)
+{
+	if (typeof x !== 'object')
+	{
+		return x === y ? /*EQ*/ 0 : x < y ? /*LT*/ -1 : /*GT*/ 1;
+	}
+
+	/**/
+	if (x instanceof String)
+	{
+		var a = x.valueOf();
+		var b = y.valueOf();
+		return a === b ? 0 : a < b ? -1 : 1;
+	}
+	//*/
+
+	/**_UNUSED/
+	if (typeof x.$ === 'undefined')
+	//*/
+	/**/
+	if (x.$[0] === '#')
+	//*/
+	{
+		return (ord = _Utils_cmp(x.a, y.a))
+			? ord
+			: (ord = _Utils_cmp(x.b, y.b))
+				? ord
+				: _Utils_cmp(x.c, y.c);
+	}
+
+	// traverse conses until end of a list or a mismatch
+	for (; x.b && y.b && !(ord = _Utils_cmp(x.a, y.a)); x = x.b, y = y.b) {} // WHILE_CONSES
+	return ord || (x.b ? /*GT*/ 1 : y.b ? /*LT*/ -1 : /*EQ*/ 0);
+}
+
+var _Utils_lt = F2(function(a, b) { return _Utils_cmp(a, b) < 0; });
+var _Utils_le = F2(function(a, b) { return _Utils_cmp(a, b) < 1; });
+var _Utils_gt = F2(function(a, b) { return _Utils_cmp(a, b) > 0; });
+var _Utils_ge = F2(function(a, b) { return _Utils_cmp(a, b) >= 0; });
+
+var _Utils_compare = F2(function(x, y)
+{
+	var n = _Utils_cmp(x, y);
+	return n < 0 ? $elm$core$Basics$LT : n ? $elm$core$Basics$GT : $elm$core$Basics$EQ;
+});
+
+
+// COMMON VALUES
+
+var _Utils_Tuple0_UNUSED = 0;
+var _Utils_Tuple0 = { $: '#0' };
+
+function _Utils_Tuple2_UNUSED(a, b) { return { a: a, b: b }; }
+function _Utils_Tuple2(a, b) { return { $: '#2', a: a, b: b }; }
+
+function _Utils_Tuple3_UNUSED(a, b, c) { return { a: a, b: b, c: c }; }
+function _Utils_Tuple3(a, b, c) { return { $: '#3', a: a, b: b, c: c }; }
+
+function _Utils_chr_UNUSED(c) { return c; }
+function _Utils_chr(c) { return new String(c); }
+
+
+// RECORDS
+
+function _Utils_update(oldRecord, updatedFields)
+{
+	var newRecord = {};
+
+	for (var key in oldRecord)
+	{
+		newRecord[key] = oldRecord[key];
+	}
+
+	for (var key in updatedFields)
+	{
+		newRecord[key] = updatedFields[key];
+	}
+
+	return newRecord;
+}
+
+
+// APPEND
+
+var _Utils_append = F2(_Utils_ap);
+
+function _Utils_ap(xs, ys)
+{
+	// append Strings
+	if (typeof xs === 'string')
+	{
+		return xs + ys;
+	}
+
+	// append Lists
+	if (!xs.b)
+	{
+		return ys;
+	}
+	var root = _List_Cons(xs.a, ys);
+	xs = xs.b
+	for (var curr = root; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		curr = curr.b = _List_Cons(xs.a, ys);
+	}
+	return root;
+}
+
+
+
+var _List_Nil_UNUSED = { $: 0 };
+var _List_Nil = { $: '[]' };
+
+function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
+function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
+
+
+var _List_cons = F2(_List_Cons);
+
+function _List_fromArray(arr)
+{
+	var out = _List_Nil;
+	for (var i = arr.length; i--; )
+	{
+		out = _List_Cons(arr[i], out);
+	}
+	return out;
+}
+
+function _List_toArray(xs)
+{
+	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		out.push(xs.a);
+	}
+	return out;
+}
+
+var _List_map2 = F3(function(f, xs, ys)
+{
+	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
+	{
+		arr.push(A2(f, xs.a, ys.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map3 = F4(function(f, xs, ys, zs)
+{
+	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A3(f, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map4 = F5(function(f, ws, xs, ys, zs)
+{
+	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
+{
+	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_sortBy = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		return _Utils_cmp(f(a), f(b));
+	}));
+});
+
+var _List_sortWith = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		var ord = A2(f, a, b);
+		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
+	}));
+});
 
 
 
@@ -4545,10 +4545,7 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $elm$core$Basics$EQ = {$: 'EQ'};
-var $elm$core$Basics$GT = {$: 'GT'};
-var $elm$core$Basics$LT = {$: 'LT'};
-var $elm$core$List$cons = _List_cons;
+}var $elm$core$List$cons = _List_cons;
 var $elm$core$Dict$foldr = F3(
 	function (func, acc, t) {
 		foldr:
@@ -4574,19 +4571,6 @@ var $elm$core$Dict$foldr = F3(
 			}
 		}
 	});
-var $elm$core$Dict$toList = function (dict) {
-	return A3(
-		$elm$core$Dict$foldr,
-		F3(
-			function (key, value, list) {
-				return A2(
-					$elm$core$List$cons,
-					_Utils_Tuple2(key, value),
-					list);
-			}),
-		_List_Nil,
-		dict);
-};
 var $elm$core$Dict$keys = function (dict) {
 	return A3(
 		$elm$core$Dict$foldr,
@@ -4600,6 +4584,19 @@ var $elm$core$Dict$keys = function (dict) {
 var $elm$core$Set$toList = function (_v0) {
 	var dict = _v0.a;
 	return $elm$core$Dict$keys(dict);
+};
+var $elm$core$Dict$toList = function (dict) {
+	return A3(
+		$elm$core$Dict$foldr,
+		F3(
+			function (key, value, list) {
+				return A2(
+					$elm$core$List$cons,
+					_Utils_Tuple2(key, value),
+					list);
+			}),
+		_List_Nil,
+		dict);
 };
 var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
 var $elm$core$Array$foldr = F3(
@@ -4625,13 +4622,32 @@ var $elm$core$Array$foldr = F3(
 var $elm$core$Array$toList = function (array) {
 	return A3($elm$core$Array$foldr, $elm$core$List$cons, _List_Nil, array);
 };
+var $elm$core$Basics$EQ = {$: 'EQ'};
+var $elm$core$Basics$GT = {$: 'GT'};
+var $elm$core$Basics$LT = {$: 'LT'};
+var $elm$core$Basics$False = {$: 'False'};
+var $author$project$Application$TaskBoard$SignIn = {$: 'SignIn'};
+var $elm$core$Maybe$Nothing = {$: 'Nothing'};
+var $author$project$Domain$Task$Draft = {$: 'Draft'};
+var $author$project$Domain$Task$Important = {$: 'Important'};
+var $author$project$Domain$Task$NotUrgent = {$: 'NotUrgent'};
+var $author$project$Domain$Task$emptyInput = {title: '', status: $author$project$Domain$Task$Draft, urgency: $author$project$Domain$Task$NotUrgent, taskOwner: '', importance: $author$project$Domain$Task$Important, description: '', outcomeOwner: '', expectedResult: ''};
+var $author$project$Application$TaskBoard$initialModel = {draft: $author$project$Domain$Task$emptyInput, tasks: _List_Nil, notice: $elm$core$Maybe$Nothing, editing: $elm$core$Maybe$Nothing, loading: false, session: $elm$core$Maybe$Nothing, authMode: $author$project$Application$TaskBoard$SignIn, authEmail: '', dropTarget: $elm$core$Maybe$Nothing, editorOpen: false, profileOpen: false, reviewDraft: '', authPassword: '', profileDraft: '', draggedTaskId: $elm$core$Maybe$Nothing, noticeVersion: 0, selectedTaskId: $elm$core$Maybe$Nothing, authDisplayName: '', submissionDraft: ''};
+var $author$project$Application$TaskBoard$init = _Utils_Tuple2($author$project$Application$TaskBoard$initialModel, _List_Nil);
+var $elm$core$Result$Ok = function (a) {
+	return {$: 'Ok', a: a};
+};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
-var $elm$json$Json$Decode$Failure = F2(
-	function (a, b) {
-		return {$: 'Failure', a: a, b: b};
-	});
+var $elm$core$Basics$True = {$: 'True'};
+var $elm$core$Result$isOk = function (result) {
+	if (result.$ === 'Ok') {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $elm$json$Json$Decode$Field = F2(
 	function (a, b) {
 		return {$: 'Field', a: a, b: b};
@@ -4640,41 +4656,13 @@ var $elm$json$Json$Decode$Index = F2(
 	function (a, b) {
 		return {$: 'Index', a: a, b: b};
 	});
-var $elm$core$Result$Ok = function (a) {
-	return {$: 'Ok', a: a};
-};
 var $elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
-var $elm$core$Basics$False = {$: 'False'};
-var $elm$core$Basics$add = _Basics_add;
-var $elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
-};
-var $elm$core$Maybe$Nothing = {$: 'Nothing'};
-var $elm$core$String$all = _String_all;
-var $elm$core$Basics$and = _Basics_and;
-var $elm$core$Basics$append = _Utils_append;
-var $elm$json$Json$Encode$encode = _Json_encode;
-var $elm$core$String$fromInt = _String_fromNumber;
-var $elm$core$String$join = F2(
-	function (sep, chunks) {
-		return A2(
-			_String_join,
-			sep,
-			_List_toArray(chunks));
+var $elm$json$Json$Decode$Failure = F2(
+	function (a, b) {
+		return {$: 'Failure', a: a, b: b};
 	});
-var $elm$core$String$split = F2(
-	function (sep, string) {
-		return _List_fromArray(
-			A2(_String_split, sep, string));
-	});
-var $elm$json$Json$Decode$indent = function (str) {
-	return A2(
-		$elm$core$String$join,
-		'\u000A    ',
-		A2($elm$core$String$split, '\u000A', str));
-};
 var $elm$core$List$foldl = F3(
 	function (func, acc, list) {
 		foldl:
@@ -4694,6 +4682,183 @@ var $elm$core$List$foldl = F3(
 			}
 		}
 	});
+var $elm$core$List$reverse = function (list) {
+	return A3($elm$core$List$foldl, $elm$core$List$cons, _List_Nil, list);
+};
+var $elm$core$Basics$le = _Utils_le;
+var $elm$core$Basics$sub = _Basics_sub;
+var $elm$core$Elm$JsArray$empty = _JsArray_empty;
+var $elm$core$Basics$ceiling = _Basics_ceiling;
+var $elm$core$Basics$fdiv = _Basics_fdiv;
+var $elm$core$Basics$logBase = F2(
+	function (base, number) {
+		return _Basics_log(number) / _Basics_log(base);
+	});
+var $elm$core$Basics$toFloat = _Basics_toFloat;
+var $elm$core$Array$branchFactor = 32;
+var $elm$core$Array$shiftStep = $elm$core$Basics$ceiling(
+	A2($elm$core$Basics$logBase, 2, $elm$core$Array$branchFactor));
+var $elm$core$Array$Array_elm_builtin = F4(
+	function (a, b, c, d) {
+		return {$: 'Array_elm_builtin', a: a, b: b, c: c, d: d};
+	});
+var $elm$core$Array$empty = A4($elm$core$Array$Array_elm_builtin, 0, $elm$core$Array$shiftStep, $elm$core$Elm$JsArray$empty, $elm$core$Elm$JsArray$empty);
+var $elm$core$Elm$JsArray$initialize = _JsArray_initialize;
+var $elm$core$Basics$remainderBy = _Basics_remainderBy;
+var $elm$core$Basics$lt = _Utils_lt;
+var $elm$core$Basics$apL = F2(
+	function (f, x) {
+		return f(x);
+	});
+var $elm$core$Array$Leaf = function (a) {
+	return {$: 'Leaf', a: a};
+};
+var $elm$core$Basics$idiv = _Basics_idiv;
+var $elm$core$Basics$eq = _Utils_equal;
+var $elm$core$Basics$add = _Basics_add;
+var $elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
+	});
+var $elm$core$Basics$gt = _Utils_gt;
+var $elm$core$Basics$max = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) > 0) ? x : y;
+	});
+var $elm$core$Basics$mul = _Basics_mul;
+var $elm$core$Basics$floor = _Basics_floor;
+var $elm$core$Elm$JsArray$length = _JsArray_length;
+var $elm$core$Tuple$first = function (_v0) {
+	var x = _v0.a;
+	return x;
+};
+var $elm$core$Array$SubTree = function (a) {
+	return {$: 'SubTree', a: a};
+};
+var $elm$core$Elm$JsArray$initializeFromList = _JsArray_initializeFromList;
+var $elm$core$Array$compressNodes = F2(
+	function (nodes, acc) {
+		compressNodes:
+		while (true) {
+			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodes);
+			var node = _v0.a;
+			var remainingNodes = _v0.b;
+			var newAcc = A2(
+				$elm$core$List$cons,
+				$elm$core$Array$SubTree(node),
+				acc);
+			if (!remainingNodes.b) {
+				return $elm$core$List$reverse(newAcc);
+			} else {
+				var $temp$nodes = remainingNodes,
+					$temp$acc = newAcc;
+				nodes = $temp$nodes;
+				acc = $temp$acc;
+				continue compressNodes;
+			}
+		}
+	});
+var $elm$core$Array$treeFromBuilder = F2(
+	function (nodeList, nodeListSize) {
+		treeFromBuilder:
+		while (true) {
+			var newNodeSize = $elm$core$Basics$ceiling(nodeListSize / $elm$core$Array$branchFactor);
+			if (newNodeSize === 1) {
+				return A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodeList).a;
+			} else {
+				var $temp$nodeList = A2($elm$core$Array$compressNodes, nodeList, _List_Nil),
+					$temp$nodeListSize = newNodeSize;
+				nodeList = $temp$nodeList;
+				nodeListSize = $temp$nodeListSize;
+				continue treeFromBuilder;
+			}
+		}
+	});
+var $elm$core$Array$builderToArray = F2(
+	function (reverseNodeList, builder) {
+		if (!builder.nodeListSize) {
+			return A4(
+				$elm$core$Array$Array_elm_builtin,
+				$elm$core$Elm$JsArray$length(builder.tail),
+				$elm$core$Array$shiftStep,
+				$elm$core$Elm$JsArray$empty,
+				builder.tail);
+		} else {
+			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.nodeList) : builder.nodeList;
+			var treeLen = builder.nodeListSize * $elm$core$Array$branchFactor;
+			var depth = $elm$core$Basics$floor(
+				A2($elm$core$Basics$logBase, $elm$core$Array$branchFactor, treeLen - 1));
+			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.nodeListSize);
+			return A4(
+				$elm$core$Array$Array_elm_builtin,
+				$elm$core$Elm$JsArray$length(builder.tail) + treeLen,
+				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
+				tree,
+				builder.tail);
+		}
+	});
+var $elm$core$Array$initializeHelp = F5(
+	function (fn, fromIndex, len, nodeList, tail) {
+		initializeHelp:
+		while (true) {
+			if (fromIndex < 0) {
+				return A2(
+					$elm$core$Array$builderToArray,
+					false,
+					{tail: tail, nodeList: nodeList, nodeListSize: (len / $elm$core$Array$branchFactor) | 0});
+			} else {
+				var leaf = $elm$core$Array$Leaf(
+					A3($elm$core$Elm$JsArray$initialize, $elm$core$Array$branchFactor, fromIndex, fn));
+				var $temp$fn = fn,
+					$temp$fromIndex = fromIndex - $elm$core$Array$branchFactor,
+					$temp$len = len,
+					$temp$nodeList = A2($elm$core$List$cons, leaf, nodeList),
+					$temp$tail = tail;
+				fn = $temp$fn;
+				fromIndex = $temp$fromIndex;
+				len = $temp$len;
+				nodeList = $temp$nodeList;
+				tail = $temp$tail;
+				continue initializeHelp;
+			}
+		}
+	});
+var $elm$core$Array$initialize = F2(
+	function (len, fn) {
+		if (len <= 0) {
+			return $elm$core$Array$empty;
+		} else {
+			var tailLen = len % $elm$core$Array$branchFactor;
+			var initialFromIndex = (len - tailLen) - $elm$core$Array$branchFactor;
+			var tail = A3($elm$core$Elm$JsArray$initialize, tailLen, len - tailLen, fn);
+			return A5($elm$core$Array$initializeHelp, fn, initialFromIndex, len, _List_Nil, tail);
+		}
+	});
+var $elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
+var $elm$core$String$all = _String_all;
+var $elm$core$Basics$and = _Basics_and;
+var $elm$core$String$join = F2(
+	function (sep, chunks) {
+		return A2(
+			_String_join,
+			sep,
+			_List_toArray(chunks));
+	});
+var $elm$core$Basics$append = _Utils_append;
+var $elm$json$Json$Encode$encode = _Json_encode;
+var $elm$core$String$split = F2(
+	function (sep, string) {
+		return _List_fromArray(
+			A2(_String_split, sep, string));
+	});
+var $elm$json$Json$Decode$indent = function (str) {
+	return A2(
+		$elm$core$String$join,
+		'\u000A    ',
+		A2($elm$core$String$split, '\u000A', str));
+};
 var $elm$core$List$length = function (xs) {
 	return A3(
 		$elm$core$List$foldl,
@@ -4704,9 +4869,22 @@ var $elm$core$List$length = function (xs) {
 		0,
 		xs);
 };
+var $elm$core$String$uncons = _String_uncons;
+var $elm$core$String$fromInt = _String_fromNumber;
+var $elm$core$Basics$or = _Basics_or;
+var $elm$core$Char$toCode = _Char_toCode;
+var $elm$core$Char$isLower = function (_char) {
+	var code = $elm$core$Char$toCode(_char);
+	return (97 <= code) && (code <= 122);
+};
+var $elm$core$Char$isUpper = function (_char) {
+	var code = $elm$core$Char$toCode(_char);
+	return (code <= 90) && (65 <= code);
+};
+var $elm$core$Char$isAlpha = function (_char) {
+	return $elm$core$Char$isLower(_char) || $elm$core$Char$isUpper(_char);
+};
 var $elm$core$List$map2 = _List_map2;
-var $elm$core$Basics$le = _Utils_le;
-var $elm$core$Basics$sub = _Basics_sub;
 var $elm$core$List$rangeHelp = F3(
 	function (lo, hi, list) {
 		rangeHelp:
@@ -4739,19 +4917,6 @@ var $elm$core$List$indexedMap = F2(
 				$elm$core$List$length(xs) - 1),
 			xs);
 	});
-var $elm$core$Char$toCode = _Char_toCode;
-var $elm$core$Char$isLower = function (_char) {
-	var code = $elm$core$Char$toCode(_char);
-	return (97 <= code) && (code <= 122);
-};
-var $elm$core$Char$isUpper = function (_char) {
-	var code = $elm$core$Char$toCode(_char);
-	return (code <= 90) && (65 <= code);
-};
-var $elm$core$Basics$or = _Basics_or;
-var $elm$core$Char$isAlpha = function (_char) {
-	return $elm$core$Char$isLower(_char) || $elm$core$Char$isUpper(_char);
-};
 var $elm$core$Char$isDigit = function (_char) {
 	var code = $elm$core$Char$toCode(_char);
 	return (code <= 57) && (48 <= code);
@@ -4759,10 +4924,6 @@ var $elm$core$Char$isDigit = function (_char) {
 var $elm$core$Char$isAlphaNum = function (_char) {
 	return $elm$core$Char$isLower(_char) || ($elm$core$Char$isUpper(_char) || $elm$core$Char$isDigit(_char));
 };
-var $elm$core$List$reverse = function (list) {
-	return A3($elm$core$List$foldl, $elm$core$List$cons, _List_Nil, list);
-};
-var $elm$core$String$uncons = _String_uncons;
 var $elm$json$Json$Decode$errorOneOf = F2(
 	function (i, error) {
 		return '\u000A\u000A(' + ($elm$core$String$fromInt(i + 1) + (') ' + $elm$json$Json$Decode$indent(
@@ -4866,160 +5027,8 @@ var $elm$json$Json$Decode$errorToStringHelp = F2(
 			}
 		}
 	});
-var $elm$core$Array$branchFactor = 32;
-var $elm$core$Array$Array_elm_builtin = F4(
-	function (a, b, c, d) {
-		return {$: 'Array_elm_builtin', a: a, b: b, c: c, d: d};
-	});
-var $elm$core$Elm$JsArray$empty = _JsArray_empty;
-var $elm$core$Basics$ceiling = _Basics_ceiling;
-var $elm$core$Basics$fdiv = _Basics_fdiv;
-var $elm$core$Basics$logBase = F2(
-	function (base, number) {
-		return _Basics_log(number) / _Basics_log(base);
-	});
-var $elm$core$Basics$toFloat = _Basics_toFloat;
-var $elm$core$Array$shiftStep = $elm$core$Basics$ceiling(
-	A2($elm$core$Basics$logBase, 2, $elm$core$Array$branchFactor));
-var $elm$core$Array$empty = A4($elm$core$Array$Array_elm_builtin, 0, $elm$core$Array$shiftStep, $elm$core$Elm$JsArray$empty, $elm$core$Elm$JsArray$empty);
-var $elm$core$Elm$JsArray$initialize = _JsArray_initialize;
-var $elm$core$Array$Leaf = function (a) {
-	return {$: 'Leaf', a: a};
-};
-var $elm$core$Basics$apL = F2(
-	function (f, x) {
-		return f(x);
-	});
-var $elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
-var $elm$core$Basics$eq = _Utils_equal;
-var $elm$core$Basics$floor = _Basics_floor;
-var $elm$core$Elm$JsArray$length = _JsArray_length;
-var $elm$core$Basics$gt = _Utils_gt;
-var $elm$core$Basics$max = F2(
-	function (x, y) {
-		return (_Utils_cmp(x, y) > 0) ? x : y;
-	});
-var $elm$core$Basics$mul = _Basics_mul;
-var $elm$core$Array$SubTree = function (a) {
-	return {$: 'SubTree', a: a};
-};
-var $elm$core$Elm$JsArray$initializeFromList = _JsArray_initializeFromList;
-var $elm$core$Array$compressNodes = F2(
-	function (nodes, acc) {
-		compressNodes:
-		while (true) {
-			var _v0 = A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodes);
-			var node = _v0.a;
-			var remainingNodes = _v0.b;
-			var newAcc = A2(
-				$elm$core$List$cons,
-				$elm$core$Array$SubTree(node),
-				acc);
-			if (!remainingNodes.b) {
-				return $elm$core$List$reverse(newAcc);
-			} else {
-				var $temp$nodes = remainingNodes,
-					$temp$acc = newAcc;
-				nodes = $temp$nodes;
-				acc = $temp$acc;
-				continue compressNodes;
-			}
-		}
-	});
-var $elm$core$Tuple$first = function (_v0) {
-	var x = _v0.a;
-	return x;
-};
-var $elm$core$Array$treeFromBuilder = F2(
-	function (nodeList, nodeListSize) {
-		treeFromBuilder:
-		while (true) {
-			var newNodeSize = $elm$core$Basics$ceiling(nodeListSize / $elm$core$Array$branchFactor);
-			if (newNodeSize === 1) {
-				return A2($elm$core$Elm$JsArray$initializeFromList, $elm$core$Array$branchFactor, nodeList).a;
-			} else {
-				var $temp$nodeList = A2($elm$core$Array$compressNodes, nodeList, _List_Nil),
-					$temp$nodeListSize = newNodeSize;
-				nodeList = $temp$nodeList;
-				nodeListSize = $temp$nodeListSize;
-				continue treeFromBuilder;
-			}
-		}
-	});
-var $elm$core$Array$builderToArray = F2(
-	function (reverseNodeList, builder) {
-		if (!builder.nodeListSize) {
-			return A4(
-				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.tail),
-				$elm$core$Array$shiftStep,
-				$elm$core$Elm$JsArray$empty,
-				builder.tail);
-		} else {
-			var treeLen = builder.nodeListSize * $elm$core$Array$branchFactor;
-			var depth = $elm$core$Basics$floor(
-				A2($elm$core$Basics$logBase, $elm$core$Array$branchFactor, treeLen - 1));
-			var correctNodeList = reverseNodeList ? $elm$core$List$reverse(builder.nodeList) : builder.nodeList;
-			var tree = A2($elm$core$Array$treeFromBuilder, correctNodeList, builder.nodeListSize);
-			return A4(
-				$elm$core$Array$Array_elm_builtin,
-				$elm$core$Elm$JsArray$length(builder.tail) + treeLen,
-				A2($elm$core$Basics$max, 5, depth * $elm$core$Array$shiftStep),
-				tree,
-				builder.tail);
-		}
-	});
-var $elm$core$Basics$idiv = _Basics_idiv;
-var $elm$core$Basics$lt = _Utils_lt;
-var $elm$core$Array$initializeHelp = F5(
-	function (fn, fromIndex, len, nodeList, tail) {
-		initializeHelp:
-		while (true) {
-			if (fromIndex < 0) {
-				return A2(
-					$elm$core$Array$builderToArray,
-					false,
-					{nodeList: nodeList, nodeListSize: (len / $elm$core$Array$branchFactor) | 0, tail: tail});
-			} else {
-				var leaf = $elm$core$Array$Leaf(
-					A3($elm$core$Elm$JsArray$initialize, $elm$core$Array$branchFactor, fromIndex, fn));
-				var $temp$fn = fn,
-					$temp$fromIndex = fromIndex - $elm$core$Array$branchFactor,
-					$temp$len = len,
-					$temp$nodeList = A2($elm$core$List$cons, leaf, nodeList),
-					$temp$tail = tail;
-				fn = $temp$fn;
-				fromIndex = $temp$fromIndex;
-				len = $temp$len;
-				nodeList = $temp$nodeList;
-				tail = $temp$tail;
-				continue initializeHelp;
-			}
-		}
-	});
-var $elm$core$Basics$remainderBy = _Basics_remainderBy;
-var $elm$core$Array$initialize = F2(
-	function (len, fn) {
-		if (len <= 0) {
-			return $elm$core$Array$empty;
-		} else {
-			var tailLen = len % $elm$core$Array$branchFactor;
-			var tail = A3($elm$core$Elm$JsArray$initialize, tailLen, len - tailLen, fn);
-			var initialFromIndex = (len - tailLen) - $elm$core$Array$branchFactor;
-			return A5($elm$core$Array$initializeHelp, fn, initialFromIndex, len, _List_Nil, tail);
-		}
-	});
-var $elm$core$Basics$True = {$: 'True'};
-var $elm$core$Result$isOk = function (result) {
-	if (result.$ === 'Ok') {
-		return true;
-	} else {
-		return false;
-	}
-};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $elm$json$Json$Decode$map = _Json_map1;
 var $elm$json$Json$Decode$map2 = _Json_map2;
 var $elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5035,161 +5044,51 @@ var $elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
-var $elm$browser$Browser$External = function (a) {
-	return {$: 'External', a: a};
-};
-var $elm$browser$Browser$Internal = function (a) {
-	return {$: 'Internal', a: a};
-};
-var $elm$core$Basics$identity = function (x) {
-	return x;
-};
-var $elm$browser$Browser$Dom$NotFound = function (a) {
-	return {$: 'NotFound', a: a};
-};
-var $elm$url$Url$Http = {$: 'Http'};
-var $elm$url$Url$Https = {$: 'Https'};
-var $elm$url$Url$Url = F6(
-	function (protocol, host, port_, path, query, fragment) {
-		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
 	});
-var $elm$core$String$contains = _String_contains;
-var $elm$core$String$length = _String_length;
-var $elm$core$String$slice = _String_slice;
-var $elm$core$String$dropLeft = F2(
-	function (n, string) {
-		return (n < 1) ? string : A3(
-			$elm$core$String$slice,
-			n,
-			$elm$core$String$length(string),
-			string);
-	});
-var $elm$core$String$indexes = _String_indexes;
-var $elm$core$String$isEmpty = function (string) {
-	return string === '';
+var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
+var $elm$html$Html$Attributes$for = $elm$html$Html$Attributes$stringProperty('htmlFor');
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$html$Html$input = _VirtualDom_node('input');
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Application$TaskBoard$SignUp = {$: 'SignUp'};
+var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
 };
-var $elm$core$String$left = F2(
-	function (n, string) {
-		return (n < 1) ? '' : A3($elm$core$String$slice, 0, n, string);
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
 	});
-var $elm$core$String$toInt = _String_toInt;
-var $elm$url$Url$chompBeforePath = F5(
-	function (protocol, path, params, frag, str) {
-		if ($elm$core$String$isEmpty(str) || A2($elm$core$String$contains, '@', str)) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var _v0 = A2($elm$core$String$indexes, ':', str);
-			if (!_v0.b) {
-				return $elm$core$Maybe$Just(
-					A6($elm$url$Url$Url, protocol, str, $elm$core$Maybe$Nothing, path, params, frag));
-			} else {
-				if (!_v0.b.b) {
-					var i = _v0.a;
-					var _v1 = $elm$core$String$toInt(
-						A2($elm$core$String$dropLeft, i + 1, str));
-					if (_v1.$ === 'Nothing') {
-						return $elm$core$Maybe$Nothing;
-					} else {
-						var port_ = _v1;
-						return $elm$core$Maybe$Just(
-							A6(
-								$elm$url$Url$Url,
-								protocol,
-								A2($elm$core$String$left, i, str),
-								port_,
-								path,
-								params,
-								frag));
-					}
-				} else {
-					return $elm$core$Maybe$Nothing;
-				}
-			}
-		}
-	});
-var $elm$url$Url$chompBeforeQuery = F4(
-	function (protocol, params, frag, str) {
-		if ($elm$core$String$isEmpty(str)) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var _v0 = A2($elm$core$String$indexes, '/', str);
-			if (!_v0.b) {
-				return A5($elm$url$Url$chompBeforePath, protocol, '/', params, frag, str);
-			} else {
-				var i = _v0.a;
-				return A5(
-					$elm$url$Url$chompBeforePath,
-					protocol,
-					A2($elm$core$String$dropLeft, i, str),
-					params,
-					frag,
-					A2($elm$core$String$left, i, str));
-			}
-		}
-	});
-var $elm$url$Url$chompBeforeFragment = F3(
-	function (protocol, frag, str) {
-		if ($elm$core$String$isEmpty(str)) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var _v0 = A2($elm$core$String$indexes, '?', str);
-			if (!_v0.b) {
-				return A4($elm$url$Url$chompBeforeQuery, protocol, $elm$core$Maybe$Nothing, frag, str);
-			} else {
-				var i = _v0.a;
-				return A4(
-					$elm$url$Url$chompBeforeQuery,
-					protocol,
-					$elm$core$Maybe$Just(
-						A2($elm$core$String$dropLeft, i + 1, str)),
-					frag,
-					A2($elm$core$String$left, i, str));
-			}
-		}
-	});
-var $elm$url$Url$chompAfterProtocol = F2(
-	function (protocol, str) {
-		if ($elm$core$String$isEmpty(str)) {
-			return $elm$core$Maybe$Nothing;
-		} else {
-			var _v0 = A2($elm$core$String$indexes, '#', str);
-			if (!_v0.b) {
-				return A3($elm$url$Url$chompBeforeFragment, protocol, $elm$core$Maybe$Nothing, str);
-			} else {
-				var i = _v0.a;
-				return A3(
-					$elm$url$Url$chompBeforeFragment,
-					protocol,
-					$elm$core$Maybe$Just(
-						A2($elm$core$String$dropLeft, i + 1, str)),
-					A2($elm$core$String$left, i, str));
-			}
-		}
-	});
-var $elm$core$String$startsWith = _String_startsWith;
-var $elm$url$Url$fromString = function (str) {
-	return A2($elm$core$String$startsWith, 'http://', str) ? A2(
-		$elm$url$Url$chompAfterProtocol,
-		$elm$url$Url$Http,
-		A2($elm$core$String$dropLeft, 7, str)) : (A2($elm$core$String$startsWith, 'https://', str) ? A2(
-		$elm$url$Url$chompAfterProtocol,
-		$elm$url$Url$Https,
-		A2($elm$core$String$dropLeft, 8, str)) : $elm$core$Maybe$Nothing);
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
 };
-var $elm$core$Basics$never = function (_v0) {
-	never:
-	while (true) {
-		var nvr = _v0.a;
-		var $temp$_v0 = nvr;
-		_v0 = $temp$_v0;
-		continue never;
-	}
+var $elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
 };
-var $elm$core$Task$Perform = function (a) {
-	return {$: 'Perform', a: a};
-};
-var $elm$core$Task$succeed = _Scheduler_succeed;
-var $elm$core$Task$init = $elm$core$Task$succeed(_Utils_Tuple0);
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -5245,1084 +5144,6 @@ var $elm$core$List$foldr = F3(
 	function (fn, acc, ls) {
 		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
 	});
-var $elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						$elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
-var $elm$core$Task$andThen = _Scheduler_andThen;
-var $elm$core$Task$map = F2(
-	function (func, taskA) {
-		return A2(
-			$elm$core$Task$andThen,
-			function (a) {
-				return $elm$core$Task$succeed(
-					func(a));
-			},
-			taskA);
-	});
-var $elm$core$Task$map2 = F3(
-	function (func, taskA, taskB) {
-		return A2(
-			$elm$core$Task$andThen,
-			function (a) {
-				return A2(
-					$elm$core$Task$andThen,
-					function (b) {
-						return $elm$core$Task$succeed(
-							A2(func, a, b));
-					},
-					taskB);
-			},
-			taskA);
-	});
-var $elm$core$Task$sequence = function (tasks) {
-	return A3(
-		$elm$core$List$foldr,
-		$elm$core$Task$map2($elm$core$List$cons),
-		$elm$core$Task$succeed(_List_Nil),
-		tasks);
-};
-var $elm$core$Platform$sendToApp = _Platform_sendToApp;
-var $elm$core$Task$spawnCmd = F2(
-	function (router, _v0) {
-		var task = _v0.a;
-		return _Scheduler_spawn(
-			A2(
-				$elm$core$Task$andThen,
-				$elm$core$Platform$sendToApp(router),
-				task));
-	});
-var $elm$core$Task$onEffects = F3(
-	function (router, commands, state) {
-		return A2(
-			$elm$core$Task$map,
-			function (_v0) {
-				return _Utils_Tuple0;
-			},
-			$elm$core$Task$sequence(
-				A2(
-					$elm$core$List$map,
-					$elm$core$Task$spawnCmd(router),
-					commands)));
-	});
-var $elm$core$Task$onSelfMsg = F3(
-	function (_v0, _v1, _v2) {
-		return $elm$core$Task$succeed(_Utils_Tuple0);
-	});
-var $elm$core$Task$cmdMap = F2(
-	function (tagger, _v0) {
-		var task = _v0.a;
-		return $elm$core$Task$Perform(
-			A2($elm$core$Task$map, tagger, task));
-	});
-_Platform_effectManagers['Task'] = _Platform_createManager($elm$core$Task$init, $elm$core$Task$onEffects, $elm$core$Task$onSelfMsg, $elm$core$Task$cmdMap);
-var $elm$core$Task$command = _Platform_leaf('Task');
-var $elm$core$Task$perform = F2(
-	function (toMessage, task) {
-		return $elm$core$Task$command(
-			$elm$core$Task$Perform(
-				A2($elm$core$Task$map, toMessage, task)));
-	});
-var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Application$TaskBoard$SignIn = {$: 'SignIn'};
-var $author$project$Domain$Task$Draft = {$: 'Draft'};
-var $author$project$Domain$Task$Important = {$: 'Important'};
-var $author$project$Domain$Task$NotUrgent = {$: 'NotUrgent'};
-var $author$project$Domain$Task$emptyInput = {description: '', expectedResult: '', importance: $author$project$Domain$Task$Important, outcomeOwner: '', status: $author$project$Domain$Task$Draft, taskOwner: '', title: '', urgency: $author$project$Domain$Task$NotUrgent};
-var $author$project$Application$TaskBoard$initialModel = {authDisplayName: '', authEmail: '', authMode: $author$project$Application$TaskBoard$SignIn, authPassword: '', draft: $author$project$Domain$Task$emptyInput, draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing, editing: $elm$core$Maybe$Nothing, editorOpen: false, loading: false, notice: $elm$core$Maybe$Nothing, noticeVersion: 0, profileDraft: '', profileOpen: false, reviewDraft: '', selectedTaskId: $elm$core$Maybe$Nothing, session: $elm$core$Maybe$Nothing, submissionDraft: '', tasks: _List_Nil};
-var $author$project$Application$TaskBoard$init = _Utils_Tuple2($author$project$Application$TaskBoard$initialModel, _List_Nil);
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Application$TaskBoard$ApproveTaskResult = F3(
-	function (a, b, c) {
-		return {$: 'ApproveTaskResult', a: a, b: b, c: c};
-	});
-var $author$project$Application$TaskBoard$CreateTask = function (a) {
-	return {$: 'CreateTask', a: a};
-};
-var $author$project$Application$TaskBoard$DeleteTask = function (a) {
-	return {$: 'DeleteTask', a: a};
-};
-var $author$project$Application$TaskBoard$LoadTasks = {$: 'LoadTasks'};
-var $author$project$Application$TaskBoard$Login = F2(
-	function (a, b) {
-		return {$: 'Login', a: a, b: b};
-	});
-var $author$project$Application$TaskBoard$Logout = function (a) {
-	return {$: 'Logout', a: a};
-};
-var $author$project$Application$TaskBoard$MoveTask = F2(
-	function (a, b) {
-		return {$: 'MoveTask', a: a, b: b};
-	});
-var $author$project$Application$TaskBoard$Register = F3(
-	function (a, b, c) {
-		return {$: 'Register', a: a, b: b, c: c};
-	});
-var $author$project$Application$TaskBoard$RequestTaskRevision = F3(
-	function (a, b, c) {
-		return {$: 'RequestTaskRevision', a: a, b: b, c: c};
-	});
-var $author$project$Application$TaskBoard$SignUp = {$: 'SignUp'};
-var $author$project$Application$TaskBoard$SubmitTaskResult = F3(
-	function (a, b, c) {
-		return {$: 'SubmitTaskResult', a: a, b: b, c: c};
-	});
-var $author$project$Application$TaskBoard$UpdateProfile = F2(
-	function (a, b) {
-		return {$: 'UpdateProfile', a: a, b: b};
-	});
-var $author$project$Application$TaskBoard$UpdateTask = F2(
-	function (a, b) {
-		return {$: 'UpdateTask', a: a, b: b};
-	});
-var $author$project$Application$TaskBoard$addEffect = F2(
-	function (effect, _v0) {
-		var model = _v0.a;
-		var effects = _v0.b;
-		return _Utils_Tuple2(
-			model,
-			A2($elm$core$List$cons, effect, effects));
-	});
-var $elm$core$Maybe$andThen = F2(
-	function (callback, maybeValue) {
-		if (maybeValue.$ === 'Just') {
-			var value = maybeValue.a;
-			return callback(value);
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var $author$project$Application$TaskBoard$closeEditor = function (model) {
-	return _Utils_update(
-		model,
-		{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing, editorOpen: false});
-};
-var $author$project$Application$TaskBoard$closePanel = function (model) {
-	return _Utils_update(
-		model,
-		{reviewDraft: '', selectedTaskId: $elm$core$Maybe$Nothing, submissionDraft: ''});
-};
-var $author$project$Application$TaskBoard$errorMessage = F2(
-	function (fallback, error) {
-		if (error.$ === 'Rejected') {
-			var message = error.a;
-			return message;
-		} else {
-			return fallback;
-		}
-	});
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $author$project$Application$TaskBoard$findTask = F2(
-	function (taskId, model) {
-		return $elm$core$List$head(
-			A2(
-				$elm$core$List$filter,
-				function (task) {
-					return _Utils_eq(task.taskId, taskId);
-				},
-				model.tasks));
-	});
-var $author$project$Domain$Task$NotImportant = {$: 'NotImportant'};
-var $author$project$Domain$Task$importanceFromString = function (rawImportance) {
-	switch (rawImportance) {
-		case 'Important':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Important);
-		case 'NotImportant':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$NotImportant);
-		default:
-			return $elm$core$Maybe$Nothing;
-	}
-};
-var $elm$core$Basics$not = _Basics_not;
-var $elm$core$String$trim = _String_trim;
-var $author$project$Application$TaskBoard$optionalText = function (raw) {
-	return ($elm$core$String$trim(raw) === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
-		$elm$core$String$trim(raw));
-};
-var $author$project$Application$TaskBoard$replaceTask = F2(
-	function (movedTask, currentTask) {
-		return _Utils_eq(currentTask.taskId, movedTask.taskId) ? movedTask : currentTask;
-	});
-var $author$project$Application$TaskBoard$ClearNoticeAfter = function (a) {
-	return {$: 'ClearNoticeAfter', a: a};
-};
-var $author$project$Application$TaskBoard$showNotice = F2(
-	function (message, model) {
-		var nextVersion = model.noticeVersion + 1;
-		return _Utils_Tuple2(
-			_Utils_update(
-				model,
-				{
-					notice: $elm$core$Maybe$Just(message),
-					noticeVersion: nextVersion
-				}),
-			_List_fromArray(
-				[
-					$author$project$Application$TaskBoard$ClearNoticeAfter(nextVersion)
-				]));
-	});
-var $author$project$Domain$Task$Approved = {$: 'Approved'};
-var $author$project$Domain$Task$Effective = {$: 'Effective'};
-var $author$project$Domain$Task$Reviewed = {$: 'Reviewed'};
-var $author$project$Domain$Task$Submitted = {$: 'Submitted'};
-var $author$project$Domain$Task$statusFromString = function (rawStatus) {
-	switch (rawStatus) {
-		case 'Draft':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Draft);
-		case 'Reviewed':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Reviewed);
-		case 'Submitted':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Submitted);
-		case 'Approved':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Approved);
-		case 'Effective':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Effective);
-		default:
-			return $elm$core$Maybe$Nothing;
-	}
-};
-var $author$project$Domain$Task$statusLabel = function (taskStatus) {
-	switch (taskStatus.$) {
-		case 'Draft':
-			return '초안';
-		case 'Reviewed':
-			return '검토 완료';
-		case 'Submitted':
-			return '제출됨';
-		case 'Approved':
-			return '승인됨';
-		default:
-			return '효력 발생';
-	}
-};
-var $author$project$Application$TaskBoard$toInput = function (task) {
-	return {description: task.description, expectedResult: task.expectedResult, importance: task.importance, outcomeOwner: task.outcomeOwner, status: task.status, taskOwner: task.taskOwner, title: task.title, urgency: task.urgency};
-};
-var $author$project$Application$TaskBoard$updateForm = F2(
-	function (transform, model) {
-		return _Utils_update(
-			model,
-			{
-				draft: transform(model.draft)
-			});
-	});
-var $author$project$Domain$Task$Urgent = {$: 'Urgent'};
-var $author$project$Domain$Task$urgencyFromString = function (rawUrgency) {
-	switch (rawUrgency) {
-		case 'Urgent':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$Urgent);
-		case 'NotUrgent':
-			return $elm$core$Maybe$Just($author$project$Domain$Task$NotUrgent);
-		default:
-			return $elm$core$Maybe$Nothing;
-	}
-};
-var $author$project$Domain$Task$TitleRequired = {$: 'TitleRequired'};
-var $author$project$Domain$Task$validateInput = function (input) {
-	return ($elm$core$String$trim(input.title) === '') ? $elm$core$Result$Err($author$project$Domain$Task$TitleRequired) : $elm$core$Result$Ok(input);
-};
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var $author$project$Application$TaskBoard$workflowNotice = function (task) {
-	var _v0 = task.status;
-	switch (_v0.$) {
-		case 'Submitted':
-			return '결과물을 제출했습니다.';
-		case 'Approved':
-			return '결과물을 승인했습니다.';
-		case 'Reviewed':
-			return '수정을 요청했습니다.';
-		default:
-			return '업무를 갱신했습니다.';
-	}
-};
-var $author$project$Application$TaskBoard$update = F2(
-	function (msg, model) {
-		switch (msg.$) {
-			case 'SelectAuthMode':
-				var mode = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{authMode: mode, notice: $elm$core$Maybe$Nothing}),
-					_List_Nil);
-			case 'EditAuthEmail':
-				var email = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{authEmail: email}),
-					_List_Nil);
-			case 'EditAuthDisplayName':
-				var displayName = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{authDisplayName: displayName}),
-					_List_Nil);
-			case 'EditAuthPassword':
-				var password = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{authPassword: password}),
-					_List_Nil);
-			case 'SubmitAuthentication':
-				if (($elm$core$String$trim(model.authEmail) === '') || ($elm$core$String$trim(model.authPassword) === '')) {
-					return A2($author$project$Application$TaskBoard$showNotice, '이메일과 비밀번호를 입력해 주세요.', model);
-				} else {
-					if (_Utils_eq(model.authMode, $author$project$Application$TaskBoard$SignUp) && ($elm$core$String$trim(model.authDisplayName) === '')) {
-						return A2($author$project$Application$TaskBoard$showNotice, '표시 이름을 입력해 주세요.', model);
-					} else {
-						var effect = function () {
-							var _v1 = model.authMode;
-							if (_v1.$ === 'SignIn') {
-								return A2(
-									$author$project$Application$TaskBoard$Login,
-									$elm$core$String$trim(model.authEmail),
-									model.authPassword);
-							} else {
-								return A3(
-									$author$project$Application$TaskBoard$Register,
-									$elm$core$String$trim(model.authEmail),
-									$elm$core$String$trim(model.authDisplayName),
-									model.authPassword);
-							}
-						}();
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{loading: true, notice: $elm$core$Maybe$Nothing}),
-							_List_fromArray(
-								[effect]));
-					}
-				}
-			case 'Authenticated':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var session = result.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								authPassword: '',
-								loading: true,
-								profileDraft: session.user.displayName,
-								session: $elm$core$Maybe$Just(session)
-							}),
-						_List_fromArray(
-							[$author$project$Application$TaskBoard$LoadTasks]));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '가입 또는 로그인하지 못했습니다.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'ToggleProfile':
-				var _v3 = model.session;
-				if (_v3.$ === 'Just') {
-					var session = _v3.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{profileDraft: session.user.displayName, profileOpen: !model.profileOpen}),
-						_List_Nil);
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'EditProfileName':
-				var displayName = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{profileDraft: displayName}),
-					_List_Nil);
-			case 'SaveProfile':
-				var _v4 = model.session;
-				if (_v4.$ === 'Just') {
-					var session = _v4.a;
-					return ($elm$core$String$trim(model.profileDraft) === '') ? A2($author$project$Application$TaskBoard$showNotice, '표시 이름을 입력해 주세요.', model) : _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing}),
-						_List_fromArray(
-							[
-								A2(
-								$author$project$Application$TaskBoard$UpdateProfile,
-								session.token,
-								$elm$core$String$trim(model.profileDraft))
-							]));
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'ProfileSaved':
-				var result = msg.a;
-				var _v5 = _Utils_Tuple2(result, model.session);
-				if (_v5.a.$ === 'Ok') {
-					if (_v5.b.$ === 'Just') {
-						var profile = _v5.a.a;
-						var session = _v5.b.a;
-						return A2(
-							$author$project$Application$TaskBoard$showNotice,
-							'프로필을 저장했습니다.',
-							_Utils_update(
-								model,
-								{
-									loading: false,
-									profileDraft: profile.displayName,
-									profileOpen: false,
-									session: $elm$core$Maybe$Just(
-										_Utils_update(
-											session,
-											{user: profile}))
-								}));
-					} else {
-						return _Utils_Tuple2(model, _List_Nil);
-					}
-				} else {
-					var error = _v5.a.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '프로필을 저장하지 못했습니다.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'LogoutRequested':
-				var _v6 = model.session;
-				if (_v6.$ === 'Just') {
-					var session = _v6.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing}),
-						_List_fromArray(
-							[
-								$author$project$Application$TaskBoard$Logout(session.token)
-							]));
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'LoggedOut':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						'로그아웃했습니다.',
-						_Utils_update(
-							$author$project$Application$TaskBoard$initialModel,
-							{noticeVersion: model.noticeVersion}));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '로그아웃하지 못했습니다.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'GotTasks':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var tasks = result.a;
-					var stillSelected = A2(
-						$elm$core$Maybe$andThen,
-						function (taskId) {
-							return A2(
-								$elm$core$List$any,
-								function (task) {
-									return _Utils_eq(task.taskId, taskId);
-								},
-								tasks) ? $elm$core$Maybe$Just(taskId) : $elm$core$Maybe$Nothing;
-						},
-						model.selectedTaskId);
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: false, selectedTaskId: stillSelected, tasks: tasks}),
-						_List_Nil);
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '업무 목록을 불러오지 못했습니다.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'EditTitle':
-				var title = msg.a;
-				return _Utils_Tuple2(
-					A2(
-						$author$project$Application$TaskBoard$updateForm,
-						function (form) {
-							return _Utils_update(
-								form,
-								{title: title});
-						},
-						model),
-					_List_Nil);
-			case 'EditDescription':
-				var description = msg.a;
-				return _Utils_Tuple2(
-					A2(
-						$author$project$Application$TaskBoard$updateForm,
-						function (form) {
-							return _Utils_update(
-								form,
-								{description: description});
-						},
-						model),
-					_List_Nil);
-			case 'EditStatus':
-				var rawStatus = msg.a;
-				var _v9 = $author$project$Domain$Task$statusFromString(rawStatus);
-				if (_v9.$ === 'Just') {
-					var taskStatus = _v9.a;
-					return _Utils_Tuple2(
-						A2(
-							$author$project$Application$TaskBoard$updateForm,
-							function (form) {
-								return _Utils_update(
-									form,
-									{status: taskStatus});
-							},
-							model),
-						_List_Nil);
-				} else {
-					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 업무 상태입니다.', model);
-				}
-			case 'EditUrgency':
-				var rawUrgency = msg.a;
-				var _v10 = $author$project$Domain$Task$urgencyFromString(rawUrgency);
-				if (_v10.$ === 'Just') {
-					var taskUrgency = _v10.a;
-					return _Utils_Tuple2(
-						A2(
-							$author$project$Application$TaskBoard$updateForm,
-							function (form) {
-								return _Utils_update(
-									form,
-									{urgency: taskUrgency});
-							},
-							model),
-						_List_Nil);
-				} else {
-					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 긴급도입니다.', model);
-				}
-			case 'EditImportance':
-				var rawImportance = msg.a;
-				var _v11 = $author$project$Domain$Task$importanceFromString(rawImportance);
-				if (_v11.$ === 'Just') {
-					var taskImportance = _v11.a;
-					return _Utils_Tuple2(
-						A2(
-							$author$project$Application$TaskBoard$updateForm,
-							function (form) {
-								return _Utils_update(
-									form,
-									{importance: taskImportance});
-							},
-							model),
-						_List_Nil);
-				} else {
-					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 중요도입니다.', model);
-				}
-			case 'EditTaskOwner':
-				var owner = msg.a;
-				return _Utils_Tuple2(
-					A2(
-						$author$project$Application$TaskBoard$updateForm,
-						function (form) {
-							return _Utils_update(
-								form,
-								{taskOwner: owner});
-						},
-						model),
-					_List_Nil);
-			case 'EditOutcomeOwner':
-				var owner = msg.a;
-				return _Utils_Tuple2(
-					A2(
-						$author$project$Application$TaskBoard$updateForm,
-						function (form) {
-							return _Utils_update(
-								form,
-								{outcomeOwner: owner});
-						},
-						model),
-					_List_Nil);
-			case 'EditExpectedResult':
-				var expected = msg.a;
-				return _Utils_Tuple2(
-					A2(
-						$author$project$Application$TaskBoard$updateForm,
-						function (form) {
-							return _Utils_update(
-								form,
-								{expectedResult: expected});
-						},
-						model),
-					_List_Nil);
-			case 'OpenNewTask':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing, editorOpen: true, notice: $elm$core$Maybe$Nothing}),
-					_List_Nil);
-			case 'CloseEditor':
-				return _Utils_Tuple2(
-					$author$project$Application$TaskBoard$closeEditor(model),
-					_List_Nil);
-			case 'SubmitTask':
-				var _v12 = $author$project$Domain$Task$validateInput(model.draft);
-				if (_v12.$ === 'Err') {
-					var _v13 = _v12.a;
-					return A2($author$project$Application$TaskBoard$showNotice, '업무 제목을 입력해 주세요.', model);
-				} else {
-					var input = _v12.a;
-					var _v14 = model.editing;
-					if (_v14.$ === 'Just') {
-						var task = _v14.a;
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{loading: true, notice: $elm$core$Maybe$Nothing}),
-							_List_fromArray(
-								[
-									A2($author$project$Application$TaskBoard$UpdateTask, task.taskId, input)
-								]));
-					} else {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{loading: true, notice: $elm$core$Maybe$Nothing}),
-							_List_fromArray(
-								[
-									$author$project$Application$TaskBoard$CreateTask(
-									_Utils_update(
-										input,
-										{status: $author$project$Domain$Task$Draft}))
-								]));
-					}
-				}
-			case 'StartEdit':
-				var task = msg.a;
-				return _Utils_Tuple2(
-					$author$project$Application$TaskBoard$closePanel(
-						_Utils_update(
-							model,
-							{
-								draft: $author$project$Application$TaskBoard$toInput(task),
-								editing: $elm$core$Maybe$Just(task),
-								editorOpen: true,
-								notice: $elm$core$Maybe$Nothing
-							})),
-					_List_Nil);
-			case 'CancelEdit':
-				return _Utils_Tuple2(
-					$author$project$Application$TaskBoard$closeEditor(model),
-					_List_Nil);
-			case 'DeleteRequested':
-				var taskId = msg.a;
-				return _Utils_Tuple2(
-					$author$project$Application$TaskBoard$closePanel(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing})),
-					_List_fromArray(
-						[
-							$author$project$Application$TaskBoard$DeleteTask(taskId)
-						]));
-			case 'Saved':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					return A2(
-						$author$project$Application$TaskBoard$addEffect,
-						$author$project$Application$TaskBoard$LoadTasks,
-						A2(
-							$author$project$Application$TaskBoard$showNotice,
-							'업무가 저장되었습니다.',
-							$author$project$Application$TaskBoard$closeEditor(model)));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '저장하지 못했습니다. 다시 시도해 주세요.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'Deleted':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					return A2(
-						$author$project$Application$TaskBoard$addEffect,
-						$author$project$Application$TaskBoard$LoadTasks,
-						A2($author$project$Application$TaskBoard$showNotice, '업무를 삭제했습니다.', model));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '업무를 삭제하지 못했습니다.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'DragStarted':
-				var taskId = msg.a;
-				return model.loading ? _Utils_Tuple2(model, _List_Nil) : _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							draggedTaskId: $elm$core$Maybe$Just(taskId),
-							dropTarget: $elm$core$Maybe$Nothing,
-							notice: $elm$core$Maybe$Nothing
-						}),
-					_List_Nil);
-			case 'DragOver':
-				var taskStatus = msg.a;
-				var _v17 = model.draggedTaskId;
-				if (_v17.$ === 'Just') {
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								dropTarget: $elm$core$Maybe$Just(taskStatus)
-							}),
-						_List_Nil);
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'DragEnded':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing}),
-					_List_Nil);
-			case 'DroppedOn':
-				var targetStatus = msg.a;
-				var _v18 = _Utils_Tuple2(model.loading, model.draggedTaskId);
-				if ((!_v18.a) && (_v18.b.$ === 'Just')) {
-					var taskId = _v18.b.a;
-					var _v19 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
-					if (_v19.$ === 'Just') {
-						var task = _v19.a;
-						return _Utils_eq(task.status, targetStatus) ? _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing}),
-							_List_Nil) : _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing, loading: true, notice: $elm$core$Maybe$Nothing}),
-							_List_fromArray(
-								[
-									A2(
-									$author$project$Application$TaskBoard$MoveTask,
-									taskId,
-									{description: task.description, expectedResult: task.expectedResult, importance: task.importance, outcomeOwner: task.outcomeOwner, status: targetStatus, taskOwner: task.taskOwner, title: task.title, urgency: task.urgency})
-								]));
-					} else {
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{draggedTaskId: $elm$core$Maybe$Nothing, dropTarget: $elm$core$Maybe$Nothing}),
-							_List_Nil);
-					}
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'MoveSaved':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var movedTask = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						'업무 상태를 ' + ($author$project$Domain$Task$statusLabel(movedTask.status) + ' 상태로 변경했습니다.'),
-						_Utils_update(
-							model,
-							{
-								loading: false,
-								tasks: A2(
-									$elm$core$List$map,
-									$author$project$Application$TaskBoard$replaceTask(movedTask),
-									model.tasks)
-							}));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '상태를 변경하지 못했습니다. 다시 시도해 주세요.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			case 'OpenTask':
-				var taskId = msg.a;
-				var _v21 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
-				if (_v21.$ === 'Just') {
-					var task = _v21.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								reviewDraft: '',
-								selectedTaskId: $elm$core$Maybe$Just(taskId),
-								submissionDraft: A2($elm$core$Maybe$withDefault, '', task.submittedResult)
-							}),
-						_List_Nil);
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'CloseTask':
-				return _Utils_Tuple2(
-					$author$project$Application$TaskBoard$closePanel(model),
-					_List_Nil);
-			case 'EditSubmission':
-				var submission = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{submissionDraft: submission}),
-					_List_Nil);
-			case 'EditReviewComment':
-				var comment = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{reviewDraft: comment}),
-					_List_Nil);
-			case 'SubmitResult':
-				var taskId = msg.a;
-				var _v22 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
-				if (_v22.$ === 'Just') {
-					var task = _v22.a;
-					return ($elm$core$String$trim(model.submissionDraft) === '') ? A2($author$project$Application$TaskBoard$showNotice, '제출 결과물을 입력해 주세요.', model) : _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing}),
-						_List_fromArray(
-							[
-								A3(
-								$author$project$Application$TaskBoard$SubmitTaskResult,
-								taskId,
-								task.taskOwner,
-								$elm$core$String$trim(model.submissionDraft))
-							]));
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'ApproveResult':
-				var taskId = msg.a;
-				var _v23 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
-				if (_v23.$ === 'Just') {
-					var task = _v23.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing}),
-						_List_fromArray(
-							[
-								A3(
-								$author$project$Application$TaskBoard$ApproveTaskResult,
-								taskId,
-								task.outcomeOwner,
-								$author$project$Application$TaskBoard$optionalText(model.reviewDraft))
-							]));
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'RequestRevision':
-				var taskId = msg.a;
-				var _v24 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
-				if (_v24.$ === 'Just') {
-					var task = _v24.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{loading: true, notice: $elm$core$Maybe$Nothing}),
-						_List_fromArray(
-							[
-								A3(
-								$author$project$Application$TaskBoard$RequestTaskRevision,
-								taskId,
-								task.outcomeOwner,
-								$author$project$Application$TaskBoard$optionalText(model.reviewDraft))
-							]));
-				} else {
-					return _Utils_Tuple2(model, _List_Nil);
-				}
-			case 'WorkflowSaved':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var task = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						$author$project$Application$TaskBoard$workflowNotice(task),
-						_Utils_update(
-							model,
-							{
-								loading: false,
-								reviewDraft: '',
-								submissionDraft: A2($elm$core$Maybe$withDefault, '', task.submittedResult),
-								tasks: A2(
-									$elm$core$List$map,
-									$author$project$Application$TaskBoard$replaceTask(task),
-									model.tasks)
-							}));
-				} else {
-					var error = result.a;
-					return A2(
-						$author$project$Application$TaskBoard$showNotice,
-						A2($author$project$Application$TaskBoard$errorMessage, '처리하지 못했습니다. 다시 시도해 주세요.', error),
-						_Utils_update(
-							model,
-							{loading: false}));
-				}
-			default:
-				var version = msg.a;
-				return _Utils_eq(model.noticeVersion, version) ? _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{notice: $elm$core$Maybe$Nothing}),
-					_List_Nil) : _Utils_Tuple2(model, _List_Nil);
-		}
-	});
-var $author$project$Application$TaskBoard$EditAuthDisplayName = function (a) {
-	return {$: 'EditAuthDisplayName', a: a};
-};
-var $author$project$Application$TaskBoard$EditAuthEmail = function (a) {
-	return {$: 'EditAuthEmail', a: a};
-};
-var $author$project$Application$TaskBoard$EditAuthPassword = function (a) {
-	return {$: 'EditAuthPassword', a: a};
-};
-var $author$project$Application$TaskBoard$SelectAuthMode = function (a) {
-	return {$: 'SelectAuthMode', a: a};
-};
-var $author$project$Application$TaskBoard$SubmitAuthentication = {$: 'SubmitAuthentication'};
-var $author$project$Presentation$TaskBoard$authTabClass = function (active) {
-	return 'auth-tab' + (active ? ' is-active' : '');
-};
-var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
-var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
-var $elm$json$Json$Encode$bool = _Json_wrap;
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
-	});
-var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$Attributes$for = $elm$html$Html$Attributes$stringProperty('htmlFor');
-var $elm$html$Html$h1 = _VirtualDom_node('h1');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
-var $elm$html$Html$Attributes$id = $elm$html$Html$Attributes$stringProperty('id');
-var $elm$html$Html$input = _VirtualDom_node('input');
-var $elm$html$Html$label = _VirtualDom_node('label');
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var $elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var $elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
-};
-var $elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var $elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
 		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
@@ -6333,6 +5154,16 @@ var $elm$html$Html$Events$targetValue = A2(
 	_List_fromArray(
 		['target', 'value']),
 	$elm$json$Json$Decode$string);
+var $elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var $elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
 var $elm$html$Html$Events$onInput = function (tagger) {
 	return A2(
 		$elm$html$Html$Events$stopPropagationOn,
@@ -6342,11 +5173,15 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
-var $elm$html$Html$p = _VirtualDom_node('p');
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $elm$html$Html$span = _VirtualDom_node('span');
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $elm$virtual_dom$VirtualDom$attribute = F2(
 	function (key, value) {
 		return A2(
@@ -6375,8 +5210,23 @@ var $author$project$Presentation$TaskBoard$toastView = function (model) {
 		return $elm$html$Html$text('');
 	}
 };
-var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $author$project$Presentation$TaskBoard$authTabClass = function (active) {
+	return 'auth-tab' + (active ? ' is-active' : '');
+};
+var $author$project$Application$TaskBoard$EditAuthEmail = function (a) {
+	return {$: 'EditAuthEmail', a: a};
+};
+var $author$project$Application$TaskBoard$SelectAuthMode = function (a) {
+	return {$: 'SelectAuthMode', a: a};
+};
+var $author$project$Application$TaskBoard$EditAuthPassword = function (a) {
+	return {$: 'EditAuthPassword', a: a};
+};
+var $author$project$Application$TaskBoard$EditAuthDisplayName = function (a) {
+	return {$: 'EditAuthDisplayName', a: a};
+};
+var $author$project$Application$TaskBoard$SubmitAuthentication = {$: 'SubmitAuthentication'};
 var $author$project$Presentation$TaskBoard$authView = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -6627,15 +5477,144 @@ var $author$project$Presentation$TaskBoard$authView = function (model) {
 					]))
 			]));
 };
+var $elm$html$Html$dd = _VirtualDom_node('dd');
+var $elm$html$Html$dl = _VirtualDom_node('dl');
+var $elm$html$Html$dt = _VirtualDom_node('dt');
+var $elm$html$Html$aside = _VirtualDom_node('aside');
+var $elm$core$String$trim = _String_trim;
+var $author$project$Presentation$TaskBoard$nonEmpty = F2(
+	function (fallback, raw) {
+		return ($elm$core$String$trim(raw) === '') ? fallback : raw;
+	});
 var $author$project$Application$TaskBoard$CloseTask = {$: 'CloseTask'};
-var $author$project$Application$TaskBoard$DeleteRequested = function (a) {
-	return {$: 'DeleteRequested', a: a};
-};
 var $author$project$Application$TaskBoard$StartEdit = function (a) {
 	return {$: 'StartEdit', a: a};
 };
-var $elm$html$Html$aside = _VirtualDom_node('aside');
-var $elm$html$Html$dd = _VirtualDom_node('dd');
+var $author$project$Domain$Task$DoFirst = {$: 'DoFirst'};
+var $author$project$Domain$Task$Delegate = {$: 'Delegate'};
+var $author$project$Domain$Task$Schedule = {$: 'Schedule'};
+var $author$project$Domain$Task$Eliminate = {$: 'Eliminate'};
+var $author$project$Domain$Task$quadrantOf = F2(
+	function (taskUrgency, taskImportance) {
+		var _v0 = _Utils_Tuple2(taskUrgency, taskImportance);
+		if (_v0.a.$ === 'Urgent') {
+			if (_v0.b.$ === 'Important') {
+				var _v1 = _v0.a;
+				var _v2 = _v0.b;
+				return $author$project$Domain$Task$DoFirst;
+			} else {
+				var _v5 = _v0.a;
+				var _v6 = _v0.b;
+				return $author$project$Domain$Task$Delegate;
+			}
+		} else {
+			if (_v0.b.$ === 'Important') {
+				var _v3 = _v0.a;
+				var _v4 = _v0.b;
+				return $author$project$Domain$Task$Schedule;
+			} else {
+				var _v7 = _v0.a;
+				var _v8 = _v0.b;
+				return $author$project$Domain$Task$Eliminate;
+			}
+		}
+	});
+var $elm$core$String$toLower = _String_toLower;
+var $author$project$Domain$Task$statusString = function (taskStatus) {
+	switch (taskStatus.$) {
+		case 'Draft':
+			return 'Draft';
+		case 'Reviewed':
+			return 'Reviewed';
+		case 'Submitted':
+			return 'Submitted';
+		case 'Approved':
+			return 'Approved';
+		default:
+			return 'Effective';
+	}
+};
+var $author$project$Domain$Task$statusClass = function (taskStatus) {
+	return 'status-' + $elm$core$String$toLower(
+		$author$project$Domain$Task$statusString(taskStatus));
+};
+var $author$project$Domain$Task$statusLabel = function (taskStatus) {
+	switch (taskStatus.$) {
+		case 'Draft':
+			return '초안';
+		case 'Reviewed':
+			return '검토 완료';
+		case 'Submitted':
+			return '제출됨';
+		case 'Approved':
+			return '승인됨';
+		default:
+			return '효력 발생';
+	}
+};
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Application$TaskBoard$findTask = F2(
+	function (taskId, model) {
+		return $elm$core$List$head(
+			A2(
+				$elm$core$List$filter,
+				function (task) {
+					return _Utils_eq(task.taskId, taskId);
+				},
+				model.tasks));
+	});
+var $author$project$Application$TaskBoard$selectedTask = function (model) {
+	return A2(
+		$elm$core$Maybe$andThen,
+		function (taskId) {
+			return A2($author$project$Application$TaskBoard$findTask, taskId, model);
+		},
+		model.selectedTaskId);
+};
+var $author$project$Domain$Task$urgencyLabel = function (taskUrgency) {
+	if (taskUrgency.$ === 'Urgent') {
+		return '긴급';
+	} else {
+		return '긴급하지 않음';
+	}
+};
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $author$project$Presentation$TaskBoard$detailSection = F2(
 	function (heading, body) {
@@ -6666,19 +5645,6 @@ var $author$project$Presentation$TaskBoard$detailSection = F2(
 						]))
 				]));
 	});
-var $elm$html$Html$dl = _VirtualDom_node('dl');
-var $elm$html$Html$dt = _VirtualDom_node('dt');
-var $author$project$Domain$Task$importanceLabel = function (taskImportance) {
-	if (taskImportance.$ === 'Important') {
-		return '중요';
-	} else {
-		return '중요하지 않음';
-	}
-};
-var $author$project$Presentation$TaskBoard$nonEmpty = F2(
-	function (fallback, raw) {
-		return ($elm$core$String$trim(raw) === '') ? fallback : raw;
-	});
 var $author$project$Domain$Task$quadrantClass = function (quadrant) {
 	switch (quadrant.$) {
 		case 'DoFirst':
@@ -6703,125 +5669,22 @@ var $author$project$Domain$Task$quadrantLabel = function (quadrant) {
 			return '제거';
 	}
 };
-var $author$project$Domain$Task$Delegate = {$: 'Delegate'};
-var $author$project$Domain$Task$DoFirst = {$: 'DoFirst'};
-var $author$project$Domain$Task$Eliminate = {$: 'Eliminate'};
-var $author$project$Domain$Task$Schedule = {$: 'Schedule'};
-var $author$project$Domain$Task$quadrantOf = F2(
-	function (taskUrgency, taskImportance) {
-		var _v0 = _Utils_Tuple2(taskUrgency, taskImportance);
-		if (_v0.a.$ === 'Urgent') {
-			if (_v0.b.$ === 'Important') {
-				var _v1 = _v0.a;
-				var _v2 = _v0.b;
-				return $author$project$Domain$Task$DoFirst;
-			} else {
-				var _v5 = _v0.a;
-				var _v6 = _v0.b;
-				return $author$project$Domain$Task$Delegate;
-			}
-		} else {
-			if (_v0.b.$ === 'Important') {
-				var _v3 = _v0.a;
-				var _v4 = _v0.b;
-				return $author$project$Domain$Task$Schedule;
-			} else {
-				var _v7 = _v0.a;
-				var _v8 = _v0.b;
-				return $author$project$Domain$Task$Eliminate;
-			}
-		}
-	});
-var $author$project$Domain$Task$resultStateLabel = function (task) {
-	var _v0 = _Utils_Tuple3(task.status, task.submittedResult, task.reviewComment);
-	_v0$0:
-	while (true) {
-		_v0$1:
-		while (true) {
-			_v0$6:
-			while (true) {
-				if (_v0.b.$ === 'Nothing') {
-					switch (_v0.a.$) {
-						case 'Effective':
-							break _v0$0;
-						case 'Approved':
-							break _v0$1;
-						case 'Submitted':
-							var _v3 = _v0.a;
-							var _v4 = _v0.b;
-							return '결과물 없음';
-						default:
-							var _v6 = _v0.b;
-							return '결과물 미제출';
-					}
-				} else {
-					switch (_v0.a.$) {
-						case 'Effective':
-							break _v0$0;
-						case 'Approved':
-							break _v0$1;
-						case 'Submitted':
-							var _v5 = _v0.a;
-							return '리뷰 대기';
-						case 'Reviewed':
-							if (_v0.c.$ === 'Just') {
-								var _v7 = _v0.a;
-								return '수정 요청됨';
-							} else {
-								break _v0$6;
-							}
-						default:
-							break _v0$6;
-					}
-				}
-			}
-			return '재제출 가능';
-		}
-		var _v2 = _v0.a;
-		return '승인 완료';
-	}
-	var _v1 = _v0.a;
-	return '효력 발생';
+var $author$project$Application$TaskBoard$DeleteRequested = function (a) {
+	return {$: 'DeleteRequested', a: a};
 };
-var $author$project$Application$TaskBoard$selectedTask = function (model) {
-	return A2(
-		$elm$core$Maybe$andThen,
-		function (taskId) {
-			return A2($author$project$Application$TaskBoard$findTask, taskId, model);
-		},
-		model.selectedTaskId);
-};
-var $author$project$Domain$Task$statusString = function (taskStatus) {
-	switch (taskStatus.$) {
-		case 'Draft':
-			return 'Draft';
-		case 'Reviewed':
-			return 'Reviewed';
-		case 'Submitted':
-			return 'Submitted';
-		case 'Approved':
-			return 'Approved';
-		default:
-			return 'Effective';
-	}
-};
-var $elm$core$String$toLower = _String_toLower;
-var $author$project$Domain$Task$statusClass = function (taskStatus) {
-	return 'status-' + $elm$core$String$toLower(
-		$author$project$Domain$Task$statusString(taskStatus));
-};
-var $author$project$Domain$Task$urgencyLabel = function (taskUrgency) {
-	if (taskUrgency.$ === 'Urgent') {
-		return '긴급';
+var $author$project$Domain$Task$importanceLabel = function (taskImportance) {
+	if (taskImportance.$ === 'Important') {
+		return '중요';
 	} else {
-		return '긴급하지 않음';
+		return '중요하지 않음';
 	}
+};
+var $elm$html$Html$textarea = _VirtualDom_node('textarea');
+var $author$project$Application$TaskBoard$SubmitResult = function (a) {
+	return {$: 'SubmitResult', a: a};
 };
 var $author$project$Application$TaskBoard$ApproveResult = function (a) {
 	return {$: 'ApproveResult', a: a};
-};
-var $author$project$Application$TaskBoard$EditReviewComment = function (a) {
-	return {$: 'EditReviewComment', a: a};
 };
 var $author$project$Application$TaskBoard$EditSubmission = function (a) {
 	return {$: 'EditSubmission', a: a};
@@ -6829,10 +5692,8 @@ var $author$project$Application$TaskBoard$EditSubmission = function (a) {
 var $author$project$Application$TaskBoard$RequestRevision = function (a) {
 	return {$: 'RequestRevision', a: a};
 };
-var $author$project$Application$TaskBoard$SubmitResult = function (a) {
-	return {$: 'SubmitResult', a: a};
-};
 var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$Domain$Task$Submitted = {$: 'Submitted'};
 var $author$project$Domain$Task$canReviewResult = function (task) {
 	return _Utils_eq(task.status, $author$project$Domain$Task$Submitted) && (!_Utils_eq(task.submittedResult, $elm$core$Maybe$Nothing));
 };
@@ -6847,7 +5708,9 @@ var $author$project$Domain$Task$canSubmitResult = function (task) {
 			return false;
 	}
 };
-var $elm$html$Html$textarea = _VirtualDom_node('textarea');
+var $author$project$Application$TaskBoard$EditReviewComment = function (a) {
+	return {$: 'EditReviewComment', a: a};
+};
 var $author$project$Presentation$TaskBoard$workflowSection = F2(
 	function (model, task) {
 		return $author$project$Domain$Task$canSubmitResult(task) ? A2(
@@ -7020,6 +5883,57 @@ var $author$project$Presentation$TaskBoard$workflowSection = F2(
 						]))
 				])));
 	});
+var $author$project$Domain$Task$resultStateLabel = function (task) {
+	var _v0 = _Utils_Tuple3(task.status, task.submittedResult, task.reviewComment);
+	_v0$0:
+	while (true) {
+		_v0$1:
+		while (true) {
+			_v0$6:
+			while (true) {
+				if (_v0.b.$ === 'Nothing') {
+					switch (_v0.a.$) {
+						case 'Effective':
+							break _v0$0;
+						case 'Approved':
+							break _v0$1;
+						case 'Submitted':
+							var _v3 = _v0.a;
+							var _v4 = _v0.b;
+							return '결과물 없음';
+						default:
+							var _v6 = _v0.b;
+							return '결과물 미제출';
+					}
+				} else {
+					switch (_v0.a.$) {
+						case 'Effective':
+							break _v0$0;
+						case 'Approved':
+							break _v0$1;
+						case 'Submitted':
+							var _v5 = _v0.a;
+							return '리뷰 대기';
+						case 'Reviewed':
+							if (_v0.c.$ === 'Just') {
+								var _v7 = _v0.a;
+								return '수정 요청됨';
+							} else {
+								break _v0$6;
+							}
+						default:
+							break _v0$6;
+					}
+				}
+			}
+			return '재제출 가능';
+		}
+		var _v2 = _v0.a;
+		return '승인 완료';
+	}
+	var _v1 = _v0.a;
+	return '효력 발생';
+};
 var $author$project$Presentation$TaskBoard$detailView = function (model) {
 	var _v0 = $author$project$Application$TaskBoard$selectedTask(model);
 	if (_v0.$ === 'Nothing') {
@@ -7313,44 +6227,32 @@ var $author$project$Presentation$TaskBoard$detailView = function (model) {
 				]));
 	}
 };
-var $author$project$Application$TaskBoard$CloseEditor = {$: 'CloseEditor'};
-var $author$project$Application$TaskBoard$CancelEdit = {$: 'CancelEdit'};
-var $author$project$Application$TaskBoard$EditDescription = function (a) {
-	return {$: 'EditDescription', a: a};
-};
-var $author$project$Application$TaskBoard$EditExpectedResult = function (a) {
-	return {$: 'EditExpectedResult', a: a};
-};
-var $author$project$Application$TaskBoard$EditImportance = function (a) {
-	return {$: 'EditImportance', a: a};
-};
-var $author$project$Application$TaskBoard$EditOutcomeOwner = function (a) {
-	return {$: 'EditOutcomeOwner', a: a};
-};
-var $author$project$Application$TaskBoard$EditStatus = function (a) {
-	return {$: 'EditStatus', a: a};
-};
-var $author$project$Application$TaskBoard$EditTaskOwner = function (a) {
-	return {$: 'EditTaskOwner', a: a};
-};
+var $elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						$elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
+var $author$project$Domain$Task$Urgent = {$: 'Urgent'};
+var $elm$html$Html$select = _VirtualDom_node('select');
 var $author$project$Application$TaskBoard$EditTitle = function (a) {
 	return {$: 'EditTitle', a: a};
 };
-var $author$project$Application$TaskBoard$EditUrgency = function (a) {
-	return {$: 'EditUrgency', a: a};
+var $author$project$Application$TaskBoard$CancelEdit = {$: 'CancelEdit'};
+var $author$project$Application$TaskBoard$EditStatus = function (a) {
+	return {$: 'EditStatus', a: a};
 };
 var $author$project$Application$TaskBoard$SubmitTask = {$: 'SubmitTask'};
-var $author$project$Domain$Task$allStatuses = _List_fromArray(
-	[$author$project$Domain$Task$Draft, $author$project$Domain$Task$Reviewed, $author$project$Domain$Task$Submitted, $author$project$Domain$Task$Approved, $author$project$Domain$Task$Effective]);
-var $author$project$Domain$Task$importanceString = function (taskImportance) {
-	if (taskImportance.$ === 'Important') {
-		return 'Important';
-	} else {
-		return 'NotImportant';
-	}
-};
-var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$Attributes$name = $elm$html$Html$Attributes$stringProperty('name');
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $author$project$Presentation$TaskBoard$radioField = F6(
 	function (fieldName, fieldLabel, selectedValue, choices, toString, toMessage) {
 		return A2(
@@ -7419,7 +6321,16 @@ var $author$project$Presentation$TaskBoard$radioField = F6(
 						choices))
 				]));
 	});
-var $elm$html$Html$select = _VirtualDom_node('select');
+var $author$project$Application$TaskBoard$CloseEditor = {$: 'CloseEditor'};
+var $author$project$Application$TaskBoard$EditUrgency = function (a) {
+	return {$: 'EditUrgency', a: a};
+};
+var $author$project$Domain$Task$Approved = {$: 'Approved'};
+var $author$project$Domain$Task$Reviewed = {$: 'Reviewed'};
+var $author$project$Domain$Task$Effective = {$: 'Effective'};
+var $author$project$Domain$Task$allStatuses = _List_fromArray(
+	[$author$project$Domain$Task$Draft, $author$project$Domain$Task$Reviewed, $author$project$Domain$Task$Submitted, $author$project$Domain$Task$Approved, $author$project$Domain$Task$Effective]);
+var $author$project$Domain$Task$NotImportant = {$: 'NotImportant'};
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
 var $author$project$Presentation$TaskBoard$statusOption = F2(
@@ -7439,12 +6350,34 @@ var $author$project$Presentation$TaskBoard$statusOption = F2(
 					$author$project$Domain$Task$statusLabel(current))
 				]));
 	});
+var $author$project$Application$TaskBoard$EditTaskOwner = function (a) {
+	return {$: 'EditTaskOwner', a: a};
+};
 var $author$project$Domain$Task$urgencyString = function (taskUrgency) {
 	if (taskUrgency.$ === 'Urgent') {
 		return 'Urgent';
 	} else {
 		return 'NotUrgent';
 	}
+};
+var $author$project$Application$TaskBoard$EditImportance = function (a) {
+	return {$: 'EditImportance', a: a};
+};
+var $author$project$Application$TaskBoard$EditDescription = function (a) {
+	return {$: 'EditDescription', a: a};
+};
+var $author$project$Application$TaskBoard$EditOutcomeOwner = function (a) {
+	return {$: 'EditOutcomeOwner', a: a};
+};
+var $author$project$Domain$Task$importanceString = function (taskImportance) {
+	if (taskImportance.$ === 'Important') {
+		return 'Important';
+	} else {
+		return 'NotImportant';
+	}
+};
+var $author$project$Application$TaskBoard$EditExpectedResult = function (a) {
+	return {$: 'EditExpectedResult', a: a};
 };
 var $author$project$Presentation$TaskBoard$formView = function (model) {
 	var isEditing = !_Utils_eq(model.editing, $elm$core$Maybe$Nothing);
@@ -7781,8 +6714,8 @@ var $author$project$Presentation$TaskBoard$editorView = function (model) {
 					]))
 			])) : $elm$html$Html$text('');
 };
-var $author$project$Application$TaskBoard$LogoutRequested = {$: 'LogoutRequested'};
 var $author$project$Application$TaskBoard$ToggleProfile = {$: 'ToggleProfile'};
+var $author$project$Application$TaskBoard$LogoutRequested = {$: 'LogoutRequested'};
 var $author$project$Presentation$TaskBoard$headerView = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -7887,7 +6820,6 @@ var $author$project$Presentation$TaskBoard$headerView = function (model) {
 					]))
 			]));
 };
-var $author$project$Application$TaskBoard$OpenNewTask = {$: 'OpenNewTask'};
 var $elm$core$List$isEmpty = function (xs) {
 	if (!xs.b) {
 		return true;
@@ -7895,31 +6827,22 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
+var $author$project$Application$TaskBoard$OpenNewTask = {$: 'OpenNewTask'};
 var $author$project$Application$TaskBoard$DragOver = function (a) {
 	return {$: 'DragOver', a: a};
-};
-var $author$project$Application$TaskBoard$DroppedOn = function (a) {
-	return {$: 'DroppedOn', a: a};
-};
-var $elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
-	return {$: 'MayPreventDefault', a: a};
-};
-var $elm$html$Html$Events$preventDefaultOn = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
-	});
-var $author$project$Application$TaskBoard$DragEnded = {$: 'DragEnded'};
-var $author$project$Application$TaskBoard$DragStarted = function (a) {
-	return {$: 'DragStarted', a: a};
 };
 var $author$project$Application$TaskBoard$OpenTask = function (a) {
 	return {$: 'OpenTask', a: a};
 };
-var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$html$Html$Attributes$tabindex = function (n) {
+	return A2(
+		_VirtualDom_attribute,
+		'tabIndex',
+		$elm$core$String$fromInt(n));
+};
+var $author$project$Application$TaskBoard$DragEnded = {$: 'DragEnded'};
 var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $author$project$Presentation$TaskBoard$onEnterKey = function (message) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -7931,11 +6854,8 @@ var $author$project$Presentation$TaskBoard$onEnterKey = function (message) {
 			},
 			A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)));
 };
-var $elm$html$Html$Attributes$tabindex = function (n) {
-	return A2(
-		_VirtualDom_attribute,
-		'tabIndex',
-		$elm$core$String$fromInt(n));
+var $author$project$Application$TaskBoard$DragStarted = function (a) {
+	return {$: 'DragStarted', a: a};
 };
 var $author$project$Presentation$TaskBoard$taskCard = F2(
 	function (model, task) {
@@ -8090,17 +7010,30 @@ var $author$project$Presentation$TaskBoard$taskCard = F2(
 						]))
 				]));
 	});
+var $author$project$Application$TaskBoard$DroppedOn = function (a) {
+	return {$: 'DroppedOn', a: a};
+};
+var $elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
+	return {$: 'MayPreventDefault', a: a};
+};
+var $elm$html$Html$Events$preventDefaultOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
+	});
 var $author$project$Presentation$TaskBoard$kanbanColumn = F2(
 	function (model, taskStatus) {
+		var dropTargetClass = _Utils_eq(
+			model.dropTarget,
+			$elm$core$Maybe$Just(taskStatus)) ? ' is-drop-target' : '';
 		var statusTasks = A2(
 			$elm$core$List$filter,
 			function (task) {
 				return _Utils_eq(task.status, taskStatus);
 			},
 			model.tasks);
-		var dropTargetClass = _Utils_eq(
-			model.dropTarget,
-			$elm$core$Maybe$Just(taskStatus)) ? ' is-drop-target' : '';
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -8180,6 +7113,17 @@ var $author$project$Presentation$TaskBoard$kanbanColumn = F2(
 						statusTasks))
 				]));
 	});
+var $author$project$Domain$Task$tasksInQuadrant = F2(
+	function (quadrant, tasks) {
+		return A2(
+			$elm$core$List$filter,
+			function (task) {
+				return _Utils_eq(
+					A2($author$project$Domain$Task$quadrantOf, task.urgency, task.importance),
+					quadrant);
+			},
+			tasks);
+	});
 var $author$project$Presentation$TaskBoard$priorityTaskCard = function (task) {
 	return A2(
 		$elm$html$Html$button,
@@ -8238,17 +7182,6 @@ var $author$project$Presentation$TaskBoard$priorityTaskCard = function (task) {
 					]))
 			]));
 };
-var $author$project$Domain$Task$tasksInQuadrant = F2(
-	function (quadrant, tasks) {
-		return A2(
-			$elm$core$List$filter,
-			function (task) {
-				return _Utils_eq(
-					A2($author$project$Domain$Task$quadrantOf, task.urgency, task.importance),
-					quadrant);
-			},
-			tasks);
-	});
 var $author$project$Presentation$TaskBoard$prioritySummary = function (tasks) {
 	var summaryItem = function (quadrant) {
 		var quadrantTasks = A2($author$project$Domain$Task$tasksInQuadrant, quadrant, tasks);
@@ -8445,10 +7378,10 @@ var $author$project$Presentation$TaskBoard$kanbanBoard = function (model) {
 					$author$project$Domain$Task$allStatuses))
 			]));
 };
+var $author$project$Application$TaskBoard$SaveProfile = {$: 'SaveProfile'};
 var $author$project$Application$TaskBoard$EditProfileName = function (a) {
 	return {$: 'EditProfileName', a: a};
 };
-var $author$project$Application$TaskBoard$SaveProfile = {$: 'SaveProfile'};
 var $author$project$Presentation$TaskBoard$profileView = function (model) {
 	var _v0 = _Utils_Tuple2(model.profileOpen, model.session);
 	if (_v0.a && (_v0.b.$ === 'Just')) {
@@ -8624,60 +7557,1086 @@ var $author$project$Presentation$TaskBoard$view = function (model) {
 				]));
 	}
 };
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$Basics$not = _Basics_not;
+var $author$project$Application$TaskBoard$Login = F2(
+	function (a, b) {
+		return {$: 'Login', a: a, b: b};
+	});
+var $author$project$Application$TaskBoard$Logout = function (a) {
+	return {$: 'Logout', a: a};
+};
+var $author$project$Application$TaskBoard$toInput = function (task) {
+	return {title: task.title, status: task.status, urgency: task.urgency, taskOwner: task.taskOwner, importance: task.importance, description: task.description, outcomeOwner: task.outcomeOwner, expectedResult: task.expectedResult};
+};
+var $author$project$Application$TaskBoard$MoveTask = F2(
+	function (a, b) {
+		return {$: 'MoveTask', a: a, b: b};
+	});
+var $author$project$Application$TaskBoard$Register = F3(
+	function (a, b, c) {
+		return {$: 'Register', a: a, b: b, c: c};
+	});
+var $author$project$Application$TaskBoard$LoadTasks = {$: 'LoadTasks'};
+var $author$project$Application$TaskBoard$addEffect = F2(
+	function (effect, _v0) {
+		var model = _v0.a;
+		var effects = _v0.b;
+		return _Utils_Tuple2(
+			model,
+			A2($elm$core$List$cons, effect, effects));
+	});
+var $author$project$Application$TaskBoard$CreateTask = function (a) {
+	return {$: 'CreateTask', a: a};
+};
+var $author$project$Application$TaskBoard$DeleteTask = function (a) {
+	return {$: 'DeleteTask', a: a};
+};
+var $author$project$Application$TaskBoard$UpdateTask = F2(
+	function (a, b) {
+		return {$: 'UpdateTask', a: a, b: b};
+	});
+var $author$project$Application$TaskBoard$closePanel = function (model) {
+	return _Utils_update(
+		model,
+		{reviewDraft: '', selectedTaskId: $elm$core$Maybe$Nothing, submissionDraft: ''});
+};
+var $author$project$Application$TaskBoard$ClearNoticeAfter = function (a) {
+	return {$: 'ClearNoticeAfter', a: a};
+};
+var $author$project$Application$TaskBoard$showNotice = F2(
+	function (message, model) {
+		var nextVersion = model.noticeVersion + 1;
+		return _Utils_Tuple2(
+			_Utils_update(
+				model,
+				{
+					notice: $elm$core$Maybe$Just(message),
+					noticeVersion: nextVersion
+				}),
+			_List_fromArray(
+				[
+					$author$project$Application$TaskBoard$ClearNoticeAfter(nextVersion)
+				]));
+	});
+var $author$project$Application$TaskBoard$updateForm = F2(
+	function (transform, model) {
+		return _Utils_update(
+			model,
+			{
+				draft: transform(model.draft)
+			});
+	});
+var $author$project$Application$TaskBoard$closeEditor = function (model) {
+	return _Utils_update(
+		model,
+		{draft: $author$project$Domain$Task$emptyInput, editing: $elm$core$Maybe$Nothing, editorOpen: false});
+};
+var $author$project$Application$TaskBoard$replaceTask = F2(
+	function (movedTask, currentTask) {
+		return _Utils_eq(currentTask.taskId, movedTask.taskId) ? movedTask : currentTask;
+	});
+var $author$project$Application$TaskBoard$errorMessage = F2(
+	function (fallback, error) {
+		if (error.$ === 'Rejected') {
+			var message = error.a;
+			return message;
+		} else {
+			return fallback;
+		}
+	});
+var $author$project$Application$TaskBoard$optionalText = function (raw) {
+	return ($elm$core$String$trim(raw) === '') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+		$elm$core$String$trim(raw));
+};
+var $author$project$Application$TaskBoard$UpdateProfile = F2(
+	function (a, b) {
+		return {$: 'UpdateProfile', a: a, b: b};
+	});
+var $author$project$Domain$Task$TitleRequired = {$: 'TitleRequired'};
+var $author$project$Domain$Task$validateInput = function (input) {
+	return ($elm$core$String$trim(input.title) === '') ? $elm$core$Result$Err($author$project$Domain$Task$TitleRequired) : $elm$core$Result$Ok(input);
+};
+var $author$project$Application$TaskBoard$workflowNotice = function (task) {
+	var _v0 = task.status;
+	switch (_v0.$) {
+		case 'Submitted':
+			return '결과물을 제출했습니다.';
+		case 'Approved':
+			return '결과물을 승인했습니다.';
+		case 'Reviewed':
+			return '수정을 요청했습니다.';
+		default:
+			return '업무를 갱신했습니다.';
+	}
+};
+var $author$project$Application$TaskBoard$SubmitTaskResult = F3(
+	function (a, b, c) {
+		return {$: 'SubmitTaskResult', a: a, b: b, c: c};
+	});
+var $author$project$Domain$Task$statusFromString = function (rawStatus) {
+	switch (rawStatus) {
+		case 'Draft':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Draft);
+		case 'Reviewed':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Reviewed);
+		case 'Submitted':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Submitted);
+		case 'Approved':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Approved);
+		case 'Effective':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Effective);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Application$TaskBoard$ApproveTaskResult = F3(
+	function (a, b, c) {
+		return {$: 'ApproveTaskResult', a: a, b: b, c: c};
+	});
+var $author$project$Domain$Task$urgencyFromString = function (rawUrgency) {
+	switch (rawUrgency) {
+		case 'Urgent':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Urgent);
+		case 'NotUrgent':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$NotUrgent);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Application$TaskBoard$RequestTaskRevision = F3(
+	function (a, b, c) {
+		return {$: 'RequestTaskRevision', a: a, b: b, c: c};
+	});
+var $author$project$Domain$Task$importanceFromString = function (rawImportance) {
+	switch (rawImportance) {
+		case 'Important':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$Important);
+		case 'NotImportant':
+			return $elm$core$Maybe$Just($author$project$Domain$Task$NotImportant);
+		default:
+			return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Application$TaskBoard$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'SelectAuthMode':
+				var mode = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{notice: $elm$core$Maybe$Nothing, authMode: mode}),
+					_List_Nil);
+			case 'EditAuthEmail':
+				var email = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{authEmail: email}),
+					_List_Nil);
+			case 'EditAuthDisplayName':
+				var displayName = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{authDisplayName: displayName}),
+					_List_Nil);
+			case 'EditAuthPassword':
+				var password = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{authPassword: password}),
+					_List_Nil);
+			case 'SubmitAuthentication':
+				if (($elm$core$String$trim(model.authEmail) === '') || ($elm$core$String$trim(model.authPassword) === '')) {
+					return A2($author$project$Application$TaskBoard$showNotice, '이메일과 비밀번호를 입력해 주세요.', model);
+				} else {
+					if (_Utils_eq(model.authMode, $author$project$Application$TaskBoard$SignUp) && ($elm$core$String$trim(model.authDisplayName) === '')) {
+						return A2($author$project$Application$TaskBoard$showNotice, '표시 이름을 입력해 주세요.', model);
+					} else {
+						var effect = function () {
+							var _v1 = model.authMode;
+							if (_v1.$ === 'SignIn') {
+								return A2(
+									$author$project$Application$TaskBoard$Login,
+									$elm$core$String$trim(model.authEmail),
+									model.authPassword);
+							} else {
+								return A3(
+									$author$project$Application$TaskBoard$Register,
+									$elm$core$String$trim(model.authEmail),
+									$elm$core$String$trim(model.authDisplayName),
+									model.authPassword);
+							}
+						}();
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{notice: $elm$core$Maybe$Nothing, loading: true}),
+							_List_fromArray(
+								[effect]));
+					}
+				}
+			case 'Authenticated':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var session = result.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								loading: true,
+								session: $elm$core$Maybe$Just(session),
+								authPassword: '',
+								profileDraft: session.user.displayName
+							}),
+						_List_fromArray(
+							[$author$project$Application$TaskBoard$LoadTasks]));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '가입 또는 로그인하지 못했습니다.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'ToggleProfile':
+				var _v3 = model.session;
+				if (_v3.$ === 'Just') {
+					var session = _v3.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{profileOpen: !model.profileOpen, profileDraft: session.user.displayName}),
+						_List_Nil);
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'EditProfileName':
+				var displayName = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{profileDraft: displayName}),
+					_List_Nil);
+			case 'SaveProfile':
+				var _v4 = model.session;
+				if (_v4.$ === 'Just') {
+					var session = _v4.a;
+					return ($elm$core$String$trim(model.profileDraft) === '') ? A2($author$project$Application$TaskBoard$showNotice, '표시 이름을 입력해 주세요.', model) : _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true}),
+						_List_fromArray(
+							[
+								A2(
+								$author$project$Application$TaskBoard$UpdateProfile,
+								session.token,
+								$elm$core$String$trim(model.profileDraft))
+							]));
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'ProfileSaved':
+				var result = msg.a;
+				var _v5 = _Utils_Tuple2(result, model.session);
+				if (_v5.a.$ === 'Ok') {
+					if (_v5.b.$ === 'Just') {
+						var profile = _v5.a.a;
+						var session = _v5.b.a;
+						return A2(
+							$author$project$Application$TaskBoard$showNotice,
+							'프로필을 저장했습니다.',
+							_Utils_update(
+								model,
+								{
+									loading: false,
+									session: $elm$core$Maybe$Just(
+										_Utils_update(
+											session,
+											{user: profile})),
+									profileOpen: false,
+									profileDraft: profile.displayName
+								}));
+					} else {
+						return _Utils_Tuple2(model, _List_Nil);
+					}
+				} else {
+					var error = _v5.a.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '프로필을 저장하지 못했습니다.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'LogoutRequested':
+				var _v6 = model.session;
+				if (_v6.$ === 'Just') {
+					var session = _v6.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true}),
+						_List_fromArray(
+							[
+								$author$project$Application$TaskBoard$Logout(session.token)
+							]));
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'LoggedOut':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						'로그아웃했습니다.',
+						_Utils_update(
+							$author$project$Application$TaskBoard$initialModel,
+							{noticeVersion: model.noticeVersion}));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '로그아웃하지 못했습니다.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'GotTasks':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var tasks = result.a;
+					var stillSelected = A2(
+						$elm$core$Maybe$andThen,
+						function (taskId) {
+							return A2(
+								$elm$core$List$any,
+								function (task) {
+									return _Utils_eq(task.taskId, taskId);
+								},
+								tasks) ? $elm$core$Maybe$Just(taskId) : $elm$core$Maybe$Nothing;
+						},
+						model.selectedTaskId);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{tasks: tasks, loading: false, selectedTaskId: stillSelected}),
+						_List_Nil);
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '업무 목록을 불러오지 못했습니다.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'EditTitle':
+				var title = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Application$TaskBoard$updateForm,
+						function (form) {
+							return _Utils_update(
+								form,
+								{title: title});
+						},
+						model),
+					_List_Nil);
+			case 'EditDescription':
+				var description = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Application$TaskBoard$updateForm,
+						function (form) {
+							return _Utils_update(
+								form,
+								{description: description});
+						},
+						model),
+					_List_Nil);
+			case 'EditStatus':
+				var rawStatus = msg.a;
+				var _v9 = $author$project$Domain$Task$statusFromString(rawStatus);
+				if (_v9.$ === 'Just') {
+					var taskStatus = _v9.a;
+					return _Utils_Tuple2(
+						A2(
+							$author$project$Application$TaskBoard$updateForm,
+							function (form) {
+								return _Utils_update(
+									form,
+									{status: taskStatus});
+							},
+							model),
+						_List_Nil);
+				} else {
+					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 업무 상태입니다.', model);
+				}
+			case 'EditUrgency':
+				var rawUrgency = msg.a;
+				var _v10 = $author$project$Domain$Task$urgencyFromString(rawUrgency);
+				if (_v10.$ === 'Just') {
+					var taskUrgency = _v10.a;
+					return _Utils_Tuple2(
+						A2(
+							$author$project$Application$TaskBoard$updateForm,
+							function (form) {
+								return _Utils_update(
+									form,
+									{urgency: taskUrgency});
+							},
+							model),
+						_List_Nil);
+				} else {
+					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 긴급도입니다.', model);
+				}
+			case 'EditImportance':
+				var rawImportance = msg.a;
+				var _v11 = $author$project$Domain$Task$importanceFromString(rawImportance);
+				if (_v11.$ === 'Just') {
+					var taskImportance = _v11.a;
+					return _Utils_Tuple2(
+						A2(
+							$author$project$Application$TaskBoard$updateForm,
+							function (form) {
+								return _Utils_update(
+									form,
+									{importance: taskImportance});
+							},
+							model),
+						_List_Nil);
+				} else {
+					return A2($author$project$Application$TaskBoard$showNotice, '알 수 없는 중요도입니다.', model);
+				}
+			case 'EditTaskOwner':
+				var owner = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Application$TaskBoard$updateForm,
+						function (form) {
+							return _Utils_update(
+								form,
+								{taskOwner: owner});
+						},
+						model),
+					_List_Nil);
+			case 'EditOutcomeOwner':
+				var owner = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Application$TaskBoard$updateForm,
+						function (form) {
+							return _Utils_update(
+								form,
+								{outcomeOwner: owner});
+						},
+						model),
+					_List_Nil);
+			case 'EditExpectedResult':
+				var expected = msg.a;
+				return _Utils_Tuple2(
+					A2(
+						$author$project$Application$TaskBoard$updateForm,
+						function (form) {
+							return _Utils_update(
+								form,
+								{expectedResult: expected});
+						},
+						model),
+					_List_Nil);
+			case 'OpenNewTask':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{draft: $author$project$Domain$Task$emptyInput, notice: $elm$core$Maybe$Nothing, editing: $elm$core$Maybe$Nothing, editorOpen: true}),
+					_List_Nil);
+			case 'CloseEditor':
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closeEditor(model),
+					_List_Nil);
+			case 'SubmitTask':
+				var _v12 = $author$project$Domain$Task$validateInput(model.draft);
+				if (_v12.$ === 'Err') {
+					var _v13 = _v12.a;
+					return A2($author$project$Application$TaskBoard$showNotice, '업무 제목을 입력해 주세요.', model);
+				} else {
+					var input = _v12.a;
+					var _v14 = model.editing;
+					if (_v14.$ === 'Just') {
+						var task = _v14.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{notice: $elm$core$Maybe$Nothing, loading: true}),
+							_List_fromArray(
+								[
+									A2($author$project$Application$TaskBoard$UpdateTask, task.taskId, input)
+								]));
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{notice: $elm$core$Maybe$Nothing, loading: true}),
+							_List_fromArray(
+								[
+									$author$project$Application$TaskBoard$CreateTask(
+									_Utils_update(
+										input,
+										{status: $author$project$Domain$Task$Draft}))
+								]));
+					}
+				}
+			case 'StartEdit':
+				var task = msg.a;
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closePanel(
+						_Utils_update(
+							model,
+							{
+								draft: $author$project$Application$TaskBoard$toInput(task),
+								notice: $elm$core$Maybe$Nothing,
+								editing: $elm$core$Maybe$Just(task),
+								editorOpen: true
+							})),
+					_List_Nil);
+			case 'CancelEdit':
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closeEditor(model),
+					_List_Nil);
+			case 'DeleteRequested':
+				var taskId = msg.a;
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closePanel(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true})),
+					_List_fromArray(
+						[
+							$author$project$Application$TaskBoard$DeleteTask(taskId)
+						]));
+			case 'Saved':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					return A2(
+						$author$project$Application$TaskBoard$addEffect,
+						$author$project$Application$TaskBoard$LoadTasks,
+						A2(
+							$author$project$Application$TaskBoard$showNotice,
+							'업무가 저장되었습니다.',
+							$author$project$Application$TaskBoard$closeEditor(model)));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '저장하지 못했습니다. 다시 시도해 주세요.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'Deleted':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					return A2(
+						$author$project$Application$TaskBoard$addEffect,
+						$author$project$Application$TaskBoard$LoadTasks,
+						A2($author$project$Application$TaskBoard$showNotice, '업무를 삭제했습니다.', model));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '업무를 삭제하지 못했습니다.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'DragStarted':
+				var taskId = msg.a;
+				return model.loading ? _Utils_Tuple2(model, _List_Nil) : _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							notice: $elm$core$Maybe$Nothing,
+							dropTarget: $elm$core$Maybe$Nothing,
+							draggedTaskId: $elm$core$Maybe$Just(taskId)
+						}),
+					_List_Nil);
+			case 'DragOver':
+				var taskStatus = msg.a;
+				var _v17 = model.draggedTaskId;
+				if (_v17.$ === 'Just') {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								dropTarget: $elm$core$Maybe$Just(taskStatus)
+							}),
+						_List_Nil);
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'DragEnded':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{dropTarget: $elm$core$Maybe$Nothing, draggedTaskId: $elm$core$Maybe$Nothing}),
+					_List_Nil);
+			case 'DroppedOn':
+				var targetStatus = msg.a;
+				var _v18 = _Utils_Tuple2(model.loading, model.draggedTaskId);
+				if ((!_v18.a) && (_v18.b.$ === 'Just')) {
+					var taskId = _v18.b.a;
+					var _v19 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
+					if (_v19.$ === 'Just') {
+						var task = _v19.a;
+						return _Utils_eq(task.status, targetStatus) ? _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{dropTarget: $elm$core$Maybe$Nothing, draggedTaskId: $elm$core$Maybe$Nothing}),
+							_List_Nil) : _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{notice: $elm$core$Maybe$Nothing, loading: true, dropTarget: $elm$core$Maybe$Nothing, draggedTaskId: $elm$core$Maybe$Nothing}),
+							_List_fromArray(
+								[
+									A2(
+									$author$project$Application$TaskBoard$MoveTask,
+									taskId,
+									{title: task.title, status: targetStatus, urgency: task.urgency, taskOwner: task.taskOwner, importance: task.importance, description: task.description, outcomeOwner: task.outcomeOwner, expectedResult: task.expectedResult})
+								]));
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{dropTarget: $elm$core$Maybe$Nothing, draggedTaskId: $elm$core$Maybe$Nothing}),
+							_List_Nil);
+					}
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'MoveSaved':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var movedTask = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						'업무 상태를 ' + ($author$project$Domain$Task$statusLabel(movedTask.status) + ' 상태로 변경했습니다.'),
+						_Utils_update(
+							model,
+							{
+								tasks: A2(
+									$elm$core$List$map,
+									$author$project$Application$TaskBoard$replaceTask(movedTask),
+									model.tasks),
+								loading: false
+							}));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '상태를 변경하지 못했습니다. 다시 시도해 주세요.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			case 'OpenTask':
+				var taskId = msg.a;
+				var _v21 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
+				if (_v21.$ === 'Just') {
+					var task = _v21.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								reviewDraft: '',
+								selectedTaskId: $elm$core$Maybe$Just(taskId),
+								submissionDraft: A2($elm$core$Maybe$withDefault, '', task.submittedResult)
+							}),
+						_List_Nil);
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'CloseTask':
+				return _Utils_Tuple2(
+					$author$project$Application$TaskBoard$closePanel(model),
+					_List_Nil);
+			case 'EditSubmission':
+				var submission = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{submissionDraft: submission}),
+					_List_Nil);
+			case 'EditReviewComment':
+				var comment = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{reviewDraft: comment}),
+					_List_Nil);
+			case 'SubmitResult':
+				var taskId = msg.a;
+				var _v22 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
+				if (_v22.$ === 'Just') {
+					var task = _v22.a;
+					return ($elm$core$String$trim(model.submissionDraft) === '') ? A2($author$project$Application$TaskBoard$showNotice, '제출 결과물을 입력해 주세요.', model) : _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true}),
+						_List_fromArray(
+							[
+								A3(
+								$author$project$Application$TaskBoard$SubmitTaskResult,
+								taskId,
+								task.taskOwner,
+								$elm$core$String$trim(model.submissionDraft))
+							]));
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'ApproveResult':
+				var taskId = msg.a;
+				var _v23 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
+				if (_v23.$ === 'Just') {
+					var task = _v23.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true}),
+						_List_fromArray(
+							[
+								A3(
+								$author$project$Application$TaskBoard$ApproveTaskResult,
+								taskId,
+								task.outcomeOwner,
+								$author$project$Application$TaskBoard$optionalText(model.reviewDraft))
+							]));
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'RequestRevision':
+				var taskId = msg.a;
+				var _v24 = A2($author$project$Application$TaskBoard$findTask, taskId, model);
+				if (_v24.$ === 'Just') {
+					var task = _v24.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{notice: $elm$core$Maybe$Nothing, loading: true}),
+						_List_fromArray(
+							[
+								A3(
+								$author$project$Application$TaskBoard$RequestTaskRevision,
+								taskId,
+								task.outcomeOwner,
+								$author$project$Application$TaskBoard$optionalText(model.reviewDraft))
+							]));
+				} else {
+					return _Utils_Tuple2(model, _List_Nil);
+				}
+			case 'WorkflowSaved':
+				var result = msg.a;
+				if (result.$ === 'Ok') {
+					var task = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						$author$project$Application$TaskBoard$workflowNotice(task),
+						_Utils_update(
+							model,
+							{
+								tasks: A2(
+									$elm$core$List$map,
+									$author$project$Application$TaskBoard$replaceTask(task),
+									model.tasks),
+								loading: false,
+								reviewDraft: '',
+								submissionDraft: A2($elm$core$Maybe$withDefault, '', task.submittedResult)
+							}));
+				} else {
+					var error = result.a;
+					return A2(
+						$author$project$Application$TaskBoard$showNotice,
+						A2($author$project$Application$TaskBoard$errorMessage, '처리하지 못했습니다. 다시 시도해 주세요.', error),
+						_Utils_update(
+							model,
+							{loading: false}));
+				}
+			default:
+				var version = msg.a;
+				return _Utils_eq(model.noticeVersion, version) ? _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{notice: $elm$core$Maybe$Nothing}),
+					_List_Nil) : _Utils_Tuple2(model, _List_Nil);
+		}
+	});
+var $elm$core$Basics$never = function (_v0) {
+	never:
+	while (true) {
+		var nvr = _v0.a;
+		var $temp$_v0 = nvr;
+		_v0 = $temp$_v0;
+		continue never;
+	}
+};
+var $elm$core$Task$andThen = _Scheduler_andThen;
+var $elm$core$Task$succeed = _Scheduler_succeed;
+var $elm$core$Task$map = F2(
+	function (func, taskA) {
+		return A2(
+			$elm$core$Task$andThen,
+			function (a) {
+				return $elm$core$Task$succeed(
+					func(a));
+			},
+			taskA);
+	});
+var $elm$core$Basics$identity = function (x) {
+	return x;
+};
+var $elm$core$Task$Perform = function (a) {
+	return {$: 'Perform', a: a};
+};
+var $elm$core$Task$init = $elm$core$Task$succeed(_Utils_Tuple0);
+var $elm$core$Task$map2 = F3(
+	function (func, taskA, taskB) {
+		return A2(
+			$elm$core$Task$andThen,
+			function (a) {
+				return A2(
+					$elm$core$Task$andThen,
+					function (b) {
+						return $elm$core$Task$succeed(
+							A2(func, a, b));
+					},
+					taskB);
+			},
+			taskA);
+	});
+var $elm$core$Task$sequence = function (tasks) {
+	return A3(
+		$elm$core$List$foldr,
+		$elm$core$Task$map2($elm$core$List$cons),
+		$elm$core$Task$succeed(_List_Nil),
+		tasks);
+};
+var $elm$core$Platform$sendToApp = _Platform_sendToApp;
+var $elm$core$Task$spawnCmd = F2(
+	function (router, _v0) {
+		var task = _v0.a;
+		return _Scheduler_spawn(
+			A2(
+				$elm$core$Task$andThen,
+				$elm$core$Platform$sendToApp(router),
+				task));
+	});
+var $elm$core$Task$onEffects = F3(
+	function (router, commands, state) {
+		return A2(
+			$elm$core$Task$map,
+			function (_v0) {
+				return _Utils_Tuple0;
+			},
+			$elm$core$Task$sequence(
+				A2(
+					$elm$core$List$map,
+					$elm$core$Task$spawnCmd(router),
+					commands)));
+	});
+var $elm$core$Task$onSelfMsg = F3(
+	function (_v0, _v1, _v2) {
+		return $elm$core$Task$succeed(_Utils_Tuple0);
+	});
+var $elm$core$Task$cmdMap = F2(
+	function (tagger, _v0) {
+		var task = _v0.a;
+		return $elm$core$Task$Perform(
+			A2($elm$core$Task$map, tagger, task));
+	});
+_Platform_effectManagers['Task'] = _Platform_createManager($elm$core$Task$init, $elm$core$Task$onEffects, $elm$core$Task$onSelfMsg, $elm$core$Task$cmdMap);
+var $elm$core$Task$command = _Platform_leaf('Task');
+var $elm$core$Task$perform = F2(
+	function (toMessage, task) {
+		return $elm$core$Task$command(
+			$elm$core$Task$Perform(
+				A2($elm$core$Task$map, toMessage, task)));
+	});
+var $elm$browser$Browser$External = function (a) {
+	return {$: 'External', a: a};
+};
+var $elm$browser$Browser$Internal = function (a) {
+	return {$: 'Internal', a: a};
+};
+var $elm$browser$Browser$Dom$NotFound = function (a) {
+	return {$: 'NotFound', a: a};
+};
+var $elm$url$Url$Http = {$: 'Http'};
+var $elm$url$Url$Https = {$: 'Https'};
+var $elm$core$String$slice = _String_slice;
+var $elm$core$String$length = _String_length;
+var $elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			$elm$core$String$slice,
+			n,
+			$elm$core$String$length(string),
+			string);
+	});
+var $elm$core$String$startsWith = _String_startsWith;
+var $elm$core$String$left = F2(
+	function (n, string) {
+		return (n < 1) ? '' : A3($elm$core$String$slice, 0, n, string);
+	});
+var $elm$core$String$indexes = _String_indexes;
+var $elm$core$String$isEmpty = function (string) {
+	return string === '';
+};
+var $elm$url$Url$Url = F6(
+	function (protocol, host, port_, path, query, fragment) {
+		return {host: host, path: path, port_: port_, query: query, fragment: fragment, protocol: protocol};
+	});
+var $elm$core$String$toInt = _String_toInt;
+var $elm$core$String$contains = _String_contains;
+var $elm$url$Url$chompBeforePath = F5(
+	function (protocol, path, params, frag, str) {
+		if ($elm$core$String$isEmpty(str) || A2($elm$core$String$contains, '@', str)) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var _v0 = A2($elm$core$String$indexes, ':', str);
+			if (!_v0.b) {
+				return $elm$core$Maybe$Just(
+					A6($elm$url$Url$Url, protocol, str, $elm$core$Maybe$Nothing, path, params, frag));
+			} else {
+				if (!_v0.b.b) {
+					var i = _v0.a;
+					var _v1 = $elm$core$String$toInt(
+						A2($elm$core$String$dropLeft, i + 1, str));
+					if (_v1.$ === 'Nothing') {
+						return $elm$core$Maybe$Nothing;
+					} else {
+						var port_ = _v1;
+						return $elm$core$Maybe$Just(
+							A6(
+								$elm$url$Url$Url,
+								protocol,
+								A2($elm$core$String$left, i, str),
+								port_,
+								path,
+								params,
+								frag));
+					}
+				} else {
+					return $elm$core$Maybe$Nothing;
+				}
+			}
+		}
+	});
+var $elm$url$Url$chompBeforeQuery = F4(
+	function (protocol, params, frag, str) {
+		if ($elm$core$String$isEmpty(str)) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var _v0 = A2($elm$core$String$indexes, '/', str);
+			if (!_v0.b) {
+				return A5($elm$url$Url$chompBeforePath, protocol, '/', params, frag, str);
+			} else {
+				var i = _v0.a;
+				return A5(
+					$elm$url$Url$chompBeforePath,
+					protocol,
+					A2($elm$core$String$dropLeft, i, str),
+					params,
+					frag,
+					A2($elm$core$String$left, i, str));
+			}
+		}
+	});
+var $elm$url$Url$chompBeforeFragment = F3(
+	function (protocol, frag, str) {
+		if ($elm$core$String$isEmpty(str)) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var _v0 = A2($elm$core$String$indexes, '?', str);
+			if (!_v0.b) {
+				return A4($elm$url$Url$chompBeforeQuery, protocol, $elm$core$Maybe$Nothing, frag, str);
+			} else {
+				var i = _v0.a;
+				return A4(
+					$elm$url$Url$chompBeforeQuery,
+					protocol,
+					$elm$core$Maybe$Just(
+						A2($elm$core$String$dropLeft, i + 1, str)),
+					frag,
+					A2($elm$core$String$left, i, str));
+			}
+		}
+	});
+var $elm$url$Url$chompAfterProtocol = F2(
+	function (protocol, str) {
+		if ($elm$core$String$isEmpty(str)) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var _v0 = A2($elm$core$String$indexes, '#', str);
+			if (!_v0.b) {
+				return A3($elm$url$Url$chompBeforeFragment, protocol, $elm$core$Maybe$Nothing, str);
+			} else {
+				var i = _v0.a;
+				return A3(
+					$elm$url$Url$chompBeforeFragment,
+					protocol,
+					$elm$core$Maybe$Just(
+						A2($elm$core$String$dropLeft, i + 1, str)),
+					A2($elm$core$String$left, i, str));
+			}
+		}
+	});
+var $elm$url$Url$fromString = function (str) {
+	return A2($elm$core$String$startsWith, 'http://', str) ? A2(
+		$elm$url$Url$chompAfterProtocol,
+		$elm$url$Url$Http,
+		A2($elm$core$String$dropLeft, 7, str)) : (A2($elm$core$String$startsWith, 'https://', str) ? A2(
+		$elm$url$Url$chompAfterProtocol,
+		$elm$url$Url$Https,
+		A2($elm$core$String$dropLeft, 8, str)) : $elm$core$Maybe$Nothing);
+};
+var $elm$browser$Browser$element = _Browser_element;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $author$project$Application$TaskBoard$DismissNotice = function (a) {
-	return {$: 'DismissNotice', a: a};
+var $elm$core$Process$sleep = _Process_sleep;
+var $elm$http$Http$Request = function (a) {
+	return {$: 'Request', a: a};
 };
-var $author$project$Application$TaskBoard$Authenticated = function (a) {
-	return {$: 'Authenticated', a: a};
-};
-var $author$project$Application$TaskBoard$Deleted = function (a) {
-	return {$: 'Deleted', a: a};
-};
-var $author$project$Application$TaskBoard$GotTasks = function (a) {
-	return {$: 'GotTasks', a: a};
-};
-var $author$project$Application$TaskBoard$LoggedOut = function (a) {
-	return {$: 'LoggedOut', a: a};
-};
-var $author$project$Application$TaskBoard$MoveSaved = function (a) {
-	return {$: 'MoveSaved', a: a};
-};
-var $author$project$Application$TaskBoard$ProfileSaved = function (a) {
-	return {$: 'ProfileSaved', a: a};
-};
-var $author$project$Application$TaskBoard$Saved = function (a) {
-	return {$: 'Saved', a: a};
-};
-var $author$project$Application$TaskBoard$WorkflowSaved = function (a) {
-	return {$: 'WorkflowSaved', a: a};
-};
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
+var $elm$http$Http$State = F2(
+	function (reqs, subs) {
+		return {reqs: reqs, subs: subs};
 	});
-var $elm$http$Http$BadStatus_ = F2(
-	function (a, b) {
-		return {$: 'BadStatus_', a: a, b: b};
-	});
-var $elm$http$Http$BadUrl_ = function (a) {
-	return {$: 'BadUrl_', a: a};
-};
-var $elm$http$Http$GoodStatus_ = F2(
-	function (a, b) {
-		return {$: 'GoodStatus_', a: a, b: b};
-	});
-var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
-var $elm$http$Http$Receiving = function (a) {
-	return {$: 'Receiving', a: a};
-};
-var $elm$http$Http$Sending = function (a) {
-	return {$: 'Sending', a: a};
-};
-var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$http$Http$init = $elm$core$Task$succeed(
+	A2($elm$http$Http$State, $elm$core$Dict$empty, _List_Nil));
 var $elm$core$Maybe$isJust = function (maybe) {
 	if (maybe.$ === 'Just') {
 		return true;
@@ -8685,7 +8644,6 @@ var $elm$core$Maybe$isJust = function (maybe) {
 		return false;
 	}
 };
-var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
 var $elm$core$Basics$compare = _Utils_compare;
 var $elm$core$Dict$get = F2(
 	function (targetKey, dict) {
@@ -8719,11 +8677,11 @@ var $elm$core$Dict$get = F2(
 		}
 	});
 var $elm$core$Dict$Black = {$: 'Black'};
+var $elm$core$Dict$Red = {$: 'Red'};
 var $elm$core$Dict$RBNode_elm_builtin = F5(
 	function (a, b, c, d, e) {
 		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
 	});
-var $elm$core$Dict$Red = {$: 'Red'};
 var $elm$core$Dict$balance = F5(
 	function (color, key, value, left, right) {
 		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
@@ -8913,6 +8871,57 @@ var $elm$core$Dict$moveRedLeft = function (dict) {
 		return dict;
 	}
 };
+var $elm$core$Dict$removeMin = function (dict) {
+	if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
+		var color = dict.a;
+		var key = dict.b;
+		var value = dict.c;
+		var left = dict.d;
+		var lColor = left.a;
+		var lLeft = left.d;
+		var right = dict.e;
+		if (lColor.$ === 'Black') {
+			if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
+				var _v3 = lLeft.a;
+				return A5(
+					$elm$core$Dict$RBNode_elm_builtin,
+					color,
+					key,
+					value,
+					$elm$core$Dict$removeMin(left),
+					right);
+			} else {
+				var _v4 = $elm$core$Dict$moveRedLeft(dict);
+				if (_v4.$ === 'RBNode_elm_builtin') {
+					var nColor = _v4.a;
+					var nKey = _v4.b;
+					var nValue = _v4.c;
+					var nLeft = _v4.d;
+					var nRight = _v4.e;
+					return A5(
+						$elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						$elm$core$Dict$removeMin(nLeft),
+						nRight);
+				} else {
+					return $elm$core$Dict$RBEmpty_elm_builtin;
+				}
+			}
+		} else {
+			return A5(
+				$elm$core$Dict$RBNode_elm_builtin,
+				color,
+				key,
+				value,
+				$elm$core$Dict$removeMin(left),
+				right);
+		}
+	} else {
+		return $elm$core$Dict$RBEmpty_elm_builtin;
+	}
+};
 var $elm$core$Dict$moveRedRight = function (dict) {
 	if (((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) && (dict.e.$ === 'RBNode_elm_builtin')) {
 		if ((dict.d.d.$ === 'RBNode_elm_builtin') && (dict.d.d.a.$ === 'Red')) {
@@ -9027,57 +9036,6 @@ var $elm$core$Dict$removeHelpPrepEQGT = F7(
 			return dict;
 		}
 	});
-var $elm$core$Dict$removeMin = function (dict) {
-	if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
-		var color = dict.a;
-		var key = dict.b;
-		var value = dict.c;
-		var left = dict.d;
-		var lColor = left.a;
-		var lLeft = left.d;
-		var right = dict.e;
-		if (lColor.$ === 'Black') {
-			if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
-				var _v3 = lLeft.a;
-				return A5(
-					$elm$core$Dict$RBNode_elm_builtin,
-					color,
-					key,
-					value,
-					$elm$core$Dict$removeMin(left),
-					right);
-			} else {
-				var _v4 = $elm$core$Dict$moveRedLeft(dict);
-				if (_v4.$ === 'RBNode_elm_builtin') {
-					var nColor = _v4.a;
-					var nKey = _v4.b;
-					var nValue = _v4.c;
-					var nLeft = _v4.d;
-					var nRight = _v4.e;
-					return A5(
-						$elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						$elm$core$Dict$removeMin(nLeft),
-						nRight);
-				} else {
-					return $elm$core$Dict$RBEmpty_elm_builtin;
-				}
-			}
-		} else {
-			return A5(
-				$elm$core$Dict$RBNode_elm_builtin,
-				color,
-				key,
-				value,
-				$elm$core$Dict$removeMin(left),
-				right);
-		}
-	} else {
-		return $elm$core$Dict$RBEmpty_elm_builtin;
-	}
-};
 var $elm$core$Dict$removeHelp = F2(
 	function (targetKey, dict) {
 		if (dict.$ === 'RBEmpty_elm_builtin') {
@@ -9199,330 +9157,26 @@ var $elm$core$Dict$update = F3(
 			return A2($elm$core$Dict$remove, targetKey, dictionary);
 		}
 	});
-var $elm$http$Http$emptyBody = _Http_emptyBody;
-var $elm$json$Json$Decode$decodeString = _Json_runOnString;
-var $elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
-var $elm$http$Http$expectStringResponse = F2(
-	function (toMsg, toResult) {
-		return A3(
-			_Http_expect,
-			'',
-			$elm$core$Basics$identity,
-			A2($elm$core$Basics$composeR, toResult, toMsg));
-	});
-var $elm$core$Result$mapError = F2(
-	function (f, result) {
-		if (result.$ === 'Ok') {
-			var v = result.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			var e = result.a;
-			return $elm$core$Result$Err(
-				f(e));
-		}
-	});
-var $elm$http$Http$BadBody = function (a) {
-	return {$: 'BadBody', a: a};
+var $elm$http$Http$BadUrl_ = function (a) {
+	return {$: 'BadUrl_', a: a};
 };
-var $elm$http$Http$BadStatus = function (a) {
-	return {$: 'BadStatus', a: a};
+var $elm$http$Http$Sending = function (a) {
+	return {$: 'Sending', a: a};
 };
-var $elm$http$Http$BadUrl = function (a) {
-	return {$: 'BadUrl', a: a};
+var $elm$http$Http$Timeout_ = {$: 'Timeout_'};
+var $elm$http$Http$Receiving = function (a) {
+	return {$: 'Receiving', a: a};
 };
-var $elm$http$Http$NetworkError = {$: 'NetworkError'};
-var $elm$http$Http$Timeout = {$: 'Timeout'};
-var $elm$http$Http$resolve = F2(
-	function (toResult, response) {
-		switch (response.$) {
-			case 'BadUrl_':
-				var url = response.a;
-				return $elm$core$Result$Err(
-					$elm$http$Http$BadUrl(url));
-			case 'Timeout_':
-				return $elm$core$Result$Err($elm$http$Http$Timeout);
-			case 'NetworkError_':
-				return $elm$core$Result$Err($elm$http$Http$NetworkError);
-			case 'BadStatus_':
-				var metadata = response.a;
-				return $elm$core$Result$Err(
-					$elm$http$Http$BadStatus(metadata.statusCode));
-			default:
-				var body = response.b;
-				return A2(
-					$elm$core$Result$mapError,
-					$elm$http$Http$BadBody,
-					toResult(body));
-		}
+var $elm$http$Http$BadStatus_ = F2(
+	function (a, b) {
+		return {$: 'BadStatus_', a: a, b: b};
 	});
-var $elm$http$Http$expectJson = F2(
-	function (toMsg, decoder) {
-		return A2(
-			$elm$http$Http$expectStringResponse,
-			toMsg,
-			$elm$http$Http$resolve(
-				function (string) {
-					return A2(
-						$elm$core$Result$mapError,
-						$elm$json$Json$Decode$errorToString,
-						A2($elm$json$Json$Decode$decodeString, decoder, string));
-				}));
+var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
+var $elm$http$Http$GoodStatus_ = F2(
+	function (a, b) {
+		return {$: 'GoodStatus_', a: a, b: b};
 	});
-var $author$project$Application$TaskBoard$Rejected = function (a) {
-	return {$: 'Rejected', a: a};
-};
-var $author$project$Application$TaskBoard$RequestFailed = {$: 'RequestFailed'};
-var $elm$core$Result$map = F2(
-	function (func, ra) {
-		if (ra.$ === 'Ok') {
-			var a = ra.a;
-			return $elm$core$Result$Ok(
-				func(a));
-		} else {
-			var e = ra.a;
-			return $elm$core$Result$Err(e);
-		}
-	});
-var $elm$core$Result$withDefault = F2(
-	function (def, result) {
-		if (result.$ === 'Ok') {
-			var a = result.a;
-			return a;
-		} else {
-			return def;
-		}
-	});
-var $author$project$Infrastructure$TaskApi$decodeResponse = F2(
-	function (decoder, response) {
-		switch (response.$) {
-			case 'GoodStatus_':
-				var body = response.b;
-				return A2(
-					$elm$core$Result$mapError,
-					function (_v1) {
-						return $author$project$Application$TaskBoard$RequestFailed;
-					},
-					A2($elm$json$Json$Decode$decodeString, decoder, body));
-			case 'BadStatus_':
-				var body = response.b;
-				return $elm$core$Result$Err(
-					A2(
-						$elm$core$Result$withDefault,
-						$author$project$Application$TaskBoard$RequestFailed,
-						A2(
-							$elm$core$Result$map,
-							$author$project$Application$TaskBoard$Rejected,
-							A2(
-								$elm$json$Json$Decode$decodeString,
-								A2($elm$json$Json$Decode$field, 'error', $elm$json$Json$Decode$string),
-								body))));
-			default:
-				return $elm$core$Result$Err($author$project$Application$TaskBoard$RequestFailed);
-		}
-	});
-var $author$project$Application$TaskBoard$Profile = F3(
-	function (id, email, displayName) {
-		return {displayName: displayName, email: email, id: id};
-	});
-var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $elm$json$Json$Decode$map3 = _Json_map3;
-var $author$project$Infrastructure$TaskApi$profileDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$Application$TaskBoard$Profile,
-	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
-	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'displayName', $elm$json$Json$Decode$string));
-var $author$project$Infrastructure$TaskApi$expectProfile = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectStringResponse,
-		toMsg,
-		$author$project$Infrastructure$TaskApi$decodeResponse($author$project$Infrastructure$TaskApi$profileDecoder));
-};
-var $author$project$Application$TaskBoard$Session = F2(
-	function (token, user) {
-		return {token: token, user: user};
-	});
-var $author$project$Infrastructure$TaskApi$sessionDecoder = A3(
-	$elm$json$Json$Decode$map2,
-	$author$project$Application$TaskBoard$Session,
-	A2($elm$json$Json$Decode$field, 'token', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'user', $author$project$Infrastructure$TaskApi$profileDecoder));
-var $author$project$Infrastructure$TaskApi$expectSession = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectStringResponse,
-		toMsg,
-		$author$project$Infrastructure$TaskApi$decodeResponse($author$project$Infrastructure$TaskApi$sessionDecoder));
-};
-var $author$project$Domain$Task$Task = function (taskId) {
-	return function (title) {
-		return function (description) {
-			return function (status) {
-				return function (urgency) {
-					return function (importance) {
-						return function (taskOwner) {
-							return function (outcomeOwner) {
-								return function (expectedResult) {
-									return function (submittedResult) {
-										return function (reviewComment) {
-											return {description: description, expectedResult: expectedResult, importance: importance, outcomeOwner: outcomeOwner, reviewComment: reviewComment, status: status, submittedResult: submittedResult, taskId: taskId, taskOwner: taskOwner, title: title, urgency: urgency};
-										};
-									};
-								};
-							};
-						};
-					};
-				};
-			};
-		};
-	};
-};
-var $author$project$Infrastructure$TaskApi$importanceDecoder = A2(
-	$elm$json$Json$Decode$andThen,
-	function (rawImportance) {
-		var _v0 = $author$project$Domain$Task$importanceFromString(rawImportance);
-		if (_v0.$ === 'Just') {
-			var taskImportance = _v0.a;
-			return $elm$json$Json$Decode$succeed(taskImportance);
-		} else {
-			return $elm$json$Json$Decode$fail('Unknown task importance');
-		}
-	},
-	$elm$json$Json$Decode$string);
-var $elm$json$Json$Decode$map8 = _Json_map8;
-var $elm$json$Json$Decode$null = _Json_decodeNull;
-var $elm$json$Json$Decode$oneOf = _Json_oneOf;
-var $elm$json$Json$Decode$nullable = function (decoder) {
-	return $elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
-				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
-			]));
-};
-var $author$project$Infrastructure$TaskApi$statusDecoder = A2(
-	$elm$json$Json$Decode$andThen,
-	function (rawStatus) {
-		var _v0 = $author$project$Domain$Task$statusFromString(rawStatus);
-		if (_v0.$ === 'Just') {
-			var taskStatus = _v0.a;
-			return $elm$json$Json$Decode$succeed(taskStatus);
-		} else {
-			return $elm$json$Json$Decode$fail('Unknown task status');
-		}
-	},
-	$elm$json$Json$Decode$string);
-var $author$project$Infrastructure$TaskApi$urgencyDecoder = A2(
-	$elm$json$Json$Decode$andThen,
-	function (rawUrgency) {
-		var _v0 = $author$project$Domain$Task$urgencyFromString(rawUrgency);
-		if (_v0.$ === 'Just') {
-			var taskUrgency = _v0.a;
-			return $elm$json$Json$Decode$succeed(taskUrgency);
-		} else {
-			return $elm$json$Json$Decode$fail('Unknown task urgency');
-		}
-	},
-	$elm$json$Json$Decode$string);
-var $author$project$Infrastructure$TaskApi$taskDecoder = A3(
-	$elm$json$Json$Decode$map2,
-	F2(
-		function (base, _v0) {
-			var expected = _v0.a;
-			var submitted = _v0.b;
-			var review = _v0.c;
-			return $author$project$Domain$Task$Task(base.identifier)(base.title)(base.description)(base.status)(base.urgency)(base.importance)(base.taskOwner)(base.outcomeOwner)(expected)(submitted)(review);
-		}),
-	A9(
-		$elm$json$Json$Decode$map8,
-		F8(
-			function (identifier, title, description, status, urgency, importance, taskOwner, outcomeOwner) {
-				return {description: description, identifier: identifier, importance: importance, outcomeOwner: outcomeOwner, status: status, taskOwner: taskOwner, title: title, urgency: urgency};
-			}),
-		A2($elm$json$Json$Decode$field, 'taskId', $elm$json$Json$Decode$int),
-		A2($elm$json$Json$Decode$field, 'title', $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$field, 'description', $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$field, 'status', $author$project$Infrastructure$TaskApi$statusDecoder),
-		A2($elm$json$Json$Decode$field, 'urgency', $author$project$Infrastructure$TaskApi$urgencyDecoder),
-		A2($elm$json$Json$Decode$field, 'importance', $author$project$Infrastructure$TaskApi$importanceDecoder),
-		A2($elm$json$Json$Decode$field, 'taskOwner', $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$field, 'outcomeOwner', $elm$json$Json$Decode$string)),
-	A4(
-		$elm$json$Json$Decode$map3,
-		F3(
-			function (expected, submitted, review) {
-				return _Utils_Tuple3(expected, submitted, review);
-			}),
-		A2($elm$json$Json$Decode$field, 'expectedResult', $elm$json$Json$Decode$string),
-		A2(
-			$elm$json$Json$Decode$field,
-			'submittedResult',
-			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
-		A2(
-			$elm$json$Json$Decode$field,
-			'reviewComment',
-			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string))));
-var $author$project$Infrastructure$TaskApi$expectTask = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectStringResponse,
-		toMsg,
-		function (response) {
-			switch (response.$) {
-				case 'GoodStatus_':
-					var body = response.b;
-					return A2(
-						$elm$core$Result$mapError,
-						function (_v1) {
-							return $author$project$Application$TaskBoard$RequestFailed;
-						},
-						A2($elm$json$Json$Decode$decodeString, $author$project$Infrastructure$TaskApi$taskDecoder, body));
-				case 'BadStatus_':
-					var body = response.b;
-					return $elm$core$Result$Err(
-						A2(
-							$elm$core$Result$withDefault,
-							$author$project$Application$TaskBoard$RequestFailed,
-							A2(
-								$elm$core$Result$map,
-								$author$project$Application$TaskBoard$Rejected,
-								A2(
-									$elm$json$Json$Decode$decodeString,
-									A2($elm$json$Json$Decode$field, 'error', $elm$json$Json$Decode$string),
-									body))));
-				default:
-					return $elm$core$Result$Err($author$project$Application$TaskBoard$RequestFailed);
-			}
-		});
-};
-var $elm$http$Http$expectBytesResponse = F2(
-	function (toMsg, toResult) {
-		return A3(
-			_Http_expect,
-			'arraybuffer',
-			_Http_toDataView,
-			A2($elm$core$Basics$composeR, toResult, toMsg));
-	});
-var $elm$http$Http$expectWhatever = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectBytesResponse,
-		toMsg,
-		$elm$http$Http$resolve(
-			function (_v0) {
-				return $elm$core$Result$Ok(_Utils_Tuple0);
-			}));
-};
-var $elm$http$Http$Request = function (a) {
-	return {$: 'Request', a: a};
-};
-var $elm$http$Http$State = F2(
-	function (reqs, subs) {
-		return {reqs: reqs, subs: subs};
-	});
-var $elm$http$Http$init = $elm$core$Task$succeed(
-	A2($elm$http$Http$State, $elm$core$Dict$empty, _List_Nil));
+var $elm$http$Http$NetworkError_ = {$: 'NetworkError_'};
 var $elm$core$Process$kill = _Scheduler_kill;
 var $elm$core$Process$spawn = _Scheduler_spawn;
 var $elm$http$Http$updateReqs = F3(
@@ -9650,20 +9304,25 @@ var $elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return $elm$http$Http$Request(
 				{
-					allowCookiesFromOtherDomains: r.allowCookiesFromOtherDomains,
+					url: r.url,
 					body: r.body,
 					expect: A2(_Http_mapExpect, func, r.expect),
-					headers: r.headers,
 					method: r.method,
+					headers: r.headers,
 					timeout: r.timeout,
 					tracker: r.tracker,
-					url: r.url
+					allowCookiesFromOtherDomains: r.allowCookiesFromOtherDomains
 				});
 		}
 	});
 var $elm$http$Http$MySub = F2(
 	function (a, b) {
 		return {$: 'MySub', a: a, b: b};
+	});
+var $elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
 	});
 var $elm$http$Http$subMap = F2(
 	function (func, _v0) {
@@ -9680,24 +9339,27 @@ var $elm$http$Http$subscription = _Platform_leaf('Http');
 var $elm$http$Http$request = function (r) {
 	return $elm$http$Http$command(
 		$elm$http$Http$Request(
-			{allowCookiesFromOtherDomains: false, body: r.body, expect: r.expect, headers: r.headers, method: r.method, timeout: r.timeout, tracker: r.tracker, url: r.url}));
+			{url: r.url, body: r.body, expect: r.expect, method: r.method, headers: r.headers, timeout: r.timeout, tracker: r.tracker, allowCookiesFromOtherDomains: false}));
 };
+var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
-		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+		{url: r.url, body: $elm$http$Http$emptyBody, expect: r.expect, method: 'GET', headers: _List_Nil, timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing});
+};
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $elm$http$Http$post = function (r) {
+	return $elm$http$Http$request(
+		{url: r.url, body: r.body, expect: r.expect, method: 'POST', headers: _List_Nil, timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing});
+};
+var $author$project$Application$TaskBoard$Saved = function (a) {
+	return {$: 'Saved', a: a};
 };
 var $elm$http$Http$Header = F2(
 	function (a, b) {
 		return {$: 'Header', a: a, b: b};
 	});
 var $elm$http$Http$header = $elm$http$Http$Header;
-var $elm$http$Http$jsonBody = function (value) {
-	return A2(
-		_Http_pair,
-		'application/json',
-		A2($elm$json$Json$Encode$encode, 0, value));
-};
-var $elm$json$Json$Decode$list = _Json_decodeList;
 var $elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -9710,6 +9372,268 @@ var $elm$json$Json$Encode$object = function (pairs) {
 				}),
 			_Json_emptyObject(_Utils_Tuple0),
 			pairs));
+};
+var $author$project$Application$TaskBoard$Deleted = function (a) {
+	return {$: 'Deleted', a: a};
+};
+var $author$project$Application$TaskBoard$GotTasks = function (a) {
+	return {$: 'GotTasks', a: a};
+};
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
+};
+var $elm$core$Result$mapError = F2(
+	function (f, result) {
+		if (result.$ === 'Ok') {
+			var v = result.a;
+			return $elm$core$Result$Ok(v);
+		} else {
+			var e = result.a;
+			return $elm$core$Result$Err(
+				f(e));
+		}
+	});
+var $author$project$Application$TaskBoard$LoggedOut = function (a) {
+	return {$: 'LoggedOut', a: a};
+};
+var $author$project$Application$TaskBoard$MoveSaved = function (a) {
+	return {$: 'MoveSaved', a: a};
+};
+var $elm$http$Http$BadUrl = function (a) {
+	return {$: 'BadUrl', a: a};
+};
+var $elm$http$Http$BadBody = function (a) {
+	return {$: 'BadBody', a: a};
+};
+var $elm$http$Http$Timeout = {$: 'Timeout'};
+var $elm$http$Http$BadStatus = function (a) {
+	return {$: 'BadStatus', a: a};
+};
+var $elm$http$Http$NetworkError = {$: 'NetworkError'};
+var $elm$http$Http$resolve = F2(
+	function (toResult, response) {
+		switch (response.$) {
+			case 'BadUrl_':
+				var url = response.a;
+				return $elm$core$Result$Err(
+					$elm$http$Http$BadUrl(url));
+			case 'Timeout_':
+				return $elm$core$Result$Err($elm$http$Http$Timeout);
+			case 'NetworkError_':
+				return $elm$core$Result$Err($elm$http$Http$NetworkError);
+			case 'BadStatus_':
+				var metadata = response.a;
+				return $elm$core$Result$Err(
+					$elm$http$Http$BadStatus(metadata.statusCode));
+			default:
+				var body = response.b;
+				return A2(
+					$elm$core$Result$mapError,
+					$elm$http$Http$BadBody,
+					toResult(body));
+		}
+	});
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
+var $elm$http$Http$expectStringResponse = F2(
+	function (toMsg, toResult) {
+		return A3(
+			_Http_expect,
+			'',
+			$elm$core$Basics$identity,
+			A2($elm$core$Basics$composeR, toResult, toMsg));
+	});
+var $elm$http$Http$expectJson = F2(
+	function (toMsg, decoder) {
+		return A2(
+			$elm$http$Http$expectStringResponse,
+			toMsg,
+			$elm$http$Http$resolve(
+				function (string) {
+					return A2(
+						$elm$core$Result$mapError,
+						$elm$json$Json$Decode$errorToString,
+						A2($elm$json$Json$Decode$decodeString, decoder, string));
+				}));
+	});
+var $elm$core$Result$map = F2(
+	function (func, ra) {
+		if (ra.$ === 'Ok') {
+			var a = ra.a;
+			return $elm$core$Result$Ok(
+				func(a));
+		} else {
+			var e = ra.a;
+			return $elm$core$Result$Err(e);
+		}
+	});
+var $author$project$Application$TaskBoard$Rejected = function (a) {
+	return {$: 'Rejected', a: a};
+};
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $author$project$Domain$Task$Task = function (taskId) {
+	return function (title) {
+		return function (description) {
+			return function (status) {
+				return function (urgency) {
+					return function (importance) {
+						return function (taskOwner) {
+							return function (outcomeOwner) {
+								return function (expectedResult) {
+									return function (submittedResult) {
+										return function (reviewComment) {
+											return {title: title, status: status, taskId: taskId, urgency: urgency, taskOwner: taskOwner, importance: importance, description: description, outcomeOwner: outcomeOwner, reviewComment: reviewComment, expectedResult: expectedResult, submittedResult: submittedResult};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$map8 = _Json_map8;
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$nullable = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				$elm$json$Json$Decode$null($elm$core$Maybe$Nothing),
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
+			]));
+};
+var $author$project$Infrastructure$TaskApi$statusDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	function (rawStatus) {
+		var _v0 = $author$project$Domain$Task$statusFromString(rawStatus);
+		if (_v0.$ === 'Just') {
+			var taskStatus = _v0.a;
+			return $elm$json$Json$Decode$succeed(taskStatus);
+		} else {
+			return $elm$json$Json$Decode$fail('Unknown task status');
+		}
+	},
+	$elm$json$Json$Decode$string);
+var $author$project$Infrastructure$TaskApi$urgencyDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	function (rawUrgency) {
+		var _v0 = $author$project$Domain$Task$urgencyFromString(rawUrgency);
+		if (_v0.$ === 'Just') {
+			var taskUrgency = _v0.a;
+			return $elm$json$Json$Decode$succeed(taskUrgency);
+		} else {
+			return $elm$json$Json$Decode$fail('Unknown task urgency');
+		}
+	},
+	$elm$json$Json$Decode$string);
+var $author$project$Infrastructure$TaskApi$importanceDecoder = A2(
+	$elm$json$Json$Decode$andThen,
+	function (rawImportance) {
+		var _v0 = $author$project$Domain$Task$importanceFromString(rawImportance);
+		if (_v0.$ === 'Just') {
+			var taskImportance = _v0.a;
+			return $elm$json$Json$Decode$succeed(taskImportance);
+		} else {
+			return $elm$json$Json$Decode$fail('Unknown task importance');
+		}
+	},
+	$elm$json$Json$Decode$string);
+var $author$project$Infrastructure$TaskApi$taskDecoder = A3(
+	$elm$json$Json$Decode$map2,
+	F2(
+		function (base, _v0) {
+			var expected = _v0.a;
+			var submitted = _v0.b;
+			var review = _v0.c;
+			return $author$project$Domain$Task$Task(base.identifier)(base.title)(base.description)(base.status)(base.urgency)(base.importance)(base.taskOwner)(base.outcomeOwner)(expected)(submitted)(review);
+		}),
+	A9(
+		$elm$json$Json$Decode$map8,
+		F8(
+			function (identifier, title, description, status, urgency, importance, taskOwner, outcomeOwner) {
+				return {title: title, status: status, urgency: urgency, taskOwner: taskOwner, identifier: identifier, importance: importance, description: description, outcomeOwner: outcomeOwner};
+			}),
+		A2($elm$json$Json$Decode$field, 'taskId', $elm$json$Json$Decode$int),
+		A2($elm$json$Json$Decode$field, 'title', $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$field, 'description', $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$field, 'status', $author$project$Infrastructure$TaskApi$statusDecoder),
+		A2($elm$json$Json$Decode$field, 'urgency', $author$project$Infrastructure$TaskApi$urgencyDecoder),
+		A2($elm$json$Json$Decode$field, 'importance', $author$project$Infrastructure$TaskApi$importanceDecoder),
+		A2($elm$json$Json$Decode$field, 'taskOwner', $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$field, 'outcomeOwner', $elm$json$Json$Decode$string)),
+	A4(
+		$elm$json$Json$Decode$map3,
+		F3(
+			function (expected, submitted, review) {
+				return _Utils_Tuple3(expected, submitted, review);
+			}),
+		A2($elm$json$Json$Decode$field, 'expectedResult', $elm$json$Json$Decode$string),
+		A2(
+			$elm$json$Json$Decode$field,
+			'submittedResult',
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string)),
+		A2(
+			$elm$json$Json$Decode$field,
+			'reviewComment',
+			$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string))));
+var $elm$core$Result$withDefault = F2(
+	function (def, result) {
+		if (result.$ === 'Ok') {
+			var a = result.a;
+			return a;
+		} else {
+			return def;
+		}
+	});
+var $author$project$Application$TaskBoard$RequestFailed = {$: 'RequestFailed'};
+var $author$project$Infrastructure$TaskApi$expectTask = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectStringResponse,
+		toMsg,
+		function (response) {
+			switch (response.$) {
+				case 'GoodStatus_':
+					var body = response.b;
+					return A2(
+						$elm$core$Result$mapError,
+						function (_v1) {
+							return $author$project$Application$TaskBoard$RequestFailed;
+						},
+						A2($elm$json$Json$Decode$decodeString, $author$project$Infrastructure$TaskApi$taskDecoder, body));
+				case 'BadStatus_':
+					var body = response.b;
+					return $elm$core$Result$Err(
+						A2(
+							$elm$core$Result$withDefault,
+							$author$project$Application$TaskBoard$RequestFailed,
+							A2(
+								$elm$core$Result$map,
+								$author$project$Application$TaskBoard$Rejected,
+								A2(
+									$elm$json$Json$Decode$decodeString,
+									A2($elm$json$Json$Decode$field, 'error', $elm$json$Json$Decode$string),
+									body))));
+				default:
+					return $elm$core$Result$Err($author$project$Application$TaskBoard$RequestFailed);
+			}
+		});
+};
+var $author$project$Infrastructure$TaskApi$toApiError = function (_v0) {
+	return $author$project$Application$TaskBoard$RequestFailed;
+};
+var $author$project$Application$TaskBoard$ProfileSaved = function (a) {
+	return {$: 'ProfileSaved', a: a};
 };
 var $author$project$Infrastructure$TaskApi$loginEncoder = F2(
 	function (email, password) {
@@ -9724,10 +9648,70 @@ var $author$project$Infrastructure$TaskApi$loginEncoder = F2(
 					$elm$json$Json$Encode$string(password))
 				]));
 	});
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $elm$http$Http$post = function (r) {
-	return $elm$http$Http$request(
-		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+var $author$project$Application$TaskBoard$Authenticated = function (a) {
+	return {$: 'Authenticated', a: a};
+};
+var $author$project$Application$TaskBoard$WorkflowSaved = function (a) {
+	return {$: 'WorkflowSaved', a: a};
+};
+var $author$project$Infrastructure$TaskApi$decodeResponse = F2(
+	function (decoder, response) {
+		switch (response.$) {
+			case 'GoodStatus_':
+				var body = response.b;
+				return A2(
+					$elm$core$Result$mapError,
+					function (_v1) {
+						return $author$project$Application$TaskBoard$RequestFailed;
+					},
+					A2($elm$json$Json$Decode$decodeString, decoder, body));
+			case 'BadStatus_':
+				var body = response.b;
+				return $elm$core$Result$Err(
+					A2(
+						$elm$core$Result$withDefault,
+						$author$project$Application$TaskBoard$RequestFailed,
+						A2(
+							$elm$core$Result$map,
+							$author$project$Application$TaskBoard$Rejected,
+							A2(
+								$elm$json$Json$Decode$decodeString,
+								A2($elm$json$Json$Decode$field, 'error', $elm$json$Json$Decode$string),
+								body))));
+			default:
+				return $elm$core$Result$Err($author$project$Application$TaskBoard$RequestFailed);
+		}
+	});
+var $author$project$Application$TaskBoard$Profile = F3(
+	function (id, email, displayName) {
+		return {id: id, email: email, displayName: displayName};
+	});
+var $author$project$Infrastructure$TaskApi$profileDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Application$TaskBoard$Profile,
+	A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int),
+	A2($elm$json$Json$Decode$field, 'email', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'displayName', $elm$json$Json$Decode$string));
+var $author$project$Infrastructure$TaskApi$expectProfile = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectStringResponse,
+		toMsg,
+		$author$project$Infrastructure$TaskApi$decodeResponse($author$project$Infrastructure$TaskApi$profileDecoder));
+};
+var $author$project$Application$TaskBoard$Session = F2(
+	function (token, user) {
+		return {user: user, token: token};
+	});
+var $author$project$Infrastructure$TaskApi$sessionDecoder = A3(
+	$elm$json$Json$Decode$map2,
+	$author$project$Application$TaskBoard$Session,
+	A2($elm$json$Json$Decode$field, 'token', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'user', $author$project$Infrastructure$TaskApi$profileDecoder));
+var $author$project$Infrastructure$TaskApi$expectSession = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectStringResponse,
+		toMsg,
+		$author$project$Infrastructure$TaskApi$decodeResponse($author$project$Infrastructure$TaskApi$sessionDecoder));
 };
 var $author$project$Infrastructure$TaskApi$reviewEncoder = F2(
 	function (owner, comment) {
@@ -9767,19 +9751,23 @@ var $author$project$Infrastructure$TaskApi$signUpEncoder = F3(
 					$elm$json$Json$Encode$string(password))
 				]));
 	});
-var $author$project$Infrastructure$TaskApi$submissionEncoder = F2(
-	function (owner, submittedResult) {
-		return $elm$json$Json$Encode$object(
-			_List_fromArray(
-				[
-					_Utils_Tuple2(
-					'taskOwner',
-					$elm$json$Json$Encode$string(owner)),
-					_Utils_Tuple2(
-					'submittedResult',
-					$elm$json$Json$Encode$string(submittedResult))
-				]));
+var $elm$http$Http$expectBytesResponse = F2(
+	function (toMsg, toResult) {
+		return A3(
+			_Http_expect,
+			'arraybuffer',
+			_Http_toDataView,
+			A2($elm$core$Basics$composeR, toResult, toMsg));
 	});
+var $elm$http$Http$expectWhatever = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectBytesResponse,
+		toMsg,
+		$elm$http$Http$resolve(
+			function (_v0) {
+				return $elm$core$Result$Ok(_Utils_Tuple0);
+			}));
+};
 var $author$project$Infrastructure$TaskApi$taskInputEncoder = function (input) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
@@ -9813,75 +9801,85 @@ var $author$project$Infrastructure$TaskApi$taskInputEncoder = function (input) {
 				$elm$json$Json$Encode$string(input.expectedResult))
 			]));
 };
-var $author$project$Infrastructure$TaskApi$toApiError = function (_v0) {
-	return $author$project$Application$TaskBoard$RequestFailed;
-};
+var $author$project$Infrastructure$TaskApi$submissionEncoder = F2(
+	function (owner, submittedResult) {
+		return $elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'taskOwner',
+					$elm$json$Json$Encode$string(owner)),
+					_Utils_Tuple2(
+					'submittedResult',
+					$elm$json$Json$Encode$string(submittedResult))
+				]));
+	});
 var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 	switch (effect.$) {
 		case 'LoadTasks':
 			return $elm$http$Http$get(
 				{
+					url: '/api/task',
 					expect: A2(
 						$elm$http$Http$expectJson,
 						A2(
 							$elm$core$Basics$composeL,
 							$author$project$Application$TaskBoard$GotTasks,
 							$elm$core$Result$mapError($author$project$Infrastructure$TaskApi$toApiError)),
-						$elm$json$Json$Decode$list($author$project$Infrastructure$TaskApi$taskDecoder)),
-					url: '/api/task'
+						$elm$json$Json$Decode$list($author$project$Infrastructure$TaskApi$taskDecoder))
 				});
 		case 'CreateTask':
 			var input = effect.a;
 			return $elm$http$Http$post(
 				{
+					url: '/api/task',
 					body: $elm$http$Http$jsonBody(
 						$author$project$Infrastructure$TaskApi$taskInputEncoder(input)),
-					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$Saved),
-					url: '/api/task'
+					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$Saved)
 				});
 		case 'UpdateTask':
 			var taskId = effect.a;
 			var input = effect.b;
 			return $elm$http$Http$request(
 				{
+					url: '/api/task/' + $elm$core$String$fromInt(taskId),
 					body: $elm$http$Http$jsonBody(
 						$author$project$Infrastructure$TaskApi$taskInputEncoder(input)),
 					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$Saved),
-					headers: _List_Nil,
 					method: 'PUT',
+					headers: _List_Nil,
 					timeout: $elm$core$Maybe$Nothing,
-					tracker: $elm$core$Maybe$Nothing,
-					url: '/api/task/' + $elm$core$String$fromInt(taskId)
+					tracker: $elm$core$Maybe$Nothing
 				});
 		case 'MoveTask':
 			var taskId = effect.a;
 			var input = effect.b;
 			return $elm$http$Http$request(
 				{
+					url: '/api/task/' + $elm$core$String$fromInt(taskId),
 					body: $elm$http$Http$jsonBody(
 						$author$project$Infrastructure$TaskApi$taskInputEncoder(input)),
 					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$MoveSaved),
-					headers: _List_Nil,
 					method: 'PUT',
+					headers: _List_Nil,
 					timeout: $elm$core$Maybe$Nothing,
-					tracker: $elm$core$Maybe$Nothing,
-					url: '/api/task/' + $elm$core$String$fromInt(taskId)
+					tracker: $elm$core$Maybe$Nothing
 				});
 		case 'DeleteTask':
 			var taskId = effect.a;
 			return $elm$http$Http$request(
 				{
+					url: '/api/task/' + $elm$core$String$fromInt(taskId),
 					body: $elm$http$Http$emptyBody,
 					expect: $elm$http$Http$expectWhatever(
 						A2(
 							$elm$core$Basics$composeL,
 							$author$project$Application$TaskBoard$Deleted,
 							$elm$core$Result$mapError($author$project$Infrastructure$TaskApi$toApiError))),
-					headers: _List_Nil,
 					method: 'DELETE',
+					headers: _List_Nil,
 					timeout: $elm$core$Maybe$Nothing,
-					tracker: $elm$core$Maybe$Nothing,
-					url: '/api/task/' + $elm$core$String$fromInt(taskId)
+					tracker: $elm$core$Maybe$Nothing
 				});
 		case 'SubmitTaskResult':
 			var taskId = effect.a;
@@ -9889,10 +9887,10 @@ var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 			var submittedResult = effect.c;
 			return $elm$http$Http$post(
 				{
+					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/submit'),
 					body: $elm$http$Http$jsonBody(
 						A2($author$project$Infrastructure$TaskApi$submissionEncoder, owner, submittedResult)),
-					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved),
-					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/submit')
+					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved)
 				});
 		case 'ApproveTaskResult':
 			var taskId = effect.a;
@@ -9900,10 +9898,10 @@ var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 			var comment = effect.c;
 			return $elm$http$Http$post(
 				{
+					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/approve'),
 					body: $elm$http$Http$jsonBody(
 						A2($author$project$Infrastructure$TaskApi$reviewEncoder, owner, comment)),
-					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved),
-					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/approve')
+					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved)
 				});
 		case 'RequestTaskRevision':
 			var taskId = effect.a;
@@ -9911,10 +9909,10 @@ var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 			var comment = effect.c;
 			return $elm$http$Http$post(
 				{
+					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/revision'),
 					body: $elm$http$Http$jsonBody(
 						A2($author$project$Infrastructure$TaskApi$reviewEncoder, owner, comment)),
-					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved),
-					url: '/api/task/' + ($elm$core$String$fromInt(taskId) + '/revision')
+					expect: $author$project$Infrastructure$TaskApi$expectTask($author$project$Application$TaskBoard$WorkflowSaved)
 				});
 		case 'Register':
 			var email = effect.a;
@@ -9922,26 +9920,27 @@ var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 			var password = effect.c;
 			return $elm$http$Http$post(
 				{
+					url: '/api/auth/signup',
 					body: $elm$http$Http$jsonBody(
 						A3($author$project$Infrastructure$TaskApi$signUpEncoder, email, displayName, password)),
-					expect: $author$project$Infrastructure$TaskApi$expectSession($author$project$Application$TaskBoard$Authenticated),
-					url: '/api/auth/signup'
+					expect: $author$project$Infrastructure$TaskApi$expectSession($author$project$Application$TaskBoard$Authenticated)
 				});
 		case 'Login':
 			var email = effect.a;
 			var password = effect.b;
 			return $elm$http$Http$post(
 				{
+					url: '/api/auth/login',
 					body: $elm$http$Http$jsonBody(
 						A2($author$project$Infrastructure$TaskApi$loginEncoder, email, password)),
-					expect: $author$project$Infrastructure$TaskApi$expectSession($author$project$Application$TaskBoard$Authenticated),
-					url: '/api/auth/login'
+					expect: $author$project$Infrastructure$TaskApi$expectSession($author$project$Application$TaskBoard$Authenticated)
 				});
 		case 'UpdateProfile':
 			var token = effect.a;
 			var displayName = effect.b;
 			return $elm$http$Http$request(
 				{
+					url: '/api/auth/me',
 					body: $elm$http$Http$jsonBody(
 						$elm$json$Json$Encode$object(
 							_List_fromArray(
@@ -9951,39 +9950,40 @@ var $author$project$Infrastructure$TaskApi$perform = function (effect) {
 									$elm$json$Json$Encode$string(displayName))
 								]))),
 					expect: $author$project$Infrastructure$TaskApi$expectProfile($author$project$Application$TaskBoard$ProfileSaved),
+					method: 'PUT',
 					headers: _List_fromArray(
 						[
 							A2($elm$http$Http$header, 'Authorization', 'Bearer ' + token)
 						]),
-					method: 'PUT',
 					timeout: $elm$core$Maybe$Nothing,
-					tracker: $elm$core$Maybe$Nothing,
-					url: '/api/auth/me'
+					tracker: $elm$core$Maybe$Nothing
 				});
 		case 'Logout':
 			var token = effect.a;
 			return $elm$http$Http$request(
 				{
+					url: '/api/auth/logout',
 					body: $elm$http$Http$emptyBody,
 					expect: $elm$http$Http$expectWhatever(
 						A2(
 							$elm$core$Basics$composeL,
 							$author$project$Application$TaskBoard$LoggedOut,
 							$elm$core$Result$mapError($author$project$Infrastructure$TaskApi$toApiError))),
+					method: 'POST',
 					headers: _List_fromArray(
 						[
 							A2($elm$http$Http$header, 'Authorization', 'Bearer ' + token)
 						]),
-					method: 'POST',
 					timeout: $elm$core$Maybe$Nothing,
-					tracker: $elm$core$Maybe$Nothing,
-					url: '/api/auth/logout'
+					tracker: $elm$core$Maybe$Nothing
 				});
 		default:
 			return $elm$core$Platform$Cmd$none;
 	}
 };
-var $elm$core$Process$sleep = _Process_sleep;
+var $author$project$Application$TaskBoard$DismissNotice = function (a) {
+	return {$: 'DismissNotice', a: a};
+};
 var $author$project$Main$performEffect = function (effect) {
 	if (effect.$ === 'ClearNoticeAfter') {
 		var version = effect.a;
@@ -10010,15 +10010,15 @@ var $author$project$Main$main = $elm$browser$Browser$element(
 		init: function (_v0) {
 			return $author$project$Main$withEffects($author$project$Application$TaskBoard$init);
 		},
-		subscriptions: function (_v1) {
-			return $elm$core$Platform$Sub$none;
-		},
+		view: $author$project$Presentation$TaskBoard$view,
 		update: F2(
 			function (message, model) {
 				return $author$project$Main$withEffects(
 					A2($author$project$Application$TaskBoard$update, message, model));
 			}),
-		view: $author$project$Presentation$TaskBoard$view
+		subscriptions: function (_v1) {
+			return $elm$core$Platform$Sub$none;
+		}
 	});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
