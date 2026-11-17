@@ -1,4 +1,4 @@
-# demo-haskell
+# yesod-haskell
 
 Haskell Yesod 웹 프레임워크 기반 블로그 애플리케이션입니다.
 
@@ -70,12 +70,44 @@ test/
 
 ## 빌드 및 실행
 
+### 전체 개발 작업 실행
+
+GHC(GHC2024 지원 버전)와 Cabal을 설치하고 `PATH`에 등록한 뒤, 포맷터와 린터를 설치합니다.
+
+```bash
+cabal install fourmolu hlint
+```
+
+Cabal의 실행 파일 설치 디렉터리도 `PATH`에 포함되어 있어야 합니다.
+
+```bash
+./scripts/run.sh
+```
+
+Windows PowerShell에서는 다음 명령을 사용합니다.
+
+```powershell
+.\scripts\run.ps1
+```
+
+두 스크립트는 실행한 위치와 관계없이 프로젝트 루트에서 다음 작업을 순서대로 수행합니다.
+
+1. `fourmolu.yaml` 설정으로 `src`, `app`, `test`의 Haskell 파일을 직접 포맷팅
+2. HLint로 같은 디렉터리 검사
+3. 테스트를 포함한 전체 컴포넌트 빌드
+4. 전체 테스트 실행 및 상세 결과 출력
+5. `yesod-haskell` 서버 실행
+
+필수 도구가 없거나 어느 단계가 실패하면 즉시 중단합니다. 서버는 `Ctrl+C`로 종료하며, 스크립트에 전달한 인수는 애플리케이션에 전달됩니다.
+
+### 개별 명령 실행
+
 ```bash
 # 빌드
 cabal build
 
 # 실행
-cabal run demo-haskell
+cabal run yesod-haskell
 ```
 
 서버가 시작되면 http://localhost:3000 에서 접속할 수 있습니다.

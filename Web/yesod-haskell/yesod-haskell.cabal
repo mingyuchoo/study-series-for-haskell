@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               demo-haskell
+name:               yesod-haskell
 version:            0.1.0.0
 synopsis:           Blog web application with Yesod
 license:            MIT
@@ -50,7 +50,7 @@ library
     , yesod-form          >= 1.7
     , yesod-persistent    >= 1.6
 
-executable demo-haskell
+executable yesod-haskell
   main-is:          Main.hs
   hs-source-dirs:   app
   default-language: GHC2024
@@ -58,9 +58,9 @@ executable demo-haskell
 
   build-depends:
       base                >= 4.17 && < 5
-    , demo-haskell
+    , yesod-haskell
 
-test-suite demo-haskell-test
+test-suite yesod-haskell-test
   type:             exitcode-stdio-1.0
   main-is:          Spec.hs
   hs-source-dirs:   test
@@ -78,7 +78,7 @@ test-suite demo-haskell-test
 
   build-depends:
       base                >= 4.17 && < 5
-    , demo-haskell
+    , yesod-haskell
     , hspec               >= 2.0
     , yesod-test          >= 1.6
     , aeson

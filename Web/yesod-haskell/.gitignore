@@ -8,3 +8,6 @@ dist-newstyle/
 
 # Yesod session key (secret)
 config/client_session_key.aes
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
