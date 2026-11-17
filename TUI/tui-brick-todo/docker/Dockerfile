@@ -1,4 +1,4 @@
-ARG PROJECT_NAME=tto
+ARG PROJECT_NAME=tui-brick-todo
 FROM fpco/stack-build:lts-24.21
 WORKDIR /app
 

@@ -7,8 +7,8 @@ extra-deps:
 - dotenv-0.12.0.0@sha256:2f25615cec37ff9a66a48ef0ebf2ac96ae989911d0c26c6796fc2f5247bdd665,4702
 - data-default-class-0.1.2.2@sha256:51400ed341ec87e86a4acf83301c6890e1fc67708e2d0ac519d48e0a14f54c15,1309
 
-docker:
-  enable: true
+11,1: docker:
+12:     enable: false
   image: fpco/stack-build:lts
   auto-pull: true
   persist: false

@@ -8,8 +8,8 @@ extra-package-dbs: []
 extra-deps: []
 flags: {}
 
-docker:
-  enable: true
+11,1: docker:
+12:     enable: false
   image: "fpco/stack-build:lts"
   container-name: "increasing-numbers"
   auto-pull: true
