@@ -198,8 +198,7 @@ build_deb() {
 build_rpm() {
   require_command fpm
   require_command rpmbuild
-  require_command rpm2cpio
-  require_command cpio
+  require_command rpm
   build_release
   prepare_unix_stage
 
@@ -230,7 +229,7 @@ build_rpm() {
     usr/share/applications/"$PACKAGE_NAME".desktop \
     usr/share/icons/hicolor/scalable/apps/"$PACKAGE_NAME".svg
 
-  rpm2cpio "$package_path" | cpio -t >/dev/null 2>&1
+  rpm -qpl --nosignature "$package_path" >/dev/null
   echo "Created $package_path"
 }
 
