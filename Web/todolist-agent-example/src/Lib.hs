@@ -1,6 +1,6 @@
-module Lib
-  ( app
-  ) where
+module Lib (
+    app,
+) where
 
 import Network.Wai (Application)
 import Todo.Interface.HTTP.Handler (HandlerEnv)

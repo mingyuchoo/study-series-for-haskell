@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Shared.Error
-  ( internalErrorMessage
-  ) where
+module Shared.Error (
+    internalErrorMessage,
+) where
 
 import Data.Text (Text)
 

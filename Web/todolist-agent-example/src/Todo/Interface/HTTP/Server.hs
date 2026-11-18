@@ -1,7 +1,7 @@
-module Todo.Interface.HTTP.Server
-  ( mkApplication
-  , mkProductionHandlerEnv
-  ) where
+module Todo.Interface.HTTP.Server (
+    mkApplication,
+    mkProductionHandlerEnv,
+) where
 
 import Data.Time (getCurrentTime)
 import Data.UUID.V4 (nextRandom)
@@ -18,8 +18,9 @@ mkApplication env = serve todoApiProxy (todoServer env)
 
 mkProductionHandlerEnv :: DatabaseConfig -> IO HandlerEnv
 mkProductionHandlerEnv dbConfig =
-  pure HandlerEnv
-    { handlerRepository = postgresTodoRepository dbConfig
-    , handlerGenerateTodoId = fromUUID <$> nextRandom
-    , handlerCurrentTime = getCurrentTime
-    }
+    pure
+        HandlerEnv
+            { handlerRepository = postgresTodoRepository dbConfig
+            , handlerGenerateTodoId = fromUUID <$> nextRandom
+            , handlerCurrentTime = getCurrentTime
+            }

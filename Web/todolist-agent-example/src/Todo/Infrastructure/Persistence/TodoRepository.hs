@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Todo.Infrastructure.Persistence.TodoRepository
-  ( statusToDatabase
-  , statusFromDatabase
-  ) where
+module Todo.Infrastructure.Persistence.TodoRepository (
+    statusToDatabase,
+    statusFromDatabase,
+) where
 
 import Data.Text (Text)
 import Todo.Application.TodoRepository (RepositoryError (..))

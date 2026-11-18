@@ -7,8 +7,8 @@ import Todo.Interface.HTTP.Server (mkApplication, mkProductionHandlerEnv)
 
 main :: IO ()
 main = do
-  config <- loadConfig
-  let dbConfig = DatabaseConfig (databaseUrl config)
-  env <- mkProductionHandlerEnv dbConfig
-  putStrLn ("TodoList listening on port " <> show (appPort config))
-  run (appPort config) (mkApplication env)
+    config <- loadConfig
+    let dbConfig = DatabaseConfig (databaseUrl config)
+    env <- mkProductionHandlerEnv dbConfig
+    putStrLn ("TodoList listening on port " <> show (appPort config))
+    run (appPort config) (mkApplication env)

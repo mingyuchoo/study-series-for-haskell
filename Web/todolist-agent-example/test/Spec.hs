@@ -1,16 +1,16 @@
 module Main (main) where
 
 import Test.Hspec (hspec)
-import qualified Todo.Application.CompleteTodoSpec
-import qualified Todo.Application.CreateTodoSpec
-import qualified Todo.Application.DeleteTodoSpec
-import qualified Todo.Domain.TodoSpec
-import qualified Todo.Interface.HTTP.TodoApiSpec
+import Todo.Application.CompleteTodoSpec qualified
+import Todo.Application.CreateTodoSpec qualified
+import Todo.Application.DeleteTodoSpec qualified
+import Todo.Domain.TodoSpec qualified
+import Todo.Interface.HTTP.TodoApiSpec qualified
 
 main :: IO ()
 main = hspec $ do
-  Todo.Domain.TodoSpec.spec
-  Todo.Application.CreateTodoSpec.spec
-  Todo.Application.CompleteTodoSpec.spec
-  Todo.Application.DeleteTodoSpec.spec
-  Todo.Interface.HTTP.TodoApiSpec.spec
+    Todo.Domain.TodoSpec.spec
+    Todo.Application.CreateTodoSpec.spec
+    Todo.Application.CompleteTodoSpec.spec
+    Todo.Application.DeleteTodoSpec.spec
+    Todo.Interface.HTTP.TodoApiSpec.spec
