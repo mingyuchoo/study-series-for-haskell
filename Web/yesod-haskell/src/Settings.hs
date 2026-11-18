@@ -2,13 +2,13 @@
 
 -- | [REQ-F001] 애플리케이션 설정
 module Settings
-  where
+where
 
 import Data.Text (Text)
 
 -- | 애플리케이션 설정 값
 data AppSettings = AppSettings
-  { appPort         :: Int
+  { appPort :: Int
   , appDatabasePath :: Text
   }
 

@@ -5,6 +5,11 @@ set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd -- "$project_root"
 
+if command -v cabal >/dev/null 2>&1; then
+  cabal_install_dir="$(cabal path --installdir)"
+  export PATH="$PATH:$cabal_install_dir"
+fi
+
 for tool in ghc cabal fourmolu hlint; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     printf 'Required tool not found in PATH: %s\nSee README.md for setup instructions.\n' "$tool" >&2

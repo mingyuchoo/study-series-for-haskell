@@ -21,20 +21,20 @@ spec = describe "Service.AuthService" $ do
     it "해시된 비밀번호를 verifyPassword로 검증할 수 있다" $ do
       mHash <- hashPassword "mySecurePass"
       case mHash of
-        Nothing   -> expectationFailure "해시 생성 실패"
+        Nothing -> expectationFailure "해시 생성 실패"
         Just hash -> verifyPassword "mySecurePass" hash `shouldBe` True
 
   describe "verifyPassword" $ do
     it "올바른 비밀번호는 True를 반환한다" $ do
       mHash <- hashPassword "correctPassword"
       case mHash of
-        Nothing   -> expectationFailure "해시 생성 실패"
+        Nothing -> expectationFailure "해시 생성 실패"
         Just hash -> verifyPassword "correctPassword" hash `shouldBe` True
 
     it "틀린 비밀번호는 False를 반환한다" $ do
       mHash <- hashPassword "correctPassword"
       case mHash of
-        Nothing   -> expectationFailure "해시 생성 실패"
+        Nothing -> expectationFailure "해시 생성 실패"
         Just hash -> verifyPassword "wrongPassword" hash `shouldBe` False
 
     it "빈 문자열 비밀번호도 처리할 수 있다" $ do

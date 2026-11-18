@@ -29,7 +29,7 @@ spec = withApp $ do
         liftIO $ length comments `shouldBe` 1
         case comments of
           (c : _) -> liftIO $ commentContent (entityVal c) `shouldBe` "댓글 내용"
-          []      -> liftIO $ expectationFailure "댓글이 존재해야 함"
+          [] -> liftIO $ expectationFailure "댓글이 존재해야 함"
 
     it "여러 댓글을 생성하면 모두 조회된다" $ do
       now <- liftIO getCurrentTime

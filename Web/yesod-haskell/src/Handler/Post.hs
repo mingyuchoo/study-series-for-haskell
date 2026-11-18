@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 -- | [REQ-F003] 포스트 CRUD 핸들러 (HTML)
 module Handler.Post
-  where
+where
 
 import Import
 import Service.CommentService (getCommentsByPostId)

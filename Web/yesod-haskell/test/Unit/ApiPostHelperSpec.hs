@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 
 -- | [REQ-T001, REQ-F003] ApiPost 헬퍼 함수 단위 테스트
 --
@@ -71,4 +70,4 @@ spec = describe "Handler.ApiPost helpers" $ do
           result = entityToJson entity
       case result of
         Object obj -> member "id" obj `shouldBe` True
-        _          -> expectationFailure "JSON 객체가 아님"
+        _ -> expectationFailure "JSON 객체가 아님"

@@ -78,7 +78,8 @@ GHC(GHC2024 지원 버전)와 Cabal을 설치하고 `PATH`에 등록한 뒤, 포
 cabal install fourmolu hlint
 ```
 
-Cabal의 실행 파일 설치 디렉터리도 `PATH`에 포함되어 있어야 합니다.
+`run.sh`는 `cabal path --installdir`로 Cabal의 실행 파일 설치 디렉터리를 찾아 `PATH`에 추가합니다.
+Windows PowerShell에서는 Cabal의 실행 파일 설치 디렉터리도 `PATH`에 포함되어 있어야 합니다.
 
 ```bash
 ./scripts/run.sh

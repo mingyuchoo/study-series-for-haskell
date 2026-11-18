@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | [REQ-F003] 포스트 JSON API 핸들러
 module Handler.ApiPost
-  where
+where
 
-import Data.Aeson (object, withObject, (.:), (.=))
+import Data.Aeson (withObject)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types (parseMaybe)
 import Import
@@ -33,7 +33,7 @@ getApiPostDetailR :: PostId -> HandlerFor App Aeson.Value
 getApiPostDetailR postId = do
   mPost <- runDB $ getPostById postId
   case mPost of
-    Nothing   -> notFound
+    Nothing -> notFound
     Just post -> returnJson $ postToJson postId post
 
 -- | PUT /api/posts/:id — 포스트 수정

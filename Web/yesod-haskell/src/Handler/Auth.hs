@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 -- | [REQ-F002] 인증 핸들러 — 회원가입, 로그인, 로그아웃
 module Handler.Auth
-  where
+where
 
 import Import
 import Service.AuthService (hashPassword, verifyPassword)

@@ -2,7 +2,7 @@
 
 -- | [REQ-F004] 댓글 핸들러 (HTML)
 module Handler.Comment
-  where
+where
 
 import Import
 import Service.CommentService

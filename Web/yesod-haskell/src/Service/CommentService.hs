@@ -1,8 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | [REQ-F004] 댓글 비즈니스 로직
 module Service.CommentService
-  where
+where
 
 import Import
 

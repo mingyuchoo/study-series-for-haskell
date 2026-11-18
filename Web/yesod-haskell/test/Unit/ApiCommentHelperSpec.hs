@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 
 -- | [REQ-T001, REQ-F004] ApiComment 헬퍼 함수 단위 테스트
 --

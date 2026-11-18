@@ -15,7 +15,6 @@ import Model
 import TestFoundation (makeTestFoundation)
 
 import Test.Hspec
-import Yesod.Core (toPathPiece)
 import Yesod.Test
 
 import Control.Monad.IO.Class (liftIO)
@@ -30,16 +29,6 @@ runDB :: SqlPersistT IO a -> YesodExample App a
 runDB action = do
   app <- getTestYesod
   liftIO $ runSqlPool action (appConnectionPool app)
-
--- | 테스트용 사용자를 생성하고 세션 쿠키를 설정하는 헬퍼
-authenticateUser :: YesodExample App UserId
-authenticateUser = do
-  now <- liftIO getCurrentTime
-  uid <- runDB $ insert $ User "테스트유저" "test@test.com" "hash" now
-  -- 세션 설정을 위해 로그인 시뮬레이션은 불가하므로,
-  -- 직접 쿠키 기반으로 테스트할 수 없음.
-  -- 대신 DB에 사용자를 만들고 ID를 반환
-  return uid
 
 spec :: Spec
 spec = yesodSpecWithSiteGenerator makeTestFoundation $ do
@@ -76,12 +65,12 @@ spec = yesodSpecWithSiteGenerator makeTestFoundation $ do
         setMethod "POST"
         setUrl ApiPostListR
         addRequestHeader ("Content-Type", "application/json")
-        setRequestBody $
-          Aeson.encode $
-            object
-              [ "title" .= ("제목" :: String)
-              , "content" .= ("본문" :: String)
-              ]
+        setRequestBody
+          $ Aeson.encode
+          $ object
+            [ "title" .= ("제목" :: String)
+            , "content" .= ("본문" :: String)
+            ]
       statusIs 303
 
   ydescribe "GET /api/posts/:postId/comments" $ do

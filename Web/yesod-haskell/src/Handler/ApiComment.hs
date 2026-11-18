@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | [REQ-F004] 댓글 JSON API 핸들러
 module Handler.ApiComment
-  where
+where
 
-import Data.Aeson (object, withObject, (.:), (.=))
+import Data.Aeson (withObject)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types (parseMaybe)
 import Import

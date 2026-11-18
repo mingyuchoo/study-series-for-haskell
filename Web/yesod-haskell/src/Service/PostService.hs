@@ -1,8 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | [REQ-F003] 포스트 비즈니스 로직
 module Service.PostService
-  where
+where
 
 import Import
 

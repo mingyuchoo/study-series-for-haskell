@@ -2,7 +2,7 @@
 
 -- | [REQ-T001] 테스트 인프라 — 테스트용 App 생성 및 헬퍼
 module TestFoundation
-  where
+where
 
 import Application ()
 import Foundation (App (..))

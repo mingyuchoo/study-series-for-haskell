@@ -1,8 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | [REQ-F002] 인증 서비스 — 비밀번호 해시 및 검증
 module Service.AuthService
-  where
+where
 
 import Crypto.BCrypt
   ( hashPasswordUsingPolicy

@@ -1,15 +1,15 @@
-{-# LANGUAGE InstanceSigs          #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | [REQ-F001] App 타입 및 Yesod 인스턴스 정의
 module Foundation
-  where
+where
 
-import Data.Text (Text)
 import Database.Persist.Sql (ConnectionPool, SqlBackend, SqlPersistT, runSqlPool)
 import Model
 import Settings
@@ -20,7 +20,7 @@ import Yesod.Persist
 
 -- | 애플리케이션 타입
 data App = App
-  { appSettings       :: AppSettings
+  { appSettings :: AppSettings
   , appConnectionPool :: ConnectionPool
   }
 
@@ -59,7 +59,7 @@ requireAuthId :: HandlerFor App UserId
 requireAuthId = do
   mUid <- maybeAuthId
   case mUid of
-    Nothing  -> redirect LoginR
+    Nothing -> redirect LoginR
     Just uid -> return uid
 
 -- | 로그인한 사용자의 Entity를 가져오기
@@ -68,5 +68,5 @@ requireAuth = do
   uid <- requireAuthId
   mUser <- runDB $ get uid
   case mUser of
-    Nothing   -> redirect LoginR
+    Nothing -> redirect LoginR
     Just user -> return (Entity uid user)
