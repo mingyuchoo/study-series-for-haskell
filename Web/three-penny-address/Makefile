@@ -2,11 +2,14 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := build
 
 STACK ?= stack
-PACKAGE_NAME := $(shell awk '/^name:/ { print $$2; exit }' package.yaml)
+APP_PACKAGE := apps/threepenny-address/package.yaml
+PACKAGE_NAME := $(shell awk '/^name:/ { print $$2; exit }' $(APP_PACKAGE))
 EXECUTABLE := $(PACKAGE_NAME)-exe
 JOBS ?= 4
 GHC_JOBS ?= 4
+HASKELL_SOURCE_DIRS := $(wildcard packages/*/src packages/*/test apps/*/app apps/*/src apps/*/test)
 GUI_PORT ?= 8023
+DOCKER_IMAGE := $(shell printf "%s" "$(PACKAGE_NAME)" | tr "[:upper:]" "[:lower:]")
 
 .PHONY: all setup deps clean build test coverage watch-test watch-coverage ghcid \
         format run release install docker-build docker-run docker-compose-up \
@@ -56,7 +59,7 @@ ghcid:
 	ghcid --command "$(STACK) ghci"
 
 format:
-	stylish-haskell --config .stylish-haskell.yaml -r -i src app test
+	stylish-haskell --config .stylish-haskell.yaml -r -i $(HASKELL_SOURCE_DIRS)
 
 run:
 	$(STACK) run $(EXECUTABLE)
@@ -70,7 +73,7 @@ install: release
 	cp dist/bin/$(EXECUTABLE) $(HOME)/.local/bin/
 
 docker-build:
-	docker build --build-arg PROJECT_NAME=$(PACKAGE_NAME) -t $(PACKAGE_NAME):latest -f docker/Dockerfile .
+	docker build -t $(DOCKER_IMAGE):latest -f docker/Dockerfile .
 
 docker-run: docker-build
 	mkdir -p data
@@ -78,13 +81,13 @@ docker-run: docker-build
 	  --name $(PACKAGE_NAME)-app \
 	  -p $(GUI_PORT):8023 \
 	  -v $(CURDIR)/data:/app/data \
-	  $(PACKAGE_NAME):latest
+	  $(DOCKER_IMAGE):latest
 
 docker-compose-up:
-	PROJECT_NAME=$(PACKAGE_NAME) docker compose -f docker/docker-compose.yaml up --build -d
+	GUI_PORT=$(GUI_PORT) docker compose -f docker/docker-compose.yaml up --build -d
 
 docker-compose-down:
-	PROJECT_NAME=$(PACKAGE_NAME) docker compose -f docker/docker-compose.yaml down --volumes
+	GUI_PORT=$(GUI_PORT) docker compose -f docker/docker-compose.yaml down --volumes
 
 docker-compose-logs:
-	PROJECT_NAME=$(PACKAGE_NAME) docker compose -f docker/docker-compose.yaml logs -f
+	GUI_PORT=$(GUI_PORT) docker compose -f docker/docker-compose.yaml logs -f

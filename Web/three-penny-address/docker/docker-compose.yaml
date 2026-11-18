@@ -1,14 +1,10 @@
 services:
-  ${PROJECT_NAME}:
+  address-book:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      args:
-        PROJECT_NAME: ${PROJECT_NAME}
-    container_name: ${PROJECT_NAME}-app
+    ports:
+      - "${GUI_PORT:-8023}:8023"
     volumes:
       - ../data:/app/data
     restart: unless-stopped
-volumes:
-  data:
-    driver: local

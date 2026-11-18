@@ -8,17 +8,12 @@
 :set prompt "\ESC[1;35m\x03BB> \ESC[m"
 :set prompt-cont "\ESC[1;35m > \ESC[m"
 
--- INCLUDE DIRECTORIES
-:set -iapp
-:set -isrc
-:set -itest
-
 -- LANGUAGE EXTENSIONS
 :set -XExplicitForAll
 :set -XStandaloneKindSignatures
 
 -- HLINT
-:def hlint const . return $ ":! hlint \"src\""
+:def! hlint const . return $ ":! hlint packages/*/src packages/*/test apps/*/src apps/*/app apps/*/test"
 
 -- HOOGLE
-:def hoogle \x -> return $ ":! hoogle --count=20 \"" ++ x ++ "\""
+:def! hoogle \x -> return $ ":! hoogle --count=20 \"" ++ x ++ "\""

@@ -15,7 +15,7 @@ contacts in a JSON file.
 ## Requirements
 
 - Stack
-- GHC 9.10.3 through Stack resolver `lts-24.21`
+- GHC 9.10.3 through Stack resolver `lts-24.40`
 - GNU Make
 
 Optional tools:
@@ -60,6 +60,8 @@ http://localhost:8023
 ```
 
 The app reads and writes `contacts.json` in the current working directory.
+Set `ADDRESS_BOOK_CONTACTS_FILE` to use a different file. The server listens on
+loopback by default. Set `ADDRESS_BOOK_BIND_ADDRESS` to override that address.
 
 Script wrappers are also available:
 
@@ -84,7 +86,7 @@ make coverage         # Run tests with coverage
 make watch-test       # Run tests in watch mode
 make watch-coverage   # Run coverage in watch mode
 make ghcid            # Start ghcid with stack ghci
-make format           # Format src, app, and test with stylish-haskell
+make format           # Format packages and apps with stylish-haskell
 ```
 
 ## Release Packages
@@ -138,7 +140,7 @@ make docker-run
 ```
 
 `make docker-run` exposes the GUI port as `8023:8023` and mounts local `data/`
-into `/app/data`.
+into `/app/data`. The container stores contacts in `data/contacts.json` on the host.
 
 Docker Compose helpers:
 
@@ -150,19 +152,20 @@ make docker-compose-down
 
 ## Project Layout
 
-```text
-app/Main.hs                    Executable entrypoint
-src/GUI/Main.hs                Threepenny GUI setup and event handling
-src/Models/                    Contact and application state models
-src/Services/                  Contact, validation, search, and persistence logic
-test/Spec.hs                   Hspec test entrypoint
-scripts/run.sh                 Linux/macOS build-test-run wrapper
-scripts/run.ps1                Windows build-test-run wrapper
-scripts/release.sh             Linux/macOS native package builder
-scripts/release.ps1            Windows MSI package builder
-docker/                        Dockerfile and Compose file
-static/index.html              Static HTML shell for Threepenny
-```
+| Workspace package | Responsibility |
+| --- | --- |
+| `packages/address-book-domain` | Pure contact models, validation, search, and address book changes |
+| `packages/address-book-application` | Contact use cases and the repository port |
+| `packages/address-book-json` | JSON format compatibility and file persistence |
+| `apps/threepenny-address` | Threepenny UI adapter and executable wiring |
+
+The UI depends on the application and domain packages. The JSON adapter
+implements the application repository port. The executable connects both adapters
+at startup. Stack builds and tests all workspace packages from the project root.
+
+The JSON adapter preserves the `contacts` and `nextId` fields in existing
+`contacts.json` files. It serializes writes through the repository instance
+shared by the server and replaces the file after encoding succeeds.
 
 ## Notes
 

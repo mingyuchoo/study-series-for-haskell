@@ -2,4 +2,7 @@
 --test=:main
 --warnings
 --restart=stack.yaml
---restart=package.yaml
+--restart=apps/threepenny-address/package.yaml
+--restart=packages/address-book-domain/package.yaml
+--restart=packages/address-book-application/package.yaml
+--restart=packages/address-book-json/package.yaml

@@ -1,0 +1,85 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ThreepennyAddress
+version:        0.1.0.0
+synopsis:       ThreepennyAddress workspace package
+description:    Please see the README on GitHub at <https://github.com/mingyuchoo/ThreepennyAddress#readme>
+category:       Web
+homepage:       https://github.com/mingyuchoo/ThreepennyAddress#readme
+bug-reports:    https://github.com/mingyuchoo/ThreepennyAddress/issues
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+copyright:      2026 Mingyu Choo
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/mingyuchoo/ThreepennyAddress
+
+library address-book-ui
+  exposed-modules:
+      GUI.Main
+  other-modules:
+      GUI.AppState
+      GUI.Components
+      GUI.Shortcuts
+      GUI.State
+      GUI.View
+      Paths_ThreepennyAddress
+  autogen-modules:
+      Paths_ThreepennyAddress
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall
+  build-depends:
+      address-book-application
+    , address-book-domain
+    , base >=4.18 && <5
+    , stm
+    , text
+    , threepenny-gui
+  default-language: GHC2024
+
+executable ThreepennyAddress-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_ThreepennyAddress
+  autogen-modules:
+      Paths_ThreepennyAddress
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      address-book-json
+    , address-book-ui
+    , base >=4.18 && <5
+    , bytestring
+    , threepenny-gui
+  default-language: GHC2024
+
+test-suite ThreepennyAddress-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_ThreepennyAddress
+  autogen-modules:
+      Paths_ThreepennyAddress
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , hspec
+  default-language: GHC2024

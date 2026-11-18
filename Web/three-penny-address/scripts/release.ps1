@@ -9,12 +9,12 @@ function Get-PackageValue {
         [Parameter(Mandatory = $true)][string]$Key
     )
 
-    $Line = Get-Content (Join-Path $ProjectRoot "package.yaml") |
+    $Line = Get-Content (Join-Path $ProjectRoot "apps/threepenny-address/package.yaml") |
         Where-Object { $_ -match "^$([regex]::Escape($Key)):\s*(.+)$" } |
         Select-Object -First 1
 
     if (-not $Line) {
-        throw "Could not read '$Key' from package.yaml"
+        throw "Could not read '$Key' from apps/threepenny-address/package.yaml"
     }
 
     return ($Line -replace "^$([regex]::Escape($Key)):\s*", "").Trim()

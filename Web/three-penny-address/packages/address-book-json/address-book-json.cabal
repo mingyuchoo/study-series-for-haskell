@@ -1,0 +1,79 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           address-book-json
+version:        0.1.0.0
+synopsis:       address-book-json workspace package
+description:    Please see the README on GitHub at <https://github.com/mingyuchoo/ThreepennyAddress#readme>
+category:       Web
+homepage:       https://github.com/mingyuchoo/ThreepennyAddress#readme
+bug-reports:    https://github.com/mingyuchoo/ThreepennyAddress/issues
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+copyright:      2026 Mingyu Choo
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/mingyuchoo/ThreepennyAddress
+
+library
+  exposed-modules:
+      AddressBook.JsonRepository
+  other-modules:
+      AddressBook.JsonRepository.Format
+      Paths_address_book_json
+  autogen-modules:
+      Paths_address_book_json
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+      DeriveAnyClass
+  ghc-options: -Wall
+  build-depends:
+      address-book-application
+    , address-book-domain
+    , aeson
+    , base >=4.18 && <5
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , temporary
+    , text
+  default-language: GHC2024
+
+test-suite json-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_address_book_json
+  autogen-modules:
+      Paths_address_book_json
+  hs-source-dirs:
+      test
+  default-extensions:
+      OverloadedStrings
+      DeriveAnyClass
+  ghc-options: -Wall
+  build-depends:
+      address-book-application
+    , address-book-domain
+    , address-book-json
+    , aeson
+    , async
+    , base >=4.18 && <5
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , hspec
+    , temporary
+    , text
+  default-language: GHC2024

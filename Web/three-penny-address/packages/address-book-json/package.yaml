@@ -1,0 +1,43 @@
+name:                address-book-json
+version:             0.1.0.0
+github:              mingyuchoo/ThreepennyAddress
+license:             BSD-3-Clause
+author:              Mingyu Choo
+maintainer:          mingyuchoo@gmail.com
+copyright:           2026 Mingyu Choo
+synopsis:            address-book-json workspace package
+category:            Web
+description:         Please see the README on GitHub at <https://github.com/mingyuchoo/ThreepennyAddress#readme>
+
+language: GHC2024
+
+ghc-options: -Wall
+
+default-extensions:
+- OverloadedStrings
+- DeriveAnyClass
+
+dependencies:
+- base >= 4.18 && < 5
+- address-book-application
+- address-book-domain
+- aeson
+- bytestring
+- containers
+- directory
+- filepath
+- text
+- temporary
+
+library:
+  source-dirs: src
+  exposed-modules: AddressBook.JsonRepository
+
+tests:
+  json-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - address-book-json
+    - hspec
+    - async

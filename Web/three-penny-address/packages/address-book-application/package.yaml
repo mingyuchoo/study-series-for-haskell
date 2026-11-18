@@ -1,0 +1,25 @@
+name:                address-book-application
+version:             0.1.0.0
+github:              mingyuchoo/ThreepennyAddress
+license:             BSD-3-Clause
+author:              Mingyu Choo
+maintainer:          mingyuchoo@gmail.com
+copyright:           2026 Mingyu Choo
+synopsis:            address-book-application workspace package
+category:            Web
+description:         Please see the README on GitHub at <https://github.com/mingyuchoo/ThreepennyAddress#readme>
+
+language: GHC2024
+
+ghc-options: -Wall
+
+default-extensions: OverloadedStrings
+
+dependencies:
+- base >= 4.18 && < 5
+- address-book-domain
+- containers
+- text
+
+library:
+  source-dirs: src

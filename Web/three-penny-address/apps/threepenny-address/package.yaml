@@ -1,0 +1,51 @@
+name:                ThreepennyAddress
+version:             0.1.0.0
+github:              mingyuchoo/ThreepennyAddress
+license:             BSD-3-Clause
+author:              Mingyu Choo
+maintainer:          mingyuchoo@gmail.com
+copyright:           2026 Mingyu Choo
+synopsis:            ThreepennyAddress workspace package
+category:            Web
+description:         Please see the README on GitHub at <https://github.com/mingyuchoo/ThreepennyAddress#readme>
+
+language: GHC2024
+
+ghc-options: -Wall
+
+default-extensions: OverloadedStrings
+
+dependencies:
+- base >= 4.18 && < 5
+
+internal-libraries:
+  address-book-ui:
+    source-dirs: src
+    exposed-modules: GUI.Main
+    dependencies:
+    - address-book-application
+    - address-book-domain
+    - stm
+    - text
+    - threepenny-gui
+
+executables:
+  ThreepennyAddress-exe:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+    - address-book-ui
+    - address-book-json
+    - bytestring
+    - threepenny-gui
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+
+tests:
+  ThreepennyAddress-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hspec

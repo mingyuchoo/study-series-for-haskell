@@ -1,8 +1,11 @@
-# https://www.stackage.org/lts-24.21
+# https://www.stackage.org/lts-24.40
 resolver: lts-24.40
 
 packages:
-- .
+- packages/address-book-domain
+- packages/address-book-application
+- packages/address-book-json
+- apps/threepenny-address
 
 extra-package-dbs: []
 extra-deps: []
