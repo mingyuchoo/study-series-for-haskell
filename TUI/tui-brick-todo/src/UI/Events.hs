@@ -44,7 +44,7 @@ import Flow ((<|))
 
 import Graphics.Vty qualified as V
 
-import Lens.Micro ((%~), (.~), (^.))
+import Lens.Micro ((%~), (.~), (?~), (^.))
 
 import TodoService qualified
 
@@ -52,7 +52,7 @@ import UI.Types
 
 -- | 에러 메시지 설정 헬퍼
 setError :: String -> EventM Name AppState ()
-setError msg = modify <| errorMessage .~ Just msg
+setError msg = modify (errorMessage ?~ msg)
 
 -- | 에러 메시지 초기화 헬퍼
 clearError :: EventM Name AppState ()
@@ -163,7 +163,7 @@ enterEditMode :: Todo -> Int -> EventM Name AppState ()
 enterEditMode todo idx =
   modify <|
     (mode .~ EditMode (todo ^. todoId))
-      . (editingIndex .~ Just idx)
+      . (editingIndex ?~ idx)
       . (focusedField .~ FocusAction)
       . (actionEditor .~ E.editor ActionField (Just 1) (todo ^. todoAction))
       . ( subjectEditor

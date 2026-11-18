@@ -3,6 +3,7 @@ Set-StrictMode -Version Latest
 
 $applicationArguments = $args
 $projectRoot = Split-Path -Parent $PSScriptRoot
+$sourcePaths = @('app', 'src', 'test', 'Setup.hs')
 
 foreach ($tool in @('stack', 'fourmolu', 'hlint')) {
     if (-not (Get-Command $tool -CommandType Application -ErrorAction SilentlyContinue)) {
@@ -27,14 +28,13 @@ function Invoke-Step {
 Push-Location -LiteralPath $projectRoot
 try {
     $sourceFiles = @(
-        Get-ChildItem -LiteralPath 'app', 'src', 'test' -Recurse -File -Filter '*.hs' |
+        Get-ChildItem -LiteralPath $sourcePaths -Recurse -File -Filter '*.hs' |
             Sort-Object FullName |
             ForEach-Object { $_.FullName }
-        (Get-Item -LiteralPath 'Setup.hs').FullName
     )
 
     Invoke-Step -Label 'Formatting' -Command 'fourmolu' -CommandArguments (@('--mode', 'inplace') + $sourceFiles)
-    Invoke-Step -Label 'Linting' -Command 'hlint' -CommandArguments @('app', 'src', 'test', 'Setup.hs')
+    Invoke-Step -Label 'Linting' -Command 'hlint' -CommandArguments $sourcePaths
     Invoke-Step -Label 'Building' -Command 'stack' -CommandArguments @('build', '--test', '--no-run-tests')
     Invoke-Step -Label 'Testing' -Command 'stack' -CommandArguments @('test')
     Invoke-Step -Label 'Running' -Command 'stack' -CommandArguments (@('exec', 'tto-exe', '--') + $applicationArguments)

@@ -46,8 +46,8 @@ createNewTodo action subject indirect direct =
    in if null stripped
         then pure Nothing
         else
-          fmap Just $
-            createTodoWithFields
+          Just
+            <$> createTodoWithFields
               stripped
               (normalizeField subject)
               (normalizeField indirect)

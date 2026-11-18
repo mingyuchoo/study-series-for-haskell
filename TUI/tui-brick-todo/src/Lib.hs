@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Application entry point and integration
 --
 -- This module integrates all components and defines the Brick application.
