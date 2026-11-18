@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("build", "test", "run", "all", "clean", "help")]
-    [string]$Command = "run",
+    [ValidateSet("format", "lint", "build", "test", "run", "all", "clean", "help")]
+    [string]$Command = "all",
 
     [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
     [string[]]$Directories = @()
@@ -13,8 +13,17 @@ $PSNativeCommandUseErrorActionPreference = $false
 $RootDir = Split-Path -Parent $PSScriptRoot
 
 if ($Command -eq "help") {
-    Write-Host "Usage: scripts/run.ps1 [build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]"
-    Write-Host "Build and run natively with Stack. Tests also require Python. Run in an interactive terminal."
+    Write-Host "Usage: scripts/run.ps1 [format|lint|build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]"
+    Write-Host "  format Format workspace Haskell sources with stylish-haskell"
+    Write-Host "  lint   Check workspace Haskell sources with HLint"
+    Write-Host "  build  Build hfm"
+    Write-Host "  test   Check architecture and run the test suite"
+    Write-Host "  run    Build and open the file manager"
+    Write-Host "  all    Format, lint, build, test, then open the file manager (default)"
+    Write-Host "  clean  Remove Stack build artifacts"
+    Write-Host "Directory arguments are accepted by run and all. Run in an interactive terminal."
+    Write-Host "Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean), python (test)."
+    Write-Host "The all command requires every tool. PowerShell runs natively without Bash or WSL."
     exit 0
 }
 
@@ -25,11 +34,6 @@ if ($Directories.Count -gt 2) {
     throw "At most two starting directories are supported"
 }
 
-if (-not (Get-Command stack -ErrorAction SilentlyContinue)) {
-    throw "Stack is required. Install the Windows Haskell toolchain and add stack to PATH."
-}
-
-# Resolve relative arguments from the caller's location before entering the project.
 $StartingDirectories = @(
     foreach ($directory in $Directories) {
         $item = Get-Item -LiteralPath $directory
@@ -40,6 +44,19 @@ $StartingDirectories = @(
     }
 )
 
+$RequiredTools = switch ($Command) {
+    'format' { 'stylish-haskell' }
+    'lint' { 'hlint' }
+    'test' { 'stack'; 'python' }
+    'all' { 'stylish-haskell'; 'hlint'; 'stack'; 'python' }
+    default { 'stack' }
+}
+foreach ($tool in $RequiredTools) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+        throw "$tool is required. Install it and add it to PATH."
+    }
+}
+
 function Invoke-Checked($Tool, [string[]]$Arguments) {
     & $Tool @Arguments
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -48,11 +65,31 @@ function Invoke-Checked($Tool, [string[]]$Arguments) {
 $PreviousPythonUtf8 = $env:PYTHONUTF8
 Push-Location -LiteralPath $RootDir
 try {
+    if ($Command -in @('format', 'lint', 'all')) {
+        $SourceDirectories = @(
+            foreach ($workspace in 'apps', 'packages') {
+                foreach ($package in Get-ChildItem -LiteralPath $workspace -Directory) {
+                    foreach ($name in 'app', 'src', 'test') {
+                        $path = Join-Path $package.FullName $name
+                        if (Test-Path -LiteralPath $path -PathType Container) { $path }
+                    }
+                }
+            }
+        )
+        if ($SourceDirectories.Count -eq 0) { throw 'No workspace source directories found' }
+        $SourceFiles = @(
+            Get-ChildItem -LiteralPath $SourceDirectories -Recurse -File -Filter '*.hs' |
+                Sort-Object FullName |
+                ForEach-Object { $_.FullName.Substring($RootDir.Length + 1).Replace('\', '/') }
+        )
+        if ($SourceFiles.Count -eq 0) { throw 'No workspace Haskell sources found' }
+    }
+    if ($Command -in @('format', 'all')) {
+        Invoke-Checked stylish-haskell (@('--config', '.stylish-haskell.yaml', '-i') + $SourceFiles)
+    }
+    if ($Command -in @('lint', 'all')) { Invoke-Checked hlint $SourceFiles }
     if ($Command -in @('build', 'all')) { Invoke-Checked stack @('build') }
     if ($Command -in @('test', 'all')) {
-        if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-            throw "Python is required for architecture checks. Add python to PATH."
-        }
         $env:PYTHONUTF8 = '1'
         Invoke-Checked python @('scripts/check-architecture.py')
         Invoke-Checked python @('scripts/test-architecture.py')

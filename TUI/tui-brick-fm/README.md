@@ -16,15 +16,30 @@ stack run hfm -- /path/to/left /path/to/right
 Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직접 실행합니다. WSL이나 Bash는 필요하지 않습니다.
 
 ```powershell
-.\scripts\run.ps1                  # 빌드 후 실행
+.\scripts\run.ps1                  # 포맷팅, 린팅, 빌드, 테스트 후 실행
 .\scripts\run.ps1 run C:\Users C:\Temp
+.\scripts\run.ps1 format
+.\scripts\run.ps1 lint
 .\scripts\run.ps1 build
 .\scripts\run.ps1 test             # Python도 필요
-.\scripts\run.ps1 all              # 빌드, 검사, 테스트, 실행
+.\scripts\run.ps1 all              # 기본 동작과 동일
 .\scripts\run.ps1 clean
 ```
 
-인자가 없으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 스크립트는 프로젝트 루트에서 Stack을 실행하므로 인자를 생략하면 프로젝트 루트가 시작 위치입니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 스크립트에 전달한 상대 경로는 호출한 위치를 기준으로 해석합니다. 실행에는 대화형 터미널이 필요하며, Windows는 네이티브 콘솔을, Unix는 `/dev/tty`를 사용합니다. Windows에서 심볼릭 링크 복사에는 개발자 모드 또는 링크 생성 권한이 필요합니다.
+파일 관리자에 시작 디렉터리를 전달하지 않으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 스크립트는 프로젝트 루트에서 Stack을 실행하므로 시작 경로를 생략하면 프로젝트 루트가 시작 위치입니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 스크립트에 전달한 상대 경로는 호출한 위치를 기준으로 해석합니다. 실행에는 대화형 터미널이 필요하며, Windows는 네이티브 콘솔을, Unix는 `/dev/tty`를 사용합니다. Windows에서 심볼릭 링크 복사에는 개발자 모드 또는 링크 생성 권한이 필요합니다.
+
+두 스크립트는 `format`, `lint`, `build`, `test`, `run`, `all`, `clean`, `help` 명령을 지원합니다. 명령을 생략하면 `all`을 실행합니다. `format`은 `apps/`와 `packages/`의 소스·테스트 디렉터리에 있는 Haskell 파일을 `.stylish-haskell.yaml` 설정으로 수정하며, 빌드 캐시는 제외합니다. `lint`는 같은 파일들을 HLint로 검사합니다. `test`는 Python 아키텍처 검사와 검사기 회귀 테스트, `stack test`를 실행합니다. `all`은 포맷팅 → 린팅 → 빌드 → 테스트 → 실행 순서로 진행합니다. 필요한 도구가 없으면 포맷팅 전에 중단하며, 실행 중 실패한 단계의 종료 코드를 반환하고 이후 단계는 실행하지 않습니다. 기존 코드에 HLint 지적이 있으면 먼저 해결해야 전체 과정이 실행됩니다.
+
+Stack과 GHC 외에 `stylish-haskell`, `hlint`를 PATH에 설치해야 합니다. 포맷터와 린터는 `stack install stylish-haskell hlint`로 설치할 수 있습니다. 테스트에는 Unix에서 `python3`, Windows에서 `python` 명령도 필요합니다. Nix 개발 셸에는 이 도구들이 포함되어 있습니다.
+
+```bash
+./scripts/run.sh                  # 전체 과정
+./scripts/run.sh format
+./scripts/run.sh lint
+./scripts/run.sh test
+./scripts/run.sh all /path/to/left /path/to/right
+./scripts/run.sh help
+```
 
 ## 키
 
@@ -120,10 +135,11 @@ Windows에서는 [NSIS 3](https://nsis.sourceforge.io/Download)을 설치하고 
 stack test
 python3 scripts/check-architecture.py
 python3 scripts/test-architecture.py
+python3 scripts/test-run-scripts.py
 python3 scripts/test-keybindings.py
 ```
 
-PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백 경로, 명령 순서, 종료 코드, NSIS 호출과 정리 범위를 검사합니다. `test-keybindings.py`는 Unix PTY 테스트이므로 Windows에서 직접 실행하지 않습니다.
+PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. Windows PowerShell에서는 `powershell -NoProfile -File scripts/test-powershell.ps1`도 사용할 수 있습니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백·대괄호 경로, 포맷팅·린팅 대상, 명령 순서, 종료 코드와 도구 누락을 검사합니다. Windows에서는 NSIS 호출과 정리 범위도 검사합니다. `test-run-scripts.py`는 Bash 실행 스크립트의 회귀 검사와 실제 포맷터가 설치된 환경의 설정 검사를 수행합니다. `test-keybindings.py`는 Unix PTY 테스트이므로 Windows에서 직접 실행하지 않습니다.
 
 macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커 옵션(`-U`와 `dynamic_lookup`, 반복된 `-lm`)을 정리합니다. 다른 링커 진단은 그대로 전달합니다.
 

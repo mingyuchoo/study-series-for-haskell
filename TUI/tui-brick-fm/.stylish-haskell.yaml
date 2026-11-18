@@ -1,10 +1,4 @@
 steps:
-  - module_header:
-       indent: 4
-       sort: true
-       separate_lists: true
-       break_where: always
-       open_bracket: next_line
   - records:
        equals: "same_line"
        first_field: "same_line"
