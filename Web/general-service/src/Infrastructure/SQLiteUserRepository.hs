@@ -6,7 +6,6 @@ module Infrastructure.SQLiteUserRepository
 where
 
 import Application.Port.UserRepository (UserRepository (..))
-import Data.Text (Text)
 import Database.SQLite.Simple
   ( FromRow (..)
   , Only (..)
@@ -21,8 +20,10 @@ import Infrastructure.SQLiteDatabase
   , withSQLiteConnection
   )
 
-instance FromRow User where
-  fromRow = User <$> field <*> field <*> field <*> field
+newtype UserRow = UserRow {fromUserRow :: User}
+
+instance FromRow UserRow where
+  fromRow = UserRow <$> (User <$> field <*> field <*> field <*> field)
 
 newSQLiteUserRepository :: SQLiteDatabase -> IO (UserRepository IO)
 newSQLiteUserRepository database =
@@ -35,7 +36,7 @@ newSQLiteUserRepository database =
                 connection
                 "SELECT id, email, display_name, password_hash FROM users WHERE email = ?"
                 (Only email)
-            pure (firstOrNothing users)
+            pure (fromUserRow <$> firstOrNothing users)
       , createStoredUser = \email displayName passwordHash ->
           withSQLiteConnection database $ \connection -> do
             execute
@@ -51,7 +52,7 @@ newSQLiteUserRepository database =
                 connection
                 "SELECT id, email, display_name, password_hash FROM users WHERE id = ?"
                 (Only identifier)
-            pure (firstOrNothing users)
+            pure (fromUserRow <$> firstOrNothing users)
       , updateStoredProfile = \identifier (ProfileUpdate displayName) ->
           withSQLiteConnection database $ \connection -> do
             execute
@@ -63,7 +64,7 @@ newSQLiteUserRepository database =
                 connection
                 "SELECT id, email, display_name, password_hash FROM users WHERE id = ?"
                 (Only identifier)
-            pure (firstOrNothing users)
+            pure (fromUserRow <$> firstOrNothing users)
       , createStoredSession = \identifier token ->
           withSQLiteConnection database $ \connection ->
             execute
@@ -81,7 +82,7 @@ newSQLiteUserRepository database =
                 connection
                 "SELECT users.id, users.email, users.display_name, users.password_hash FROM sessions INNER JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > CURRENT_TIMESTAMP"
                 (Only token)
-            pure (firstOrNothing users)
+            pure (fromUserRow <$> firstOrNothing users)
       , deleteStoredSession = \token ->
           withSQLiteConnection database $ \connection ->
             execute connection "DELETE FROM sessions WHERE token = ?" (Only token)

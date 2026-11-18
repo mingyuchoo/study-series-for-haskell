@@ -9,6 +9,7 @@
 | T-2026-0911-025 | REVIEW | orchestrator | 새 업무 등록 서랍의 우선순위 라디오 그룹을 한 줄로 정렬했다. |
 | T-2026-1119-026 | REVIEW | orchestrator | Linux·macOS와 Windows용 포맷·린트·빌드·테스트·실행 스크립트를 제공한다. |
 | T-2026-1119-027 | DONE | orchestrator | elm-test 설치 오류를 재현하고 의존성 수정과 서버 실행을 검증했다. |
+| T-2026-1119-028 | DONE | orchestrator | 실행 경고 15건과 미사용 코드를 제거하고 테스트·서버 시작 및 독립 검토를 통과했다. |
 
 ## 가정
 

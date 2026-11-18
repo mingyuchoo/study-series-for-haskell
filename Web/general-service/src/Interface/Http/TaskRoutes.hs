@@ -21,6 +21,7 @@ import Data.Aeson
   , (.=)
   )
 import Data.ByteString (ByteString)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as TextEncoding
@@ -118,11 +119,11 @@ instance FromJSON TaskInputRequest where
 
 instance FromJSON SubmissionRequest where
   parseJSON = withObject "SubmissionRequest" $ \value ->
-    SubmissionRequest <$> (TaskOwner <$> value .: "taskOwner") <*> value .: "submittedResult"
+    SubmissionRequest . TaskOwner <$> value .: "taskOwner" <*> value .: "submittedResult"
 
 instance FromJSON ReviewRequest where
   parseJSON = withObject "ReviewRequest" $ \value ->
-    ReviewRequest <$> (OutcomeOwner <$> value .: "outcomeOwner") <*> value .:? "reviewComment"
+    ReviewRequest . OutcomeOwner <$> value .: "outcomeOwner" <*> value .:? "reviewComment"
 
 instance FromJSON OutcomeInputRequest where
   parseJSON = withObject "OutcomeInputRequest" $ \value ->
@@ -255,7 +256,7 @@ application repository userRepository request respond =
               repository
               identifier
               owner
-              (maybe "수정이 필요합니다." id comment)
+              (fromMaybe "수정이 필요합니다." comment)
           respondTaskResult respond result
     ["api", "task", rawId] | requestMethod request == methodPut ->
       withId rawId respond $ \identifier ->

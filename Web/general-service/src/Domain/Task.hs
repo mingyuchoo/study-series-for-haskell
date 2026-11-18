@@ -22,6 +22,7 @@ module Domain.Task
   )
 where
 
+import Data.Maybe (isNothing)
 import Data.Text (Text)
 import qualified Data.Text as Text
 
@@ -143,14 +144,14 @@ submitTaskResult actor taskResult task
 approveTaskResult :: OutcomeOwner -> Maybe Text -> TaskItem -> Either TaskError TaskItem
 approveTaskResult actor comment task
   | actor /= reviewOwner task = Left NotOutcomeOwner
-  | submittedResult task == Nothing = Left ResultNotSubmitted
+  | isNothing (submittedResult task) = Left ResultNotSubmitted
   | status task /= Submitted = Left TaskNotReadyForReview
   | otherwise = Right task {reviewComment = comment, status = Approved}
 
 requestTaskRevision :: OutcomeOwner -> Text -> TaskItem -> Either TaskError TaskItem
 requestTaskRevision actor comment task
   | actor /= reviewOwner task = Left NotOutcomeOwner
-  | submittedResult task == Nothing = Left ResultNotSubmitted
+  | isNothing (submittedResult task) = Left ResultNotSubmitted
   | status task /= Submitted = Left TaskNotReadyForReview
   | otherwise = Right task {reviewComment = Just comment, status = Reviewed}
 

@@ -4,6 +4,7 @@ module Main (main) where
 
 import Control.Exception (bracket)
 import Control.Monad (when)
+import Data.Maybe (fromMaybe)
 import Domain.Task
   ( Importance (..)
   , OutcomeOwner (..)
@@ -28,8 +29,8 @@ import System.Environment (lookupEnv)
 main :: IO ()
 main = do
   port <- maybe 3000 read <$> lookupEnv "PORT"
-  databasePath <- maybe "general-service.sqlite3" id <$> lookupEnv "DATABASE_PATH"
-  seedExampleData <- maybe True (/= "false") <$> lookupEnv "SEED_EXAMPLE_DATA"
+  databasePath <- fromMaybe "general-service.sqlite3" <$> lookupEnv "DATABASE_PATH"
+  seedExampleData <- (/= Just "false") <$> lookupEnv "SEED_EXAMPLE_DATA"
   when (null databasePath) (fail "DATABASE_PATH must not be empty")
   bracket
     (openSQLiteDatabase databasePath)

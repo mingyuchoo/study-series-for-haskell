@@ -10,7 +10,7 @@ where
 
 import Control.Concurrent.MVar (MVar, newMVar, withMVar)
 import Control.Exception (onException)
-import Control.Monad (forM_, when)
+import Control.Monad (forM_, unless, when)
 import Database.SQLite.Simple
   ( Connection
   , Only (..)
@@ -62,7 +62,7 @@ migrate connection = do
           <> ")"
       )
   forM_ migrations $ \(version, action) ->
-    when (version `notElem` applied) $
+    unless (version `elem` applied) $
       withTransaction connection $ do
         action connection
         execute connection "INSERT INTO schema_migrations (version) VALUES (?)" (Only version)

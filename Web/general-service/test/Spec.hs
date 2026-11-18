@@ -5,7 +5,7 @@ module Main (main) where
 import qualified Application.AuthService as AuthService
 import qualified Application.TaskService as TaskService
 import Control.Exception (bracket)
-import Control.Monad (forM_)
+import Control.Monad (forM_, when)
 import Data.List (find)
 import Domain.Task
 import Domain.User
@@ -229,7 +229,7 @@ cleanupDatabaseFiles :: FilePath -> IO ()
 cleanupDatabaseFiles databasePath =
   forM_ [databasePath, databasePath <> "-wal", databasePath <> "-shm"] $ \path -> do
     exists <- doesFileExist path
-    if exists then removeFile path else pure ()
+    when exists (removeFile path)
 
 assert :: String -> Bool -> IO ()
 assert label condition =

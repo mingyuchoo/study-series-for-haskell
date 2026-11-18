@@ -37,7 +37,6 @@ library
       Infrastructure.SQLiteTaskRepository
       Infrastructure.SQLiteUserRepository
       Interface.Http.TaskRoutes
-      Lib
   other-modules:
       Paths_GeneralService
   autogen-modules:

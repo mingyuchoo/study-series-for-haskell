@@ -48,7 +48,7 @@ updateTask repository identifier input =
     Right validInput -> Right <$> Repository.updateStoredTask repository identifier validInput
 
 deleteTask :: TaskRepository m -> Int -> m Bool
-deleteTask repository = Repository.deleteStoredTask repository
+deleteTask = Repository.deleteStoredTask
 
 submitTaskResult
   :: TaskRepository IO -> Int -> TaskOwner -> Text -> IO (Either TaskError (Maybe TaskItem))

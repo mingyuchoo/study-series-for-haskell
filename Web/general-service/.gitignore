@@ -24,3 +24,6 @@ web/elm-stuff/
 *.sqlite3-wal
 *.sqlite3-shm
 *.sqlite3-journal
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/

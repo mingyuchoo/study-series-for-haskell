@@ -1,7 +1,7 @@
 module Presentation.TaskBoard exposing (view)
 
 import Application.TaskBoard exposing (AuthMode(..), Model, Msg(..), selectedTask)
-import Domain.Task as Task exposing (Importance, Status, Task, Urgency)
+import Domain.Task as Task exposing (Status, Task)
 import Html exposing (Html, aside, button, dd, div, dl, dt, h1, h2, h3, input, label, option, p, select, span, text, textarea)
 import Html.Attributes exposing (attribute, checked, class, disabled, for, id, name, placeholder, selected, tabindex, type_, value)
 import Html.Events exposing (on, onClick, onInput, preventDefaultOn)
@@ -570,16 +570,6 @@ workflowSection model task =
 statusOption : Status -> Status -> Html Msg
 statusOption selectedStatus current =
     option [ value (Task.statusString current), selected (selectedStatus == current) ] [ text (Task.statusLabel current) ]
-
-
-urgencyOption : Urgency -> Urgency -> Html Msg
-urgencyOption selectedUrgency current =
-    option [ value (Task.urgencyString current), selected (selectedUrgency == current) ] [ text (Task.urgencyLabel current) ]
-
-
-importanceOption : Importance -> Importance -> Html Msg
-importanceOption selectedImportance current =
-    option [ value (Task.importanceString current), selected (selectedImportance == current) ] [ text (Task.importanceLabel current) ]
 
 
 prioritySummary : List Task -> Html Msg

@@ -71,7 +71,7 @@ isEmail email =
   let trimmed = Text.strip email
       parts = Text.splitOn "@" trimmed
    in length parts == 2
-        && all (not . Text.null) parts
+        && not (any Text.null parts)
         && maybe False (Text.isInfixOf ".") (safeLast parts)
 
 safeLast :: [a] -> Maybe a

@@ -62,34 +62,21 @@ data OutcomeRow = OutcomeRow Int Text Text Status
 newtype TaskRow = TaskRow {fromTaskRow :: TaskItem}
 
 instance FromRow TaskRow where
-  fromRow = do
-    identifier <- field
-    taskTitle <- field
-    taskDescription <- field
-    taskStatus <- readEnum "task status"
-    taskUrgency <- readEnum "task urgency"
-    taskImportance <- readEnum "task importance"
-    owner <- TaskOwner <$> field
-    reviewer <- OutcomeOwner <$> field
-    expected <- field
-    submitted <- field
-    comment <- field
-    pure
-      ( TaskRow
-          ( TaskItem
-              identifier
-              taskTitle
-              taskDescription
-              taskStatus
-              taskUrgency
-              taskImportance
-              owner
-              reviewer
-              expected
-              submitted
-              comment
+  fromRow =
+    TaskRow
+      <$> ( TaskItem
+              <$> field
+              <*> field
+              <*> field
+              <*> readEnum "task status"
+              <*> readEnum "task urgency"
+              <*> readEnum "task importance"
+              <*> (TaskOwner <$> field)
+              <*> (OutcomeOwner <$> field)
+              <*> field
+              <*> field
+              <*> field
           )
-      )
 
 instance FromRow OutcomeRow where
   fromRow = OutcomeRow <$> field <*> field <*> field <*> readEnum "outcome status"
