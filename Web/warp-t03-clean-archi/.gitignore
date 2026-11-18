@@ -1,5 +1,10 @@
 .stack-work/
 *~
+node_modules/
+elm-stuff/
+/www/elm.js
+/test-results/
+/playwright-report/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/

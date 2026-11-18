@@ -1,0 +1,10 @@
+.git
+.stack-work
+node_modules
+**/node_modules
+**/elm-stuff
+test-results
+playwright-report
+graft
+www/elm.js
+users.db

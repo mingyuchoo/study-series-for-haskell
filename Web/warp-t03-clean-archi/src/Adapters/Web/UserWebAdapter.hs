@@ -64,12 +64,12 @@ app svc request respond = do
               [(hContentType, "text/css"), ("Access-Control-Allow-Origin", "*")]
               "www/styles.css"
               Nothing
-        ["script.js"] ->
+        ["elm.js"] ->
           respond <|
             responseFile
               status200
               [(hContentType, "application/javascript"), ("Access-Control-Allow-Origin", "*")]
-              "www/script.js"
+              "www/elm.js"
               Nothing
         _ ->
           respond <|

@@ -10,7 +10,7 @@ show_help() {
     '  --skip-run  Stop after tests without starting the server.' \
     '  --help      Show this help.' \
     '' \
-    'Required commands: stack, fourmolu, hlint'
+    'Required commands: node, npm, stack, fourmolu, hlint'
 }
 
 skip_run=false
@@ -33,7 +33,7 @@ done
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd -- "$project_root"
 
-for required_command in stack fourmolu hlint; do
+for required_command in node npm stack fourmolu hlint; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
     printf 'Required command not found: %s\n' "$required_command" >&2
     printf 'Install Stack, then install development tools with: stack install fourmolu hlint\n' >&2
@@ -48,18 +48,26 @@ while IFS= read -r -d '' source_file; do
   source_files+=("$source_file")
 done < <(find src app test -type f -name '*.hs' -print0)
 
-printf '\n[1/5] Formatting Haskell sources\n'
+printf '\n[1/7] Formatting Haskell sources\n'
 for source_file in "${source_files[@]}"; do
   fourmolu --mode inplace --config "$project_root/fourmolu.yaml" "$source_file"
 done
 
-printf '\n[2/5] Linting Haskell sources\n'
+printf '\n[2/7] Linting Haskell sources\n'
 hlint --language=GHC2024 "${source_files[@]}"
 
-printf '\n[3/5] Building application and tests\n'
+printf '\n[3/7] Building Elm frontend\n'
+npm ci
+npm run build
+
+printf '\n[4/7] Checking Elm frontend\n'
+npm test
+npm run format:check
+
+printf '\n[5/7] Building application and tests\n'
 stack build --test --no-run-tests
 
-printf '\n[4/5] Running tests\n'
+printf '\n[6/7] Running tests\n'
 stack test
 
 if [[ "$skip_run" == true ]]; then
@@ -67,5 +75,5 @@ if [[ "$skip_run" == true ]]; then
   exit 0
 fi
 
-printf '\n[5/5] Starting server at http://localhost:8000 (Ctrl+C to stop)\n'
+printf '\n[7/7] Starting server at http://localhost:8000 (Ctrl+C to stop)\n'
 exec stack exec warp-t03-clean-archi-exe

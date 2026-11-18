@@ -1,0 +1,8 @@
+{
+  "name": "@warp/frontend",
+  "private": true,
+  "scripts": {
+    "build": "elm make src/Main.elm --optimize --output=../../www/elm.js",
+    "test": "elm-test"
+  }
+}

@@ -1,6 +1,6 @@
 # warp-t03-clean-archi
 
-A Haskell web application demonstrating Clean Architecture principles with a User Management System. Built using Warp web server, SQLite database, and a RESTful API with a web frontend.
+A Haskell web application demonstrating Clean Architecture principles with a User Management System. Built using Warp web server, SQLite database, and a RESTful API with an Elm 0.19.3 frontend.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ This project follows Clean Architecture patterns with clear separation of concer
 ## Features
 
 - **RESTful API** for user management (CRUD operations)
-- **Web Frontend** with interactive user interface
+- **Elm 0.19.3 Frontend** with pure state transitions and a separate HTTP adapter
 - **SQLite Database** with automatic table creation
 - **Clean Architecture** with dependency inversion
 - **Docker Support** with multi-stage builds
@@ -38,19 +38,21 @@ This project follows Clean Architecture patterns with clear separation of concer
 
 - `GET /` - Serves `www/index.html`
 - `GET /styles.css` - Serves `www/styles.css`
-- `GET /script.js` - Serves `www/script.js`
+- `GET /elm.js` - Serves the compiled Elm application (`www/elm.js`)
 
 ### Web Interface
 
 - User creation form with name input
 - User list table with edit/delete actions
-- Inline edit form for updating users
-- Toast-style success/error notifications
-- Responsive 2-column grid layout
+- Inline edit form with validation and preservation of input after failures
+- Search by name or ID, explicit deletion confirmation, retryable errors
+- Accessible status messages, keyboard controls, and responsive layouts
+- DESIGN.md cream/coral/dark palette, serif headings, and token-based CSS
 
 ## Prerequisites
 
 - [Stack](https://docs.haskellstack.org/en/stable/README/) (Haskell build tool)
+- Node.js 22+ and npm; npm installs the pinned Elm 0.19.3 compiler and test tools
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
 
 ## How to create a project
@@ -60,6 +62,54 @@ stack new <project-name> mingyuchoo/new-template
 ```
 
 ## How to build
+
+### Elm frontend workspace
+
+The root npm workspace owns `@warp/frontend` in `apps/frontend`:
+
+- `src/Domain/User.elm`: pure name validation and directory filtering.
+- `src/Application/Management.elm`: pure model/update logic and typed effect descriptions.
+- `src/Infrastructure/UserApi.elm`: JSON and HTTP boundary for the existing REST API.
+- `src/Presentation/`: HTML views; `src/Main.elm` wires the Elm runtime.
+- `tests/`: deterministic domain/application unit tests.
+
+The frontend uses Elm 0.19.3, elm/browser, elm/html, elm/http, and elm/json.
+UI state and behavior live in Elm; the HTML shell only mounts the compiled app.
+No shared package is needed yet; all Elm modules stay within this workspace.
+`www/elm.js`, `elm-stuff`, and `node_modules` are generated and ignored.
+The UI uses the local font fallback stacks specified by DESIGN.md.
+
+```bash
+npm ci
+npm run build
+npm test
+npm run format:check
+npx playwright install chromium
+npm run test:e2e
+npm run test:integration
+```
+
+Browser tests serve the real compiled frontend and substitute the HTTP boundary
+with isolated fixtures; desktop, tablet, and mobile projects exercise CRUD,
+validation, search, request failures, confirmation, and safe text rendering.
+`npm run test:e2e` rebuilds Elm before testing. `npm run test:integration`
+builds both applications, starts the real Warp executable with a temporary
+SQLite database, and verifies CRUD through Chromium. It requires port 8000
+to be free and removes its temporary database after stopping the server.
+
+To run the application with its real Haskell API:
+
+```bash
+npm ci
+npm run build
+stack build
+stack exec warp-t03-clean-archi-exe
+```
+
+Open `http://localhost:8000`. Rebuild Elm after editing its source. `make build`
+and `make run` build the frontend automatically; `make frontend-e2e` builds it
+and runs browser checks. Docker builds the frontend in a Node stage and copies
+its output into the Warp image.
 
 ### Format, lint, build, test, and run
 
@@ -89,19 +139,21 @@ From PowerShell:
 
 Both scripts resolve the project root from their own location. They format root-level
 Haskell files and all Haskell files under `src`, `app`, and `test` in place using
-`fourmolu.yaml`, run HLint, build the application and tests, run the test suite, and
+`fourmolu.yaml`, run HLint, install/build/test the Elm workspace, build the Haskell application and tests, run the Haskell test suite, and
 start `warp-t03-clean-archi-exe` at `http://localhost:8000`. Any failed command stops
 the pipeline with a nonzero exit code. The skip-run option stops after testing;
 otherwise, use Ctrl+C to stop the server.
 
-The current `stack.yaml` contains malformed Docker keys (`11,1: docker:` and
-`12:     enable: false`) that must be corrected before Stack commands can run.
 The existing `Given Lib` test calls `appRunner`, which starts a persistent server;
 that test must be changed to terminate before the pipeline can reach server startup.
+Run `stack test --test-arguments=--skip=appRunner` for the terminating Haskell tests.
+Use `npm run test:integration` for the isolated, terminating real-server CRUD check.
 
 ### Build only
 
 ```bash
+npm ci
+npm run build
 stack build
 # or
 stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
@@ -211,10 +263,16 @@ make docker-compose-down
 │   └── Lib.hs                               # Application orchestration
 ├── test/
 │   └── Spec.hs                              # Test suite (hspec)
+├── apps/frontend/                           # Elm application workspace
+│   ├── elm.json
+│   ├── src/                                 # Domain, application, adapters, presentation
+│   └── tests/
+├── tests/browser/                           # Frontend browser tests
+├── tests/integration/                       # Real Warp and Elm CRUD check
 ├── www/                                     # Web frontend assets
 │   ├── index.html
 │   ├── styles.css
-│   └── script.js
+│   └── elm.js                               # Generated Elm bundle
 ├── docker/
 │   ├── Dockerfile                           # Multi-stage Docker build
 │   └── docker-compose.yaml
