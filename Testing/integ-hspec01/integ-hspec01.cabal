@@ -1,6 +1,6 @@
-cabal-version: 3.16
+cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -28,6 +28,8 @@ library
       Lib
   other-modules:
       Paths_integ_hspec01
+  autogen-modules:
+      Paths_integ_hspec01
   hs-source-dirs:
       src
   default-extensions:
@@ -43,6 +45,8 @@ library
 executable integ-hspec01-exe
   main-is: Main.hs
   other-modules:
+      Paths_integ_hspec01
+  autogen-modules:
       Paths_integ_hspec01
   hs-source-dirs:
       app
@@ -62,6 +66,8 @@ test-suite integ-hspec01-test
   main-is: Spec.hs
   other-modules:
       ExampleHspec
+      Paths_integ_hspec01
+  autogen-modules:
       Paths_integ_hspec01
   hs-source-dirs:
       test

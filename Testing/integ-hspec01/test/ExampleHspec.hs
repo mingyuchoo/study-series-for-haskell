@@ -1,5 +1,5 @@
 module ExampleHspec
-  where
+where
 
 import Control.Exception (evaluate)
 

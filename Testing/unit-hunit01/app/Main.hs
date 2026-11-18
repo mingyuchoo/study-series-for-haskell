@@ -1,5 +1,5 @@
 module Main
-  where
+where
 
 import Lib
 

@@ -1,5 +1,32 @@
 # README
 
+## Format, lint, build, test, and run
+
+Install Stack, Fourmolu, and HLint. With GHC and Cabal installed:
+
+```bash
+cabal update
+cabal install fourmolu hlint
+```
+
+Make the tools available on `PATH`. Cabal's installation directory can be checked
+with `cabal path --installdir`. The Bash script also searches `$HOME/.cabal/bin`.
+
+```bash
+./scripts/run.sh
+```
+
+On Windows, from PowerShell:
+
+```powershell
+.\scripts\run.ps1
+```
+
+The scripts format and lint the Haskell sources, build and test with Stack, and
+run `unit-hunit01-exe`. They stop if any step fails, work from any directory,
+and pass additional arguments to the application. Formatting updates source files
+in place. Stack downloads the configured compiler and dependencies when needed.
+
 ## Install hackages
 
 ```bash

@@ -1,5 +1,5 @@
 module ExampleHUnit
-  where
+where
 
 import Test.HUnit
 
@@ -13,7 +13,7 @@ partB :: Int -> IO Bool
 partB v = return (v > 5)
 
 test1 :: Test
-test1 = TestCase (assertEqual "for (foo 3)," (1, 2) (foo 3))
+test1 = TestCase (assertEqual "for (foo 3)," (1, 3) (foo 3))
 
 test2 :: Test
 test2 = TestCase $ do
@@ -32,7 +32,7 @@ tests =
 tests' :: Test
 tests' =
   test
-    [ "test1" ~: "(foo 3)" ~: (1, 2) ~=? (foo 3)
+    [ "test1" ~: "(foo 3)" ~: (1, 3) ~=? foo 3
     , "test2" ~: do
         (x, y) <- partA 3
         assertEqual "for the first result of partA," 5 x
@@ -40,6 +40,4 @@ tests' =
     ]
 
 call :: IO Counts
-call = do
-  _ <- runTestTT tests
-  runTestTT tests'
+call = runTestTT (TestList [tests, tests'])

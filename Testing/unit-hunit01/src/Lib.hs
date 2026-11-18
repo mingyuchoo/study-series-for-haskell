@@ -1,5 +1,5 @@
 module Lib
-  where
+where
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
