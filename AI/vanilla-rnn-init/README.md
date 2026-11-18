@@ -41,17 +41,26 @@ Cross-Entropy 손실 함수
 
 ## 실행 방법
 
-```bash
-# GHC로 컴파일
-ghc -O2 RNN.hs
+Stack을 설치하고, 포맷터와 린터를 설치한 뒤 세 명령이 모두 `PATH`에 포함되어 있는지 확인합니다.
 
-# 실행
-./RNN
+```sh
+stack install stylish-haskell hlint
 ```
 
-또는 GHCi에서:
+Bash:
 
+```sh
+./scripts/run.sh
 ```
-bashghci RNN.hs
-> main
+
+PowerShell:
+
+```powershell
+.\scripts\run.ps1
 ```
+
+두 스크립트는 현재 작업 디렉터리와 관계없이 프로젝트 루트에서
+포맷팅 → 린팅 → 빌드 → 테스트 → 실행 순서로 동작합니다.
+`Setup.hs`와 `src`, `app`, `test`의 Haskell 소스를 포맷팅하고 린팅하며,
+어느 단계든 실패하면 즉시 중단하고 해당 종료 코드를 반환합니다.
+스크립트에 전달한 인자는 `vanilla-rnn-init-exe`에 그대로 전달됩니다.

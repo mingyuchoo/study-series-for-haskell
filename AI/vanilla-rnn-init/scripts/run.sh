@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -Eeuo pipefail
+project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd -- "$project_root"
 
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
-readonly EXECUTABLE="vanilla-rnn-init-exe"
+for tool in stack stylish-haskell hlint; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    printf 'Required tool not found: %s\nInstall Stack and run: stack install stylish-haskell hlint\n' "$tool" >&2
+    exit 127
+  fi
+done
 
-if ! command -v stack >/dev/null 2>&1; then
-  echo "오류: Stack이 설치되어 있지 않음" >&2
-  echo "설치 안내: https://docs.haskellstack.org/en/stable/install_and_upgrade/" >&2
-  exit 127
-fi
+printf '\n[1/5] Formatting Haskell sources\n'
+find Setup.hs src app test -type f \( -name '*.hs' -o -name '*.lhs' \) -print0 |
+  while IFS= read -r -d '' source_file; do
+    stylish-haskell --config .stylish-haskell.yaml --inplace "$source_file"
+  done
 
-cd "${PROJECT_ROOT}"
+printf '\n[2/5] Linting Haskell sources\n'
+hlint Setup.hs src app test
 
-echo "[1/3] 빌드 시작함"
+printf '\n[3/5] Building\n'
 stack build
 
-echo "[2/3] 테스트 시작함"
+printf '\n[4/5] Running tests\n'
 stack test
 
-echo "[3/3] 실행 시작함"
-stack exec "${EXECUTABLE}" -- "$@"
+printf '\n[5/5] Starting vanilla-rnn-init-exe\n'
+exec stack exec -- vanilla-rnn-init-exe "$@"
