@@ -132,7 +132,7 @@ optional key fields =
 
 -- | 비어 있더라도 필드가 왔는지 봅니다. 값을 지우는 요청과 구분하기 위해서입니다.
 hasField :: Text -> [(Text, Text)] -> Bool
-hasField key fields = any ((== key) . fst) fields
+hasField key = any ((== key) . fst)
 
 required :: Text -> [(Text, Text)] -> Either FormError Text
 required key fields = maybe (Left (MissingField key)) Right (optional key fields)

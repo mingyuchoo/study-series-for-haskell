@@ -127,9 +127,9 @@ parseRoute method path params = case path of
     | isGet -> ListRoute <$> parseListQuery params
     | isPost -> pure CreateRoute
     | otherwise -> pure MethodMismatch
-  ["todos", rawId] -> withTodoId rawId (\todoId -> onGet (pure (DetailRoute todoId)))
-  ["todos", rawId, "edit"] -> withTodoId rawId (\todoId -> onPost (pure (EditRoute todoId)))
-  ["todos", rawId, "status"] -> withTodoId rawId (\todoId -> onPost (pure (StatusRoute todoId)))
+  ["todos", rawId] -> withTodoId rawId (onGet . pure . DetailRoute)
+  ["todos", rawId, "edit"] -> withTodoId rawId (onPost . pure . EditRoute)
+  ["todos", rawId, "status"] -> withTodoId rawId (onPost . pure . StatusRoute)
   ["todos", rawId, "delete"] ->
     withTodoId rawId $ \todoId ->
       if isGet

@@ -194,7 +194,7 @@ todoRow todo = tr_ [class_ "task-row"] $ do
   td_ [class_ "col-tags"] $
     if Set.null (todoTags todo)
       then span_ [class_ "tags-empty"] "-"
-      else div_ [class_ "tags-list"] $ mapM_ (\t -> span_ [class_ "tag-chip"] (toHtml (unTag t))) (Set.toAscList (todoTags todo))
+      else div_ [class_ "tags-list"] $ mapM_ (span_ [class_ "tag-chip"] . toHtml . unTag) (Set.toAscList (todoTags todo))
   td_ [class_ "col-due"] (span_ [class_ "mono-due"] (toHtml (dueText todo)))
 
 -- | 상세 화면의 본문입니다.

@@ -76,6 +76,7 @@ dependency_out.write_text(
     "허용된 방향은 `ARCHITECTURE.md`가 정의하고 `scripts/quality/architecture-check.sh`가 검사합니다.\n"
     "이 파일을 직접 수정하지 마십시오.\n",
     encoding="utf-8",
+    newline="\n",
 )
 
 rows = "\n".join(
@@ -95,6 +96,7 @@ service_out.write_text(
     "책임 설명은 각 패키지 cabal 파일의 synopsis에서 가져옵니다.\n"
     "이 파일을 직접 수정하지 마십시오.\n",
     encoding="utf-8",
+    newline="\n",
 )
 PY
 

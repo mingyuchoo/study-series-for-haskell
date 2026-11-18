@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | 입력 검증과 오류 노출 범위 검증입니다.
@@ -65,7 +66,7 @@ spec = describe "api 입력 검증" $ do
   it "오류 메시지가 저장 경로나 SQL을 노출하지 않는다" $ do
     response <- withApi (get "/todos/999")
     let message = jsonBody response >>= fieldOf "message"
-    message `shouldSatisfy` \value -> case value of
+    message `shouldSatisfy` \case
       Just (String text) ->
         not (T.isInfixOf "SELECT" text)
           && not (T.isInfixOf "todo.db" text)

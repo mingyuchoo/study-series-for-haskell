@@ -36,6 +36,7 @@ out.write_text(
     "필드의 비즈니스 의미, 분류와 보존 정책은 `docs/contracts/data/TODO-STORE-v1.md`에 있습니다.\n"
     "이 파일을 직접 수정하지 마십시오.\n",
     encoding="utf-8",
+    newline="\n",
 )
 PY
 

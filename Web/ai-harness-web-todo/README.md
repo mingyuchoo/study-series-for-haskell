@@ -8,6 +8,7 @@ Haskell로 만든 로컬 우선 할 일 관리 앱입니다. 계정도 서버도
 
 - GHC 9.10 이상
 - cabal 3.16 이상
+- Python 3.11 이상 (저장소 검사와 릴리스 도구)
 
 ## 시작하기
 
@@ -88,6 +89,12 @@ API 서버는 `127.0.0.1`에만 바인딩합니다. 인증이 없으므로 다�
 ```
 
 `./scripts/run.sh help`과 `list`로 사용 가능한 명령과 앱을 확인할 수 있습니다.
+
+## 릴리스
+
+macOS/Linux는 `./scripts/release.sh`, Windows 11은 `.\scripts\release.ps1`로 포맷팅, 린트, 빌드, 전체 테스트, 번들링과 설치파일 생성을 수행합니다. macOS는 `.pkg`, Linux는 `.deb`와 `.rpm`, Windows는 설치용 `.exe`를 압축 번들 및 SHA-256 체크섬과 함께 생성합니다.
+
+기본 실행은 소스에 포맷팅을 적용합니다. 검사만 하려면 `./scripts/release.sh --format check` 또는 `.\scripts\release.ps1 -Format check`를 사용합니다. 플랫폼별 필수 도구, 출력 경로와 설치 방법은 [릴리스 안내](docs/RELEASE.md)를 따릅니다.
 
 ## 검증
 

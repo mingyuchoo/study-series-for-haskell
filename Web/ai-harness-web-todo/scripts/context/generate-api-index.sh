@@ -67,6 +67,7 @@ out.write_text(
     "라우트 수준의 사실은 `docs/generated/route-map.md`에 있습니다.\n"
     "이 파일을 직접 수정하지 마십시오.\n",
     encoding="utf-8",
+    newline="\n",
 )
 PY
 

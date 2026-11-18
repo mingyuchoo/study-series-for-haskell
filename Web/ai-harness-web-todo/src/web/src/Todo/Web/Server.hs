@@ -16,6 +16,7 @@ module Todo.Web.Server (
   application,
 ) where
 
+import Control.Monad (void)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy as LazyByteString
 import Data.Text (Text)
@@ -146,14 +147,14 @@ handle conn request route = case route of
       Left err -> pure (formErrorResponse err)
       Right patch -> do
         result <- runSqlite conn (updateTodo now patch (TodoId rawId))
-        pure (afterChange rawId (fmap (const ()) result))
+        pure (afterChange rawId (void result))
   StatusRoute rawId -> withForm $ \fields -> do
     now <- getCurrentTime
     case parseStatusChange fields of
       Left err -> pure (formErrorResponse err)
       Right target -> do
         result <- runSqlite conn (changeStatus now target (TodoId rawId))
-        pure (afterChange rawId (fmap (const ()) result))
+        pure (afterChange rawId (void result))
   DeleteRoute rawId -> withForm $ \_ -> do
     result <- runSqlite conn (deleteTodo (TodoId rawId))
     pure $ case result of

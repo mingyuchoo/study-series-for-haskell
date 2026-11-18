@@ -1,14 +1,20 @@
 .DS_Store
+Desktop.ini
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
 
 # Haskell 빌드 산출물
 dist-newstyle/
+dist/
 .stack-work/
 cabal.project.local
-cabal.project.local~
 .ghc.environment.*
+.hie/
 *.hi
+*.hie
 *.o
 *.dyn_hi
 *.dyn_o
@@ -16,11 +22,32 @@ cabal.project.local~
 *.p_o
 *.prof
 *.hp
+*.eventlog
+.hpc/
+*.tix
 
 # 로컬 실행 시 만들어지는 데이터베이스
-todo.db
-todo.db-shm
-todo.db-wal
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
 
+# Python 릴리스 도구 캐시
+__pycache__/
+*.py[cod]
+.ruff_cache/
+
+# 로컬 임시 파일과 로그
 tmp/
 *.log
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/

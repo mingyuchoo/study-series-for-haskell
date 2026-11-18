@@ -17,4 +17,6 @@ else
   done
 fi
 
+PYTHONPATH="$repo_root/scripts/release${PYTHONPATH:+:$PYTHONPATH}" python3 -m unittest discover -s scripts/release/tests -v
+
 printf '테스트 단계 통과\n'

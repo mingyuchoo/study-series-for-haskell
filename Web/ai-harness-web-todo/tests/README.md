@@ -12,6 +12,7 @@
 | 아키텍처 | `architecture/README.md` | `../scripts/quality/architecture-check.sh` |
 | 보안 | `security/README.md` | `../src/api/tests`, `../src/web/tests` |
 | 회귀 | `regression/README.md` | `../src/store/tests` |
+| 릴리스 도구 | `../docs/RELEASE.md` | `../scripts/release/tests` (Python unittest) |
 
 ## 전체 실행
 

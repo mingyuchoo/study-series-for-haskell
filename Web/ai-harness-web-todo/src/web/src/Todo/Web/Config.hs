@@ -14,6 +14,7 @@ module Todo.Web.Config (
   resolveConfig,
 ) where
 
+import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 
 -- | 실행에 필요한 설정입니다.
@@ -38,6 +39,6 @@ defaultDatabasePath = "todo.db"
 resolveConfig :: Maybe String -> Maybe String -> WebConfig
 resolveConfig rawDatabasePath rawPort =
   WebConfig
-    { webPort = maybe defaultPort id (rawPort >>= readMaybe)
-    , webDatabasePath = maybe defaultDatabasePath id rawDatabasePath
+    { webPort = fromMaybe defaultPort (rawPort >>= readMaybe)
+    , webDatabasePath = fromMaybe defaultDatabasePath rawDatabasePath
     }
