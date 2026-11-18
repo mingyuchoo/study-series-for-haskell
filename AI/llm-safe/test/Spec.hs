@@ -33,12 +33,18 @@ import LlmSafe.Verify
   )
 
 import System.Environment (setEnv, unsetEnv)
+import System.IO (hSetEncoding, stdout, utf8)
 
 import Test.Hspec
 import Test.QuickCheck
 
 main :: IO ()
-main = hspec $ do
+main = do
+  hSetEncoding stdout utf8
+  hspec spec
+
+spec :: Spec
+spec = do
   -- =========================================================================
   -- LlmSafe.Types
   -- =========================================================================

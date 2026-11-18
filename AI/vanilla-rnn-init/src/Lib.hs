@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Lib
   ( trainExample
@@ -28,9 +28,7 @@ data RNNParams = RNNParams
   deriving (Show)
 
 -- | RNN 상태
-data RNNState = RNNState
-  { hiddenState :: Vector
-  }
+newtype RNNState = RNNState { hiddenState :: Vector }
   deriving (Show)
 
 -- ============= 행렬/벡터 연산 =============
@@ -60,8 +58,8 @@ transpose :: Matrix -> Matrix
 transpose [] = []
 transpose ([] : _) = []
 transpose m =
-  map (\row -> case row of (x : _) -> x; [] -> error "transpose: empty row") m
-    : transpose (map (\row -> case row of (_ : xs) -> xs; [] -> []) m)
+  map (\case (x : _) -> x; [] -> error "transpose: empty row") m
+    : transpose (map (\case (_ : xs) -> xs; [] -> []) m)
 
 -- | 행렬 덧셈
 matAdd :: Matrix -> Matrix -> Matrix
@@ -75,7 +73,7 @@ tanhActivation = map tanh
 
 -- | Tanh 미분
 tanhDerivative :: Vector -> Vector
-tanhDerivative xs = map (\x -> 1 - x * x) xs
+tanhDerivative = map (\x -> 1 - x * x)
 
 -- | Softmax 함성화 함수
 softmax :: Vector -> Vector
@@ -295,4 +293,4 @@ computeStepGradients params input target output h_t dh_next =
 
 -- | trace 함수 (디버깅용)
 trace :: String -> a -> a
-trace msg x = seq (length msg) x
+trace msg = seq (length msg)
