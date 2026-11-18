@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AppSpec ( spec ) where
+module AppSpec (spec) where
 
-import           App
-import qualified Config
-import qualified DB
-import           Database.SQLite.Simple (open)
-import           Effects
-import           Flow                   ((<|))
-import qualified I18n
-import qualified TodoService
-import           Test.Hspec
+import App
+import Config qualified
+import DB qualified
+import Database.SQLite.Simple (open)
+import Effects
+import Flow ((<|))
+import I18n qualified
+import Test.Hspec
+import TodoService qualified
 
 spec :: Spec
 spec = do
@@ -49,7 +49,9 @@ spec = do
       conn <- open ":memory:"
       DB.initDB conn
       let env = AppEnv conn I18n.defaultMessages Config.defaultKeyBindings
-      maybeTid <- runAppM env <| TodoService.createNewTodo "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
+      maybeTid <-
+        runAppM env <|
+          TodoService.createNewTodo "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
       maybeTid `shouldSatisfy` (/= Nothing)
 
       let Just tid = maybeTid
@@ -66,7 +68,8 @@ spec = do
       DB.initDB conn
       let env = AppEnv conn I18n.defaultMessages Config.defaultKeyBindings
       tid <- runAppM env <| createTodo "Original"
-      runAppM env <| TodoService.updateTodoById tid "Updated" (Just "NewSubject") Nothing Nothing
+      runAppM env <|
+        TodoService.updateTodoById tid "Updated" (Just "NewSubject") Nothing Nothing
 
       todos <- runAppM env TodoService.loadAllTodos
       let updatedTodo = head <| filter (\t -> DB.todoId t == tid) todos

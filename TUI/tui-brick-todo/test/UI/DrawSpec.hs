@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UI.DrawSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           UI.Draw
+import UI.Draw
 
-import qualified I18n
+import I18n qualified
 
-import           Flow      ((<|))
-import           Test.Hspec
+import Flow ((<|))
+import Test.Hspec
 
 spec :: Spec
 spec = do

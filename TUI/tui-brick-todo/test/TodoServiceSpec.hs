@@ -1,64 +1,64 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TodoServiceSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import qualified App
-import qualified Config
-import qualified DB
-import           TodoService
+import App qualified
+import Config qualified
+import DB qualified
+import TodoService
 
-import           Database.SQLite.Simple (open)
+import Database.SQLite.Simple (open)
 
-import           Flow       ((<|))
-import qualified I18n
-import           Test.Hspec
+import Flow ((<|))
+import I18n qualified
+import Test.Hspec
 
 -- | 테스트용 TodoRow 헬퍼
 mkTodoRow :: DB.TodoId -> String -> String -> DB.TodoRow
 mkTodoRow tid action status =
-    DB.TodoRow
-        { DB.todoId = tid
-        , DB.todoAction = action
-        , DB.todoStatus = status
-        , DB.todoCreatedAt = "2025-01-01 00:00"
-        , DB.todoSubject = Nothing
-        , DB.todoIndirectObject = Nothing
-        , DB.todoDirectObject = Nothing
-        , DB.todoStatusChangedAt = Nothing
-        }
+  DB.TodoRow
+    { DB.todoId = tid
+    , DB.todoAction = action
+    , DB.todoStatus = status
+    , DB.todoCreatedAt = "2025-01-01 00:00"
+    , DB.todoSubject = Nothing
+    , DB.todoIndirectObject = Nothing
+    , DB.todoDirectObject = Nothing
+    , DB.todoStatusChangedAt = Nothing
+    }
 
 -- | 테스트용 AppEnv 생성 헬퍼
 mkTestEnv :: IO App.AppEnv
 mkTestEnv = do
-    conn <- open ":memory:"
-    DB.initDB conn
-    pure $ App.AppEnv conn I18n.defaultMessages Config.defaultKeyBindings
+  conn <- open ":memory:"
+  DB.initDB conn
+  pure $ App.AppEnv conn I18n.defaultMessages Config.defaultKeyBindings
 
 spec :: Spec
 spec = do
   describe "findTodoById" <| do
     let rows =
-            [ mkTodoRow 1 "할 일 1" "registered"
-            , mkTodoRow 2 "할 일 2" "in_progress"
-            , mkTodoRow 3 "할 일 3" "completed"
-            ]
+          [ mkTodoRow 1 "할 일 1" "registered"
+          , mkTodoRow 2 "할 일 2" "in_progress"
+          , mkTodoRow 3 "할 일 3" "completed"
+          ]
 
     it "존재하는 ID로 Todo를 찾아야 함" <| do
       case findTodoById 1 rows of
         Just row -> DB.todoAction row `shouldBe` "할 일 1"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
     it "중간 ID로 Todo를 찾아야 함" <| do
       case findTodoById 2 rows of
         Just row -> DB.todoAction row `shouldBe` "할 일 2"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
     it "마지막 ID로 Todo를 찾아야 함" <| do
       case findTodoById 3 rows of
         Just row -> DB.todoStatus row `shouldBe` "completed"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
     it "존재하지 않는 ID는 Nothing을 반환해야 함" <| do
       findTodoById 999 rows `shouldBe` Nothing
@@ -125,7 +125,7 @@ spec = do
       todos <- App.runAppM env loadAllTodos
       case findTodoById tid todos of
         Just row -> DB.todoAction row `shouldBe` "할 일"
-        Nothing  -> expectationFailure "생성된 Todo를 찾지 못함"
+        Nothing -> expectationFailure "생성된 Todo를 찾지 못함"
 
   describe "cycleStatusForward (통합 테스트)" <| do
     it "전체 상태 순환: Registered → InProgress → Cancelled → Completed → Registered" <| do
@@ -138,28 +138,28 @@ spec = do
       todos1 <- App.runAppM env loadAllTodos
       case findTodoById tid todos1 of
         Just row -> DB.todoStatus row `shouldBe` "in_progress"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
       -- in_progress -> cancelled
       App.runAppM env <| cycleStatusForward tid "in_progress"
       todos2 <- App.runAppM env loadAllTodos
       case findTodoById tid todos2 of
         Just row -> DB.todoStatus row `shouldBe` "cancelled"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
       -- cancelled -> completed
       App.runAppM env <| cycleStatusForward tid "cancelled"
       todos3 <- App.runAppM env loadAllTodos
       case findTodoById tid todos3 of
         Just row -> DB.todoStatus row `shouldBe` "completed"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
       -- completed -> registered
       App.runAppM env <| cycleStatusForward tid "completed"
       todos4 <- App.runAppM env loadAllTodos
       case findTodoById tid todos4 of
         Just row -> DB.todoStatus row `shouldBe` "registered"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"
 
     it "알 수 없는 상태에서는 변경하지 않아야 함" <| do
       env <- mkTestEnv
@@ -170,4 +170,4 @@ spec = do
       todos <- App.runAppM env loadAllTodos
       case findTodoById tid todos of
         Just row -> DB.todoStatus row `shouldBe` "registered"
-        Nothing  -> expectationFailure "Todo를 찾지 못함"
+        Nothing -> expectationFailure "Todo를 찾지 못함"

@@ -1,13 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module I18nSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           I18n
+import I18n
 
-import           Test.Hspec
-import           Flow             ((<|))
+import Flow ((<|))
+import Test.Hspec
+
 spec :: Spec
 spec = do
   describe "Language" <| do

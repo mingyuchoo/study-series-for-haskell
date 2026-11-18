@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module DBSpec ( spec ) where
+module DBSpec (spec) where
 
-import           DB
-import           Database.SQLite.Simple (open)
-import           Flow                   ((<|))
-import qualified I18n
-import           Test.Hspec
+import DB
+import Database.SQLite.Simple (open)
+import Flow ((<|))
+import I18n qualified
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -55,7 +55,8 @@ spec = do
     it "모든 필드를 포함한 todo를 생성해야 함" <| do
       conn <- open ":memory:"
       initDB conn
-      newTodoId <- createTodoWithFields conn "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
+      newTodoId <-
+        createTodoWithFields conn "Action" (Just "Subject") (Just "Indirect") (Just "Direct")
       todos <- getAllTodos conn
       let createdTodo = head <| filter (\t -> DB.todoId t == newTodoId) todos
       todoAction createdTodo `shouldBe` "Action"

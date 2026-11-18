@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Configuration management (MIXED: Pure + Effectful)
@@ -21,48 +21,58 @@
 --   - YAML parsing
 --   - Console output (putStrLn)
 module Config
-    ( KeyAction (..)
-    , KeyBindings (..)
-    , defaultKeyBindings
-    , getFirstKey
-    , keyToString
-    , loadKeyBindings
-    , loadKeyBindingsWithMessages
-    , matchesKey
-    , matchesKeyWithMods
-    ) where
+  ( KeyAction (..)
+  , KeyBindings (..)
+  , defaultKeyBindings
+  , getFirstKey
+  , keyToString
+  , loadKeyBindings
+  , loadKeyBindingsWithMessages
+  , matchesKey
+  , matchesKeyWithMods
+  ) where
 
-import           Data.Aeson       (FromJSON, parseJSON, withObject, (.:))
-import qualified Data.ByteString  as BS
-import           Data.List        (find)
-import qualified Data.Yaml        as Yaml
+import Data.Aeson (FromJSON, parseJSON, withObject, (.:))
+import Data.ByteString qualified as BS
+import Data.List (find)
+import Data.Yaml qualified as Yaml
 
-import           Flow             ((<|))
+import Flow ((<|))
 
-import           GHC.Generics     (Generic)
+import GHC.Generics (Generic)
 
-import qualified Graphics.Vty     as V
+import Graphics.Vty qualified as V
 
-import qualified I18n
+import I18n qualified
 
-import           System.Directory (doesFileExist)
+import System.Directory (doesFileExist)
 
 -- | Key action types (Pure)
-data KeyAction = QuitApp | AddTodo | ToggleComplete | DeleteTodo | NavigateUp | NavigateDown | SaveInput | CancelInput | EditTodo
-     deriving (Eq, Generic, Show)
+data KeyAction
+  = QuitApp
+  | AddTodo
+  | ToggleComplete
+  | DeleteTodo
+  | NavigateUp
+  | NavigateDown
+  | SaveInput
+  | CancelInput
+  | EditTodo
+  deriving (Eq, Generic, Show)
 
 -- | Key bindings configuration (Pure)
-data KeyBindings = KeyBindings { quit            :: ![String]
-                               , add_todo        :: ![String]
-                               , toggle_complete :: ![String]
-                               , delete_todo     :: ![String]
-                               , navigate_up     :: ![String]
-                               , navigate_down   :: ![String]
-                               , save_input      :: ![String]
-                               , cancel_input    :: ![String]
-                               , edit_todo       :: ![String]
-                               }
-     deriving (Generic, Show)
+data KeyBindings = KeyBindings
+  { quit :: ![String]
+  , add_todo :: ![String]
+  , toggle_complete :: ![String]
+  , delete_todo :: ![String]
+  , navigate_up :: ![String]
+  , navigate_down :: ![String]
+  , save_input :: ![String]
+  , cancel_input :: ![String]
+  , edit_todo :: ![String]
+  }
+  deriving (Generic, Show)
 
 instance FromJSON KeyBindings where
   parseJSON =
@@ -83,15 +93,15 @@ instance FromJSON KeyBindings where
 defaultKeyBindings :: KeyBindings
 defaultKeyBindings =
   KeyBindings
-    { quit = ["q", "Esc"],
-      add_todo = ["a"],
-      toggle_complete = ["Space"],
-      delete_todo = ["d"],
-      navigate_up = ["Up", "k"],
-      navigate_down = ["Down", "j"],
-      save_input = ["Enter"],
-      cancel_input = ["Esc"],
-      edit_todo = ["e"]
+    { quit = ["q", "Esc"]
+    , add_todo = ["a"]
+    , toggle_complete = ["Space"]
+    , delete_todo = ["d"]
+    , navigate_up = ["Up", "k"]
+    , navigate_down = ["Down", "j"]
+    , save_input = ["Enter"]
+    , cancel_input = ["Esc"]
+    , edit_todo = ["e"]
     }
 
 -- | Load key bindings from configuration file(Effectful)
@@ -106,7 +116,7 @@ loadKeyBindingsWithMessages path msgs = do
   exists <- doesFileExist path
   if exists
     then loadFromFile sysMsgs
-    else pure defaultKeyBindings  -- Silently use defaults if no config file
+    else pure defaultKeyBindings -- Silently use defaults if no config file
   where
     loadFromFile sysMsgs = do
       content <- BS.readFile path
@@ -123,23 +133,23 @@ loadKeyBindingsWithMessages path msgs = do
 keyToString :: V.Key -> String
 keyToString = \case
   V.KChar ' ' -> "Space"
-  V.KChar c   -> [c]
-  V.KEnter    -> "Enter"
-  V.KEsc      -> "Esc"
-  V.KUp       -> "Up"
-  V.KDown     -> "Down"
-  V.KLeft     -> "Left"
-  V.KRight    -> "Right"
-  V.KBS       -> "Backspace"
-  V.KFun n    -> "F" <> show n
-  _           -> ""
+  V.KChar c -> [c]
+  V.KEnter -> "Enter"
+  V.KEsc -> "Esc"
+  V.KUp -> "Up"
+  V.KDown -> "Down"
+  V.KLeft -> "Left"
+  V.KRight -> "Right"
+  V.KBS -> "Backspace"
+  V.KFun n -> "F" <> show n
+  _ -> ""
 
 -- | Convert Vty key with modifiers to string representation (Pure)
 keyWithModsToString :: V.Key -> [V.Modifier] -> String
 keyWithModsToString key mods
   | V.MCtrl `elem` mods = case key of
       V.KChar c -> "C-" <> [c]
-      _         -> keyToString key
+      _ -> keyToString key
   | otherwise = keyToString key
 
 -- | Match a key to its corresponding action (Pure)
@@ -153,18 +163,18 @@ matchesKeyWithMods kb key mods = snd <$> find (keyMatches keyStr . fst) actions
     keyStr = keyWithModsToString key mods
     keyMatches str keys = str `elem` keys
     actions =
-      [ (quit kb, QuitApp),
-        (add_todo kb, AddTodo),
-        (toggle_complete kb, ToggleComplete),
-        (delete_todo kb, DeleteTodo),
-        (navigate_up kb, NavigateUp),
-        (navigate_down kb, NavigateDown),
-        (save_input kb, SaveInput),
-        (cancel_input kb, CancelInput),
-        (edit_todo kb, EditTodo)
+      [ (quit kb, QuitApp)
+      , (add_todo kb, AddTodo)
+      , (toggle_complete kb, ToggleComplete)
+      , (delete_todo kb, DeleteTodo)
+      , (navigate_up kb, NavigateUp)
+      , (navigate_down kb, NavigateDown)
+      , (save_input kb, SaveInput)
+      , (cancel_input kb, CancelInput)
+      , (edit_todo kb, EditTodo)
       ]
 
 -- | Get the first key from a list of keys, or return a default (Pure)
 getFirstKey :: [String] -> String -> String
-getFirstKey [] def     = def
-getFirstKey (k:_) _def = k
+getFirstKey [] def = def
+getFirstKey (k : _) _def = k

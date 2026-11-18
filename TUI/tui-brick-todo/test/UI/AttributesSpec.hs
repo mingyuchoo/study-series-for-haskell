@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UI.AttributesSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           Test.Hspec
-import           Flow             ((<|))
-import           UI.Attributes
+import Flow ((<|))
+import Test.Hspec
+import UI.Attributes
 
 spec :: Spec
 spec = do

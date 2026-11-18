@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UI.EventsSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           Test.Hspec
-import           Flow             ((<|))
-import           UI.Events
+import Flow ((<|))
+import Test.Hspec
+import UI.Events
 
 spec :: Spec
 spec = do

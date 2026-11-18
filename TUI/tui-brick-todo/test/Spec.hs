@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Test.Hspec
+import Test.Hspec
 
-import qualified AppSpec
-import qualified ConfigSpec
-import qualified DBSpec
-import qualified I18nSpec
-import qualified TodoServiceSpec
-import qualified TodoStatusSpec
-import qualified UI.AttributesSpec
-import qualified UI.DrawSpec
-import qualified UI.EventsSpec
-import qualified UI.TypesSpec
+import AppSpec qualified
+import ConfigSpec qualified
+import DBSpec qualified
+import I18nSpec qualified
+import TodoServiceSpec qualified
+import TodoStatusSpec qualified
+import UI.AttributesSpec qualified
+import UI.DrawSpec qualified
+import UI.EventsSpec qualified
+import UI.TypesSpec qualified
 
 main :: IO ()
 main = hspec spec

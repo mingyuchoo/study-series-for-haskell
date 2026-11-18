@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module TodoStatusSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           TodoStatus
+import TodoStatus
 
-import           Flow      ((<|))
-import           Test.Hspec
+import Flow ((<|))
+import Test.Hspec
 
 spec :: Spec
 spec = do
@@ -79,27 +79,27 @@ spec = do
   describe "상태 확인 함수" <| do
     it "isRegistered가 Registered 상태를 식별해야 함" <| do
       case stringToStatus "registered" of
-        Just s  -> isRegistered s `shouldBe` True
+        Just s -> isRegistered s `shouldBe` True
         Nothing -> expectationFailure "파싱 실패"
 
     it "isInProgress가 InProgress 상태를 식별해야 함" <| do
       case stringToStatus "in_progress" of
-        Just s  -> isInProgress s `shouldBe` True
+        Just s -> isInProgress s `shouldBe` True
         Nothing -> expectationFailure "파싱 실패"
 
     it "isCancelled가 Cancelled 상태를 식별해야 함" <| do
       case stringToStatus "cancelled" of
-        Just s  -> isCancelled s `shouldBe` True
+        Just s -> isCancelled s `shouldBe` True
         Nothing -> expectationFailure "파싱 실패"
 
     it "isCompleted가 Completed 상태를 식별해야 함" <| do
       case stringToStatus "completed" of
-        Just s  -> isCompleted s `shouldBe` True
+        Just s -> isCompleted s `shouldBe` True
         Nothing -> expectationFailure "파싱 실패"
 
     it "isCompleted가 다른 상태에 False를 반환해야 함" <| do
       case stringToStatus "registered" of
-        Just s  -> isCompleted s `shouldBe` False
+        Just s -> isCompleted s `shouldBe` False
         Nothing -> expectationFailure "파싱 실패"
 
   describe "AnyStatus 패턴 매칭" <| do

@@ -1,5 +1,5 @@
-{-# LANGUAGE DataKinds      #-}
-{-# LANGUAGE GADTs          #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 
 -- | Todo status state machine using GADTs (Pure)
@@ -14,38 +14,39 @@
 --
 -- Effects: NONE - All functions are pure
 module TodoStatus
-    ( AnyStatus (..)
-    , TodoStatus (..)
-    , TodoStatusType (..)
-    , cancel
-    , complete
-    , isCancelled
-    , isCompleted
-    , isInProgress
-    , isRegistered
-    , registered
-    , resetToRegistered
-    , startProgress
-    , statusToString
-    , stringToStatus
-    ) where
+  ( AnyStatus (..)
+  , TodoStatus (..)
+  , TodoStatusType (..)
+  , cancel
+  , complete
+  , isCancelled
+  , isCompleted
+  , isInProgress
+  , isRegistered
+  , registered
+  , resetToRegistered
+  , startProgress
+  , statusToString
+  , stringToStatus
+  ) where
 
 -- | Type-level status tags
 data TodoStatusType = Registered | InProgress | Cancelled | Completed
-     deriving (Eq, Show)
+  deriving (Eq, Show)
 
 -- | GADT for type-safe todo status
-data TodoStatus (a :: TodoStatusType) where StatusRegistered :: TodoStatus 'Registered
-                                            StatusInProgress :: TodoStatus 'InProgress
-                                            StatusCancelled :: TodoStatus 'Cancelled
-                                            StatusCompleted :: TodoStatus 'Completed
+data TodoStatus (a :: TodoStatusType) where
+  StatusRegistered :: TodoStatus 'Registered
+  StatusInProgress :: TodoStatus 'InProgress
+  StatusCancelled :: TodoStatus 'Cancelled
+  StatusCompleted :: TodoStatus 'Completed
 
 -- | Show instance for TodoStatus
 instance Show (TodoStatus a) where
-    show StatusRegistered = "Registered"
-    show StatusInProgress = "InProgress"
-    show StatusCancelled  = "Cancelled"
-    show StatusCompleted  = "Completed"
+  show StatusRegistered = "Registered"
+  show StatusInProgress = "InProgress"
+  show StatusCancelled = "Cancelled"
+  show StatusCompleted = "Completed"
 
 -- | Create a new todo in Registered state
 registered :: TodoStatus 'Registered
@@ -71,39 +72,39 @@ resetToRegistered StatusCompleted = StatusRegistered
 data AnyStatus where AnyStatus :: TodoStatus a -> AnyStatus
 
 instance Show AnyStatus where
-    show (AnyStatus s) = show s
+  show (AnyStatus s) = show s
 
 -- | Convert status to string for database storage
 statusToString :: TodoStatus a -> String
 statusToString StatusRegistered = "registered"
 statusToString StatusInProgress = "in_progress"
-statusToString StatusCancelled  = "cancelled"
-statusToString StatusCompleted  = "completed"
+statusToString StatusCancelled = "cancelled"
+statusToString StatusCompleted = "completed"
 
 -- | Parse status from string (from database)
 stringToStatus :: String -> Maybe AnyStatus
-stringToStatus "registered"  = Just (AnyStatus StatusRegistered)
+stringToStatus "registered" = Just (AnyStatus StatusRegistered)
 stringToStatus "in_progress" = Just (AnyStatus StatusInProgress)
-stringToStatus "cancelled"   = Just (AnyStatus StatusCancelled)
-stringToStatus "completed"   = Just (AnyStatus StatusCompleted)
-stringToStatus _             = Nothing
+stringToStatus "cancelled" = Just (AnyStatus StatusCancelled)
+stringToStatus "completed" = Just (AnyStatus StatusCompleted)
+stringToStatus _ = Nothing
 
 -- | Check if status is completed
 isCompleted :: AnyStatus -> Bool
 isCompleted (AnyStatus StatusCompleted) = True
-isCompleted _                           = False
+isCompleted _ = False
 
 -- | Check if status is cancelled
 isCancelled :: AnyStatus -> Bool
 isCancelled (AnyStatus StatusCancelled) = True
-isCancelled _                           = False
+isCancelled _ = False
 
 -- | Check if status is in progress
 isInProgress :: AnyStatus -> Bool
 isInProgress (AnyStatus StatusInProgress) = True
-isInProgress _                            = False
+isInProgress _ = False
 
 -- | Check if status is registered
 isRegistered :: AnyStatus -> Bool
 isRegistered (AnyStatus StatusRegistered) = True
-isRegistered _                            = False
+isRegistered _ = False

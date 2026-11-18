@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module ConfigSpec
-    ( spec
-    ) where
+  ( spec
+  ) where
 
-import           Config
+import Config
 
-import qualified Graphics.Vty as V
-import           Flow             ((<|))
-import           Test.Hspec
+import Flow ((<|))
+import Graphics.Vty qualified as V
+import Test.Hspec
 
 spec :: Spec
 spec = do

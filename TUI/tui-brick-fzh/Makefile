@@ -2,6 +2,7 @@
 
 # Extract project name from directory path
 PROJECT_NAME := $(shell basename $(CURDIR))
+EXECUTABLE_NAME := fzh-exe
 
 all: clean setup build test run
 
@@ -43,7 +44,7 @@ ghcid: setup
 	ghcid --command "stack ghci test/Spec.hs"
 
 run: build
-	time stack exec $(PROJECT_NAME)-exe
+	time stack exec $(EXECUTABLE_NAME)
 
 release: setup
 	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS"
@@ -72,5 +73,5 @@ docker-compose-logs:
 
 install: release
 	mkdir -p $(HOME)/.local/bin
-	cp $(shell stack path --local-install-root)/bin/$(PROJECT_NAME)-exe $(HOME)/.local/bin/
+	cp $(shell stack path --local-install-root)/bin/$(EXECUTABLE_NAME) $(HOME)/.local/bin/
 

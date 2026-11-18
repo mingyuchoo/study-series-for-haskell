@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module UI.TypesSpec ( spec ) where
+module UI.TypesSpec (spec) where
 
-import qualified DB
-import           Flow        ((<|))
-import           Lens.Micro  ((%~), (&), (.~), (^.))
-import           Test.Hspec
-import           UI.Types
+import DB qualified
+import Flow ((<|))
+import Lens.Micro ((%~), (&), (.~), (^.))
+import Test.Hspec
+import UI.Types
 
 spec :: Spec
 spec = do
@@ -49,9 +49,16 @@ spec = do
       FocusIndirectObject `shouldNotBe` FocusDirectObject
 
   describe "Todo" <| do
-    let sampleTodo = Todo 1 "Test action" "registered" "2024-01-01 10:00"
-                          (Just "Subject")
-                          (Just "Indirect") (Just "Direct") Nothing
+    let sampleTodo =
+          Todo
+            1
+            "Test action"
+            "registered"
+            "2024-01-01 10:00"
+            (Just "Subject")
+            (Just "Indirect")
+            (Just "Direct")
+            Nothing
 
     it "Todo는 Eq 인스턴스를 가져야 함" <| do
       sampleTodo `shouldBe` sampleTodo
@@ -90,9 +97,16 @@ spec = do
 
   describe "fromTodoRow" <| do
     it "DB.TodoRow를 UI.Todo로 변환해야 함" <| do
-      let dbRow = DB.TodoRow 1 "Action" "registered" "2024-01-01"
-                             (Just "Sub")
-                             (Just "Ind") (Just "Dir") Nothing
+      let dbRow =
+            DB.TodoRow
+              1
+              "Action"
+              "registered"
+              "2024-01-01"
+              (Just "Sub")
+              (Just "Ind")
+              (Just "Dir")
+              Nothing
           uiTodo = fromTodoRow dbRow
       uiTodo ^. todoId `shouldBe` 1
       uiTodo ^. todoAction `shouldBe` "Action"
@@ -104,9 +118,16 @@ spec = do
       uiTodo ^. todoStatusChangedAt `shouldBe` Nothing
 
     it "완료된 TodoRow를 변환해야 함" <| do
-      let dbRow = DB.TodoRow 2 "Done" "completed" "2024-01-01"
-                             Nothing Nothing Nothing
-                             (Just "2024-01-02")
+      let dbRow =
+            DB.TodoRow
+              2
+              "Done"
+              "completed"
+              "2024-01-01"
+              Nothing
+              Nothing
+              Nothing
+              (Just "2024-01-02")
           uiTodo = fromTodoRow dbRow
       uiTodo ^. todoStatus `shouldBe` "completed"
       uiTodo ^. todoStatusChangedAt `shouldBe` Just "2024-01-02"
