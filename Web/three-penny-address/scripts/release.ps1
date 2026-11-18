@@ -44,7 +44,6 @@ Set-Location $ProjectRoot
 $PackageName = Get-PackageValue "name"
 $Version = Get-PackageValue "version"
 $Maintainer = Get-PackageValue "maintainer"
-$LicenseName = Get-PackageValue "license"
 $Executable = "$PackageName-exe"
 $MsiVersionParts = $Version.Split(".") | Select-Object -First 3
 $MsiVersion = ($MsiVersionParts -join ".")

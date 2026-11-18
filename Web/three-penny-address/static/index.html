@@ -4,185 +4,359 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Address Book</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&amp;family=Inter:wght@400;500&amp;display=swap">
     <style>
+        :root {
+            --canvas: #faf9f5;
+            --surface-soft: #f5f0e8;
+            --surface-card: #efe9de;
+            --surface-selected: #e8e0d2;
+            --surface-dark: #181715;
+            --ink: #141413;
+            --body: #3d3d3a;
+            --muted: #6c6a64;
+            --on-dark: #faf9f5;
+            --on-primary: #ffffff;
+            --primary: #cc785c;
+            --primary-active: #a9583e;
+            --hairline: #e6dfd8;
+            --error: #c64545;
+            --focus-ring: color-mix(in srgb, var(--primary) 15%, transparent);
+            --display-font: Copernicus, "Tiempos Headline", "Cormorant Garamond", Garamond, Georgia, serif;
+            --body-font: StyreneB, Inter, system-ui, sans-serif;
+            --control-radius: 8px;
+            --card-radius: 12px;
+            --space-xs: 8px;
+            --space-sm: 12px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-xxl: 48px;
+            --section-space: 96px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
+            background: var(--canvas);
+            color: var(--body);
+            font: 400 1rem/1.55 var(--body-font);
         }
 
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            min-height: 100vh;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin-inline: auto;
+            padding: var(--section-space) var(--space-xl);
+        }
+
+        h1, h2 {
+            margin: 0;
+            color: var(--ink);
+            font-family: var(--display-font);
+            font-weight: 400;
         }
 
         h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
+            font-size: 4rem;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .page-header {
+            margin-bottom: var(--space-xxl);
+        }
+
+        .toolbar, .selection-actions, .panel-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: var(--space-sm);
+        }
+
+        .toolbar {
+            justify-content: space-between;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
         }
 
         .search-section {
-            margin-bottom: 20px;
+            flex: 1 1 18rem;
+            max-width: 26rem;
         }
 
-        .search-section input {
+        label {
+            display: block;
+            margin-bottom: var(--space-xs);
+            color: var(--ink);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        input, textarea, button {
+            font: inherit;
+        }
+
+        .search-section input, .form-group input, .form-group textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
+            min-height: 40px;
+            padding: 7px 14px;
+            border: 1px solid var(--hairline);
+            border-radius: var(--control-radius);
+            background: var(--canvas);
+            color: var(--ink);
         }
 
-        .action-section {
-            margin-bottom: 20px;
+        :focus-visible {
+            outline: 2px solid var(--primary-active);
+            outline-offset: 2px;
+        }
+
+        .search-section input:focus, .form-group input:focus, .form-group textarea:focus {
+            border-color: var(--primary-active);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        input::placeholder {
+            color: var(--muted);
         }
 
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
+            min-height: 40px;
+            padding: 12px 20px;
+            border: 1px solid transparent;
+            border-radius: var(--control-radius);
+            color: var(--ink);
             cursor: pointer;
-            font-size: 14px;
-            margin-right: 10px;
-            transition: background-color 0.3s;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1;
         }
 
         .btn-primary {
-            background-color: #4CAF50;
-            color: white;
+            background: var(--primary);
         }
 
-        .btn-primary:hover {
-            background-color: #45a049;
+        .btn-primary:active {
+            background: var(--primary-active);
+            color: var(--on-primary);
         }
 
         .btn-secondary {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #1976D2;
+            background: var(--canvas);
+            border-color: var(--hairline);
         }
 
         .btn-danger {
-            background-color: #f44336;
-            color: white;
+            background: var(--canvas);
+            border-color: var(--hairline);
+            color: var(--error);
         }
 
-        .btn-danger:hover {
-            background-color: #d32f2f;
+        .btn-danger:active {
+            background: var(--error);
+            color: var(--on-primary);
+        }
+
+        .btn:disabled, .form-group :disabled {
+            background: var(--hairline);
+            color: var(--muted);
+            cursor: default;
+        }
+
+        .directory {
+            overflow: hidden;
+            border: 1px solid var(--hairline);
+            border-radius: var(--card-radius);
+            background: var(--surface-soft);
+        }
+
+        .directory-header {
+            padding: var(--space-lg) var(--space-xl);
+            background: var(--surface-dark);
+        }
+
+        .directory-header h2 {
+            color: var(--on-dark);
         }
 
         .contact-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            font-size: 0.875rem;
         }
 
-        .contact-table th,
-        .contact-table td {
-            border: 1px solid #ddd;
-            padding: 12px;
+        .contact-table th, .contact-table td {
+            padding: var(--space-sm) var(--space-md);
             text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        .contact-table th:first-child, .contact-table td:first-child {
+            padding-inline-start: var(--space-xl);
+        }
+
+        .contact-table th:last-child, .contact-table td:last-child {
+            padding-inline-end: var(--space-xl);
+        }
+
+        .contact-table thead {
+            color: var(--muted);
         }
 
         .contact-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+            font-weight: 500;
         }
 
-        .contact-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+        .contact-table tbody tr {
+            border-top: 1px solid var(--hairline);
+            background: var(--canvas);
         }
 
-        .contact-table tr:hover {
-            background-color: #f5f5f5;
+        .contact-table tbody tr.selected {
+            background: var(--surface-selected);
         }
 
-        .form-section {
-            border: 1px solid #ddd;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
+        .contact-name {
+            color: var(--ink);
+            font-weight: 500;
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        .contact-table input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            vertical-align: middle;
+            accent-color: var(--primary-active);
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .form-group textarea {
-            height: 60px;
-            resize: vertical;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            padding: 40px;
-        }
-
-        input, textarea {
-            box-sizing: border-box;
-        }
-
-        .selection-actions {
-            display: inline;
+        .field-caption {
+            display: none;
         }
 
         .form-section, .confirm-section {
-            margin-bottom: 20px;
+            margin-bottom: var(--space-lg);
+            padding: var(--space-xl);
+            border-radius: var(--card-radius);
+            background: var(--surface-card);
         }
 
-        .confirm-section {
-            padding: 20px;
-            background: #fff3e0;
-            border-radius: 4px;
+        .form-section h2, .confirm-section h2 {
+            margin-bottom: var(--space-md);
         }
 
-        .btn-neutral {
-            background: #666;
-            color: white;
+        .form-fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: default;
+        .form-fields > :first-child, .form-fields > :last-child {
+            grid-column: 1 / -1;
         }
 
-        .table-section {
-            overflow-x: auto;
+        .form-group textarea {
+            display: block;
+            min-height: 80px;
+            resize: vertical;
         }
 
-        .contact-table tr.selected {
-            background: #e3f2fd;
+        .directory-message {
+            margin: 0;
+            padding: var(--space-xl);
+            color: var(--muted);
         }
 
         .error {
-            color: #a52020;
+            color: var(--error);
+            overflow-wrap: anywhere;
             white-space: pre-line;
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                padding: var(--space-xxl) var(--space-md);
+            }
+
+            .page-header {
+                margin-bottom: var(--space-xl);
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .search-section {
+                max-width: none;
+            }
+
+            .toolbar, .form-fields {
+                gap: var(--space-md);
+            }
+
+            .form-fields {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .form-section, .confirm-section, .directory-header, .directory-message {
+                padding: var(--space-lg);
+            }
+
+            .contact-table, .contact-table tbody {
+                display: block;
+            }
+
+            .contact-table thead {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+            }
+
+            .contact-table tbody tr {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: var(--space-sm);
+                padding: var(--space-md) var(--space-lg);
+                align-items: center;
+            }
+
+            .contact-table td,
+            .contact-table td:first-child,
+            .contact-table td:last-child {
+                padding: 0;
+            }
+
+            .contact-table td:first-child {
+                grid-area: 1 / 2;
+            }
+
+            .contact-name {
+                grid-area: 1 / 1;
+                font-size: 1rem;
+            }
+
+            .contact-detail, .contact-actions {
+                grid-column: 1 / -1;
+            }
+
+            .field-caption {
+                display: block;
+                color: var(--muted);
+                font-size: 0.8125rem;
+                font-weight: 500;
+            }
         }
     </style>
 </head>

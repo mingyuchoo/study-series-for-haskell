@@ -1,7 +1,6 @@
 module AddressBook.Application
   ( ContactError (..)
   , ContactRepository (..)
-  , findContact
   , listContacts
   , removeContact
   , saveContact
@@ -31,9 +30,6 @@ data ContactRepository m = ContactRepository
 
 listContacts :: Text -> AddressBookState -> [Contact]
 listContacts query = searchContacts query . addressBookToContacts
-
-findContact :: ContactId -> AddressBookState -> Maybe Contact
-findContact identifier = Map.lookup identifier . addressContacts
 
 saveContact
   :: ContactRepository m
