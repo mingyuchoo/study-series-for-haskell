@@ -1,6 +1,6 @@
 {
   "private": true,
   "devDependencies": {
-    "elm-test": "0.19.3-1"
+    "elm-test": "0.19.3-0"
   }
 }

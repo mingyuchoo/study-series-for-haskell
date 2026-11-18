@@ -4,13 +4,25 @@
 
 ## 실행
 
+Stack, Fourmolu, HLint, Elm 0.19.3, elm-format, Node.js와 npm을 `PATH`에 준비합니다. Windows에서는 Windows PowerShell 또는 PowerShell에서 실행합니다. 두 스크립트는 프로젝트 루트를 기준으로 소스를 포맷하고, HLint 검사와 Elm 포맷 검증, 빌드, 테스트를 순서대로 수행합니다. Elm 테스트 도구는 `web/package-lock.json`을 기준으로 설치합니다. HLint 경고는 출력한 뒤 계속 진행합니다.
+
+Linux·macOS
+
 ```bash
-stack run
+./scripts/run.sh
 ```
 
-브라우저에서 `http://localhost:3000`을 엽니다.
+Windows 11
 
-기본 데이터베이스는 명령을 실행한 디렉터리의 `general-service.sqlite3`입니다. 다른 위치를 사용하려면 실행 환경에 `DATABASE_PATH`를 지정합니다. `.env.example`은 설정 예시일 뿐 애플리케이션이 `.env` 파일을 자동으로 읽지는 않습니다.
+```powershell
+.\scripts\run.ps1
+```
+
+검증까지만 실행하려면 Bash에서 `--check-only`, PowerShell에서 `-CheckOnly`를 지정합니다. 검증 전용 실행도 소스를 포맷하고 `web/elm.js`를 갱신합니다.
+
+검증을 통과하면 서버를 포그라운드에서 실행합니다. 브라우저에서 `http://localhost:3000`을 엽니다. 다른 포트를 사용하려면 `PORT` 환경 변수를 설정합니다. 포트가 이미 사용 중이면 서버 시작이 실패합니다. 서버를 종료하려면 `Ctrl+C`를 누릅니다.
+
+두 스크립트의 기본 데이터베이스는 프로젝트 루트의 `general-service.sqlite3`입니다. 다른 위치를 사용하려면 실행 환경에 `DATABASE_PATH`를 지정합니다. `.env.example`은 설정 예시일 뿐 애플리케이션이 `.env` 파일을 자동으로 읽지는 않습니다.
 
 ```bash
 DATABASE_PATH=/absolute/path/general-service.sqlite3 stack run

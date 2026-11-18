@@ -7,6 +7,8 @@
 | T-2026-0910-023 | IN_PROGRESS | orchestrator | 메모리 저장소를 SQLite 영속 저장소로 교체한다. |
 | T-2026-0910-024 | REVIEW | orchestrator | 좁은 화면에서 상태 스윔레인이 줄바꿈되도록 반응형 레이아웃을 수정했다. |
 | T-2026-0911-025 | REVIEW | orchestrator | 새 업무 등록 서랍의 우선순위 라디오 그룹을 한 줄로 정렬했다. |
+| T-2026-1119-026 | REVIEW | orchestrator | Linux·macOS와 Windows용 포맷·린트·빌드·테스트·실행 스크립트를 제공한다. |
+| T-2026-1119-027 | DONE | orchestrator | elm-test 설치 오류를 재현하고 의존성 수정과 서버 실행을 검증했다. |
 
 ## 가정
 
