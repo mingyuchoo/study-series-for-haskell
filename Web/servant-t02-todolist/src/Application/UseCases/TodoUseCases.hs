@@ -6,6 +6,7 @@ module Application.UseCases.TodoUseCases
   , getTodoList
   , removeTodo
   , updateExistingTodo
+
     -- * Re-exports
   , TodoRepository (getAllTodos, getTodoById, createTodo, updateTodo, deleteTodo)
   ) where
@@ -49,7 +50,8 @@ createNewTodo = createTodo
 -- | Update an existing todo with validation
 --
 -- The validation is performed at the repository layer
-updateExistingTodo :: (TodoRepository m) => Int -> Todo -> m (Either ValidationError [Todo])
+updateExistingTodo
+  :: (TodoRepository m) => Int -> Todo -> m (Either ValidationError [Todo])
 updateExistingTodo = updateTodo
 
 -- | Remove a todo by ID

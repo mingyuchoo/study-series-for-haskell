@@ -67,7 +67,7 @@ executables:
           - -optl-static
           - -optc-static
           - -optc-fno-PIC
-      - condition: '!(flag(static))'
+      - condition: '!flag(static) && !os(windows)'
         ghc-options:
           - -dynamic
     dependencies:
@@ -78,10 +78,13 @@ tests:
     main: Spec.hs
     source-dirs: test
     ghc-options:
-      - -dynamic
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N4
+    when:
+      - condition: '!os(windows)'
+        ghc-options:
+          - -dynamic
     dependencies:
       - servant-t03-clean-archi
       - hspec

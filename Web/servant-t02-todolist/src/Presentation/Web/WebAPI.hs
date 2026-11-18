@@ -1,10 +1,11 @@
-{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
 -- | Web interface API for Todo application
 module Presentation.Web.WebAPI
   ( -- * API Type
     WebAPI
+
     -- * Server Implementation
   , webServer
   ) where

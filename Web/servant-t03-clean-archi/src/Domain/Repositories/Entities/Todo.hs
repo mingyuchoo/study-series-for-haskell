@@ -1,7 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Domain entities for the Todo application
 module Domain.Repositories.Entities.Todo
@@ -11,6 +11,7 @@ module Domain.Repositories.Entities.Todo
   , Status (TodoStatus, DoingStatus, DoneStatus)
   , Todo (..)
   , ValidationError (..)
+
     -- * Functions
   , mkNewTodo
   , mkTodo
@@ -38,20 +39,21 @@ import GHC.Generics (Generic)
 -- -------------------------------------------------------------------
 
 -- | Priority levels for todos
-data Priority -- | Low priority tasks
-              = Low
-              -- | Medium priority tasks
-              | Medium
-              -- | High priority tasks
-              | High
+data Priority
+  = -- | Low priority tasks
+    Low
+  | -- | Medium priority tasks
+    Medium
+  | -- | High priority tasks
+    High
   deriving (Bounded, Eq, Generic, Read)
 
 -- | Custom Enum instance for Priority to handle wrapping around
 instance Enum Priority where
   -- Convert to Int
-  fromEnum Low    = 0
+  fromEnum Low = 0
   fromEnum Medium = 1
-  fromEnum High   = 2
+  fromEnum High = 2
 
   -- Convert from Int with wrapping
   toEnum n = case n `mod` 3 of
@@ -61,50 +63,51 @@ instance Enum Priority where
     _ -> error "Impossible case in Priority toEnum"
 
   -- Custom succ with wrapping
-  succ High   = Low
+  succ High = Low
   succ Medium = High
-  succ Low    = Medium
+  succ Low = Medium
 
   -- Custom pred with wrapping
-  pred Low    = High
-  pred High   = Medium
+  pred Low = High
+  pred High = Medium
   pred Medium = Low
 
 -- | Show instance for Priority
 instance Show Priority where
-  show Low    = "Low"
+  show Low = "Low"
   show Medium = "Medium"
-  show High   = "High"
+  show High = "High"
 
 -- | Custom JSON instances for Priority
 instance FromJSON Priority where
   parseJSON (String t) = case T.unpack t of
-    "Low"    -> pure Low
+    "Low" -> pure Low
     "Medium" -> pure Medium
-    "High"   -> pure High
-    _        -> fail <| "Unknown priority: " ++ T.unpack t
+    "High" -> pure High
+    _ -> fail <| "Unknown priority: " ++ T.unpack t
   parseJSON _ = fail "Expected String for Priority"
 
 instance ToJSON Priority where
-  toJSON Low    = String "Low"
+  toJSON Low = String "Low"
   toJSON Medium = String "Medium"
-  toJSON High   = String "High"
+  toJSON High = String "High"
 
 -- | Status levels for todos
-data Status -- | Not started
-            = TodoStatus
-            -- | In progress
-            | DoingStatus
-            -- | Completed
-            | DoneStatus
+data Status
+  = -- | Not started
+    TodoStatus
+  | -- | In progress
+    DoingStatus
+  | -- | Completed
+    DoneStatus
   deriving (Bounded, Eq, Generic, Read)
 
 -- | Custom Enum instance for Status to handle wrapping around
 instance Enum Status where
   -- Convert to Int
-  fromEnum TodoStatus  = 0
+  fromEnum TodoStatus = 0
   fromEnum DoingStatus = 1
-  fromEnum DoneStatus  = 2
+  fromEnum DoneStatus = 2
 
   -- Convert from Int with wrapping
   toEnum n = case n `mod` 3 of
@@ -114,47 +117,47 @@ instance Enum Status where
     _ -> error "Impossible case in Status toEnum"
 
   -- Custom succ with wrapping
-  succ DoneStatus  = TodoStatus
+  succ DoneStatus = TodoStatus
   succ DoingStatus = DoneStatus
-  succ TodoStatus  = DoingStatus
+  succ TodoStatus = DoingStatus
 
   -- Custom pred with wrapping
-  pred TodoStatus  = DoneStatus
-  pred DoneStatus  = DoingStatus
+  pred TodoStatus = DoneStatus
+  pred DoneStatus = DoingStatus
   pred DoingStatus = TodoStatus
 
 -- | Show instance for Status
 instance Show Status where
-  show TodoStatus  = "Todo"
+  show TodoStatus = "Todo"
   show DoingStatus = "Doing"
-  show DoneStatus  = "Done"
+  show DoneStatus = "Done"
 
 -- | Custom JSON instances for Status
 instance FromJSON Status where
   parseJSON (String t) = case T.unpack t of
-    "TodoStatus"  -> pure TodoStatus
+    "TodoStatus" -> pure TodoStatus
     "DoingStatus" -> pure DoingStatus
-    "DoneStatus"  -> pure DoneStatus
-    _             -> fail <| "Unknown status: " ++ T.unpack t
+    "DoneStatus" -> pure DoneStatus
+    _ -> fail <| "Unknown status: " ++ T.unpack t
   parseJSON _ = fail "Expected String for Status"
 
 instance ToJSON Status where
-  toJSON TodoStatus  = String "Todo"
+  toJSON TodoStatus = String "Todo"
   toJSON DoingStatus = String "Doing"
-  toJSON DoneStatus  = String "Done"
+  toJSON DoneStatus = String "Done"
 
 -- | Core entity representing a Todo item
 data Todo = Todo
-  { todoId    :: !Int
-    -- ^ Unique identifier
+  { todoId :: !Int
+  -- ^ Unique identifier
   , todoTitle :: !Text
-    -- ^ Title of the todo
+  -- ^ Title of the todo
   , createdAt :: !UTCTime
-    -- ^ Creation timestamp
-  , priority  :: !Priority
-    -- ^ Priority level
-  , status    :: !Status
-    -- ^ Current status
+  -- ^ Creation timestamp
+  , priority :: !Priority
+  -- ^ Priority level
+  , status :: !Status
+  -- ^ Current status
   }
   deriving (Eq, Generic, Show)
 
@@ -170,7 +173,7 @@ mkTodo todoId' title time prio stat =
     }
 
 -- | Used for creating a new todo without specifying todoId
-newtype NewTodo = NewTodo { newTodoTitle :: Text }
+newtype NewTodo = NewTodo {newTodoTitle :: Text}
   deriving (Eq, Generic, Show)
 
 -- | Helper function to create a new NewTodo
@@ -178,7 +181,7 @@ mkNewTodo :: Text -> NewTodo
 mkNewTodo = NewTodo
 
 -- | Validation error response
-newtype ValidationError = ValidationError { errorMessage :: Text }
+newtype ValidationError = ValidationError {errorMessage :: Text}
   deriving (Eq, Generic, Show)
 
 -- | JSON instances
@@ -201,14 +204,14 @@ instance FromRow Todo where
     tPriorityStr <- field :: RowParser String
     tStatusStr <- field :: RowParser String
     let tPriority = case tPriorityStr of
-          "Low"    -> Low
+          "Low" -> Low
           "Medium" -> Medium
-          "High"   -> High
-          _        -> Medium -- Default to Medium if unknown
+          "High" -> High
+          _ -> Medium -- Default to Medium if unknown
     let tStatus = case tStatusStr of
-          "Done"  -> DoneStatus
+          "Done" -> DoneStatus
           "Doing" -> DoingStatus
-          _       -> TodoStatus -- Default to Todo if unknown
+          _ -> TodoStatus -- Default to Todo if unknown
     pure <| Todo tId tTitle tCreatedAt tPriority tStatus
 
 instance ToRow Todo where

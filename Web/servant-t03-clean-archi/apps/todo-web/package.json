@@ -1,0 +1,11 @@
+{
+  "name": "@todo/web",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "elm make src/Main.elm --optimize --output=../../static/js/elm.js"
+  },
+  "devDependencies": {
+    "elm": "0.19.3-0"
+  }
+}

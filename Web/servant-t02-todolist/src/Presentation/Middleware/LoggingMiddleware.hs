@@ -102,7 +102,7 @@ logBodyContent body = do
       result <- try (pure $! TE.decodeUtf8 body) :: IO (Either SomeException Text)
       case result of
         Right text -> logLine "Body" <| T.unpack text
-        Left _     -> logLine "Body" "<binary data>"
+        Left _ -> logLine "Body" "<binary data>"
 
 -- | Capture the request body and create a new request with the body restored
 captureRequestBody :: Request -> IO (Request, ByteString)

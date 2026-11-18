@@ -1,16 +1,19 @@
-{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | SQLite implementation of the Todo repository
 module Infrastructure.Repositories.SQLiteTodoRepository
   ( -- * Repository implementation
     SQLiteRepo (..)
+
     -- * Database operations
   , migrate
   , withConn
+
     -- * Direct access functions
+
     -- | These functions are exported for direct use in tests or specialized scenarios
   , deleteTodoById
   , insertTodo
@@ -56,7 +59,7 @@ import Flow ((<|))
 -- -------------------------------------------------------------------
 
 -- | Newtype wrapper for SQLite IO operations
-newtype SQLiteRepo a = SQLiteRepo { runSQLiteRepo :: IO a }
+newtype SQLiteRepo a = SQLiteRepo {runSQLiteRepo :: IO a}
   deriving (Applicative, Functor, Monad)
 
 -- | TodoRepository implementation for SQLiteRepo

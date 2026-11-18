@@ -1,5 +1,15 @@
 # 프로젝트 이름을 ARG로 받아서 사용
 ARG PROJECT_NAME=servant-t03-clean-archi
+FROM node:24-bookworm-slim AS frontend
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY apps/todo-web/package.json apps/todo-web/package.json
+RUN npm ci
+COPY apps/todo-web/elm.json apps/todo-web/elm.json
+COPY apps/todo-web/src/ apps/todo-web/src/
+RUN npm run build
+
 # 빌드와 실행을 동일한 이미지에서 진행
 FROM fpco/stack-build:lts
 WORKDIR /app
@@ -14,6 +24,7 @@ COPY src/ src/
 COPY app/ app/
 COPY test/ test/
 COPY static/ static/
+COPY --from=frontend /app/static/js/elm.js static/js/elm.js
 
 # 프로젝트 설정 및 의존성 설치
 RUN stack setup --no-docker && stack build --dependencies-only --no-docker

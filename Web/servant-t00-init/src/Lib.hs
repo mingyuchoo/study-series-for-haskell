@@ -1,6 +1,6 @@
-{-# LANGUAGE DataKinds       #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeOperators   #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Lib
   ( app
@@ -29,9 +29,9 @@ type UserAPI2 =
 
 type User :: *
 data User = User
-  { name              :: String
-  , age               :: Int
-  , email             :: String
+  { name :: String
+  , age :: Int
+  , email :: String
   , registration_date :: Day
   }
   deriving (Eq, Show)

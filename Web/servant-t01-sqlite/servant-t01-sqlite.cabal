@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.39.1.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -64,7 +64,7 @@ executable servant-t01-sqlite-exe
   default-extensions:
       StandaloneKindSignatures
       TypeApplications
-  ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N4
+  ghc-options: -Wall -O2 -haddock -threaded -rtsopts -with-rtsopts=-N4
   build-depends:
       aeson
     , base
@@ -80,6 +80,8 @@ executable servant-t01-sqlite-exe
     , wai-app-static
     , warp
   default-language: GHC2024
+  if !os(windows)
+    ghc-options: -dynamic
 
 test-suite servant-t01-sqlite-test
   type: exitcode-stdio-1.0
@@ -93,7 +95,7 @@ test-suite servant-t01-sqlite-test
   default-extensions:
       StandaloneKindSignatures
       TypeApplications
-  ghc-options: -Wall -O2 -haddock -dynamic -threaded -rtsopts -with-rtsopts=-N4
+  ghc-options: -Wall -O2 -haddock -threaded -rtsopts -with-rtsopts=-N4
   build-depends:
       aeson
     , base
@@ -112,3 +114,5 @@ test-suite servant-t01-sqlite-test
     , wai-app-static
     , warp
   default-language: GHC2024
+  if !os(windows)
+    ghc-options: -dynamic

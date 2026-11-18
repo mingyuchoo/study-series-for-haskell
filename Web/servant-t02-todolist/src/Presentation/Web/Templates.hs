@@ -122,9 +122,9 @@ formatPriority High = span_ [class_ "priority-high", onclick_ "togglePriority(th
 
 -- | Convert Priority to Text for JavaScript
 priorityToString :: Priority -> Text
-priorityToString Low    = "Low"
+priorityToString Low = "Low"
 priorityToString Medium = "Medium"
-priorityToString High   = "High"
+priorityToString High = "High"
 
 -- | Format status with appropriate CSS class and click handler
 formatStatus :: Status -> Html ()

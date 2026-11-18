@@ -1,10 +1,11 @@
-{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
 -- | REST API for Todo operations
 module Presentation.API.TodoAPI
   ( -- * API Type
     TodoAPI
+
     -- * Server Implementation
   , todoServer
   ) where

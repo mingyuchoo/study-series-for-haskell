@@ -1,0 +1,4 @@
+.stack-work
+node_modules
+apps/todo-web/elm-stuff
+static/js/elm.js

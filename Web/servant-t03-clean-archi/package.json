@@ -1,0 +1,8 @@
+{
+  "name": "servant-t03-workspace",
+  "private": true,
+  "workspaces": ["apps/todo-web"],
+  "scripts": {
+    "build": "npm run build --workspace @todo/web"
+  }
+}

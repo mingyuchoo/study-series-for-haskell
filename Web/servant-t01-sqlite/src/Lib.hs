@@ -1,7 +1,7 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Lib
   ( appRunner
@@ -62,13 +62,13 @@ import Servant.HTML.Lucid (HTML)
 -- -------------------------------------------------------------------
 
 data User = User
-  { userId   :: Int
+  { userId :: Int
   , userName :: String
   }
   deriving (Eq, Generic, Show)
 
 -- Used for creating a new user without specifying userId
-newtype NewUser = NewUser { newUserName :: String }
+newtype NewUser = NewUser {newUserName :: String}
   deriving (Eq, Generic, Show)
 
 instance FromJSON NewUser
@@ -76,7 +76,7 @@ instance FromJSON NewUser
 instance ToJSON NewUser
 
 -- Validation error response
-newtype ValidationError = ValidationError { errorMessage :: Text }
+newtype ValidationError = ValidationError {errorMessage :: Text}
   deriving (Eq, Generic, Show)
 
 instance ToJSON ValidationError
@@ -294,7 +294,8 @@ validateUsername name
   | null name = Left $ ValidationError "Username cannot be empty"
   | length name < 3 = Left $ ValidationError "Username must be at least 3 characters long"
   | length name > 50 = Left $ ValidationError "Username must be at most 50 characters long"
-  | not (all (\c -> c `elem` ['a' .. 'z'] ++ ['A' .. 'Z'] ++ ['0' .. '9'] ++ [' ', '_', '-']) name) =
+  | not
+      (all (\c -> c `elem` ['a' .. 'z'] ++ ['A' .. 'Z'] ++ ['0' .. '9'] ++ [' ', '_', '-']) name) =
       Left $
         ValidationError
           "Username can only contain letters, numbers, spaces, underscores, and hyphens"

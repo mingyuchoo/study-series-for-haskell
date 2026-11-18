@@ -2,6 +2,7 @@
 module Domain.Repositories.TodoRepository
   ( -- * Repository interface
     TodoRepository (..)
+
     -- * Re-export domain entities
   , module Domain.Repositories.Entities.Todo
   ) where

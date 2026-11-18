@@ -1,4 +1,4 @@
-.PHONY: test coverage install update-stack-yaml
+.PHONY: test coverage install update-stack-yaml frontend
 
 # Extract project name from directory path
 PROJECT_NAME := $(shell basename $(CURDIR))
@@ -24,7 +24,11 @@ setup: update-stack-yaml
 format: setup
 	stylish-haskell --config .stylish-haskell.yaml -r -i ./**/*.hs
 
-build: setup
+frontend:
+	npm ci
+	npm run build
+
+build: frontend setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
 
 test: setup
@@ -42,10 +46,10 @@ watch-coverage: setup
 ghcid: setup
 	ghcid --command "stack ghci test/Spec.hs"
 
-run: setup
+run: frontend setup
 	time stack exec $(PROJECT_NAME)-exe
 
-release: setup
+release: frontend setup
 	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS" --docker
 
 docker-build: release

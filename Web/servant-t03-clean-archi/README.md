@@ -73,9 +73,15 @@ stack new <project-name> mingyuchoo/new-template
 
 ## How to build
 
+웹 프런트엔드 소스는 `apps/todo-web`에 있습니다. Node.js 24와 npm을 설치한 뒤
+`make frontend`를 실행하면 Elm 0.19.3으로 `static/js/elm.js`를 생성합니다.
+`make build`와 `make run`도 이 단계를 실행합니다.
+
 ```bash
 make build
 # or
+npm ci
+npm run build
 stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
 ```
 
@@ -95,7 +101,7 @@ make ghcid
 
 ```bash
 make run
-# or
+# or (after building the frontend)
 stack run
 ```
 

@@ -46,10 +46,12 @@ executables:
     main: Main.hs
     source-dirs: app
     ghc-options:
-      - -dynamic
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N4
+    when:
+      - condition: '!os(windows)'
+        ghc-options: -dynamic
     dependencies:
       - servant-t01-sqlite
 
@@ -58,10 +60,12 @@ tests:
     main: Spec.hs
     source-dirs: test
     ghc-options:
-      - -dynamic
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N4
+    when:
+      - condition: '!os(windows)'
+        ghc-options: -dynamic
     dependencies:
       - servant-t01-sqlite
       - hspec
