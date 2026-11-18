@@ -61,6 +61,46 @@ stack new <project-name> mingyuchoo/new-template
 
 ## How to build
 
+### Format, lint, build, test, and run
+
+Install Stack and the development tools on your `PATH`:
+
+```bash
+stack install fourmolu hlint
+```
+
+Use a recent HLint version that supports `GHC2024`.
+
+From Bash:
+
+```bash
+./scripts/run.sh
+./scripts/run.sh --skip-run
+./scripts/run.sh --help
+```
+
+From PowerShell:
+
+```powershell
+./scripts/run.ps1
+./scripts/run.ps1 -SkipRun
+./scripts/run.ps1 -Help
+```
+
+Both scripts resolve the project root from their own location. They format root-level
+Haskell files and all Haskell files under `src`, `app`, and `test` in place using
+`fourmolu.yaml`, run HLint, build the application and tests, run the test suite, and
+start `warp-t03-clean-archi-exe` at `http://localhost:8000`. Any failed command stops
+the pipeline with a nonzero exit code. The skip-run option stops after testing;
+otherwise, use Ctrl+C to stop the server.
+
+The current `stack.yaml` contains malformed Docker keys (`11,1: docker:` and
+`12:     enable: false`) that must be corrected before Stack commands can run.
+The existing `Given Lib` test calls `appRunner`, which starts a persistent server;
+that test must be changed to terminate before the pipeline can reach server startup.
+
+### Build only
+
 ```bash
 stack build
 # or

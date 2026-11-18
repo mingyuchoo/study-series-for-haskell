@@ -19,7 +19,7 @@ import Data.Text qualified as T
 
 -- 사용자 엔티티 (DB, 웹 프레임워크 등 인프라에 독립적)
 data User = User
-  { userId   :: Maybe Int
+  { userId :: Maybe Int
   , userName :: T.Text
   }
   deriving (Show)

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- 어댑터 계층(Repository): SQLite 구체 구현
 module Adapters.Repository.UserRepositoryAdapter
@@ -24,7 +24,7 @@ instance FromRow User where
   fromRow = User <$> field <*> field
 
 instance ToRow User where
-  toRow (User Nothing n)  = toRow (Only n)
+  toRow (User Nothing n) = toRow (Only n)
   toRow (User (Just i) n) = toRow (i, n)
 
 -- 새 사용자 생성
@@ -34,7 +34,7 @@ createUser conn user = do
   rows <- query conn "SELECT last_insert_rowid()" () :: IO [Only Integer]
   let newId = case rows of
         [Only n] -> fromIntegral n :: Int
-        _        -> 0
+        _ -> 0
   pure <| user {userId = Just newId}
 
 -- ID로 사용자 조회
@@ -43,7 +43,7 @@ getUser conn uid = do
   results <- query conn "SELECT id, name FROM users WHERE id = ?" (Only uid)
   case results of
     [u] -> pure <| Just u
-    _   -> pure Nothing
+    _ -> pure Nothing
 
 -- 모든 사용자 조회
 getUsers :: Connection -> IO [User]

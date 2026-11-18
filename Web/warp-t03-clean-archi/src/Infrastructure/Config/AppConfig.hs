@@ -6,9 +6,9 @@ module Infrastructure.Config.AppConfig
 
 -- 간단한 설정 레코드
 data AppConfig = AppConfig
-  { port   :: Int
-    -- 서버 포트
-  , dbPath :: FilePath
+  { port :: Int
+  , -- 서버 포트
+    dbPath :: FilePath
     -- SQLite DB 파일 경로
   }
 

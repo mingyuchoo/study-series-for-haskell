@@ -13,8 +13,8 @@ import Domain.UserModel (User)
 -- 유스케이스를 한 곳에 모은 인터페이스(레코드)
 data UserService = UserService
   { createUser :: User -> IO User
-  , getUser    :: Int -> IO (Maybe User)
-  , getUsers   :: IO [User]
+  , getUser :: Int -> IO (Maybe User)
+  , getUsers :: IO [User]
   , updateUser :: User -> IO Bool
   , deleteUser :: Int -> IO Bool
   }
