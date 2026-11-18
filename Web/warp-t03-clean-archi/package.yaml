@@ -67,3 +67,4 @@ tests:
       - hspec
       - doctest
       - doctest-discover
+      - wai-extra

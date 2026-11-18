@@ -1,9 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 import Flow ((<|))
-import Lib
-
--- {-# OPTIONS_GHC -F -pgmF doctest-discover #-}
--- {-# OPTIONS_GHC -F -pgmF hspec-discover   #-}
-
+import Lib (withUserApplication)
+import Network.HTTP.Types (status200)
+import Network.Wai.Test
+  ( defaultRequest
+  , request
+  , runSession
+  , setPath
+  , simpleBody
+  , simpleStatus
+  )
 import Test.Hspec
 
 main :: IO ()
@@ -17,7 +24,9 @@ spec = do
         read "10" `shouldBe` (10 :: Int)
       it "should parse floating-point numbers" <| do
         read "2.5" `shouldBe` (2.5 :: Float)
-  describe "Given Lib" <| do
-    context "when use `appRunner` function" <| do
-      it "should be succeeded" <| do
-        appRunner
+  describe "GET /api/users" <| do
+    it "returns an empty list for a fresh database" <| do
+      withUserApplication ":memory:" $ \application -> do
+        response <- runSession (request (setPath defaultRequest "/api/users")) application
+        simpleStatus response `shouldBe` status200
+        simpleBody response `shouldBe` "[]"

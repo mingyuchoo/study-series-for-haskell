@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Database
   ( User (..)
@@ -40,7 +40,7 @@ initDB = do
 
 -- | User data type
 data User = User
-  { userId   :: Maybe Int
+  { userId :: Maybe Int
   , userName :: T.Text
   }
   deriving (Show)
@@ -51,7 +51,7 @@ instance FromRow User where
 
 -- | User data type
 instance ToRow User where
-  toRow (User Nothing name)    = toRow (Only name)
+  toRow (User Nothing name) = toRow (Only name)
   toRow (User (Just id') name) = toRow (id', name)
 
 -- | User data type
@@ -84,7 +84,7 @@ getUser conn userId' = do
   results <- query conn "SELECT id, name FROM users WHERE id = ?" (Only userId')
   case results of
     [user] -> return <| Just user
-    _      -> return Nothing
+    _ -> return Nothing
 
 -- | Get all users
 getUsers :: Connection -> IO [User]
@@ -98,7 +98,7 @@ updateUser conn User {..} = case userId of
     rows <- query conn "SELECT changes()" () :: IO [Only Int]
     case rows of
       [Only n] -> return <| n > 0
-      _        -> return False
+      _ -> return False
   Nothing -> return False
 
 -- | Delete a user
@@ -108,4 +108,4 @@ deleteUser conn userId' = do
   rows <- query conn "SELECT changes()" () :: IO [Only Int]
   case rows of
     [Only n] -> return <| n > 0
-    _        -> return False
+    _ -> return False

@@ -1,6 +1,6 @@
-cabal-version: 3.16
+cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.0.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
@@ -107,6 +107,7 @@ test-suite warp-t02-sqlite-test
     , time
     , uuid
     , wai
+    , wai-extra
     , warp
     , warp-t02-sqlite
   default-language: GHC2024

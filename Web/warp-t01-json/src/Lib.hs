@@ -47,9 +47,9 @@ app request respond
         reqQueryString = queryString request
        in
         case (reqPathInfo, reqQueryString) of
-          ([], _)                         -> respond <| index
+          ([], _) -> respond <| index
           (["expr"], [("q", Just stuff)]) -> respond <| homeRoute stuff
-          (_, _)                          -> respond <| notFoundRoute
+          (_, _) -> respond <| notFoundRoute
   | requestMethod request == methodPost = respond <| post
   | requestMethod request == methodPut = respond <| put
   | requestMethod request == methodDelete = respond <| delete

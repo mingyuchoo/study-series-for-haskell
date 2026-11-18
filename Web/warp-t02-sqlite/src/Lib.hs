@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-  ( appRunner
+  ( app
+  , appRunner
   ) where
 
 import Control.Exception (bracket)
