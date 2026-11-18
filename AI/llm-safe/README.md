@@ -114,6 +114,24 @@ LLM_CONSENSUS_COUNT=3                      # 합의 기반 호출 횟수
 
 ## 빌드 및 실행
 
+전체 개발 절차를 실행하려면 PATH에 `stack`, `fourmolu`, `hlint`가 필요하다.
+포맷터와 린터는 `stack install fourmolu hlint`로 설치할 수 있다.
+TUI 실행에 필요한 `.env`는 위의 환경 변수 설정을 참고해 준비한다.
+
+```bash
+./scripts/run.sh
+```
+
+```powershell
+.\scripts\run.ps1
+```
+
+두 스크립트는 프로젝트 루트에서 `src`, `app`, `test`의 Haskell 파일을
+`fourmolu.yaml` 설정으로 직접 포맷팅하고, HLint 검사, 빌드, 테스트,
+`llm-safe-exe` 실행을 순서대로 수행한다. 어느 단계든 실패하면 즉시 중단한다.
+다른 디렉터리에서도 스크립트 경로를 지정해 실행할 수 있으며,
+스크립트에 전달한 인자는 애플리케이션으로 전달된다.
+
 ```bash
 # 빌드
 stack build
