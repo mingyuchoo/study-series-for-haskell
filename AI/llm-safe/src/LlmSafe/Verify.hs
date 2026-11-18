@@ -9,10 +9,13 @@ module LlmSafe.Verify
   ( -- * 단순 검증
     verify
   , verifyConfidence
+
     -- * 구조적 검증 (파싱 + 검증)
   , verifyWith
+
     -- * 합의 기반 검증
   , verifyByConsensus
+
     -- * 유틸리티 파서
   , parseIntFromText
   ) where
@@ -111,15 +114,15 @@ verifyByConsensus parser responses =
            in if count >= threshold
                 then Right $ mkVerified best
                 else
-                  Left $
-                    ConsensusNotReached $
-                      "최빈 응답 "
-                        <> show count
-                        <> "/"
-                        <> show total
-                        <> " (과반수 "
-                        <> show threshold
-                        <> " 필요)"
+                  Left
+                    $ ConsensusNotReached
+                    $ "최빈 응답 "
+                      <> show count
+                      <> "/"
+                      <> show total
+                      <> " (과반수 "
+                      <> show threshold
+                      <> " 필요)"
   where
     -- group은 빈 리스트를 반환하지 않으므로 각 원소는 비어있지 않다
     headSafe (x : _) = x
@@ -136,4 +139,4 @@ parseIntFromText :: String -> Either String Int
 parseIntFromText s =
   case reads (filter (`elem` ['0' .. '9']) s) of
     [(n, "")] -> Right n
-    _         -> Left $ "정수를 파싱할 수 없음: " <> s
+    _ -> Left $ "정수를 파싱할 수 없음: " <> s

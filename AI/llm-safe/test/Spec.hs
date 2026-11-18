@@ -356,12 +356,12 @@ main = hspec $ do
 
 isParseError :: Either LlmError a -> Bool
 isParseError (Left (ParseError _)) = True
-isParseError _                     = False
+isParseError _ = False
 
 isConsensusNotReached :: Either LlmError a -> Bool
 isConsensusNotReached (Left (ConsensusNotReached _)) = True
-isConsensusNotReached _                              = False
+isConsensusNotReached _ = False
 
 isLeft :: Either a b -> Bool
 isLeft (Left _) = True
-isLeft _        = False
+isLeft _ = False

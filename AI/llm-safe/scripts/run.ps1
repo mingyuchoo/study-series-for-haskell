@@ -36,7 +36,7 @@ try {
 
     Write-Host "`n[2/5] Linting Haskell sources"
     Invoke-CheckedCommand -Command 'hlint' -CommandArguments @(
-        '--extension=ImportQualifiedPost', 'src', 'app', 'test'
+        '-XImportQualifiedPost', 'src', 'app', 'test'
     )
 
     Write-Host "`n[3/5] Building"

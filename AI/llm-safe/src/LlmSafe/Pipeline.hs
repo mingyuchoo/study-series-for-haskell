@@ -17,10 +17,12 @@ module LlmSafe.Pipeline
   ( -- * 결정적 영역 (Verified 값만 받는 순수 함수)
     classifyPopulation
   , formatAnswer
+
     -- * 파이프라인 (실제 LLM 호출)
   , consensusPipeline
   , distributionAnalysisPipeline
   , populationPipeline
+
     -- * 파이프라인 (주입 가능한 호출 함수 — 테스트용)
   , consensusPipelineWith
   , distributionAnalysisPipelineWith
@@ -133,7 +135,7 @@ consensusPipelineWith callFn logger n cityName = do
   let verified = verifyByConsensus parseIntFromText responses
   case verified of
     Left err -> pure $ Left err
-    Right v  -> pure $ Right (classifyPopulation v)
+    Right v -> pure $ Right (classifyPopulation v)
 
 -- | 분포 분석 파이프라인: N번 호출 결과를 LLM이 직접 분포 분석하여 결정.
 --

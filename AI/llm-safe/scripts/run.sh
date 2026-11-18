@@ -18,7 +18,7 @@ find src app test -type f \( -name '*.hs' -o -name '*.lhs' \) -print0 |
   done
 
 printf '\n[2/5] Linting Haskell sources\n'
-hlint --extension=ImportQualifiedPost src app test
+hlint -XImportQualifiedPost src app test
 
 printf '\n[3/5] Building\n'
 stack build

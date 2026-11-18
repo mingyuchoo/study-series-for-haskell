@@ -41,26 +41,27 @@ data PipelineMode = SingleCall | ConsensusCall | DistributionAnalysis
   deriving (Eq, Show)
 
 -- | 커스텀 이벤트 (백그라운드 스레드 → TUI)
-data AppEvent -- | 파이프라인 로그 메시지
-              = LogMsg String
-              | Done (Either LlmError String)
+data AppEvent
+  = -- | 파이프라인 로그 메시지
+    LogMsg String
+  | Done (Either LlmError String)
 
 -- | 앱 상태
 data AppState = AppState
-  { _cityEdit  :: Edit.Editor String Name
-    -- ^ 도시명 입력 에디터
-  , _pipeMode  :: PipelineMode
-    -- ^ 파이프라인 모드
-  , _logs      :: [String]
-    -- ^ 실행 로그 라인 목록
-  , _running   :: Bool
-    -- ^ 파이프라인 실행 중 여부
+  { _cityEdit :: Edit.Editor String Name
+  -- ^ 도시명 입력 에디터
+  , _pipeMode :: PipelineMode
+  -- ^ 파이프라인 모드
+  , _logs :: [String]
+  -- ^ 실행 로그 라인 목록
+  , _running :: Bool
+  -- ^ 파이프라인 실행 중 여부
   , _llmConfig :: LlmConfig
-    -- ^ Azure OpenAI 설정
+  -- ^ Azure OpenAI 설정
   , _eventChan :: BChan.BChan AppEvent
-    -- ^ 커스텀 이벤트 채널
-  , _focused   :: Name
-    -- ^ 현재 포커스 위젯
+  -- ^ 커스텀 이벤트 채널
+  , _focused :: Name
+  -- ^ 현재 포커스 위젯
   }
 
 -- ---------------------------------------------------------------------------
@@ -143,9 +144,9 @@ drawUI st = [ui]
        in B.str (icon <> label)
 
     logSection =
-      B.padLeftRight 1 $
-        B.viewport LogViewport B.Vertical $
-          B.vBox (map B.str (_logs st))
+      B.padLeftRight 1
+        $ B.viewport LogViewport B.Vertical
+        $ B.vBox (map B.str (_logs st))
 
     helpBar =
       B.padLeftRight 1 $
@@ -195,7 +196,7 @@ handleEvent ev = case ev of
   B.AppEvent (Done result) -> do
     let line = case result of
           Right s -> "✓ 완료: " <> s
-          Left e  -> "✗ 실패: " <> renderLlmError e
+          Left e -> "✗ 실패: " <> renderLlmError e
     B.modify $ \st ->
       st
         { _running = False
@@ -221,8 +222,8 @@ handleEvent ev = case ev of
       B.modify $ \s ->
         s
           { _pipeMode = case _pipeMode s of
-              SingleCall           -> ConsensusCall
-              ConsensusCall        -> DistributionAnalysis
+              SingleCall -> ConsensusCall
+              ConsensusCall -> DistributionAnalysis
               DistributionAnalysis -> SingleCall
           }
 
@@ -277,8 +278,8 @@ runPipeline = do
     BChan.writeBChan ch (Done result)
 
 showMode :: LlmConfig -> PipelineMode -> String
-showMode _ SingleCall             = "단일 호출(1회)"
-showMode cfg ConsensusCall        = "합의 기반(" <> show (configConsensusCount cfg) <> "회)"
+showMode _ SingleCall = "단일 호출(1회)"
+showMode cfg ConsensusCall = "합의 기반(" <> show (configConsensusCount cfg) <> "회)"
 showMode cfg DistributionAnalysis = "분포 분석(" <> show (configConsensusCount cfg) <> "회)"
 
 -- ---------------------------------------------------------------------------

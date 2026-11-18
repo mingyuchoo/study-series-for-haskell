@@ -23,10 +23,13 @@
 module LlmSafe
   ( -- * 핵심 타입
     module LlmSafe.Types
+
     -- * LLM 호출 (비결정적 영역)
   , module LlmSafe.Client
+
     -- * 검증 관문 (비결정적 → 결정적 경계)
   , module LlmSafe.Verify
+
     -- * 파이프라인 및 결정적 처리
   , module LlmSafe.Pipeline
   ) where

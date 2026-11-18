@@ -1,4 +1,4 @@
-{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- | LLM 비결정성 관리의 핵심 타입 정의.
@@ -10,18 +10,22 @@ module LlmSafe.Types
   ( -- * 비결정적 영역의 타입
     Confidence (..)
   , LlmResponse (..)
+
     -- * 검증된 결과 (스마트 생성자로만 생성 가능)
   , Verified
   , mkVerified
   , unVerified
+
     -- * 에러 타입
   , LlmError (..)
   , renderLlmError
+
     -- * LLM 설정
   , LlmConfig (..)
   , defaultConfig
   ) where
 
+import Data.Maybe (fromMaybe)
 import System.Environment (lookupEnv)
 
 -- | LLM의 원시 응답. 아직 검증되지 않은 비결정적 결과.
@@ -30,23 +34,24 @@ import System.Environment (lookupEnv)
 --   직접 전달할 수 없다. 반드시 검증 관문을 통과해야 한다.
 data LlmResponse a = LlmResponse
   { rawContent :: a
-    -- ^ 원시 응답 내용
+  -- ^ 원시 응답 내용
   , confidence :: Confidence
-    -- ^ 모델이 보고한 신뢰도
-  , modelId    :: String
-    -- ^ 어떤 모델이 생성했는가
+  -- ^ 모델이 보고한 신뢰도
+  , modelId :: String
+  -- ^ 어떤 모델이 생성했는가
   , promptHash :: String
-    -- ^ 입력 프롬프트의 해시 (재현성 추적)
+  -- ^ 입력 프롬프트의 해시 (재현성 추적)
   }
   deriving stock (Eq, Show)
 
 -- | 신뢰도 수준. LLM 출력의 불확실성을 명시적 값으로 표현.
-data Confidence -- | 자유 텍스트, 검증 어려움
-                = Low
-                -- | 부분적으로 검증 가능
-                | Medium
-                -- | 구조화된 출력, 높은 일관성
-                | High
+data Confidence
+  = -- | 자유 텍스트, 검증 어려움
+    Low
+  | -- | 부분적으로 검증 가능
+    Medium
+  | -- | 구조화된 출력, 높은 일관성
+    High
   deriving stock (Eq, Ord, Show)
 
 -- | 검증을 통과한 결과.
@@ -69,16 +74,17 @@ mkVerified :: a -> Verified a
 mkVerified = Verified
 
 -- | LLM 처리 과정에서 발생할 수 있는 오류.
-data LlmError -- | 검증 실패 (술어 조건 불충족)
-              = VerificationFailed String
-              -- | 합의 도달 실패 (다수결 미달)
-              | ConsensusNotReached String
-              -- | 구조화된 출력 파싱 실패
-              | ParseError String
-              -- | 재시도 횟수 초과
-              | RetryExhausted Int
-              -- | 신뢰도가 요구 수준 미달
-              | LowConfidence Confidence
+data LlmError
+  = -- | 검증 실패 (술어 조건 불충족)
+    VerificationFailed String
+  | -- | 합의 도달 실패 (다수결 미달)
+    ConsensusNotReached String
+  | -- | 구조화된 출력 파싱 실패
+    ParseError String
+  | -- | 재시도 횟수 초과
+    RetryExhausted Int
+  | -- | 신뢰도가 요구 수준 미달
+    LowConfidence Confidence
   deriving stock (Eq, Show)
 
 -- | 'LlmError'를 사람이 읽을 수 있는 한국어 문자열로 변환한다.
@@ -86,28 +92,28 @@ data LlmError -- | 검증 실패 (술어 조건 불충족)
 --   'show'를 사용하면 한국어가 유니코드 이스케이프로 깨지므로,
 --   이 함수를 사용해 내부 메시지를 직접 꺼낸다.
 renderLlmError :: LlmError -> String
-renderLlmError (VerificationFailed msg)  = "검증 실패: " <> msg
+renderLlmError (VerificationFailed msg) = "검증 실패: " <> msg
 renderLlmError (ConsensusNotReached msg) = "합의 실패: " <> msg
-renderLlmError (ParseError msg)          = "파싱 오류: " <> msg
-renderLlmError (RetryExhausted n)        = "재시도 초과: " <> show n <> "회"
-renderLlmError (LowConfidence c)         = "신뢰도 부족: " <> show c
+renderLlmError (ParseError msg) = "파싱 오류: " <> msg
+renderLlmError (RetryExhausted n) = "재시도 초과: " <> show n <> "회"
+renderLlmError (LowConfidence c) = "신뢰도 부족: " <> show c
 
 -- | LLM 호출 설정.
 data LlmConfig = LlmConfig
-  { configModelId        :: String
-    -- ^ 사용할 모델 배포 이름
-  , configMaxRetries     :: Int
-    -- ^ 최대 재시도 횟수
-  , configMinConfidence  :: Confidence
-    -- ^ 최소 요구 신뢰도
-  , configEndpoint       :: String
-    -- ^ Azure OpenAI 엔드포인트 URL
-  , configApiKey         :: String
-    -- ^ Azure OpenAI API 키
-  , configApiVersion     :: String
-    -- ^ Azure OpenAI API 버전
+  { configModelId :: String
+  -- ^ 사용할 모델 배포 이름
+  , configMaxRetries :: Int
+  -- ^ 최대 재시도 횟수
+  , configMinConfidence :: Confidence
+  -- ^ 최소 요구 신뢰도
+  , configEndpoint :: String
+  -- ^ Azure OpenAI 엔드포인트 URL
+  , configApiKey :: String
+  -- ^ Azure OpenAI API 키
+  , configApiVersion :: String
+  -- ^ Azure OpenAI API 버전
   , configConsensusCount :: Int
-    -- ^ 합의 기반 파이프라인 호출 횟수
+  -- ^ 합의 기반 파이프라인 호출 횟수
   }
   deriving stock (Eq, Show)
 
@@ -141,11 +147,11 @@ defaultConfig = do
     require name = do
       mval <- lookupEnv name
       case mval of
-        Just v  -> pure v
+        Just v -> pure v
         Nothing -> ioError $ userError $ "환경 변수가 설정되지 않았습니다: " <> name
     getWithDefault name def = do
       mval <- lookupEnv name
-      pure $ maybe def id mval
+      pure $ fromMaybe def mval
     getIntWithDefault name def = do
       mval <- lookupEnv name
       pure $ maybe def read mval
