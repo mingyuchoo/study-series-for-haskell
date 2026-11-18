@@ -41,6 +41,26 @@ stack new <project-name> mingyuchoo/new-template
 
 ## 빌드
 
+### 전체 작업 자동 실행
+
+`stack`, `fourmolu`, `hlint`가 PATH에 있어야 합니다. Windows에서는 PowerShell도 필요합니다.
+
+```bash
+./scripts/run.sh
+```
+
+```powershell
+.\scripts\run.ps1
+```
+
+프로젝트 루트와 `app`, `src`, `test` 아래의 Haskell 파일을 `fourmolu.yaml` 설정으로
+포맷팅한 뒤 HLint 검사, `stack build`, `stack test`, 서버 실행을 차례로 수행합니다.
+도구가 없거나 어느 단계든 실패하면 즉시 중단합니다. 포맷팅은 소스 파일을 직접 수정합니다.
+스크립트는 어느 작업 디렉터리에서 호출해도 동작하며, 전달한 인수는 실행 파일에 전달됩니다.
+서버는 `http://localhost:4000`에서 실행되며 `Ctrl+C`로 종료합니다.
+
+### 개별 빌드
+
 ```bash
 # 기본 빌드
 make build

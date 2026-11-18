@@ -43,6 +43,28 @@ Warp 웹 서버의 기본 사용법을 학습하기 위한 프로젝트입니다
 
 ## 빌드 및 실행
 
+`stack`, `fourmolu`, `hlint`가 PATH에 있어야 합니다. 포맷터와 린터는
+`cabal install fourmolu hlint`로 설치할 수 있습니다. 설치 경로도 PATH에 추가하세요.
+
+다음 스크립트는 포맷팅 → 린팅 → 빌드 → 테스트 → 서버 실행을 순서대로 수행합니다.
+포맷팅은 루트와 `app/`, `src/`, `test/`의 Haskell 파일을 직접 수정하며,
+도구가 없거나 단계가 실패하면 즉시 중단합니다. 어느 디렉터리에서 호출해도 동작합니다.
+
+```bash
+./scripts/run.sh
+```
+
+Windows PowerShell 또는 PowerShell에서는 다음과 같이 실행합니다.
+
+```powershell
+.\scripts\run.ps1
+```
+
+모든 검사가 통과하면 <http://localhost:4000>에서 서버가 실행됩니다.
+종료하려면 `Ctrl+C`를 누르세요. 스크립트에 전달한 인자는 서버 실행 파일로 전달됩니다.
+
+기존 Make 명령도 사용할 수 있습니다.
+
 ```bash
 # 의존성 설치 및 빌드
 make setup
