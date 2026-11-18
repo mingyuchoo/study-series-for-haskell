@@ -95,6 +95,7 @@ $MsiPath = Join-Path $ReleaseDir "$PackageName-$Version-windows-$Arch.msi"
 $ExeXml = Escape-Xml $InstalledExe
 $LauncherXml = Escape-Xml $Launcher
 $StaticXml = Escape-Xml (Join-Path $InstallRoot "static\index.html")
+$ElmXml = Escape-Xml (Join-Path $InstallRoot "static\elm.js")
 $ReadmeXml = Escape-Xml (Join-Path $InstallRoot "README.md")
 $LicenseXml = Escape-Xml (Join-Path $InstallRoot "LICENSE")
 $ChangelogXml = Escape-Xml (Join-Path $InstallRoot "CHANGELOG.md")
@@ -135,6 +136,9 @@ $PackageNameXml = Escape-Xml $PackageName
           <Component Id="StaticIndexComponent" Guid="213F7AF2-FB09-41C1-8700-7C1E4AE39E0F">
             <File Id="StaticIndexFile" Source="$StaticXml" KeyPath="yes" />
           </Component>
+          <Component Id="StaticElmComponent" Guid="BBA6957D-E3AF-4963-B3CE-43A9AC791B5F">
+            <File Id="StaticElmFile" Source="$ElmXml" KeyPath="yes" />
+          </Component>
         </Directory>
       </Directory>
     </StandardDirectory>
@@ -146,6 +150,7 @@ $PackageNameXml = Escape-Xml $PackageName
       <ComponentRef Id="LicenseComponent" />
       <ComponentRef Id="ChangelogComponent" />
       <ComponentRef Id="StaticIndexComponent" />
+      <ComponentRef Id="StaticElmComponent" />
     </Feature>
   </Package>
 </Wix>

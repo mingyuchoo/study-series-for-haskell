@@ -1,7 +1,7 @@
 # ThreepennyAddress
 
-ThreepennyAddress is a Haskell address book application built with
-Threepenny-GUI. It runs a local web UI on `http://localhost:8023` and stores
+ThreepennyAddress is an address book application with an Elm 0.19.3 frontend
+and a Haskell backend. It runs a local web UI on `http://localhost:8023` and stores
 contacts in a JSON file.
 
 ## Features
@@ -17,6 +17,7 @@ contacts in a JSON file.
 - Stack
 - GHC 9.10.3 through Stack resolver `lts-24.40`
 - GNU Make
+- [Elm 0.19.3](https://github.com/elm/compiler/releases/tag/0.19.3) for local frontend builds
 
 Optional tools:
 
@@ -34,9 +35,10 @@ make build
 make test
 ```
 
-Equivalent Stack commands:
+To compile the frontend and invoke Stack directly:
 
 ```bash
+make frontend
 stack build --fast
 stack test --fast
 ```
@@ -53,7 +55,7 @@ make all
 make run
 ```
 
-The application starts a Threepenny server at:
+The application starts the Haskell server at:
 
 ```text
 http://localhost:8023
@@ -62,6 +64,8 @@ http://localhost:8023
 The app reads and writes `contacts.json` in the current working directory.
 Set `ADDRESS_BOOK_CONTACTS_FILE` to use a different file. The server listens on
 loopback by default. Set `ADDRESS_BOOK_BIND_ADDRESS` to override that address.
+The server loads frontend assets from `static/`. Set `ADDRESS_BOOK_STATIC_DIRECTORY`
+to serve them from a different directory.
 
 Script wrappers are also available:
 
@@ -157,11 +161,14 @@ make docker-compose-down
 | `packages/address-book-domain` | Pure contact models, validation, search, and address book changes |
 | `packages/address-book-application` | Contact use cases and the repository port |
 | `packages/address-book-json` | JSON format compatibility and file persistence |
-| `apps/threepenny-address` | Threepenny UI adapter and executable wiring |
+| `apps/address-book-elm` | Elm contact list, forms, and browser interaction |
+| `apps/threepenny-address` | HTTP adapter, static asset serving, and executable wiring |
 
-The UI depends on the application and domain packages. The JSON adapter
+Elm communicates with the HTTP adapter through a same-origin JSON API. The
+HTTP adapter uses the application and domain packages. The JSON adapter
 implements the application repository port. The executable connects both adapters
-at startup. Stack builds and tests all workspace packages from the project root.
+at startup. `make build` compiles Elm into `static/elm.js` and builds the Haskell
+workspace with Stack.
 
 The JSON adapter preserves the `contacts` and `nextId` fields in existing
 `contacts.json` files. It serializes writes through the repository instance

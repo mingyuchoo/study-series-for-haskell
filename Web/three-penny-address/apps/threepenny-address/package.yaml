@@ -19,25 +19,26 @@ dependencies:
 - base >= 4.18 && < 5
 
 internal-libraries:
-  address-book-ui:
+  address-book-http:
     source-dirs: src
-    exposed-modules: GUI.Main
+    exposed-modules: AddressBook.Http
     dependencies:
     - address-book-application
     - address-book-domain
-    - stm
+    - aeson
+    - filepath
+    - http-types
     - text
-    - threepenny-gui
+    - wai
 
 executables:
   ThreepennyAddress-exe:
     main: Main.hs
     source-dirs: app
     dependencies:
-    - address-book-ui
+    - address-book-http
     - address-book-json
-    - bytestring
-    - threepenny-gui
+    - warp
     ghc-options:
     - -threaded
     - -rtsopts

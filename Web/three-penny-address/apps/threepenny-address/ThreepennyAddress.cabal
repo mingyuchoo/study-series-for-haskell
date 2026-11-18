@@ -22,15 +22,10 @@ source-repository head
   type: git
   location: https://github.com/mingyuchoo/ThreepennyAddress
 
-library address-book-ui
+library address-book-http
   exposed-modules:
-      GUI.Main
+      AddressBook.Http
   other-modules:
-      GUI.AppState
-      GUI.Components
-      GUI.Shortcuts
-      GUI.State
-      GUI.View
       Paths_ThreepennyAddress
   autogen-modules:
       Paths_ThreepennyAddress
@@ -42,10 +37,12 @@ library address-book-ui
   build-depends:
       address-book-application
     , address-book-domain
+    , aeson
     , base >=4.18 && <5
-    , stm
+    , filepath
+    , http-types
     , text
-    , threepenny-gui
+    , wai
   default-language: GHC2024
 
 executable ThreepennyAddress-exe
@@ -60,11 +57,10 @@ executable ThreepennyAddress-exe
       OverloadedStrings
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      address-book-json
-    , address-book-ui
+      address-book-http
+    , address-book-json
     , base >=4.18 && <5
-    , bytestring
-    , threepenny-gui
+    , warp
   default-language: GHC2024
 
 test-suite ThreepennyAddress-test

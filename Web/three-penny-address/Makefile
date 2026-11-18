@@ -2,6 +2,9 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := build
 
 STACK ?= stack
+ELM ?= elm
+ELM_APP := apps/address-book-elm
+ELM_SOURCES := $(wildcard $(ELM_APP)/src/*.elm)
 APP_PACKAGE := apps/threepenny-address/package.yaml
 PACKAGE_NAME := $(shell awk '/^name:/ { print $$2; exit }' $(APP_PACKAGE))
 EXECUTABLE := $(PACKAGE_NAME)-exe
@@ -11,7 +14,7 @@ HASKELL_SOURCE_DIRS := $(wildcard packages/*/src packages/*/test apps/*/app apps
 GUI_PORT ?= 8023
 DOCKER_IMAGE := $(shell printf "%s" "$(PACKAGE_NAME)" | tr "[:upper:]" "[:lower:]")
 
-.PHONY: all setup deps clean build test coverage watch-test watch-coverage ghcid \
+.PHONY: all setup deps clean build frontend test coverage watch-test watch-coverage ghcid \
         format run release install docker-build docker-run docker-compose-up \
         docker-compose-down docker-compose-logs help
 
@@ -20,9 +23,10 @@ all: build test
 help:
 	@printf '%s\n' \
 	  'Targets:' \
-	  '  make build             Build the library and executable' \
+	  '  make build             Build the Elm frontend and Haskell executable' \
+	  '  make frontend          Compile the Elm frontend' \
 	  '  make test              Run the test suite' \
-	  '  make run               Run the Threepenny GUI on http://localhost:8023' \
+	  '  make run               Run the address book on http://localhost:8023' \
 	  '  make coverage          Run tests with coverage' \
 	  '  make format            Format Haskell sources with stylish-haskell' \
 	  '  make release           Build and copy the executable to dist/bin' \
@@ -38,10 +42,15 @@ deps:
 
 clean:
 	$(STACK) clean
-	rm -rf dist
+	rm -rf dist $(ELM_APP)/elm-stuff static/elm.js
 
-build:
+build: frontend
 	$(STACK) build --fast -j$(JOBS) --ghc-options "-j$(GHC_JOBS) +RTS -A256m -RTS"
+
+frontend: static/elm.js
+
+static/elm.js: $(ELM_APP)/elm.json $(ELM_SOURCES)
+	cd $(ELM_APP) && $(ELM) make src/Main.elm --optimize --output=../../$@
 
 test:
 	$(STACK) test --fast
@@ -61,10 +70,10 @@ ghcid:
 format:
 	stylish-haskell --config .stylish-haskell.yaml -r -i $(HASKELL_SOURCE_DIRS)
 
-run:
+run: frontend
 	$(STACK) run $(EXECUTABLE)
 
-release:
+release: frontend
 	mkdir -p dist/bin
 	$(STACK) build --copy-bins --local-bin-path dist/bin -j$(JOBS) --ghc-options "-j$(GHC_JOBS) +RTS -A256m -RTS"
 

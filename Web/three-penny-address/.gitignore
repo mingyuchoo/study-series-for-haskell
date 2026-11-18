@@ -1,2 +1,4 @@
 .stack-work/
 *~
+/apps/address-book-elm/elm-stuff/
+/static/elm.js

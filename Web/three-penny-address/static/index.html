@@ -11,7 +11,7 @@
             padding: 0;
             background-color: #f5f5f5;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -20,17 +20,17 @@
             min-height: 100vh;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        
+
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 30px;
         }
-        
+
         .search-section {
             margin-bottom: 20px;
         }
-        
+
         .search-section input {
             width: 100%;
             padding: 10px;
@@ -38,11 +38,11 @@
             border-radius: 4px;
             font-size: 16px;
         }
-        
+
         .action-section {
             margin-bottom: 20px;
         }
-        
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -52,77 +52,77 @@
             margin-right: 10px;
             transition: background-color 0.3s;
         }
-        
+
         .btn-primary {
             background-color: #4CAF50;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background-color: #45a049;
         }
-        
+
         .btn-secondary {
             background-color: #2196F3;
             color: white;
         }
-        
+
         .btn-secondary:hover {
             background-color: #1976D2;
         }
-        
+
         .btn-danger {
             background-color: #f44336;
             color: white;
         }
-        
+
         .btn-danger:hover {
             background-color: #d32f2f;
         }
-        
+
         .contact-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        
+
         .contact-table th,
         .contact-table td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
         }
-        
+
         .contact-table th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        
+
         .contact-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        
+
         .contact-table tr:hover {
             background-color: #f5f5f5;
         }
-        
+
         .form-section {
             border: 1px solid #ddd;
             padding: 20px;
             background-color: #f9f9f9;
             border-radius: 4px;
         }
-        
+
         .form-group {
             margin-bottom: 15px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        
+
         .form-group input,
         .form-group textarea {
             width: 100%;
@@ -131,31 +131,89 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        
+
         .form-group textarea {
             height: 60px;
             resize: vertical;
         }
-        
+
         .empty-state {
             text-align: center;
             color: #666;
             font-style: italic;
             padding: 40px;
         }
-        
-        .hidden {
-            display: none;
+
+        input, textarea {
+            box-sizing: border-box;
+        }
+
+        .selection-actions {
+            display: inline;
+        }
+
+        .form-section, .confirm-section {
+            margin-bottom: 20px;
+        }
+
+        .confirm-section {
+            padding: 20px;
+            background: #fff3e0;
+            border-radius: 4px;
+        }
+
+        .btn-neutral {
+            background: #666;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .table-section {
+            overflow-x: auto;
+        }
+
+        .contact-table tr.selected {
+            background: #e3f2fd;
+        }
+
+        .error {
+            color: #a52020;
+            white-space: pre-line;
         }
     </style>
 </head>
 <body>
-    <div id="content">
-        <!-- Threepenny-GUI will inject content here -->
-    </div>
-    <script src="haskell.js"></script>
+    <div id="content"></div>
+    <script src="/elm.js"></script>
     <script>
-        Haskell.initFFI();
+        const app = Elm.Main.init({ node: document.getElementById("content") });
+
+        document.addEventListener("keydown", (event) => {
+            const key = event.key.toLowerCase();
+            const modifier = event.ctrlKey || event.metaKey;
+            const editable = event.target instanceof HTMLElement &&
+                (event.target.matches("input, textarea") || event.target.isContentEditable);
+            let shortcut;
+
+            if (modifier && key === "n") {
+                shortcut = "add";
+            } else if (modifier && key === "f") {
+                shortcut = "search";
+            } else if (key === "delete" && !editable) {
+                shortcut = "delete";
+            } else if (key === "escape") {
+                shortcut = "cancel";
+            }
+
+            if (shortcut) {
+                event.preventDefault();
+                app.ports.shortcuts.send(shortcut);
+            }
+        });
     </script>
 </body>
 </html>
