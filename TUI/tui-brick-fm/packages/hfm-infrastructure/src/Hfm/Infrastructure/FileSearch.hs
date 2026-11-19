@@ -3,12 +3,13 @@ module Hfm.Infrastructure.FileSearch
     , shouldExclude
     ) where
 
-import           Control.Exception (SomeException, catch)
-import           Control.Monad     (forM)
+import           Control.Exception       (SomeException, catch)
+import           Control.Monad           (forM)
 
-import           System.Directory  (doesDirectoryExist, listDirectory)
-import           System.FilePath   ((</>))
-import Hfm.Domain.SearchPolicy (shouldExclude)
+import           Hfm.Domain.SearchPolicy (shouldExclude)
+
+import           System.Directory        (doesDirectoryExist, listDirectory)
+import           System.FilePath         ((</>))
 
 -- | 재귀적으로 디렉토리 내 모든 파일 검색 (Effect)
 -- 제외 패턴에 해당하는 디렉토리는 건너뛰고, 에러 발생 시 해당 경로만 건너뜀

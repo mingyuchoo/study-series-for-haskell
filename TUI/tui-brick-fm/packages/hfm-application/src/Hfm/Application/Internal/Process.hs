@@ -1,14 +1,16 @@
 module Hfm.Application.Internal.Process (openEditor, executeCommand) where
 
-import Control.Monad.State.Strict (get, modify)
-import qualified Data.Text as T
-import Hfm.Application.Internal.Action
-import Hfm.Application.Internal.Files (finish)
-import Hfm.Application.Program
-import Hfm.Application.State
-import Hfm.Application.Status
-import Hfm.Domain.Entry
-import Hfm.Domain.Config (settingsEditor)
+import           Control.Monad.State.Strict      (get, modify)
+
+import qualified Data.Text                       as T
+
+import           Hfm.Application.Internal.Action
+import           Hfm.Application.Internal.Files  (finish)
+import           Hfm.Application.Program
+import           Hfm.Application.State
+import           Hfm.Application.Status
+import           Hfm.Domain.Config               (settingsEditor)
+import           Hfm.Domain.Entry
 
 openEditor :: Action ()
 openEditor = do

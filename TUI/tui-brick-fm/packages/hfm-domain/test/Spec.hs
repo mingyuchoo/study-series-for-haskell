@@ -1,14 +1,17 @@
 module Main (main) where
 
-import qualified Data.Vector as Vec
-import Hfm.Domain.PathPolicy
-import Hfm.Domain.Input
-import Hfm.Domain.Editor
-import Hfm.Domain.Fuzzy
-import Hfm.Domain.Selection
-import Test.Hspec
-import System.FilePath (normalise, (</>))
-import System.Info (os)
+import qualified Data.Vector           as Vec
+
+import           Hfm.Domain.Editor
+import           Hfm.Domain.Fuzzy
+import           Hfm.Domain.Input
+import           Hfm.Domain.PathPolicy
+import           Hfm.Domain.Selection
+
+import           System.FilePath       (normalise, (</>))
+import           System.Info           (os)
+
+import           Test.Hspec
 
 main :: IO ()
 main = hspec spec

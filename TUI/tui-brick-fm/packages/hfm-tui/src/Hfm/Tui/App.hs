@@ -3,17 +3,18 @@ module Hfm.Tui.App
   , buildVtyFromTty
   ) where
 
-import Brick
-import Hfm.Tui.Theme (themeAttributes, effectiveTheme)
-import Hfm.Tui.Layout (prepareLayout)
-import Hfm.Application.Effects.Ports (FileSystem, Processes)
-import Hfm.Application.Error (FileError)
-import Hfm.Domain.Config (Settings)
-import Hfm.Tui.Event (handleEvent)
-import Hfm.Tui.Name
-import Hfm.Application.State
-import Hfm.Tui.UI (drawUI)
-import Hfm.Tui.Terminal (buildVtyFromTty)
+import           Brick
+
+import           Hfm.Application.Effects.Ports (FileSystem, Processes)
+import           Hfm.Application.Error         (FileError)
+import           Hfm.Application.State
+import           Hfm.Domain.Config             (Settings)
+import           Hfm.Tui.Event                 (handleEvent)
+import           Hfm.Tui.Layout                (prepareLayout)
+import           Hfm.Tui.Name
+import           Hfm.Tui.Terminal              (buildVtyFromTty)
+import           Hfm.Tui.Theme                 (effectiveTheme, themeAttributes)
+import           Hfm.Tui.UI                    (drawUI)
 
 app :: FileSystem IO -> Processes IO -> (Settings -> IO (Either FileError ())) -> App AppState e Name
 app files processes save = App

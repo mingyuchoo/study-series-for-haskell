@@ -28,49 +28,59 @@ module Hfm.Application.State
   , maxPreviewLines
   ) where
 
-import Hfm.Application.Status (Status (Ready))
-import System.FilePath ((</>))
-import Hfm.Domain.Theme
-import Hfm.Domain.Selection
-import Hfm.Domain.Config (KeyBindingConfig (..), KeyBindingStyle (..), Settings (..), defaultSettings)
-import Control.Applicative ((<|>))
-import Data.List (findIndex)
-import qualified Data.Text as T
-import Hfm.Domain.Entry (Entry (..), EntryKind (..))
-import Hfm.Domain.Language (Language (..))
+import           Control.Applicative    ((<|>))
 
-data Side = LeftSide | RightSide deriving (Eq, Show)
-data Operation = Copy | Move | Rename | Mkdir | Command deriving (Eq, Show)
-data Mode = Browse | Search | Prompt Operation T.Text | EditorPrompt T.Text | ConfirmDelete | ViewFile FilePath T.Text Int deriving (Eq, Show)
+import           Data.List              (findIndex)
+import qualified Data.Text              as T
 
-data Panel = Panel
-  { panelPath :: FilePath
-  , panelEntries :: Selection Entry
-  , panelAll :: [Entry]
-  , panelSearch :: T.Text
-  }
+import           Hfm.Application.Status (Status (Ready))
+import           Hfm.Domain.Config      (KeyBindingConfig (..),
+                                         KeyBindingStyle (..), Settings (..),
+                                         defaultSettings)
+import           Hfm.Domain.Entry       (Entry (..), EntryKind (..))
+import           Hfm.Domain.Language    (Language (..))
+import           Hfm.Domain.Selection
+import           Hfm.Domain.Theme
 
-data AppConfig = AppConfig
-  { configKeyBinding :: KeyBindingStyle
-  , configSettings :: Settings
-  }
+import           System.FilePath        ((</>))
 
-data AppState = AppState
-  { stLeft :: Panel
-  , stRight :: Panel
-  , stActive :: Side
-  , stTheme :: Theme
-  , stThemePicker :: Maybe (Selection Theme)
-  , stLanguage :: Language
-  , stMode :: Mode
-  , stInputCursor :: Int
-  , stPendingCtrlX :: Bool
-  , stShowHidden :: Bool
-  , stStatus :: Status
-  , stTerminalSize :: (Int, Int)
-  , stViewerFooterRows :: Int
-  , stConfig :: AppConfig
-  }
+data Side = LeftSide | RightSide
+     deriving (Eq, Show)
+data Operation = Copy | Move | Rename | Mkdir | Command
+     deriving (Eq, Show)
+data Mode = Browse
+          | Search
+          | Prompt Operation T.Text
+          | EditorPrompt T.Text
+          | ConfirmDelete
+          | ViewFile FilePath T.Text Int
+     deriving (Eq, Show)
+
+data Panel = Panel { panelPath    :: FilePath
+                   , panelEntries :: Selection Entry
+                   , panelAll     :: [Entry]
+                   , panelSearch  :: T.Text
+                   }
+
+data AppConfig = AppConfig { configKeyBinding :: KeyBindingStyle
+                           , configSettings   :: Settings
+                           }
+
+data AppState = AppState { stLeft             :: Panel
+                         , stRight            :: Panel
+                         , stActive           :: Side
+                         , stTheme            :: Theme
+                         , stThemePicker      :: Maybe (Selection Theme)
+                         , stLanguage         :: Language
+                         , stMode             :: Mode
+                         , stInputCursor      :: Int
+                         , stPendingCtrlX     :: Bool
+                         , stShowHidden       :: Bool
+                         , stStatus           :: Status
+                         , stTerminalSize     :: (Int, Int)
+                         , stViewerFooterRows :: Int
+                         , stConfig           :: AppConfig
+                         }
 
 defaultConfig :: AppConfig
 defaultConfig = AppConfig Emacs defaultSettings
@@ -110,14 +120,14 @@ initialState left leftEntries right rightEntries cfg size = AppState
 -- Layout-dependent clamping is performed by the presentation adapter.
 toggleLanguage :: AppState -> AppState
 toggleLanguage st = st { stLanguage = case stLanguage st of
-                          Korean -> English
+                          Korean  -> English
                           English -> Korean }
 
 -- The picker is independent of the current file operation or viewer mode.
 -- Canceling a preview never changes the committed theme.
 toggleThemePicker :: AppState -> AppState
 toggleThemePicker st = st { stThemePicker = case stThemePicker st of
-  Just _ -> Nothing
+  Just _  -> Nothing
   Nothing -> Just (selectAt (fromEnum (stTheme st)) (selection themes)) }
 
 activePanel :: AppState -> Panel
@@ -125,7 +135,7 @@ activePanel st = if stActive st == LeftSide then stLeft st else stRight st
 
 replaceActivePanel :: Panel -> AppState -> AppState
 replaceActivePanel panel st = case stActive st of
-  LeftSide -> st { stLeft = panel }
+  LeftSide  -> st { stLeft = panel }
   RightSide -> st { stRight = panel }
 
 selectedEntry :: AppState -> Maybe Entry

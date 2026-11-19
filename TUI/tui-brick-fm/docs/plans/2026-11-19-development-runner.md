@@ -4,9 +4,9 @@
 
 **Goal:** Make Bash and native PowerShell runners support formatting, linting, building, testing, and running hfm.
 
-**Architecture:** Keep command orchestration and external tool execution in `scripts/`. Use the existing Stack workspace, stylish-haskell configuration, HLint, and Python architecture checks without changing Haskell packages.
+**Architecture:** Keep command orchestration and external tool execution in `scripts/`. Use the existing Stack workspace, stylish-haskell configuration, HLint, and the `hfm-dev-tools` architecture executable.
 
-**Tech Stack:** Bash, Windows PowerShell 5.1 compatible PowerShell, Python unittest, Stack, stylish-haskell, HLint.
+**Tech Stack:** Bash, Windows PowerShell 5.1 compatible PowerShell, Hspec, Stack, stylish-haskell, HLint.
 
 **Spec:** The user requests `scripts/run.sh` and `scripts/run.ps1` to format, lint, build, test, and run the current codebase.
 
@@ -27,11 +27,11 @@
 - Generated Haskell files in build directories must not be formatted or linted.
 - Missing tools and failures at every pipeline stage must prevent subsequent commands.
 - Help and individual commands must require only their own dependencies.
-- PowerShell must restore the caller's location and Python encoding setting.
+- PowerShell must restore the caller's location.
 
 ## Task 1: Extend and verify both runners
 
-**Files:** `scripts/run.sh`, `scripts/run.ps1`, `scripts/test-run-scripts.py`, `scripts/test-powershell.ps1`, `.stylish-haskell.yaml`, `README.md`.
+**Files:** `scripts/run.sh`, `scripts/run.ps1`, `scripts/test-run-scripts.sh`, `scripts/test-powershell.ps1`, `.stylish-haskell.yaml`, `README.md`.
 
 **Verification finding:** stylish-haskell 0.15.1.0's configured `module_header` step fails on implicit Main modules. Remove that step and add an integration regression test; retain the remaining formatting rules.
 
@@ -47,7 +47,7 @@
 - Ten Bash runner and formatter configuration tests pass.
 - PowerShell runner regressions pass with PowerShell 7.7.0 on Linux ARM64; native Windows PowerShell 5.1 and Windows installer checks require a Windows host.
 - Actual formatting succeeds and is idempotent for all 44 Haskell files in a disposable copy.
-- `scripts/run.sh build` and `scripts/run.sh test` pass, including 97 Haskell examples and the Python architecture checks.
+- `scripts/run.sh build` and `scripts/run.sh test` pass, including the Haskell examples and architecture checks.
 - The terminal keybinding suite passes; `scripts/run.sh run` opens the real TUI and exits successfully with `C-x C-c`.
 - `scripts/run.sh lint` reports the same 17 preexisting HLint hints as the baseline and returns exit code 1. Consequently, `all` stops at lint until those hints are resolved.
 - Source-discovery failure cleanup and preservation of the original exit code have a dedicated regression test.

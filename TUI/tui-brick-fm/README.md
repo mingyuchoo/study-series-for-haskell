@@ -21,16 +21,16 @@ Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직�
 .\scripts\run.ps1 format
 .\scripts\run.ps1 lint
 .\scripts\run.ps1 build
-.\scripts\run.ps1 test             # Python도 필요
+.\scripts\run.ps1 test
 .\scripts\run.ps1 all              # 기본 동작과 동일
 .\scripts\run.ps1 clean
 ```
 
 파일 관리자에 시작 디렉터리를 전달하지 않으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 스크립트는 프로젝트 루트에서 Stack을 실행하므로 시작 경로를 생략하면 프로젝트 루트가 시작 위치입니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 스크립트에 전달한 상대 경로는 호출한 위치를 기준으로 해석합니다. 실행에는 대화형 터미널이 필요하며, Windows는 네이티브 콘솔을, Unix는 `/dev/tty`를 사용합니다. Windows에서 심볼릭 링크 복사에는 개발자 모드 또는 링크 생성 권한이 필요합니다.
 
-두 스크립트는 `format`, `lint`, `build`, `test`, `run`, `all`, `clean`, `help` 명령을 지원합니다. 명령을 생략하면 `all`을 실행합니다. `format`은 `apps/`와 `packages/`의 소스·테스트 디렉터리에 있는 Haskell 파일을 `.stylish-haskell.yaml` 설정으로 수정하며, 빌드 캐시는 제외합니다. `lint`는 같은 파일들을 HLint로 검사합니다. `test`는 Python 아키텍처 검사와 검사기 회귀 테스트, `stack test`를 실행합니다. `all`은 포맷팅 → 린팅 → 빌드 → 테스트 → 실행 순서로 진행합니다. 필요한 도구가 없으면 포맷팅 전에 중단하며, 실행 중 실패한 단계의 종료 코드를 반환하고 이후 단계는 실행하지 않습니다. 기존 코드에 HLint 지적이 있으면 먼저 해결해야 전체 과정이 실행됩니다.
+두 스크립트는 `format`, `lint`, `build`, `test`, `run`, `all`, `clean`, `help` 명령을 지원합니다. 명령을 생략하면 `all`을 실행합니다. `format`은 `apps/`와 `packages/`의 소스·테스트 디렉터리에 있는 Haskell 파일을 `.stylish-haskell.yaml` 설정으로 수정하며, 빌드 캐시는 제외합니다. `lint`는 같은 파일들을 HLint로 검사합니다. `test`는 Haskell 아키텍처 검사 실행 파일과 검사기 회귀 테스트를 포함한 `stack test`를 실행합니다. `all`은 포맷팅 → 린팅 → 빌드 → 테스트 → 실행 순서로 진행합니다. 필요한 도구가 없으면 포맷팅 전에 중단하며, 실행 중 실패한 단계의 종료 코드를 반환하고 이후 단계는 실행하지 않습니다. 기존 코드에 HLint 지적이 있으면 먼저 해결해야 전체 과정이 실행됩니다.
 
-Stack과 GHC 외에 `stylish-haskell`, `hlint`를 PATH에 설치해야 합니다. 포맷터와 린터는 `stack install stylish-haskell hlint`로 설치할 수 있습니다. 테스트에는 Unix에서 `python3`, Windows에서 `python` 명령도 필요합니다. Nix 개발 셸에는 이 도구들이 포함되어 있습니다.
+Stack과 GHC 외에 `stylish-haskell`, `hlint`를 PATH에 설치해야 합니다. 포맷터와 린터는 `stack install stylish-haskell hlint`로 설치할 수 있습니다. Nix 개발 셸에는 이 도구들이 포함되어 있습니다. 아키텍처 검사와 회귀 테스트는 Haskell과 셸로 실행하며 별도 인터프리터 설치가 필요하지 않습니다.
 
 ```bash
 ./scripts/run.sh                  # 전체 과정
@@ -133,13 +133,13 @@ Windows에서는 [NSIS 3](https://nsis.sourceforge.io/Download)을 설치하고 
 
 ```bash
 stack test
-python3 scripts/check-architecture.py
-python3 scripts/test-architecture.py
-python3 scripts/test-run-scripts.py
-python3 scripts/test-keybindings.py
+stack run hfm-check-architecture
+stack test hfm-dev-tools
+bash scripts/test-run-scripts.sh
+stack exec hfm-test-keybindings -- "$(stack path --local-install-root)/bin/hfm"
 ```
 
-PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. Windows PowerShell에서는 `powershell -NoProfile -File scripts/test-powershell.ps1`도 사용할 수 있습니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백·대괄호 경로, 포맷팅·린팅 대상, 명령 순서, 종료 코드와 도구 누락을 검사합니다. Windows에서는 NSIS 호출과 정리 범위도 검사합니다. `test-run-scripts.py`는 Bash 실행 스크립트의 회귀 검사와 실제 포맷터가 설치된 환경의 설정 검사를 수행합니다. `test-keybindings.py`는 Unix PTY 테스트이므로 Windows에서 직접 실행하지 않습니다.
+PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. Windows PowerShell에서는 `powershell -NoProfile -File scripts/test-powershell.ps1`도 사용할 수 있습니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백·대괄호 경로, 포맷팅·린팅 대상, 명령 순서, 종료 코드와 도구 누락을 검사합니다. Windows에서는 NSIS 호출과 정리 범위도 검사합니다. `test-run-scripts.sh`는 Bash 실행 스크립트의 회귀 검사와 실제 포맷터가 설치된 환경의 설정 검사를 수행합니다. `hfm-test-keybindings`는 Unix PTY 테스트 실행 파일이며 Windows에서는 빌드하지 않습니다. 먼저 `stack build`로 파일 관리자와 테스트 실행 파일을 빌드하세요. PTY 테스트에는 Unix의 `stty` 명령이 필요합니다.
 
 macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커 옵션(`-U`와 `dynamic_lookup`, 반복된 `-lm`)을 정리합니다. 다른 링커 진단은 그대로 전달합니다.
 
@@ -153,6 +153,7 @@ packages/hfm-domain/          # 순수 타입·선택·입력 편집·정책
 packages/hfm-application/     # 순수 상태·실행 계획, Effects의 포트·실행기
 packages/hfm-infrastructure/  # 파일 시스템·프로세스·설정의 실제 IO 구현
 packages/hfm-tui/             # Brick/Vty·렌더링·한국어/영어 표시
+packages/hfm-dev-tools/       # 순수 아키텍처 규칙·파일 읽기 어댑터·Unix PTY 검사
 ```
 
 내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application의 `planInput`·`planStartup`은 순수한 `Program` 실행 계획을 만들고, `Effects.Runtime.runProgram`이 주입받은 `FileSystem m`과 `Processes m` 포트로 이를 실행합니다. 순수 모듈은 `Effects`를 import하지 않으며 오류도 독립된 순수 타입입니다. `Main`에서 파일·프로세스 IO 구현을 각각 연결하고, TUI는 프로세스 실행에 필요한 터미널 중단·복귀를 담당합니다. 테스트에서는 실행 계획을 직접 검사하거나 두 포트의 메모리 구현을 따로 주입합니다. 경로 검증·대상 이름 계산은 domain, 상태 메시지의 한국어/영어 표시는 tui가 담당합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법 및 Haskell 인터페이스 변경은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다.

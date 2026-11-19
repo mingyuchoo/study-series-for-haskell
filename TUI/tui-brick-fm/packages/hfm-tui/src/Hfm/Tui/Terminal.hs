@@ -5,20 +5,24 @@ module Hfm.Tui.Terminal
     , waitForReturn
     ) where
 
-import qualified Graphics.Vty                        as V
 import           Control.Exception                   (IOException, catch)
+
 import qualified Data.Text                           as T
 import qualified Data.Text.IO                        as T
+
+import qualified Graphics.Vty                        as V
 #if defined(mingw32_HOST_OS)
 import           Graphics.Vty.Platform.Windows       (mkVty)
-import           System.IO                           (hFlush, stdin, stdout, hGetLine)
+import           System.IO                           (hFlush, hGetLine, stdin,
+                                                      stdout)
 #else
-import           System.IO                           (IOMode (..), hFlush, hGetLine, withFile)
 import           Data.Maybe                          (fromMaybe)
 import           Graphics.Vty.Platform.Unix          (mkVtyWithSettings)
 import qualified Graphics.Vty.Platform.Unix.Settings as VtyUnixSettings
 
 import           System.Environment                  (lookupEnv)
+import           System.IO                           (IOMode (..), hFlush,
+                                                      hGetLine, withFile)
 import           System.Posix.IO                     (OpenMode (..),
                                                       defaultFileFlags, openFd)
 #endif

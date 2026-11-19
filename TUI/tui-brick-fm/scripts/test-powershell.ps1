@@ -29,7 +29,7 @@ try {
     Set-Content -LiteralPath (Join-Path $Fixture 'apps/hfm/package.yaml') -Value "name: hfm`nversion: 0.1.0.0"
     Set-Content -LiteralPath (Join-Path $Fixture 'README.md') -Value 'README'
     Set-Content -LiteralPath (Join-Path $Fixture 'LICENSE') -Value 'LICENSE'
-    $sourceFiles = @('apps/hfm/app/Main.hs', 'packages/hfm-domain/src/Some file.hs', 'packages/hfm-domain/test/Spec.hs')
+    $sourceFiles = @('apps/hfm/app/Main.hs', 'packages/hfm-domain/src/Some file.hs', 'packages/hfm-domain/test/Spec.hs', 'packages/hfm-dev-tools/app/Main.hs', 'packages/hfm-dev-tools/pty/Terminal.hs')
     foreach ($name in $sourceFiles + @('packages/hfm-domain/.stack-work/Generated.hs', 'apps/hfm/dist/Generated.hs')) {
         $path = Join-Path $Fixture $name
         New-Item -ItemType Directory -Path (Split-Path -Parent $path) -Force | Out-Null
@@ -43,7 +43,8 @@ function bash { throw 'Bash must not be invoked' }
 function Record-Call($Name, $Arguments) {
     @{ Name = $Name; Args = @($Arguments); Cwd = (Get-Location).Path } | ConvertTo-Json -Compress | Add-Content -LiteralPath $env:HFM_TEST_LOG
     $stage = $Name + ':' + $Arguments[0]
-    $global:LASTEXITCODE = if ($env:HFM_TEST_FAIL -in @($Name, $stage)) { 7 } else { 0 }
+    $target = $stage + ':' + $Arguments[1]
+    $global:LASTEXITCODE = if ($env:HFM_TEST_FAIL -in @($Name, $stage, $target)) { 7 } else { 0 }
 }
 function stack {
     Record-Call 'stack' $args
@@ -53,7 +54,6 @@ function stack {
         Set-Content -LiteralPath (Join-Path $bin 'hfm.exe') -Value 'fixture executable'
     }
 }
-function python { Record-Call 'python' $args }
 function stylish-haskell { Record-Call 'stylish-haskell' $args }
 function hlint { Record-Call 'hlint' $args }
 function makensis {
@@ -98,14 +98,15 @@ exit $LASTEXITCODE
         $expectedTool = if ($command -eq 'format') { 'stylish-haskell' } else { 'hlint' }
         Assert ($result.Code -eq 0 -and $result.Calls.Count -eq 1 -and $result.Calls[0].Name -eq $expectedTool) "$command must call its tool"
         $actualSources = @($result.Calls[0].Args | Where-Object { $_ -like '*.hs' })
-        Assert ($actualSources.Count -eq 3 -and @($sourceFiles | Where-Object { $_ -notin $actualSources }).Count -eq 0) "$command must process only workspace sources"
+        Assert ($actualSources.Count -eq $sourceFiles.Count -and @($sourceFiles | Where-Object { $_ -notin $actualSources }).Count -eq 0) "$command must process only workspace sources"
     }
     foreach ($command in 'all', '') {
         $result = Invoke-Fixture 'run.ps1' $command
-        Assert ($result.Code -eq 0 -and ($result.Calls.Name -join ',') -eq 'stylish-haskell,hlint,stack,python,python,stack,stack') 'All and default must format, lint, build, check architecture, test, then run'
-        Assert (($result.Calls | Where-Object { $_.Name -eq 'stack' } | ForEach-Object { $_.Args[0] }) -join ',' -eq 'build,test,run') 'Stack stages must run in order'
+        Assert ($result.Code -eq 0 -and ($result.Calls.Name -join ',') -eq 'stylish-haskell,hlint,stack,stack,stack,stack') 'All and default must format, lint, build, check architecture, test, then run'
+        Assert (($result.Calls | Where-Object { $_.Name -eq 'stack' } | ForEach-Object { $_.Args[0] }) -join ',' -eq 'build,run,test,run') 'Stack stages must run in order'
+        Assert ($result.Calls[3].Args[1] -eq 'hfm-check-architecture') 'Architecture checks must use the workspace executable'
     }
-    $stages = @('stylish-haskell', 'hlint', 'stack:build', 'python:scripts/check-architecture.py', 'python:scripts/test-architecture.py', 'stack:test', 'stack:run')
+    $stages = @('stylish-haskell', 'hlint', 'stack:build', 'stack:run:hfm-check-architecture', 'stack:test', 'stack:run:hfm')
     for ($index = 0; $index -lt $stages.Count; $index++) {
         $result = Invoke-Fixture 'run.ps1' 'all' -Fail $stages[$index]
         Assert ($result.Code -eq 7 -and $result.Calls.Count -eq $index + 1) "Failure at $($stages[$index]) must stop all and preserve its exit code"
@@ -120,7 +121,7 @@ exit $LASTEXITCODE
     Assert ($result.Code -ne 0 -and $result.Calls.Count -eq 0) 'Run must reject files as starting directories'
     $result = Invoke-Fixture 'run.ps1' 'help'
     Assert ($result.Code -eq 0 -and $result.Calls.Count -eq 0) 'Help must not require a build tool'
-    $result = Invoke-Fixture 'run.ps1' 'help' -Missing 'stack,python,stylish-haskell,hlint'
+    $result = Invoke-Fixture 'run.ps1' 'help' -Missing 'stack,stylish-haskell,hlint'
     Assert ($result.Code -eq 0 -and $result.Calls.Count -eq 0) 'Help must work without development tools'
     $result = Invoke-Fixture 'run.ps1' 'all' -Missing 'hlint'
     Assert ($result.Code -ne 0 -and $result.Calls.Count -eq 0) 'Missing tools must be detected before formatting'

@@ -4,20 +4,23 @@ module SyntaxHighlightSpec
     ( spec
     ) where
 
-import           Data.Maybe      (isJust)
-import qualified Data.Text       as T
+import           Brick                       (Padding (Max), attrMapLookup,
+                                              attrName, padBottom, padRight)
+import           Brick.Main                  (renderWidget)
 
-import Brick (attrName, attrMapLookup, padRight, padBottom, Padding (Max))
-import Brick.Main (renderWidget)
-import qualified Data.Text.Lazy as TL
-import qualified Data.Vector as Vec
-import qualified Graphics.Vty as V
-import Graphics.Vty.PictureToSpans (displayOpsForPic)
-import Graphics.Vty.Span (SpanOp (..))
-import Hfm.Domain.Theme (themes)
-import Hfm.Tui.Theme (themeAttributes)
-import Hfm.Tui.Text (expandTabs)
+import           Data.Maybe                  (isJust)
+import qualified Data.Text                   as T
+import qualified Data.Text.Lazy              as TL
+import qualified Data.Vector                 as Vec
+
+import qualified Graphics.Vty                as V
+import           Graphics.Vty.PictureToSpans (displayOpsForPic)
+import           Graphics.Vty.Span           (SpanOp (..))
+
+import           Hfm.Domain.Theme            (themes)
 import           Hfm.Tui.SyntaxHighlight
+import           Hfm.Tui.Text                (expandTabs)
+import           Hfm.Tui.Theme               (themeAttributes)
 
 import           Test.Hspec
 
@@ -69,11 +72,11 @@ spec = do
             ops = displayOpsForPic (renderWidget (Just attributes) [widget] (80, 4)) (80, 4)
             spans = concatMap Vec.toList (Vec.toList ops)
             text (TextSpan _ _ _ value) = TL.toStrict value
-            text (Skip count) = T.replicate count " "
-            text (RowEnd count) = T.replicate count " "
+            text (Skip count)           = T.replicate count " "
+            text (RowEnd count)         = T.replicate count " "
             firstLine = T.concat (map text (Vec.toList (Vec.head ops)))
         firstLine `shouldSatisfy` T.isPrefixOf "  1 | main =  putStrLn \"x     z\""
-        mapM_ (\op -> case op of
+        mapM_ (\case
           TextSpan attribute _ _ value -> do
             V.attrBackColor attribute `shouldBe` background
             TL.any (== '\t') value `shouldBe` False

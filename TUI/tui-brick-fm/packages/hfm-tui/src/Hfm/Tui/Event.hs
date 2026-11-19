@@ -1,18 +1,22 @@
 module Hfm.Tui.Event (handleEvent) where
 
-import Brick (BrickEvent (..), EventM, get, put, halt, suspendAndResume')
-import Control.Monad (when)
-import Control.Monad.IO.Class (liftIO)
-import Hfm.Application.Effects.Ports (FileSystem (..), Processes (..))
-import Hfm.Application.Error (FileError)
-import Hfm.Domain.Config (Settings)
-import Hfm.Tui.Name
-import Hfm.Application.State
-import Hfm.Application.Effects.Runtime (handleInput)
-import Hfm.Tui.Input (fromVty)
-import Hfm.Tui.Layout (prepareLayout)
-import Hfm.Tui.Terminal (waitForReturn)
-import Hfm.Tui.I18n (translate)
+import           Brick                           (BrickEvent (..), EventM, get,
+                                                  halt, put, suspendAndResume')
+
+import           Control.Monad                   (when)
+import           Control.Monad.IO.Class          (liftIO)
+
+import           Hfm.Application.Effects.Ports   (FileSystem (..),
+                                                  Processes (..))
+import           Hfm.Application.Effects.Runtime (handleInput)
+import           Hfm.Application.Error           (FileError)
+import           Hfm.Application.State
+import           Hfm.Domain.Config               (Settings)
+import           Hfm.Tui.I18n                    (translate)
+import           Hfm.Tui.Input                   (fromVty)
+import           Hfm.Tui.Layout                  (prepareLayout)
+import           Hfm.Tui.Name
+import           Hfm.Tui.Terminal                (waitForReturn)
 
 handleEvent :: FileSystem IO -> Processes IO -> (Settings -> IO (Either FileError ())) -> BrickEvent Name e -> EventM Name AppState ()
 handleEvent files processes save (VtyEvent input) = do

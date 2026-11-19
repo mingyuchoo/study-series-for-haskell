@@ -2,25 +2,30 @@
 
 module Main (main) where
 
-import Control.Monad.State.Strict (State, modify, runState)
-import Hfm.Application.Effects.Ports
-import Hfm.Application.Error
-import Hfm.Application.State
-import Hfm.Application.Program
-import Hfm.Application.Startup (planStartup)
-import Hfm.Application.Workflow (planInput)
-import Hfm.Application.Status
-import Hfm.Application.Effects.Runtime
-import qualified Data.Vector as Vec
-import qualified Data.Text as T
-import Hfm.Domain.Entry
-import Hfm.Domain.Config (Settings (..), defaultSettings)
-import Hfm.Domain.Input
-import Hfm.Domain.Theme (themes)
-import Hfm.Domain.Selection
-import Test.Hspec hiding (before, after, pending)
-import System.FilePath ((</>))
-import System.Info (os)
+import           Control.Monad.State.Strict      (State, modify, runState)
+
+import qualified Data.Text                       as T
+import qualified Data.Vector                     as Vec
+
+import           Hfm.Application.Effects.Ports
+import           Hfm.Application.Effects.Runtime
+import           Hfm.Application.Error
+import           Hfm.Application.Program
+import           Hfm.Application.Startup         (planStartup)
+import           Hfm.Application.State
+import           Hfm.Application.Status
+import           Hfm.Application.Workflow        (planInput)
+import           Hfm.Domain.Config               (Settings (..),
+                                                  defaultSettings)
+import           Hfm.Domain.Entry
+import           Hfm.Domain.Input
+import           Hfm.Domain.Selection
+import           Hfm.Domain.Theme                (themes)
+
+import           System.FilePath                 ((</>))
+import           System.Info                     (os)
+
+import           Test.Hspec                      hiding (after, before, pending)
 
 main :: IO ()
 main = hspec spec
@@ -416,7 +421,7 @@ spec = do
         _ -> expectationFailure "Expected destination inspection before a transfer"
 
     it "does not mutate or refresh when destination inspection fails" $ do
-      let ports = memory { doesDirectoryExist = \_ -> recordFailure }
+      let ports = memory { doesDirectoryExist = const recordFailure }
           recordFailure = modify (++ ["inspect failed"]) >> pure (Left PermissionDenied)
           state = initial { stMode = Prompt Move (T.pack (testPath "right")) }
           ((done, _), calls) = run ports (KeyPress KEnter []) state

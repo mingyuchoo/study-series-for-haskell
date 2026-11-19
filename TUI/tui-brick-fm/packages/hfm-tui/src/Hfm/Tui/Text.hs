@@ -1,6 +1,7 @@
 module Hfm.Tui.Text (expandTabs) where
 
-import Brick (textWidth)
+import           Brick     (textWidth)
+
 import qualified Data.Text as T
 
 -- Expand before rendering/tokenizing: terminal tabs move the cursor without

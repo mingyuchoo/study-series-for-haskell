@@ -2,21 +2,23 @@
 
 module Hfm.Tui.UI (drawUI) where
 
-import Brick
-import Brick.Widgets.Border (border, borderWithLabel)
+import           Brick
+import           Brick.Widgets.Border  (border, borderWithLabel)
+import           Brick.Widgets.Center  (centerLayer)
+import           Brick.Widgets.List    (list, listMoveTo, renderList)
 import qualified Brick.Widgets.List
-import Brick.Widgets.List (list, listMoveTo, renderList)
-import qualified Data.Text as T
-import qualified Data.Vector as Vec
-import Brick.Widgets.Center (centerLayer)
-import Hfm.Domain.Theme (themeName)
-import Hfm.Domain.Entry (Entry (..), EntryKind (..))
-import Hfm.Tui.I18n (translate, renderStatus)
-import Hfm.Tui.Name
-import Hfm.Application.State
-import Hfm.Domain.Selection
-import Hfm.Tui.Text (expandTabs)
-import Hfm.Tui.Layout (viewerHelpLines, prepareLayout)
+
+import qualified Data.Text             as T
+import qualified Data.Vector           as Vec
+
+import           Hfm.Application.State
+import           Hfm.Domain.Entry      (Entry (..), EntryKind (..))
+import           Hfm.Domain.Selection
+import           Hfm.Domain.Theme      (themeName)
+import           Hfm.Tui.I18n          (renderStatus, translate)
+import           Hfm.Tui.Layout        (prepareLayout, viewerHelpLines)
+import           Hfm.Tui.Name
+import           Hfm.Tui.Text          (expandTabs)
 
 -- The main screen deliberately uses only a few fixed rows, leaving the rest to the lists.
 drawUI :: AppState -> [Widget Name]
@@ -24,10 +26,10 @@ drawUI state =
   let st = prepareLayout state
       screen = withAttr (attrName "default") $ padRight Max $ padBottom Max $ case stMode st of
         ViewFile path content offset -> renderViewer st path content offset
-        _ -> renderManager st
+        _                            -> renderManager st
   in case stThemePicker st of
     Just choices -> [renderThemePicker st choices, screen]
-    Nothing -> [screen]
+    Nothing      -> [screen]
 
 renderThemePicker :: AppState -> Selection Theme -> Widget Name
 renderThemePicker st choices = centerLayer $
@@ -42,7 +44,7 @@ renderThemePicker st choices = centerLayer $
     ]
   where
     entries = maybe base (`listMoveTo` base) (selectionIndex choices)
-    base = list ThemeList (Vec.imap (\i theme -> (i, theme)) (selectionItems choices)) 1
+    base = list ThemeList (Vec.imap (,) (selectionItems choices)) 1
     drawTheme selected (i, theme) = withAttr (attrName (if selected then "selected" else "active")) $
       txt (T.pack (show (i + 1)) <> " " <> (if theme == stTheme st then "* " else "  ") <> themeName theme)
     help
@@ -101,15 +103,15 @@ renderPanel st side panel width =
   where
     drawEntry isSelected entry =
       let prefix = case entryKind entry of
-            Parent -> "↑ "
-            Directory -> "/ "
+            Parent       -> "↑ "
+            Directory    -> "/ "
             SymbolicLink -> "@ "
-            RegularFile -> "  "
-            Special -> "! "
+            RegularFile  -> "  "
+            Special      -> "! "
           suffix = case entryKind entry of
             RegularFile -> "  "
-            Special -> "! " <> T.pack (show (entrySize entry))
-            _ -> ""
+            Special     -> "! " <> T.pack (show (entrySize entry))
+            _           -> ""
       in withAttr (attrName (if isSelected && stActive st == side then "selected" else if isSelected then "selectedInactive" else if stActive st == side then "active" else "inactive")) $
            txt (prefix <> T.pack (entryName entry) <> suffix)
 

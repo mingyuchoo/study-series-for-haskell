@@ -3,19 +3,23 @@ module Hfm.Application.Internal.Interaction
   , searchEvent, promptEvent, editorPromptEvent, confirmEvent, viewEvent
   ) where
 
-import Control.Monad (when)
-import Control.Monad.State.Strict (get, modify)
-import qualified Data.Text as T
-import Hfm.Application.Internal.Action
-import Hfm.Application.Internal.Files (runFileOperation, deleteSelected)
-import Hfm.Application.Internal.Process (executeCommand)
-import Hfm.Application.State
-import Hfm.Application.Status
-import Hfm.Domain.Editor (editText)
-import Hfm.Domain.Config (Settings (..), validEditor)
-import Hfm.Domain.Entry
-import Hfm.Domain.Input
-import Hfm.Domain.Selection (selectAt)
+import           Control.Monad                    (when)
+import           Control.Monad.State.Strict       (get, modify)
+
+import           Data.Maybe                       (isJust)
+import qualified Data.Text                        as T
+
+import           Hfm.Application.Internal.Action
+import           Hfm.Application.Internal.Files   (deleteSelected,
+                                                   runFileOperation)
+import           Hfm.Application.Internal.Process (executeCommand)
+import           Hfm.Application.State
+import           Hfm.Application.Status
+import           Hfm.Domain.Config                (Settings (..), validEditor)
+import           Hfm.Domain.Editor                (editText)
+import           Hfm.Domain.Entry
+import           Hfm.Domain.Input
+import           Hfm.Domain.Selection             (selectAt)
 
 cancelMode :: Action ()
 cancelMode = do
@@ -41,7 +45,7 @@ movePage down st = iterate (moveSelection down) st !! max 1 (snd (stTerminalSize
 startPrompt :: Operation -> Action ()
 startPrompt op = do
   st <- get
-  when (maybe False ((/= Special) . entryKind) (selectedEntry st) && selectedPath st /= Nothing) $ do
+  when (maybe False ((/= Special) . entryKind) (selectedEntry st) && isJust (selectedPath st)) $ do
     let other = if stActive st == LeftSide then stRight st else stLeft st
     let value = T.pack (if op == Rename then maybe "" entryName (selectedEntry st) else panelPath other)
     modify (\s -> s { stMode = Prompt op value, stInputCursor = T.length value })
@@ -83,7 +87,7 @@ promptEvent op value event = case event of
   KeyPress (KChar 'g') [MCtrl] -> modify (\s -> s { stMode = Browse })
   KeyPress KEnter [] -> case op of
     Command -> executeCommand value
-    _ -> runFileOperation op value
+    _       -> runFileOperation op value
   _ -> do
     st <- get
     case editText event value (stInputCursor st) of
@@ -115,22 +119,22 @@ confirmEvent event = case event of
 
 viewEvent :: FilePath -> T.Text -> Int -> Input -> Action ()
 viewEvent path content offset event = case event of
-  KeyPress KEsc [] -> close
+  KeyPress KEsc []             -> close
   KeyPress (KChar 'g') [MCtrl] -> close
-  KeyPress (KChar 'q') [] -> close
-  KeyPress KUp [] -> scroll (-1)
-  KeyPress KDown [] -> scroll 1
-  KeyPress KPageUp [] -> scrollPage (-1)
-  KeyPress KPageDown [] -> scrollPage 1
+  KeyPress (KChar 'q') []      -> close
+  KeyPress KUp []              -> scroll (-1)
+  KeyPress KDown []            -> scroll 1
+  KeyPress KPageUp []          -> scrollPage (-1)
+  KeyPress KPageDown []        -> scrollPage 1
   KeyPress (KChar 'p') [MCtrl] -> scroll (-1)
   KeyPress (KChar 'n') [MCtrl] -> scroll 1
   KeyPress (KChar 'v') [MCtrl] -> scrollPage 1
   KeyPress (KChar 'v') [MMeta] -> scrollPage (-1)
   KeyPress (KChar '<') [MMeta] -> scrollTo 0
   KeyPress (KChar '>') [MMeta] -> scrollTo (length (T.lines content))
-  KeyPress KHome [] -> scrollTo 0
-  KeyPress KEnd [] -> scrollTo (length (T.lines content))
-  _ -> pure ()
+  KeyPress KHome []            -> scrollTo 0
+  KeyPress KEnd []             -> scrollTo (length (T.lines content))
+  _                            -> pure ()
   where
     close = modify (\s -> s { stMode = Browse })
     scrollTo target = modify (\s -> s { stMode = ViewFile path content (clampViewerOffset s content target) })

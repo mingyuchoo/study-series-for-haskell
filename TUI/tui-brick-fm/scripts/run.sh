@@ -18,8 +18,8 @@ Usage: scripts/run.sh [format|lint|build|test|run|all|clean|help] [LEFT_DIR] [RI
   clean  Remove Stack build artifacts
 
 Directory arguments are accepted by run and all. A controlling terminal is required.
-Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean),
-and python3 (test). The all command requires every tool.
+Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean).
+The all command requires every tool.
 USAGE
 }
 
@@ -33,7 +33,7 @@ require_tool() {
 collect_sources() {
   local source_directory source_file source_file_list source_discovery_status=0
   local source_directories=()
-  for source_directory in apps/*/app apps/*/src apps/*/test packages/*/src packages/*/test; do
+  for source_directory in apps/*/app apps/*/src apps/*/test packages/*/src packages/*/test packages/*/app packages/*/pty; do
     if [ -d "$source_directory" ]; then
       source_directories+=("$source_directory")
     fi
@@ -95,9 +95,9 @@ case "$COMMAND" in
   format) require_tool stylish-haskell ;;
   lint) require_tool hlint ;;
   build|run|clean) require_tool stack ;;
-  test) require_tool python3; require_tool stack ;;
+  test) require_tool stack ;;
   all)
-    for tool in stylish-haskell hlint stack python3; do
+    for tool in stylish-haskell hlint stack; do
       require_tool "$tool"
     done
     ;;
@@ -118,8 +118,7 @@ if [ "$COMMAND" = build ] || [ "$COMMAND" = all ]; then
   stack build
 fi
 if [ "$COMMAND" = test ] || [ "$COMMAND" = all ]; then
-  python3 scripts/check-architecture.py
-  python3 scripts/test-architecture.py
+  stack run hfm-check-architecture
   stack test
 fi
 case "$COMMAND" in

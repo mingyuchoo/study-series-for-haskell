@@ -9,17 +9,17 @@ module Hfm.Tui.SyntaxHighlight
 
 import           Brick
 
-import qualified Data.Text       as T
+import qualified Data.Text             as T
+
+import           Hfm.Application.State (maxPreviewLines)
+import           Hfm.Tui.Name          (Name)
+import           Hfm.Tui.Text          (expandTabs)
 
 import           Skylighting
 
-import           System.FilePath (takeExtension)
+import           System.FilePath       (takeExtension)
 
-import           Text.Printf     (printf)
-
-import Hfm.Tui.Text (expandTabs)
-import Hfm.Tui.Name (Name)
-import Hfm.Application.State (maxPreviewLines)
+import           Text.Printf           (printf)
 
 -- | 파일 확장자로 언어 감지
 detectLanguage :: FilePath -> Maybe Syntax

@@ -1,26 +1,39 @@
 module Main (main) where
 
-import Control.Exception (bracket)
-import Hfm.Domain.Config
-import Hfm.Infrastructure.Config
-  ( decodeKeyBindingConfig, decodeSettings, loadSettingsFrom, saveSettingsTo
-  , getSettingsPath, loadSettings, saveSettings )
-import Hfm.Domain.Language (Language (..))
-import Hfm.Domain.Theme (Theme (Monokai), themes)
-import Hfm.Infrastructure.FileSystem
-import qualified Hfm.Infrastructure.Process as Process
-import Hfm.Infrastructure.Ports (ioProcesses)
+import           Control.Exception             (bracket)
+
 import qualified Hfm.Application.Effects.Ports as Ports
-import System.Directory
-  ( createDirectory, createDirectoryIfMissing, doesDirectoryExist, doesFileExist, getTemporaryDirectory, getCurrentDirectory, listDirectory
-  , removeFile, removePathForcibly, createFileLink, createDirectoryLink
-  , getSymbolicLinkTarget, withCurrentDirectory )
-import System.FilePath ((</>))
-import System.IO (hClose, openTempFile)
-import System.Environment (getArgs, getExecutablePath, lookupEnv, setEnv, unsetEnv)
-import System.Exit (ExitCode (..), exitWith)
-import System.Info (os)
-import Test.Hspec
+import           Hfm.Domain.Config
+import           Hfm.Domain.Language           (Language (..))
+import           Hfm.Domain.Theme              (Theme (Monokai), themes)
+import           Hfm.Infrastructure.Config     (decodeKeyBindingConfig,
+                                                decodeSettings, getSettingsPath,
+                                                loadSettings, loadSettingsFrom,
+                                                saveSettings, saveSettingsTo)
+import           Hfm.Infrastructure.FileSystem
+import           Hfm.Infrastructure.Ports      (ioProcesses)
+import qualified Hfm.Infrastructure.Process    as Process
+
+import           System.Directory              (createDirectory,
+                                                createDirectoryIfMissing,
+                                                createDirectoryLink,
+                                                createFileLink,
+                                                doesDirectoryExist,
+                                                doesFileExist,
+                                                getCurrentDirectory,
+                                                getSymbolicLinkTarget,
+                                                getTemporaryDirectory,
+                                                listDirectory, removeFile,
+                                                removePathForcibly,
+                                                withCurrentDirectory)
+import           System.Environment            (getArgs, getExecutablePath,
+                                                lookupEnv, setEnv, unsetEnv)
+import           System.Exit                   (ExitCode (..), exitWith)
+import           System.FilePath               ((</>))
+import           System.Info                   (os)
+import           System.IO                     (hClose, openTempFile)
+
+import           Test.Hspec
 
 main :: IO ()
 main = do
@@ -33,7 +46,7 @@ main = do
 withEnvironment :: String -> Maybe String -> IO a -> IO a
 withEnvironment name value action = bracket (lookupEnv name <* assign value) assign (const action)
   where
-    assign Nothing = unsetEnv name
+    assign Nothing        = unsetEnv name
     assign (Just setting) = setEnv name setting
 
 withFixture :: (FilePath -> IO a) -> IO a

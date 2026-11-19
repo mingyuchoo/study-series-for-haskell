@@ -1,8 +1,9 @@
 module Hfm.Domain.Editor (editText) where
 
-import Data.Char (isAlphaNum)
-import qualified Data.Text as T
-import Hfm.Domain.Input
+import           Data.Char        (isAlphaNum)
+import qualified Data.Text        as T
+
+import           Hfm.Domain.Input
 
 -- | Edit a one-line input. Cursor positions count Text characters, not bytes.
 editText :: Input -> T.Text -> Int -> Maybe (T.Text, Int)

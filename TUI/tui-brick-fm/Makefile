@@ -28,8 +28,8 @@ build: setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
 
 check-architecture:
-	python3 scripts/check-architecture.py
-	python3 scripts/test-architecture.py
+	stack run hfm-check-architecture
+	stack test hfm-dev-tools
 
 test: setup check-architecture
 	stack test --fast

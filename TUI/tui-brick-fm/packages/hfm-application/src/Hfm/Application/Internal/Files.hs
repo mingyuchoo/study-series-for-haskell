@@ -1,19 +1,23 @@
 module Hfm.Application.Internal.Files
   ( refreshAll, changeDir, enterSelected, openView, runFileOperation, deleteSelected, finish ) where
 
-import Control.Monad.Except (ExceptT (..), runExceptT)
-import Control.Monad.State.Strict (get, modify)
-import qualified Data.ByteString as BS
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8With)
-import Data.Text.Encoding.Error (lenientDecode)
-import Hfm.Application.Internal.Action
-import Hfm.Application.Program
-import Hfm.Application.State
-import Hfm.Application.Status
-import Hfm.Domain.Entry
-import Hfm.Domain.PathPolicy
-import System.FilePath (takeDirectory, takeFileName, (</>))
+import           Control.Monad.Except            (ExceptT (..), runExceptT)
+import           Control.Monad.State.Strict      (get, modify)
+
+import qualified Data.ByteString                 as BS
+import qualified Data.Text                       as T
+import           Data.Text.Encoding              (decodeUtf8With)
+import           Data.Text.Encoding.Error        (lenientDecode)
+
+import           Hfm.Application.Internal.Action
+import           Hfm.Application.Program
+import           Hfm.Application.State
+import           Hfm.Application.Status
+import           Hfm.Domain.Entry
+import           Hfm.Domain.PathPolicy
+
+import           System.FilePath                 (takeDirectory, takeFileName,
+                                                  (</>))
 
 refreshAll :: Action ()
 refreshAll = do
@@ -92,5 +96,5 @@ deleteSelected :: Action ()
 deleteSelected = do
   st <- get
   case selectedPath st of
-    Nothing -> modify (\s -> s { stMode = Browse })
+    Nothing   -> modify (\s -> s { stMode = Browse })
     Just path -> attempt (request (DeleteEntry path)) $ \_ -> finish Deleted

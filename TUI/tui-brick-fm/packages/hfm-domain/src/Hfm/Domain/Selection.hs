@@ -1,10 +1,12 @@
 module Hfm.Domain.Selection
   ( Selection, selection, selectionItems, selectionIndex, selectedElement, selectAt, selectStep ) where
 
+import           Data.Maybe  (fromMaybe)
 import qualified Data.Vector as Vec
 
 -- The constructor is private so every selection is empty or within bounds.
-data Selection a = Selection (Vec.Vector a) (Maybe Int) deriving (Eq, Show)
+data Selection a = Selection (Vec.Vector a) (Maybe Int)
+     deriving (Eq, Show)
 
 selection :: [a] -> Selection a
 selection xs = Selection (Vec.fromList xs) (if null xs then Nothing else Just 0)
@@ -29,4 +31,4 @@ selectAt index (Selection xs _) =
   in Selection xs (if count == 0 then Nothing else Just (max 0 (min (count - 1) requested)))
 
 selectStep :: Int -> Selection a -> Selection a
-selectStep step selected = selectAt (max 0 (maybe 0 id (selectionIndex selected) + step)) selected
+selectStep step selected = selectAt (max 0 (fromMaybe 0 (selectionIndex selected) + step)) selected

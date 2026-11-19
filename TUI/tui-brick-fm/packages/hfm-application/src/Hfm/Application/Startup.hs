@@ -1,9 +1,10 @@
 module Hfm.Application.Startup (planStartup) where
 
-import Control.Monad.Except (ExceptT (..), runExceptT)
-import Hfm.Application.Error (FileError)
-import Hfm.Application.Program
-import Hfm.Application.State
+import           Control.Monad.Except    (ExceptT (..), runExceptT)
+
+import           Hfm.Application.Error   (FileError)
+import           Hfm.Application.Program
+import           Hfm.Application.State
 
 -- Startup follows the same port boundary as navigation; Main only assembles it.
 planStartup :: FilePath -> FilePath -> AppConfig -> (Int, Int) -> Program (Either FileError AppState)

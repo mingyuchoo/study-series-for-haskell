@@ -22,7 +22,7 @@ if ($Command -eq "help") {
     Write-Host "  all    Format, lint, build, test, then open the file manager (default)"
     Write-Host "  clean  Remove Stack build artifacts"
     Write-Host "Directory arguments are accepted by run and all. Run in an interactive terminal."
-    Write-Host "Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean), python (test)."
+    Write-Host "Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean)."
     Write-Host "The all command requires every tool. PowerShell runs natively without Bash or WSL."
     exit 0
 }
@@ -47,8 +47,8 @@ $StartingDirectories = @(
 $RequiredTools = switch ($Command) {
     'format' { 'stylish-haskell' }
     'lint' { 'hlint' }
-    'test' { 'stack'; 'python' }
-    'all' { 'stylish-haskell'; 'hlint'; 'stack'; 'python' }
+    'test' { 'stack' }
+    'all' { 'stylish-haskell'; 'hlint'; 'stack' }
     default { 'stack' }
 }
 foreach ($tool in $RequiredTools) {
@@ -62,14 +62,13 @@ function Invoke-Checked($Tool, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-$PreviousPythonUtf8 = $env:PYTHONUTF8
 Push-Location -LiteralPath $RootDir
 try {
     if ($Command -in @('format', 'lint', 'all')) {
         $SourceDirectories = @(
             foreach ($workspace in 'apps', 'packages') {
                 foreach ($package in Get-ChildItem -LiteralPath $workspace -Directory) {
-                    foreach ($name in 'app', 'src', 'test') {
+                    foreach ($name in 'app', 'src', 'test', 'pty') {
                         $path = Join-Path $package.FullName $name
                         if (Test-Path -LiteralPath $path -PathType Container) { $path }
                     }
@@ -90,9 +89,7 @@ try {
     if ($Command -in @('lint', 'all')) { Invoke-Checked hlint $SourceFiles }
     if ($Command -in @('build', 'all')) { Invoke-Checked stack @('build') }
     if ($Command -in @('test', 'all')) {
-        $env:PYTHONUTF8 = '1'
-        Invoke-Checked python @('scripts/check-architecture.py')
-        Invoke-Checked python @('scripts/test-architecture.py')
+        Invoke-Checked stack @('run', 'hfm-check-architecture')
         Invoke-Checked stack @('test')
     }
     if ($Command -in @('run', 'all')) {
@@ -102,6 +99,5 @@ try {
 }
 finally {
     Pop-Location
-    $env:PYTHONUTF8 = $PreviousPythonUtf8
 }
 exit 0

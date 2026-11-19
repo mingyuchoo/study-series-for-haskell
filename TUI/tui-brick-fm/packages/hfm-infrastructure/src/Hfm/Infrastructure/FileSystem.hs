@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Hfm.Infrastructure.FileSystem
   ( Entry (..)
@@ -13,29 +12,36 @@ module Hfm.Infrastructure.FileSystem
   , pathExists
   ) where
 
-import Control.Exception (IOException, catch, onException, throwIO)
-import Control.Monad (forM, unless, when)
-import Hfm.Domain.PathPolicy (requestedPath, destinationPath, isWithin)
-import Hfm.Domain.Entry
-import System.Directory
-  ( canonicalizePath, copyFile, createDirectory, doesDirectoryExist
-  , listDirectory, removeDirectory, removeFile, renamePath
-  )
-import System.FilePath (equalFilePath, isAbsolute, normalise, takeDirectory, (</>))
-import System.IO.Error (isDoesNotExistError)
+import           Control.Exception     (IOException, catch, onException,
+                                        throwIO)
+import           Control.Monad         (forM, unless, when)
+
+import           Hfm.Domain.Entry
+import           Hfm.Domain.PathPolicy (destinationPath, isWithin,
+                                        requestedPath)
+
+import           System.Directory      (canonicalizePath, copyFile,
+                                        createDirectory, doesDirectoryExist,
+                                        listDirectory, removeDirectory,
+                                        removeFile, renamePath)
+import           System.FilePath       (equalFilePath, isAbsolute, normalise,
+                                        takeDirectory, (</>))
+import           System.IO.Error       (isDoesNotExistError)
 #if defined(mingw32_HOST_OS)
-import Data.Bits ((.&.))
-import System.Directory
-  ( createDirectoryLink, createFileLink
-  , getSymbolicLinkTarget, removeDirectoryLink )
-import System.Win32.File
-  ( getFileAttributes, getFileAttributesExStandard, WIN32_FILE_ATTRIBUTE_DATA (..)
-  , fILE_ATTRIBUTE_DIRECTORY, fILE_ATTRIBUTE_REPARSE_POINT )
+import           Data.Bits             ((.&.))
+import           System.Directory      (createDirectoryLink, createFileLink,
+                                        getSymbolicLinkTarget,
+                                        removeDirectoryLink)
+import           System.Win32.File     (WIN32_FILE_ATTRIBUTE_DATA (..),
+                                        fILE_ATTRIBUTE_DIRECTORY,
+                                        fILE_ATTRIBUTE_REPARSE_POINT,
+                                        getFileAttributes,
+                                        getFileAttributesExStandard)
 #else
-import System.Posix.Files
-  ( createSymbolicLink, fileSize, getSymbolicLinkStatus, isDirectory
-  , isSymbolicLink, isRegularFile, readSymbolicLink
-  )
+import           System.Posix.Files    (createSymbolicLink, fileSize,
+                                        getSymbolicLinkStatus, isDirectory,
+                                        isRegularFile, isSymbolicLink,
+                                        readSymbolicLink)
 #endif
 
 entryInfo :: FilePath -> IO (EntryKind, Integer)
@@ -71,7 +77,7 @@ readEntries showHidden dir = do
     (kind, size) <- entryInfo (dir </> name)
     pure (Entry name kind size)
   let root = isAbsolute dir && equalFilePath (normalise dir) (takeDirectory (normalise dir))
-      parent = if root then [] else [Entry ".." Parent 0]
+      parent = [Entry ".." Parent 0 | not root]
   pure (parent ++ sortEntries entries)
 -- A destination may be a directory or a new path for a rename.
 destinationFor :: FilePath -> FilePath -> FilePath -> IO FilePath

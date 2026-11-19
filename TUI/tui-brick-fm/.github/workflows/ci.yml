@@ -47,14 +47,14 @@ jobs:
 
     - name: Check architecture boundaries
       run: |
-        python3 scripts/check-architecture.py
-        python3 scripts/test-architecture.py
+        stack run hfm-check-architecture
+        bash scripts/test-run-scripts.sh
 
     - name: Run tests
       run: stack test --coverage
 
     - name: Exercise terminal input
-      run: python3 scripts/test-keybindings.py
+      run: stack exec hfm-test-keybindings -- "$(stack path --local-install-root)/bin/hfm"
 
     - name: Generate Haddock documentation
       run: stack haddock --no-haddock-deps

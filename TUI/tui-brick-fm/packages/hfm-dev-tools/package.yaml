@@ -1,0 +1,55 @@
+name: hfm-dev-tools
+version: 0.1.0.0
+license: BSD-3-Clause
+license-file: LICENSE
+author: Mingyu Choo
+maintainer: mingyuchoo@gmail.com
+language: GHC2024
+ghc-options:
+- -Wall
+when:
+- condition: os(darwin)
+  ghc-options: -pgml ../../scripts/link-macos.sh
+dependencies:
+- base >= 4.18 && < 5
+library:
+  source-dirs: src
+  dependencies:
+  - directory
+  - filepath
+  - text
+executables:
+  hfm-check-architecture:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+    - hfm-dev-tools
+  hfm-test-keybindings:
+    main: Main.hs
+    source-dirs: pty
+    ghc-options: -threaded
+    when:
+    - condition: os(windows)
+      then:
+        buildable: false
+      else:
+        dependencies:
+        - unix
+    dependencies:
+    - bytestring
+    - directory
+    - filepath
+    - process
+    - temporary
+    - text
+tests:
+  hfm-dev-tools-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hfm-dev-tools
+    - hspec
+    - directory
+    - filepath
+    - temporary
+    - text

@@ -1,31 +1,33 @@
 module Hfm.Tui.Theme (themeAttributes, effectiveTheme) where
 
-import Brick (AttrMap, attrMap, attrName, on)
-import Brick.Widgets.List (listSelectedAttr, listSelectedFocusedAttr)
-import qualified Graphics.Vty as V
-import Hfm.Application.State (AppState (..))
-import Hfm.Domain.Selection (selectedElement)
-import Hfm.Domain.Theme
+import           Brick                 (AttrMap, attrMap, attrName, on)
+import           Brick.Widgets.List    (listSelectedAttr,
+                                        listSelectedFocusedAttr)
+
+import qualified Graphics.Vty          as V
+
+import           Hfm.Application.State (AppState (..))
+import           Hfm.Domain.Selection  (selectedElement)
+import           Hfm.Domain.Theme
 
 -- RGB adaptation of VS Code's built-in editor/list/status colors.
 -- Source: https://github.com/microsoft/vscode/tree/main/extensions
 -- Light/Dark use the Visual Studio defaults. Alpha colors are replaced with
 -- opaque selection colors because terminal attributes do not support alpha.
-data Palette = Palette
-  { foreground :: Int
-  , background :: Int
-  , surface :: Int
-  , barForeground :: Int
-  , barBackground :: Int
-  , accent :: Int
-  , selectionForeground :: Int
-  , selectionBackground :: Int
-  , inactiveSelection :: Int
-  , keyword :: Int
-  , stringColor :: Int
-  , number :: Int
-  , comment :: Int
-  }
+data Palette = Palette { foreground          :: Int
+                       , background          :: Int
+                       , surface             :: Int
+                       , barForeground       :: Int
+                       , barBackground       :: Int
+                       , accent              :: Int
+                       , selectionForeground :: Int
+                       , selectionBackground :: Int
+                       , inactiveSelection   :: Int
+                       , keyword             :: Int
+                       , stringColor         :: Int
+                       , number              :: Int
+                       , comment             :: Int
+                       }
 
 palette :: Theme -> Palette
 palette Light = Palette

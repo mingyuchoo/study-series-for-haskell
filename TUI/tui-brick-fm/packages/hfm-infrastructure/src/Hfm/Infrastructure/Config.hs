@@ -3,20 +3,30 @@ module Hfm.Infrastructure.Config
   , getSettingsPath, loadSettings, loadSettingsFrom, saveSettings, saveSettingsTo, decodeSettings
   ) where
 
-import Control.Exception (IOException, try, bracketOnError)
-import qualified Data.ByteString as BS
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Yaml (FromJSON (..), ToJSON (..), ParseException, decodeEither', encode, withObject, object, (.=), (.!=), (.:?))
-import Hfm.Application.Error (FileError (..))
-import Hfm.Domain.Config
-import Hfm.Domain.Language (Language (..))
-import Hfm.Domain.Theme (themes)
-import Hfm.Infrastructure.Ports (capture, formatFileError)
-import System.Directory (XdgDirectory (..), doesFileExist, getXdgDirectory, createDirectoryIfMissing, renameFile, removeFile)
-import System.FilePath ((</>), takeDirectory)
-import System.IO (openBinaryTempFile, hClose)
-import System.IO.Error (isDoesNotExistError)
+import           Control.Exception        (IOException, bracketOnError, try)
+
+import qualified Data.ByteString          as BS
+import           Data.Either              (fromRight)
+import           Data.Text                (Text)
+import qualified Data.Text                as T
+import           Data.Yaml                (FromJSON (..), ParseException,
+                                           ToJSON (..), decodeEither', encode,
+                                           object, withObject, (.!=), (.:?),
+                                           (.=))
+
+import           Hfm.Application.Error    (FileError (..))
+import           Hfm.Domain.Config
+import           Hfm.Domain.Language      (Language (..))
+import           Hfm.Domain.Theme         (themes)
+import           Hfm.Infrastructure.Ports (capture, formatFileError)
+
+import           System.Directory         (XdgDirectory (..),
+                                           createDirectoryIfMissing,
+                                           doesFileExist, getXdgDirectory,
+                                           removeFile, renameFile)
+import           System.FilePath          (takeDirectory, (</>))
+import           System.IO                (hClose, openBinaryTempFile)
+import           System.IO.Error          (isDoesNotExistError)
 
 newtype StoredSettings = StoredSettings Settings
 
@@ -28,13 +38,13 @@ instance FromJSON StoredSettings where
     selectedLanguage <- case (language :: Text) of
       "ko" -> pure Korean
       "en" -> pure English
-      _ -> fail "Unsupported language; expected ko or en"
+      _    -> fail "Unsupported language; expected ko or en"
     selectedTheme <- case lookup theme [(T.toLower (T.pack (show t)), t) | t <- themes] of
-      Just t -> pure t
+      Just t  -> pure t
       Nothing -> fail "Unsupported theme"
     case editor of
       Just value | not (validEditor value) -> fail "Invalid editor path"
-      _ -> pure ()
+      _                                    -> pure ()
     let executable = editor >>= \value ->
           if T.null (T.strip value) then Nothing else Just (T.unpack (T.strip value))
     pure (StoredSettings (Settings executable selectedLanguage selectedTheme))
@@ -108,5 +118,5 @@ loadKeyBindingConfig = do
       result <- try (BS.readFile path) :: IO (Either IOException BS.ByteString)
       pure $ case result of
         Left _ -> defaultKeyBindingConfig
-        Right bytes -> either (const defaultKeyBindingConfig) id (decodeKeyBindingConfig bytes)
+        Right bytes -> fromRight defaultKeyBindingConfig (decodeKeyBindingConfig bytes)
     else pure defaultKeyBindingConfig

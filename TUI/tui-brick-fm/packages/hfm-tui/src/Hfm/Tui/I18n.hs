@@ -2,11 +2,11 @@
 
 module Hfm.Tui.I18n (translate, renderStatus, renderFileError) where
 
-import qualified Data.Text as T
+import qualified Data.Text              as T
 
-import Hfm.Application.Error (FileError (..))
-import Hfm.Application.Status (Status (..))
-import Hfm.Domain.Language (Language (..))
+import           Hfm.Application.Error  (FileError (..))
+import           Hfm.Application.Status (Status (..))
+import           Hfm.Domain.Language    (Language (..))
 
 -- Translate application text only; paths, filenames and file contents stay intact.
 translate :: Language -> T.Text -> T.Text
@@ -17,7 +17,7 @@ translate English value = case lookup value translations of
     Just detail -> "Error: " <> translate English detail
     Nothing -> case T.stripPrefix "user error (" value >>= T.stripSuffix ")" of
       Just detail -> "user error (" <> translate English detail <> ")"
-      Nothing -> value
+      Nothing     -> value
 
 renderStatus :: Language -> Status -> T.Text
 renderStatus language status = case status of
@@ -43,8 +43,8 @@ renderStatus language status = case status of
 
 renderFileError :: Language -> FileError -> T.Text
 renderFileError language err = translate language $ case err of
-  Missing -> "파일이 존재하지 않습니다"
-  PermissionDenied -> "파일 접근 권한이 없습니다"
+  Missing            -> "파일이 존재하지 않습니다"
+  PermissionDenied   -> "파일 접근 권한이 없습니다"
   FileFailure detail -> detail
 
 translations :: [(T.Text, T.Text)]

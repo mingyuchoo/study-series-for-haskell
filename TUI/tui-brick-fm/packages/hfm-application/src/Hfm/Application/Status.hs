@@ -1,26 +1,25 @@
 module Hfm.Application.Status (Status (..)) where
 
-import Hfm.Application.Error (FileError)
+import           Hfm.Application.Error (FileError)
 
 -- Semantic outcomes. A presentation adapter owns wording and localization.
-data Status
-  = Ready
-  | UnknownCommand
-  | Cancelled
-  | SpecialFileUnsupported
-  | BinaryPreviewUnsupported
-  | InvalidDestination
-  | DirectoryCreated
-  | Copied
-  | Moved
-  | Deleted
-  | DeletionCancelled
-  | EditorFinished Int
-  | CommandFinished Int
-  | InvalidCommand
-  | InvalidEditor
-  | SettingsSaved
-  | SettingsSaveFailed FileError
-  | CurrentDirectory FilePath
-  | Failed FileError
-  deriving (Eq, Show)
+data Status = Ready
+            | UnknownCommand
+            | Cancelled
+            | SpecialFileUnsupported
+            | BinaryPreviewUnsupported
+            | InvalidDestination
+            | DirectoryCreated
+            | Copied
+            | Moved
+            | Deleted
+            | DeletionCancelled
+            | EditorFinished Int
+            | CommandFinished Int
+            | InvalidCommand
+            | InvalidEditor
+            | SettingsSaved
+            | SettingsSaveFailed FileError
+            | CurrentDirectory FilePath
+            | Failed FileError
+     deriving (Eq, Show)

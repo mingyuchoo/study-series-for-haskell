@@ -1,0 +1,98 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           hfm-dev-tools
+version:        0.1.0.0
+author:         Mingyu Choo
+maintainer:     mingyuchoo@gmail.com
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Hfm.DevTools.Architecture
+      Hfm.DevTools.Workspace
+  other-modules:
+      Paths_hfm_dev_tools
+  autogen-modules:
+      Paths_hfm_dev_tools
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , directory
+    , filepath
+    , text
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+
+executable hfm-check-architecture
+  main-is: Main.hs
+  other-modules:
+      Paths_hfm_dev_tools
+  autogen-modules:
+      Paths_hfm_dev_tools
+  hs-source-dirs:
+      app
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , hfm-dev-tools
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+
+executable hfm-test-keybindings
+  main-is: Main.hs
+  other-modules:
+      Terminal
+      Paths_hfm_dev_tools
+  autogen-modules:
+      Paths_hfm_dev_tools
+  hs-source-dirs:
+      pty
+  ghc-options: -Wall -threaded
+  build-depends:
+      base >=4.18 && <5
+    , bytestring
+    , directory
+    , filepath
+    , process
+    , temporary
+    , text
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh
+  if os(windows)
+    buildable: False
+  else
+    build-depends:
+        unix
+
+test-suite hfm-dev-tools-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hfm_dev_tools
+  autogen-modules:
+      Paths_hfm_dev_tools
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , directory
+    , filepath
+    , hfm-dev-tools
+    , hspec
+    , temporary
+    , text
+  default-language: GHC2024
+  if os(darwin)
+    ghc-options: -pgml ../../scripts/link-macos.sh

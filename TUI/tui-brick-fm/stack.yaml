@@ -6,6 +6,7 @@ packages:
 - packages/hfm-application
 - packages/hfm-infrastructure
 - packages/hfm-tui
+- packages/hfm-dev-tools
 - apps/hfm
 
 extra-package-dbs: []

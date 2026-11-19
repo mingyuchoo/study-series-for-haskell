@@ -28,10 +28,6 @@ cabal.project.local~
 /result-*
 /data/
 
-__pycache__/
-*.pyc
-*.pyo
-
 *~
 *.swp
 *.swo

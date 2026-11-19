@@ -1,13 +1,15 @@
 module Hfm.Tui.Layout (viewerHelpLines, prepareLayout) where
 
-import Brick (textWidth)
-import qualified Data.Text as T
-import Hfm.Application.State
-import Hfm.Tui.I18n (translate)
+import           Brick                 (textWidth)
+
+import qualified Data.Text             as T
+
+import           Hfm.Application.State
+import           Hfm.Tui.I18n          (translate)
 
 viewerHelpLines :: AppState -> [T.Text]
 viewerHelpLines st = case T.words (viewerHelpText st) of
-  [] -> []
+  []          -> []
   word : rest -> wrap word rest
   where
     width = max 1 (fst (stTerminalSize st) - 2)

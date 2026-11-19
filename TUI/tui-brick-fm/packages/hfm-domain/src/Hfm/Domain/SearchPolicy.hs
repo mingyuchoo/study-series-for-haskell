@@ -1,6 +1,6 @@
 module Hfm.Domain.SearchPolicy (shouldExclude) where
 
-import System.FilePath (takeFileName)
+import           System.FilePath (takeFileName)
 
 -- | 제외할 디렉토리/파일 패턴 목록 (숨김 파일 제외)
 -- 숨김 파일/디렉토리(.으로 시작)는 별도 조건으로 처리

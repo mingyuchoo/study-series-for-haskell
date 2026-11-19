@@ -1,8 +1,8 @@
 module Hfm.Domain.PathPolicy
   ( validDestination, validDirectoryName, requestedPath, destinationPath, isWithin ) where
 
-import System.FilePath
-  ( equalFilePath, isAbsolute, normalise, splitDirectories, takeFileName, (</>) )
+import           System.FilePath (equalFilePath, isAbsolute, normalise,
+                                  splitDirectories, takeFileName, (</>))
 
 validDestination :: FilePath -> Bool
 validDestination input = not (null input) && input /= "." && input /= ".."

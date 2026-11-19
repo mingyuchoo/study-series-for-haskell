@@ -1,26 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import qualified Data.Vector as Vec
-import Brick.Main (renderWidget)
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import Hfm.Tui.UI (drawUI)
-import Hfm.Application.Status
-import Hfm.Application.Error (FileError (..))
-import Hfm.Tui.I18n (translate, renderStatus)
-import Graphics.Vty.PictureToSpans (displayOpsForPic)
-import Graphics.Vty.Span (SpanOp (..))
-import Brick (attrName, attrMapLookup)
-import qualified Graphics.Vty as V
-import Hfm.Tui.Theme (themeAttributes, effectiveTheme)
-import Hfm.Domain.Theme (themes, themeName)
-import Hfm.Domain.Selection (selection, selectAt)
-import Hfm.Domain.Entry
-import Test.Hspec
-import Hfm.Application.State hiding (initialState, toggleLanguage)
-import qualified Hfm.Application.State as State
-import Hfm.Tui.Layout
+import           Brick                       (attrMapLookup, attrName)
+import           Brick.Main                  (renderWidget)
+
+import qualified Data.Text                   as T
+import qualified Data.Text.Lazy              as TL
+import qualified Data.Vector                 as Vec
+
+import qualified Graphics.Vty                as V
+import           Graphics.Vty.PictureToSpans (displayOpsForPic)
+import           Graphics.Vty.Span           (SpanOp (..))
+
+import           Hfm.Application.Error       (FileError (..))
+import           Hfm.Application.State       hiding (initialState,
+                                              toggleLanguage)
+import qualified Hfm.Application.State       as State
+import           Hfm.Application.Status
+import           Hfm.Domain.Entry
+import           Hfm.Domain.Selection        (selectAt, selection)
+import           Hfm.Domain.Theme            (themeName, themes)
+import           Hfm.Tui.I18n                (renderStatus, translate)
+import           Hfm.Tui.Layout
+import           Hfm.Tui.Theme               (effectiveTheme, themeAttributes)
+import           Hfm.Tui.UI                  (drawUI)
+
 import qualified SyntaxHighlightSpec
+
+import           Test.Hspec
 
 main :: IO ()
 main = hspec spec
@@ -36,8 +42,8 @@ viewerRows st =
   let size = stTerminalSize st
       picture = renderWidget Nothing (drawUI st) size
       spanText (TextSpan _ _ _ value) = TL.toStrict value
-      spanText (Skip count) = T.replicate count " "
-      spanText (RowEnd count) = T.replicate count " "
+      spanText (Skip count)           = T.replicate count " "
+      spanText (RowEnd count)         = T.replicate count " "
   in map (T.concat . map spanText . Vec.toList) (Vec.toList (displayOpsForPic picture size))
 
 spec :: Spec
@@ -168,8 +174,8 @@ spec = do
             body = concatMap Vec.toList (take 5 (drop 2 (Vec.toList ops)))
             background = V.attrBackColor (attrMapLookup (attrName "default") attributes)
             text (TextSpan _ _ _ value) = TL.toStrict value
-            text (Skip count) = T.replicate count " "
-            text (RowEnd count) = T.replicate count " "
+            text (Skip count)           = T.replicate count " "
+            text (RowEnd count)         = T.replicate count " "
             rows = map (T.concat . map text . Vec.toList) (Vec.toList ops)
         rows !! 3 `shouldSatisfy` T.isPrefixOf "│        stack build"
         rows !! 5 `shouldSatisfy` T.isPrefixOf "│가      값"
