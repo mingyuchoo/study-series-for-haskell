@@ -1,0 +1,45 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           tto-application
+version:        0.1.0.0
+license:        BSD-3-Clause
+build-type:     Simple
+
+library
+  exposed-modules:
+      Todo.Application.Form
+      Todo.Application.Repository
+      Todo.Application.Types
+      Todo.Application.Workflow
+  other-modules:
+      Paths_tto_application
+  autogen-modules:
+      Paths_tto_application
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , tto-domain
+  default-language: GHC2024
+
+test-suite workflow-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_tto_application
+  autogen-modules:
+      Paths_tto_application
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      base >=4.18 && <5
+    , hspec
+    , tto-application
+    , tto-domain
+  default-language: GHC2024

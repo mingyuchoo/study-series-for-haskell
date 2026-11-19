@@ -1,25 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module SyntaxHighlight
-  ( detectLanguage
-  , limitLines
-  , limitStringLines
-  , renderHighlightedContent
-  , renderPreviewContent
-  , renderPlainText
-  ) where
+    ( detectLanguage
+    , limitLines
+    , limitStringLines
+    , renderHighlightedContent
+    , renderPlainText
+    , renderPreviewContent
+    ) where
 
-import Brick
+import           Brick
 
-import Data.Text qualified as T
+import qualified Data.Text       as T
 
-import Skylighting
+import           Skylighting
 
-import System.FilePath (takeExtension)
+import           System.FilePath (takeExtension)
 
-import Text.Printf (printf)
+import           Text.Printf     (printf)
 
-import Types (Name, maxPreviewLines)
+import           Types           (Name, maxPreviewLines)
 
 detectLanguage :: FilePath -> Maybe Syntax
 detectLanguage path =
@@ -33,19 +33,19 @@ limitStringLines :: String -> [T.Text]
 limitStringLines = map T.pack . take maxPreviewLines . lines
 
 tokenAttr :: TokenType -> AttrName
-tokenAttr KeywordTok = attrName "syntax.keyword"
+tokenAttr KeywordTok  = attrName "syntax.keyword"
 tokenAttr DataTypeTok = attrName "syntax.type"
-tokenAttr DecValTok = attrName "syntax.number"
-tokenAttr BaseNTok = attrName "syntax.number"
-tokenAttr FloatTok = attrName "syntax.number"
+tokenAttr DecValTok   = attrName "syntax.number"
+tokenAttr BaseNTok    = attrName "syntax.number"
+tokenAttr FloatTok    = attrName "syntax.number"
 tokenAttr ConstantTok = attrName "syntax.number"
-tokenAttr CharTok = attrName "syntax.string"
-tokenAttr StringTok = attrName "syntax.string"
-tokenAttr CommentTok = attrName "syntax.comment"
-tokenAttr OtherTok = attrName "syntax.function"
+tokenAttr CharTok     = attrName "syntax.string"
+tokenAttr StringTok   = attrName "syntax.string"
+tokenAttr CommentTok  = attrName "syntax.comment"
+tokenAttr OtherTok    = attrName "syntax.function"
 tokenAttr FunctionTok = attrName "syntax.function"
 tokenAttr VariableTok = attrName "syntax.function"
-tokenAttr _ = attrName "default"
+tokenAttr _           = attrName "default"
 
 renderPlainText :: [T.Text] -> Widget Name
 renderPlainText textLines =
@@ -85,5 +85,5 @@ renderHighlightedLines path contentLines = case detectLanguage path of
   Just syntax ->
     let config = TokenizerConfig defaultSyntaxMap False
      in case tokenize config syntax (T.unlines contentLines) of
-          Left _err -> renderPlainText contentLines
+          Left _err         -> renderPlainText contentLines
           Right sourceLines -> vBox $ zipWith renderTokenLine [1 ..] sourceLines

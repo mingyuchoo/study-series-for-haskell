@@ -1,15 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Database operations (Effectful)
---
--- This module handles all SQLite database interactions.
--- All functions perform IO operations.
---
--- Effects:
---   - SQLite database queries and updates
---   - Current time retrieval (getCurrentTime)
---
--- Purity: NONE - All exported functions are effectful
 module DB
   ( TodoId
   , TodoRow (..)
@@ -48,7 +38,6 @@ import TodoStatus qualified
 
 type TodoId = Int
 
--- | Domain model for a Todo item (Effectful)
 data TodoRow = TodoRow
   { todoId :: !TodoId
   , todoAction :: !String
@@ -77,11 +66,9 @@ instance ToRow TodoRow where
   toRow (TodoRow tid txt status created subj indObj dirObj statusChangedAt) =
     toRow (tid, txt, status, created, subj, indObj, dirObj, statusChangedAt)
 
--- | Initialize database schema and seed data (Effectful)
 initDB :: Connection -> IO ()
 initDB conn = initDBWithMessages conn I18n.defaultMessages
 
--- | Initialize database with custom messages (Effectful)
 initDBWithMessages :: Connection -> I18n.I18nMessages -> IO ()
 initDBWithMessages conn msgs = do
   createTodosTable
@@ -129,7 +116,6 @@ initDBWithMessages conn msgs = do
       insertTodo (I18n.add_hint samples) "in_progress"
       insertTodo (I18n.toggle_hint samples) "completed"
 
--- | Create a new todo with action text only (Effectful)
 createTodo :: Connection -> String -> IO TodoId
 createTodo conn text = do
   timeStr <- formatCurrentTime
@@ -148,7 +134,6 @@ createTodo conn text = do
     )
   fromIntegral <$> lastInsertRowId conn
 
--- | Create a new todo with all fields (Effectful)
 createTodoWithFields
   :: Connection -> String -> Maybe String -> Maybe String -> Maybe String -> IO TodoId
 createTodoWithFields conn text subj indObj dirObj = do
@@ -168,7 +153,6 @@ createTodoWithFields conn text subj indObj dirObj = do
     )
   fromIntegral <$> lastInsertRowId conn
 
--- | Retrieve all todos ordered by ID descending (Effectful)
 getAllTodos :: Connection -> IO [TodoRow]
 getAllTodos conn =
   query_
@@ -177,7 +161,6 @@ getAllTodos conn =
     \indirect_object, direct_object, status_changed_at \
     \FROM todos ORDER BY id DESC"
 
--- | Update all fields of a todo (Effectful)
 updateTodo
   :: Connection
   -> TodoId
@@ -195,7 +178,6 @@ updateTodo conn tid text status subj indObj dirObj statusChangedAt =
     \indirect_object = ?, direct_object = ?, status_changed_at = ? WHERE id = ?"
     (text, status, subj, indObj, dirObj, statusChangedAt, tid)
 
--- | Update specific fields of a todo (Effectful)
 updateTodoWithFields
   :: Connection -> TodoId -> String -> Maybe String -> Maybe String -> Maybe String -> IO ()
 updateTodoWithFields conn tid text subj indObj dirObj =
@@ -205,11 +187,9 @@ updateTodoWithFields conn tid text subj indObj dirObj =
     \direct_object = ? WHERE id = ?"
     (text, subj, indObj, dirObj, tid)
 
--- | Delete a todo by ID (Effectful)
 deleteTodo :: Connection -> TodoId -> IO ()
 deleteTodo conn tid = execute conn "DELETE FROM todos WHERE id = ?" (Only tid)
 
--- | 상태 전이 공통 함수 (Effectful)
 transitionStatus
   :: Connection -> TodoId -> TodoStatus.TodoStatus from -> TodoStatus.TodoStatus to -> IO ()
 transitionStatus conn tid _fromStatus toStatus = do
@@ -223,26 +203,21 @@ transitionStatus conn tid _fromStatus toStatus = do
     , TodoStatus.statusToString _fromStatus
     )
 
--- | Transition: Registered -> InProgress (Effectful)
 transitionToInProgress :: Connection -> TodoId -> IO ()
 transitionToInProgress conn tid =
   transitionStatus conn tid TodoStatus.StatusRegistered TodoStatus.StatusInProgress
 
--- | Transition: InProgress -> Cancelled (Effectful)
 transitionToCancelled :: Connection -> TodoId -> IO ()
 transitionToCancelled conn tid =
   transitionStatus conn tid TodoStatus.StatusInProgress TodoStatus.StatusCancelled
 
--- | Transition: Cancelled -> Completed (Effectful)
 transitionToCompleted :: Connection -> TodoId -> IO ()
 transitionToCompleted conn tid =
   transitionStatus conn tid TodoStatus.StatusCancelled TodoStatus.StatusCompleted
 
--- | Transition: Completed -> Registered (Effectful)
 transitionToRegistered :: Connection -> TodoId -> IO ()
 transitionToRegistered conn tid =
   transitionStatus conn tid TodoStatus.StatusCompleted TodoStatus.StatusRegistered
 
--- | Helper function to format current time (Effectful)
 formatCurrentTime :: IO String
 formatCurrentTime = formatTime defaultTimeLocale "%Y-%m-%d %H:%M" <$> getCurrentTime

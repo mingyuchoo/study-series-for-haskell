@@ -1,43 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module UI
-  ( drawUI
-  , formatInfoText
-  , renderWarningUI
-  ) where
+    ( drawUI
+    , formatInfoText
+    , renderWarningUI
+    ) where
 
-import Brick
-import Brick.Widgets.Border
-import Brick.Widgets.Center
-import Brick.Widgets.List
+import           Brick
+import           Brick.Widgets.Border
+import           Brick.Widgets.Center
+import           Brick.Widgets.List
 
-import Config (KeyBindingStyle (..))
+import           Config               (KeyBindingStyle (..))
 
-import Data.Text qualified as T
-import Data.Vector qualified as Vec
+import qualified Data.Text            as T
+import qualified Data.Vector          as Vec
 
-import Event (formatPreviewError)
-import Flow ((<|))
-import Fzh.Domain.Session (PreviewState (..), browserPreview, sessionBrowser)
+import           Event                (formatPreviewError)
 
-import SyntaxHighlight (renderPreviewContent)
+import           Flow                 ((<|))
 
-import Types
-  ( AppConfig (..)
-  , AppState
-  , Name
-  , contentHeight
-  , isTerminalSizeSufficient
-  , minTerminalHeight
-  , minTerminalWidth
-  , previewWidth
-  , resultListWidth
-  , stConfig
-  , stFilteredList
-  , stSearchQuery
-  , stSession
-  , stTerminalSize
-  )
+import           Fzh.Domain.Session   (PreviewState (..), browserPreview,
+                                       sessionBrowser)
+
+import           SyntaxHighlight      (renderPreviewContent)
+
+import           Types                (AppConfig (..), AppState, Name,
+                                       contentHeight, isTerminalSizeSufficient,
+                                       minTerminalHeight, minTerminalWidth,
+                                       previewWidth, resultListWidth, stConfig,
+                                       stFilteredList, stSearchQuery, stSession,
+                                       stTerminalSize)
 
 drawUI :: AppState -> [Widget Name]
 drawUI st = [ui]
@@ -108,9 +101,9 @@ renderFilePreview _cfg st =
       padRight Max <|
         padLeftRight 1 <|
           case browserPreview (sessionBrowser (stSession st)) of
-            NoPreview -> txt "No file selected"
-            Loading _ -> txt "Loading..."
-            Failed _ problem -> txt (formatPreviewError problem)
+            NoPreview           -> txt "No file selected"
+            Loading _           -> txt "Loading..."
+            Failed _ problem    -> txt (formatPreviewError problem)
             Loaded path content -> renderPreviewContent path content
 
 renderKeyBindingHelp :: AppConfig -> Widget Name

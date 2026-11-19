@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module SyntaxHighlightSpec
-  ( spec
-  ) where
+    ( spec
+    ) where
 
-import Data.Maybe (isJust)
-import Data.Text qualified as T
+import           Data.Maybe      (isJust)
+import qualified Data.Text       as T
 
-import SyntaxHighlight
+import           SyntaxHighlight
 
-import Test.Hspec
+import           Test.Hspec
 
 spec :: Spec
 spec = do

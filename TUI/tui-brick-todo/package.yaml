@@ -7,27 +7,26 @@ maintainer:          mingyuchoo@gmail.com
 copyright:           Mingyu Choo 2025
 synopsis:            A TUI todo manager with i18n and configurable keybindings
 category:            Application
-description:         Terminal-based todo manager built with Brick, SQLite, and Tagless Final pattern
+description:         Terminal-based todo manager built with Brick, SQLite, and an ADT workflow state machine
 
 extra-source-files:
 - README.md
 - CHANGELOG.md
 
 dependencies:
+- tto-domain
+- tto-application
 - base >= 4.18 && < 5
 - brick
 - containers
 - flow
 - microlens
 - microlens-th
-- mtl
-- parallel
 - text
 - time
 - vector
 - vty
 - sqlite-simple
-- transformers
 - aeson
 - yaml
 - bytestring
@@ -53,12 +52,12 @@ ghc-options:
 language: GHC2024
 
 library:
-  source-dirs: src
+  source-dirs: packages/terminal/src
 
 executables:
   tto-exe:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         apps/tto
     ghc-options:
     - -static
     - -threaded
@@ -79,8 +78,3 @@ tests:
     dependencies:
     - tto
     - hspec
-    - doctest
-    - doctest-discover
-    - microlens
-    - brick
-    - vector

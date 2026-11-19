@@ -1,50 +1,51 @@
 module Fzh.Domain.Search
-  ( Search
-  , Direction (..)
-  , newSearch
-  , allItems
-  , query
-  , results
-  , selectedIndex
-  , selectedItem
-  , updateQuery
-  , moveSelection
-  , fuzzyMatchScore
-  , filterItems
-  ) where
+    ( Direction (..)
+    , Search
+    , allItems
+    , filterItems
+    , fuzzyMatchScore
+    , moveSelection
+    , newSearch
+    , query
+    , results
+    , selectedIndex
+    , selectedItem
+    , updateQuery
+    ) where
 
-import Data.List (sortOn)
-import Fzh.Domain.Unicode (lowercase)
+import           Data.List          (sortOn)
 
-data Search = Search
-  { allItems :: [String]
-  , query :: String
-  , results :: [String]
-  , cursor :: !Cursor
-  }
-  deriving (Eq, Show)
+import           Fzh.Domain.Unicode (lowercase)
+
+data Search = Search { allItems :: [String]
+                     , query    :: String
+                     , results  :: [String]
+                     , cursor   :: !Cursor
+                     }
+     deriving (Eq, Show)
 
 data Direction = Previous | Next
-  deriving (Eq, Show)
+     deriving (Eq, Show)
 
-data Cursor = EmptyCursor | Cursor !Int [String] String [String]
-  deriving (Eq, Show)
+data Cursor = EmptyCursor
+            | Cursor !Int [String] String [String]
+     deriving (Eq, Show)
 
 newSearch :: [String] -> Search
 newSearch items = Search items "" items (firstCursor items)
 
 firstCursor :: [String] -> Cursor
-firstCursor [] = EmptyCursor
+firstCursor []                 = EmptyCursor
 firstCursor (item : remaining) = Cursor 0 [] item remaining
 
 selectedIndex :: Search -> Maybe Int
 selectedIndex search = case cursor search of
-  EmptyCursor -> Nothing
+  EmptyCursor        -> Nothing
   Cursor index _ _ _ -> Just index
 
 selectedItem :: Search -> Maybe String
 selectedItem search = case cursor search of
-  EmptyCursor -> Nothing
+  EmptyCursor       -> Nothing
   Cursor _ _ item _ -> Just item
 
 updateQuery :: String -> Search -> Search

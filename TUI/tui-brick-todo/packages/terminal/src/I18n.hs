@@ -1,21 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Internationalization support (MIXED: Pure + Effectful)
---
--- This module provides multi-language support for the application.
---
--- Pure components:
---   - Data types: Language, I18nMessages, UIMessages, etc.
---   - defaultMessages: Default English messages
---
--- Effectful functions:
---   - loadMessages: Load messages from YAML file (IO)
---
--- Effects:
---   - File system access (doesFileExist, readFile)
---   - YAML parsing
---   - Console output (putStrLn)
 module I18n
   ( FieldLabels (..)
   , HelpMessages (..)
@@ -27,26 +12,16 @@ module I18n
   , SystemMessages (..)
   , UIMessages (..)
   , defaultMessages
-  , loadMessages
   , stringToLanguage
   ) where
 
 import Data.Aeson (FromJSON)
-import Data.ByteString qualified as BS
-import Data.Yaml qualified as Yaml
-
-import Flow ((<|))
 
 import GHC.Generics (Generic)
 
-import System.Directory (doesFileExist)
-import System.FilePath ((</>))
-
--- | Supported languages (Pure)
 data Language = English | Korean
   deriving (Eq, Generic, Show)
 
--- | Parse language from string (Pure)
 stringToLanguage :: String -> Language
 stringToLanguage "en" = English
 stringToLanguage "english" = English
@@ -54,7 +29,6 @@ stringToLanguage "ko" = Korean
 stringToLanguage "korean" = Korean
 stringToLanguage _ = Korean
 
--- | UI messages structure (Pure)
 data UIMessages = UIMessages
   { header :: !String
   , todos_title :: !String
@@ -69,7 +43,6 @@ data UIMessages = UIMessages
 
 instance FromJSON UIMessages
 
--- | Field labels (Pure)
 data FieldLabels = FieldLabels
   { id_label :: !String
   , status_label :: !String
@@ -87,7 +60,6 @@ data FieldLabels = FieldLabels
 
 instance FromJSON FieldLabels
 
--- | Status messages (Pure)
 data StatusMessages = StatusMessages
   { registered :: !String
   , in_progress :: !String
@@ -98,7 +70,6 @@ data StatusMessages = StatusMessages
 
 instance FromJSON StatusMessages
 
--- | List display messages (Pure)
 data ListMessages = ListMessages
   { checkbox_done :: !String
   , checkbox_todo :: !String
@@ -114,7 +85,6 @@ data ListMessages = ListMessages
 
 instance FromJSON ListMessages
 
--- | Help messages (Pure)
 data HelpMessages = HelpMessages
   { view_mode :: !String
   , edit_mode :: !String
@@ -130,7 +100,6 @@ data HelpMessages = HelpMessages
 
 instance FromJSON HelpMessages
 
--- | System messages (Pure)
 data SystemMessages = SystemMessages
   { config_not_found :: !String
   , config_load_failed :: !String
@@ -145,7 +114,6 @@ data SystemMessages = SystemMessages
 
 instance FromJSON SystemMessages
 
--- | Sample todos (Pure)
 data SampleTodos = SampleTodos
   { welcome :: !String
   , add_hint :: !String
@@ -155,7 +123,6 @@ data SampleTodos = SampleTodos
 
 instance FromJSON SampleTodos
 
--- | Complete internationalization messages (Pure)
 data I18nMessages = I18nMessages
   { language :: !String
   , ui :: !UIMessages
@@ -170,7 +137,6 @@ data I18nMessages = I18nMessages
 
 instance FromJSON I18nMessages
 
--- | Default English messages (Pure)
 defaultMessages :: I18nMessages
 defaultMessages =
   I18nMessages
@@ -249,28 +215,3 @@ defaultMessages =
           , toggle_hint = "Press Space to toggle completion"
           }
     }
-
--- | Load messages from config directory (Effectful)
-loadMessages :: FilePath -> Language -> IO I18nMessages
-loadMessages configDir lang = do
-  let filename = case lang of
-        English -> "messages-en.yaml"
-        Korean -> "messages-ko.yaml"
-      path = configDir </> filename
-  exists <- doesFileExist path
-  if exists
-    then loadFromFile path
-    else useDefault <| i18n_not_found (messages defaultMessages) <> ": " <> path
-  where
-    loadFromFile path = do
-      content <- BS.readFile path
-      case Yaml.decodeEither' content of
-        Left err -> useDefault <| i18n_load_failed (messages defaultMessages) <> ": " <> show err
-        Right msgs -> do
-          putStrLn <| i18n_loaded (messages msgs)
-          pure msgs
-
-    useDefault msg = do
-      putStrLn msg
-      putStrLn <| using_default_lang (messages defaultMessages)
-      pure defaultMessages

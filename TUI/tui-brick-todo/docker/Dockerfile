@@ -1,12 +1,12 @@
-ARG PROJECT_NAME=tui-brick-todo
+ARG PROJECT_NAME=tto
 FROM fpco/stack-build:lts-24.21
 WORKDIR /app
 
 ARG PROJECT_NAME
-COPY stack.yaml stack.yaml.lock package.yaml ${PROJECT_NAME}.cabal Setup.hs ./
+COPY stack.yaml stack.yaml.lock package.yaml tto.cabal Setup.hs ./
 COPY README.md CHANGELOG.md LICENSE ./
-COPY src/ src/
-COPY app/ app/
+COPY packages/ packages/
+COPY apps/ apps/
 COPY test/ test/
 
 RUN stack setup --no-docker && stack build --dependencies-only --no-docker

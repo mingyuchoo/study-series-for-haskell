@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- | UI rendering functions (Pure)
 module UI.Draw
   ( charWidth
   , drawUI
@@ -41,7 +40,6 @@ import Lens.Micro ((^.))
 
 import UI.Types
 
--- | 상태 문자열을 리스트 아이콘으로 변환 (Pure)
 statusToIcon :: String -> String
 statusToIcon "registered" = "[R] "
 statusToIcon "in_progress" = "[P] "
@@ -49,7 +47,6 @@ statusToIcon "cancelled" = "[X] "
 statusToIcon "completed" = "[✓] "
 statusToIcon _ = "[ ] "
 
--- | 상태 문자열을 속성 이름으로 변환 (Pure)
 statusToAttrName :: String -> String
 statusToAttrName "registered" = "registered"
 statusToAttrName "in_progress" = "in_progress"
@@ -57,7 +54,6 @@ statusToAttrName "cancelled" = "cancelled"
 statusToAttrName "completed" = "completed"
 statusToAttrName _ = "normal"
 
--- | 상태 문자열을 i18n 표시 텍스트로 변환 (Pure)
 statusToDisplayText :: I18n.StatusMessages -> String -> String
 statusToDisplayText msgs "registered" = I18n.registered msgs
 statusToDisplayText msgs "in_progress" = I18n.in_progress msgs
@@ -147,7 +143,6 @@ drawTodo msgs selected todo = withAttr selectAttr todoWidget
             , withAttr (attrName "timestamp") $ str timestampText
             ]
 
--- | CJK/전각 문자의 표시 너비를 계산 (Pure)
 charWidth :: Char -> Int
 charWidth c
   | c >= '\x1100' && c <= '\x11FF' = 2
@@ -179,7 +174,7 @@ drawDetailView :: AppState -> Widget Name
 drawDetailView s =
   let msgs = s ^. i18nMessages
       uiMsgs = I18n.ui msgs
-   in case s ^. mode of
+   in case appMode s of
         ViewMode -> drawViewModeDetail s msgs uiMsgs
         EditMode _ -> drawEditModeDetail s msgs uiMsgs
         InputMode -> drawInputModeDetail s msgs uiMsgs
@@ -194,16 +189,11 @@ drawViewModeDetail s msgs uiMsgs =
 
 drawEditModeDetail :: AppState -> I18n.I18nMessages -> I18n.UIMessages -> Widget Name
 drawEditModeDetail s msgs uiMsgs =
-  case s ^. editingIndex of
-    Nothing -> emptyDetailView uiMsgs (I18n.not_found uiMsgs)
-    Just idx -> case (s ^. todoList . listElementsL) Vec.!? idx of
+  case appMode s of
+    EditMode target -> case Vec.find ((== target) . _todoId) (s ^. todoList . listElementsL) of
       Nothing -> emptyDetailView uiMsgs (I18n.not_found uiMsgs)
-      Just todo ->
-        drawTodoDetailWithEditors
-          s
-          msgs
-          todo
-          (I18n.detail_edit_title uiMsgs)
+      Just todo -> drawTodoDetailWithEditors s msgs todo (I18n.detail_edit_title uiMsgs)
+    _ -> emptyDetailView uiMsgs (I18n.not_found uiMsgs)
 
 drawInputModeDetail :: AppState -> I18n.I18nMessages -> I18n.UIMessages -> Widget Name
 drawInputModeDetail s msgs uiMsgs =
@@ -223,7 +213,7 @@ drawInputModeDetail s msgs uiMsgs =
           , hBox
               [ withAttr (attrName "detailLabel") $
                   str (I18n.status_label fieldMsgs <> ": ")
-              , str $ I18n.in_progress statusMsgs
+              , str $ I18n.registered statusMsgs
               ]
           , renderEditField
               s
@@ -395,7 +385,7 @@ renderEditField
   -> FocusedField
   -> Widget Name
 renderEditField s _ fieldLabel editor fieldType =
-  let isFocused = s ^. focusedField == fieldType
+  let isFocused = activeField s == fieldType
       fieldAttr =
         if isFocused
           then attrName "focusedField"
@@ -405,9 +395,8 @@ renderEditField s _ fieldLabel editor fieldType =
         , E.renderEditor (str . unlines) isFocused editor
         ]
 
--- | 에러 메시지 표시 바 (Pure)
 drawErrorBar :: AppState -> Widget Name
-drawErrorBar s = case s ^. errorMessage of
+drawErrorBar s = case appError s of
   Nothing -> str ""
   Just msg -> withAttr (attrName "error") $ hCenter $ str msg
 
@@ -415,7 +404,7 @@ drawHelp :: AppState -> Widget Name
 drawHelp s =
   let msgs = s ^. i18nMessages
       helpMsgs = I18n.help msgs
-   in padAll 1 $ case s ^. mode of
+   in padAll 1 $ case appMode s of
         InputMode -> str $ I18n.input_mode helpMsgs
         EditMode _ -> str $ I18n.edit_mode helpMsgs
         ViewMode -> drawViewModeHelp s helpMsgs

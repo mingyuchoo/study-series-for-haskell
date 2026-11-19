@@ -22,9 +22,21 @@ class ReleaseFixture(unittest.TestCase):
         self.project = self.root / "project with spaces"
         self.project.mkdir()
         shutil.copytree(PROJECT_ROOT / "scripts", self.project / "scripts")
-        for directory in ("app", "src", "test", "config"):
-            (self.project / directory).mkdir()
-        for filename in ("Setup.hs", "app/Main.hs", "src/Example.hs", "test/Spec.hs"):
+        for directory in (
+            "apps/tto",
+            "packages/domain/src",
+            "packages/application/src",
+            "packages/terminal/src",
+            "test",
+            "config",
+        ):
+            (self.project / directory).mkdir(parents=True)
+        for filename in (
+            "Setup.hs",
+            "apps/tto/Main.hs",
+            "packages/domain/src/Example.hs",
+            "test/Spec.hs",
+        ):
             (self.project / filename).write_text("main = pure ()\n")
         for filename in ("README.md", "CHANGELOG.md", "LICENSE"):
             (self.project / filename).write_text(filename + "\n")

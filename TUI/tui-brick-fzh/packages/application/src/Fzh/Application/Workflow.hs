@@ -1,53 +1,52 @@
 module Fzh.Application.Workflow
-  ( InputSource (..)
-  , Outcome (..)
-  , Workflow (..)
-  , WorkflowEvent (..)
-  , WorkflowCommand (..)
-  , transitionWorkflow
-  , workflowFinished
-  ) where
+    ( InputSource (..)
+    , Outcome (..)
+    , Workflow (..)
+    , WorkflowCommand (..)
+    , WorkflowEvent (..)
+    , transitionWorkflow
+    , workflowFinished
+    ) where
 
-import Fzh.Domain.Config
-import Fzh.Domain.Search qualified as Search
-import Fzh.Domain.Session
+import           Fzh.Domain.Config
+import qualified Fzh.Domain.Search  as Search
+import           Fzh.Domain.Session
 
-data InputSource = StandardInput | FileSystem FilePath
-  deriving (Eq, Show)
+data InputSource = StandardInput
+                 | FileSystem FilePath
+     deriving (Eq, Show)
 
-data Outcome = NoInput | Selection (Maybe String)
-  deriving (Eq, Show)
+data Outcome = NoInput
+             | Selection (Maybe String)
+     deriving (Eq, Show)
 
-data Workflow
-  = Ready
-  | DetectingSource
-  | GatheringInput InputSource
-  | ReadingConfig [String]
-  | RunningSession [String] KeyBindingConfig
-  | WritingOutput Outcome
-  | WorkflowCompleted Outcome
-  | WorkflowFailed String
-  deriving (Eq, Show)
+data Workflow = Ready
+              | DetectingSource
+              | GatheringInput InputSource
+              | ReadingConfig [String]
+              | RunningSession [String] KeyBindingConfig
+              | WritingOutput Outcome
+              | WorkflowCompleted Outcome
+              | WorkflowFailed String
+     deriving (Eq, Show)
 
-data WorkflowEvent
-  = Start
-  | SourceDetected InputSource
-  | InputGathered [String]
-  | ConfigurationRead ConfigResult
-  | SessionEnded Session
-  | OutputWritten
-  | WarningReported
-  | OperationFailed String
-  deriving (Eq, Show)
+data WorkflowEvent = Start
+                   | SourceDetected InputSource
+                   | InputGathered [String]
+                   | ConfigurationRead ConfigResult
+                   | SessionEnded Session
+                   | OutputWritten
+                   | WarningReported
+                   | OperationFailed String
+     deriving (Eq, Show)
 
-data WorkflowCommand
-  = DetectSource
-  | GatherInput InputSource
-  | ReadConfig
-  | LaunchSession [String] KeyBindingConfig
-  | WriteOutput Outcome
-  | ReportWarning String
-  deriving (Eq, Show)
+data WorkflowCommand = DetectSource
+                     | GatherInput InputSource
+                     | ReadConfig
+                     | LaunchSession [String] KeyBindingConfig
+                     | WriteOutput Outcome
+                     | ReportWarning String
+     deriving (Eq, Show)
 
 transitionWorkflow :: WorkflowEvent -> Workflow -> (Workflow, [WorkflowCommand])
 transitionWorkflow event workflow
@@ -62,7 +61,7 @@ transitionWorkflow event workflow
         let config = resolvedConfig result
             warnings = case result of
               ConfigInvalid problem -> [ReportWarning problem]
-              _ -> []
+              _                     -> []
          in (RunningSession items config, warnings ++ [LaunchSession items config])
       (SessionEnded (Finished _ browser), RunningSession _ _) ->
         let outcome = Selection (Search.selectedItem (browserSearch browser))
@@ -73,5 +72,5 @@ transitionWorkflow event workflow
 
 workflowFinished :: Workflow -> Bool
 workflowFinished (WorkflowCompleted _) = True
-workflowFinished (WorkflowFailed _) = True
-workflowFinished _ = False
+workflowFinished (WorkflowFailed _)    = True
+workflowFinished _                     = False

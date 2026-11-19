@@ -1,7 +1,6 @@
 .PHONY: test coverage install update-stack-yaml
 
-# Extract project name from directory path
-PROJECT_NAME := $(shell basename $(CURDIR))
+PROJECT_NAME := tto
 
 all: clean setup build test run
 
@@ -22,7 +21,7 @@ setup: update-stack-yaml
 	stack test --only-dependencies
 
 format: setup
-	stylish-haskell --config .stylish-haskell.yaml -r -i ./**/*.hs
+	find apps packages test Setup.hs -type d -name .stack-work -prune -o -type f -name '*.hs' -exec fourmolu --mode inplace {} +
 
 build: setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"

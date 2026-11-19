@@ -4,12 +4,42 @@ module UI.EventsSpec
   ( spec
   ) where
 
+import Config qualified
 import Flow ((<|))
+import Graphics.Vty qualified as V
+import I18n qualified
 import Test.Hspec
+import Todo.Application.Workflow qualified as Workflow
 import UI.Events
+import UI.Types
 
 spec :: Spec
 spec = do
+  describe "workflow key translation" $ do
+    let base = initialState Config.defaultKeyBindings I18n.defaultMessages
+        loaded =
+          fst
+            $ Workflow.transition (Workflow.Succeeded (Workflow.TodosLoaded []))
+            $ fst
+            $ Workflow.transition Workflow.Start Workflow.initialWorkflow
+        browsing = projectWorkflow loaded base
+        creating = projectWorkflow (fst $ Workflow.transition Workflow.BeginCreate loaded) browsing
+    it "cancels forms with Escape despite overlapping quit bindings" $
+      keyEvent creating V.KEsc [] `shouldBe` Just Workflow.Cancel
+    it "quits from browsing with Escape" $
+      keyEvent browsing V.KEsc [] `shouldBe` Just Workflow.Quit
+    it "saves forms with Enter" $
+      keyEvent creating V.KEnter [] `shouldBe` Just Workflow.Submit
+    it "keeps normal shortcut letters as text while editing" $
+      keyEvent creating (V.KChar 'q') [] `shouldBe` Nothing
+    it "cycles form focus with Tab" $
+      keyEvent creating (V.KChar '\t') [] `shouldBe` Just Workflow.FocusNext
+    it "honors modifier-based save bindings" $ do
+      let keys = Config.defaultKeyBindings {Config.save_input = ["C-s"]}
+          configured = creating {_configuredKeys = keys}
+      keyEvent configured (V.KChar 's') [V.MCtrl] `shouldBe` Just Workflow.Submit
+      keyEvent configured (V.KChar 's') [] `shouldBe` Nothing
+
   describe "trim" <| do
     it "앞뒤 공백을 제거해야 함" <| do
       trim "  hello  " `shouldBe` "hello"

@@ -5,7 +5,7 @@ set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd -- "$project_root"
 
-source_paths=(app src test Setup.hs)
+source_paths=(apps packages test Setup.hs)
 
 for tool in stack fourmolu hlint; do
   if ! command -v "$tool" >/dev/null 2>&1; then
@@ -22,7 +22,7 @@ run_step() {
   "$@"
 }
 
-run_step 'Formatting' find "${source_paths[@]}" -type f -name '*.hs' \
+run_step 'Formatting' find "${source_paths[@]}" -type d -name .stack-work -prune -o -type f -name '*.hs' \
   -exec fourmolu --mode inplace {} +
 run_step 'Linting' hlint "${source_paths[@]}"
 run_step 'Building' stack build --test --no-run-tests

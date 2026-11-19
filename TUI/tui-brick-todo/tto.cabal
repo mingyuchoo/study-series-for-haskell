@@ -1,13 +1,13 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.6.
 --
 -- see: https://github.com/sol/hpack
 
 name:           tto
 version:        0.1.0.0
 synopsis:       A TUI todo manager with i18n and configurable keybindings
-description:    Terminal-based todo manager built with Brick, SQLite, and Tagless Final pattern
+description:    Terminal-based todo manager built with Brick, SQLite, and an ADT workflow state machine
 category:       Application
 homepage:       https://github.com/mingyuchoo/tto#readme
 bug-reports:    https://github.com/mingyuchoo/tto/issues
@@ -27,14 +27,13 @@ source-repository head
 
 library
   exposed-modules:
-      App
       Config
       DB
-      Effects
       I18n
+      Infrastructure.Configuration
+      Infrastructure.Messages
+      Infrastructure.Repository
       Lib
-      TodoService
-      TodoStatus
       UI.Attributes
       UI.Draw
       UI.Events
@@ -44,7 +43,7 @@ library
   autogen-modules:
       Paths_tto
   hs-source-dirs:
-      src
+      packages/terminal/src
   default-extensions:
       DataKinds
       DeriveGeneric
@@ -67,12 +66,11 @@ library
     , flow
     , microlens
     , microlens-th
-    , mtl
-    , parallel
     , sqlite-simple
     , text
     , time
-    , transformers
+    , tto-application
+    , tto-domain
     , vector
     , vty
     , yaml
@@ -85,7 +83,7 @@ executable tto-exe
   autogen-modules:
       Paths_tto
   hs-source-dirs:
-      app
+      apps/tto
   default-extensions:
       DataKinds
       DeriveGeneric
@@ -108,13 +106,12 @@ executable tto-exe
     , flow
     , microlens
     , microlens-th
-    , mtl
-    , parallel
     , sqlite-simple
     , text
     , time
-    , transformers
     , tto
+    , tto-application
+    , tto-domain
     , vector
     , vty
     , yaml
@@ -124,11 +121,10 @@ test-suite tto-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      AppSpec
       ConfigSpec
       DBSpec
       I18nSpec
-      TodoServiceSpec
+      RepositorySpec
       TodoStatusSpec
       UI.AttributesSpec
       UI.DrawSpec
@@ -157,20 +153,17 @@ test-suite tto-test
     , bytestring
     , containers
     , directory
-    , doctest
-    , doctest-discover
     , filepath
     , flow
     , hspec
     , microlens
     , microlens-th
-    , mtl
-    , parallel
     , sqlite-simple
     , text
     , time
-    , transformers
     , tto
+    , tto-application
+    , tto-domain
     , vector
     , vty
     , yaml

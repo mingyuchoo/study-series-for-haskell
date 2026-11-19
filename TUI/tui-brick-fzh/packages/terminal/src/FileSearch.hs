@@ -1,11 +1,18 @@
-module FileSearch (listFilesRecursive, listFilesWithIssues, shouldExclude) where
+module FileSearch
+    ( listFilesRecursive
+    , listFilesWithIssues
+    , shouldExclude
+    ) where
 
-import Control.Exception (IOException, try)
-import Fzh.Domain.Discovery (DiscoveryIssue (..))
-import Fzh.Domain.Discovery qualified as Discovery
-import System.Directory (doesDirectoryExist, listDirectory, pathIsSymbolicLink)
-import System.FilePath (takeFileName, (</>))
-import System.IO (hPutStrLn, stderr)
+import           Control.Exception    (IOException, try)
+
+import           Fzh.Domain.Discovery (DiscoveryIssue (..))
+import qualified Fzh.Domain.Discovery as Discovery
+
+import           System.Directory     (doesDirectoryExist, listDirectory,
+                                       pathIsSymbolicLink)
+import           System.FilePath      (takeFileName, (</>))
+import           System.IO            (hPutStrLn, stderr)
 
 shouldExclude :: FilePath -> Bool
 shouldExclude = Discovery.shouldExclude . takeFileName
@@ -15,7 +22,7 @@ listFilesWithIssues root = uncurry run (Discovery.startDiscovery root)
   where
     run state [] = case Discovery.discoveryResult state of
       Just result -> pure result
-      Nothing -> ioError (userError "Discovery stopped before completion")
+      Nothing     -> ioError (userError "Discovery stopped before completion")
     run state (command : pending) = do
       event <- execute command
       let (next, commands) = Discovery.transitionDiscovery event state

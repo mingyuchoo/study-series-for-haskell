@@ -1,8 +1,12 @@
-module Fuzzy (filterItems, fuzzyMatchScore) where
+module Fuzzy
+    ( filterItems
+    , fuzzyMatchScore
+    ) where
 
-import Data.Text qualified as T
-import Data.Vector qualified as Vec
-import Fzh.Domain.Search qualified as Search
+import qualified Data.Text         as T
+import qualified Data.Vector       as Vec
+
+import qualified Fzh.Domain.Search as Search
 
 fuzzyMatchScore :: T.Text -> T.Text -> Maybe Int
 fuzzyMatchScore query value = Search.fuzzyMatchScore (T.unpack query) (T.unpack value)

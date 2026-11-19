@@ -1,50 +1,53 @@
 module Types
-  ( AppConfig (..)
-  , AppState
-  , Name (..)
-  , configWithKeyBinding
-  , defaultConfig
-  , initialState
-  , transitionApp
-  , stSession
-  , stConfig
-  , stItems
-  , stFilteredList
-  , stSearchQuery
-  , stTerminalSize
-  , contentHeight
-  , isTerminalSizeSufficient
-  , maxPreviewLines
-  , minTerminalHeight
-  , minTerminalWidth
-  , previewWidth
-  , resultListWidth
-  ) where
+    ( AppConfig (..)
+    , AppState
+    , Name (..)
+    , configWithKeyBinding
+    , contentHeight
+    , defaultConfig
+    , initialState
+    , isTerminalSizeSufficient
+    , maxPreviewLines
+    , minTerminalHeight
+    , minTerminalWidth
+    , previewWidth
+    , resultListWidth
+    , stConfig
+    , stFilteredList
+    , stItems
+    , stSearchQuery
+    , stSession
+    , stTerminalSize
+    , transitionApp
+    ) where
 
-import Brick (on)
-import Brick.Widgets.List (List, list, listMoveTo)
-import Config (KeyBindingConfig (..), KeyBindingStyle (..))
-import Data.Text qualified as T
-import Data.Vector qualified as Vec
-import Fzh.Domain.Search qualified as Search
-import Fzh.Domain.Session
-import Graphics.Vty qualified as V
+import           Brick              (on)
+import           Brick.Widgets.List (List, list, listMoveTo)
+
+import           Config             (KeyBindingConfig (..),
+                                     KeyBindingStyle (..))
+
+import qualified Data.Text          as T
+import qualified Data.Vector        as Vec
+
+import qualified Fzh.Domain.Search  as Search
+import           Fzh.Domain.Session
+
+import qualified Graphics.Vty       as V
 
 data Name = ItemList
-  deriving (Eq, Ord, Show)
+     deriving (Eq, Ord, Show)
 
-data AppConfig = AppConfig
-  { configMaxWidth :: !Int
-  , configDefaultAttr :: !V.Attr
-  , configSelectedAttr :: !V.Attr
-  , configKeyBinding :: !KeyBindingStyle
-  }
+data AppConfig = AppConfig { configMaxWidth     :: !Int
+                           , configDefaultAttr  :: !V.Attr
+                           , configSelectedAttr :: !V.Attr
+                           , configKeyBinding   :: !KeyBindingStyle
+                           }
 
-data AppState = AppState
-  { stSession :: !Session
-  , stConfig :: !AppConfig
-  , stFilteredList :: !(List Name T.Text)
-  }
+data AppState = AppState { stSession      :: !Session
+                         , stConfig       :: !AppConfig
+                         , stFilteredList :: !(List Name T.Text)
+                         }
 
 defaultConfig :: AppConfig
 defaultConfig = AppConfig 80 V.defAttr (V.white `on` V.blue) Emacs

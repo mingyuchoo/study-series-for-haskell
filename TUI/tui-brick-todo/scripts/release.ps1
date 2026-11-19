@@ -80,14 +80,15 @@ try {
     }
     $version = $versionLine.Matches[0].Groups[1].Value
     $sourceFiles = @(
-        Get-ChildItem -LiteralPath 'app', 'src', 'test' -Recurse -File -Filter '*.hs' |
+        Get-ChildItem -LiteralPath 'apps', 'packages', 'test' -Recurse -File -Filter '*.hs' |
+            Where-Object { $_.FullName -notmatch '[\\/]\.stack-work[\\/]' } |
             Sort-Object FullName |
             ForEach-Object { $_.FullName }
         (Get-Item -LiteralPath 'Setup.hs').FullName
     )
 
     Invoke-Native -Label 'Formatting' -Command 'fourmolu' -CommandArguments (@('--mode', 'inplace') + $sourceFiles)
-    Invoke-Native -Label 'Linting' -Command 'hlint' -CommandArguments @('app', 'src', 'test', 'Setup.hs')
+    Invoke-Native -Label 'Linting' -Command 'hlint' -CommandArguments @('apps', 'packages', 'test', 'Setup.hs')
     Invoke-Native -Label 'Building' -Command 'stack' -CommandArguments @('build', '--test', '--no-run-tests', '--ghc-options=-O2')
     Invoke-Native -Label 'Testing' -Command 'stack' -CommandArguments @('test', '--ghc-options=-O2')
 

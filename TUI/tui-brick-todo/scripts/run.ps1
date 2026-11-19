@@ -3,7 +3,7 @@ Set-StrictMode -Version Latest
 
 $applicationArguments = $args
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$sourcePaths = @('app', 'src', 'test', 'Setup.hs')
+$sourcePaths = @('apps', 'packages', 'test', 'Setup.hs')
 
 foreach ($tool in @('stack', 'fourmolu', 'hlint')) {
     if (-not (Get-Command $tool -CommandType Application -ErrorAction SilentlyContinue)) {
@@ -29,6 +29,7 @@ Push-Location -LiteralPath $projectRoot
 try {
     $sourceFiles = @(
         Get-ChildItem -LiteralPath $sourcePaths -Recurse -File -Filter '*.hs' |
+            Where-Object { $_.FullName -notmatch '[\\/]\.stack-work[\\/]' } |
             Sort-Object FullName |
             ForEach-Object { $_.FullName }
     )

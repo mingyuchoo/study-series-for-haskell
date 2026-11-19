@@ -1,34 +1,33 @@
 module Fzh.Domain.Discovery
-  ( Discovery
-  , EntryKind (..)
-  , DiscoveryIssue (..)
-  , DiscoveryEvent (..)
-  , DiscoveryCommand (..)
-  , startDiscovery
-  , transitionDiscovery
-  , discoveryResult
-  , shouldExclude
-  ) where
+    ( Discovery
+    , DiscoveryCommand (..)
+    , DiscoveryEvent (..)
+    , DiscoveryIssue (..)
+    , EntryKind (..)
+    , discoveryResult
+    , shouldExclude
+    , startDiscovery
+    , transitionDiscovery
+    ) where
 
-data Discovery
-  = Inspecting FilePath [FilePath] [FilePath] [DiscoveryIssue]
-  | Listing FilePath [FilePath] [FilePath] [DiscoveryIssue]
-  | DiscoveryFinished [FilePath] [DiscoveryIssue]
-  deriving (Eq, Show)
+data Discovery = Inspecting FilePath [FilePath] [FilePath] [DiscoveryIssue]
+               | Listing FilePath [FilePath] [FilePath] [DiscoveryIssue]
+               | DiscoveryFinished [FilePath] [DiscoveryIssue]
+     deriving (Eq, Show)
 
 data EntryKind = RegularFile | Directory | SymbolicLink
-  deriving (Eq, Show)
+     deriving (Eq, Show)
 
 data DiscoveryIssue = DiscoveryIssue FilePath String
-  deriving (Eq, Show)
+     deriving (Eq, Show)
 
-data DiscoveryEvent
-  = PathInspected FilePath (Either String EntryKind)
-  | DirectoryRead FilePath (Either String [(FilePath, String)])
-  deriving (Eq, Show)
+data DiscoveryEvent = PathInspected FilePath (Either String EntryKind)
+                    | DirectoryRead FilePath (Either String [(FilePath, String)])
+     deriving (Eq, Show)
 
-data DiscoveryCommand = InspectPath FilePath | ReadDirectory FilePath
-  deriving (Eq, Show)
+data DiscoveryCommand = InspectPath FilePath
+                      | ReadDirectory FilePath
+     deriving (Eq, Show)
 
 startDiscovery :: FilePath -> (Discovery, [DiscoveryCommand])
 startDiscovery root = (Listing root [] [] [], [ReadDirectory root])
@@ -57,10 +56,10 @@ advance (path : pending) files issues = (Inspecting path pending files issues, [
 
 discoveryResult :: Discovery -> Maybe ([FilePath], [DiscoveryIssue])
 discoveryResult (DiscoveryFinished files issues) = Just (files, issues)
-discoveryResult _ = Nothing
+discoveryResult _                                = Nothing
 
 shouldExclude :: String -> Bool
 shouldExclude name = name `elem` ["node_modules", "dist", "dist-newstyle", "build", "target"] || hidden name
   where
     hidden ('.' : rest) = rest `notElem` ["", "."]
-    hidden _ = False
+    hidden _            = False

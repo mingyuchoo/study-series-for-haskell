@@ -1,20 +1,19 @@
 module Fzh.Application.Ports
-  ( WorkflowPorts (..)
-  , runWorkflow
-  ) where
+    ( WorkflowPorts (..)
+    , runWorkflow
+    ) where
 
-import Fzh.Application.Workflow
-import Fzh.Domain.Config (ConfigResult, KeyBindingConfig)
-import Fzh.Domain.Session (Session)
+import           Fzh.Application.Workflow
+import           Fzh.Domain.Config        (ConfigResult, KeyBindingConfig)
+import           Fzh.Domain.Session       (Session)
 
-data WorkflowPorts m = WorkflowPorts
-  { detectSource :: m (Either String InputSource)
-  , gatherInput :: InputSource -> m (Either String [String])
-  , readConfiguration :: m ConfigResult
-  , launchSession :: [String] -> KeyBindingConfig -> m (Either String Session)
-  , writeOutput :: Outcome -> m (Either String ())
-  , reportWarning :: String -> m ()
-  }
+data WorkflowPorts m = WorkflowPorts { detectSource :: m (Either String InputSource)
+                                     , gatherInput :: InputSource -> m (Either String [String])
+                                     , readConfiguration :: m ConfigResult
+                                     , launchSession :: [String] -> KeyBindingConfig -> m (Either String Session)
+                                     , writeOutput :: Outcome -> m (Either String ())
+                                     , reportWarning :: String -> m ()
+                                     }
 
 runWorkflow :: (Monad m) => WorkflowPorts m -> m Workflow
 runWorkflow ports = uncurry run (transitionWorkflow Start Ready)

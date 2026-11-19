@@ -1,19 +1,16 @@
 module Vty
-  ( buildVtyFromTty
-  ) where
+    ( buildVtyFromTty
+    ) where
 
-import Data.Maybe (fromMaybe)
+import           Data.Maybe                          (fromMaybe)
 
-import Graphics.Vty qualified as V
-import Graphics.Vty.Platform.Unix (mkVtyWithSettings)
-import Graphics.Vty.Platform.Unix.Settings qualified as VtyUnixSettings
+import qualified Graphics.Vty                        as V
+import           Graphics.Vty.Platform.Unix          (mkVtyWithSettings)
+import qualified Graphics.Vty.Platform.Unix.Settings as VtyUnixSettings
 
-import System.Environment (lookupEnv)
-import System.Posix.IO
-  ( OpenMode (..)
-  , defaultFileFlags
-  , openFd
-  )
+import           System.Environment                  (lookupEnv)
+import           System.Posix.IO                     (OpenMode (..),
+                                                      defaultFileFlags, openFd)
 
 buildVtyFromTty :: IO V.Vty
 buildVtyFromTty = do

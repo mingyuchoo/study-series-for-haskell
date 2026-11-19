@@ -1,19 +1,32 @@
-module AdapterSpec (spec) where
+module AdapterSpec
+    ( spec
+    ) where
 
-import Brick.Widgets.List qualified as List
-import Config
-import Control.Exception (bracket)
-import Data.Text.IO qualified as TIO
-import Event (loadFileContent, toSessionEvent)
-import FileSearch (listFilesWithIssues)
-import Fzh.Domain.Search qualified as Search
-import Fzh.Domain.Session
-import Graphics.Vty qualified as V
-import System.Directory
-import System.FilePath ((</>))
-import System.IO (hClose, openTempFile)
-import Test.Hspec
-import Types (defaultConfig, initialState, stFilteredList, stSession, transitionApp)
+import qualified Brick.Widgets.List as List
+
+import           Config
+
+import           Control.Exception  (bracket)
+
+import qualified Data.Text.IO       as TIO
+
+import           Event              (loadFileContent, toSessionEvent)
+
+import           FileSearch         (listFilesWithIssues)
+
+import qualified Fzh.Domain.Search  as Search
+import           Fzh.Domain.Session
+
+import qualified Graphics.Vty       as V
+
+import           System.Directory
+import           System.FilePath    ((</>))
+import           System.IO          (hClose, openTempFile)
+
+import           Test.Hspec
+
+import           Types              (defaultConfig, initialState,
+                                     stFilteredList, stSession, transitionApp)
 
 spec :: Spec
 spec = do

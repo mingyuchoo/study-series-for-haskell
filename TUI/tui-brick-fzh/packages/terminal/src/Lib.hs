@@ -1,29 +1,27 @@
 module Lib
-  ( module Config
-  , module Types
-  , app
-  , buildVtyFromTty
-  ) where
+    ( module Config
+    , module Types
+    , app
+    , buildVtyFromTty
+    ) where
 
-import Brick
-import Brick.Widgets.List (listSelectedAttr)
+import           Brick
+import           Brick.Widgets.List      (listSelectedAttr)
 
-import Config
-  ( KeyBindingConfig (..)
-  , KeyBindingStyle (..)
-  , defaultKeyBindingConfig
-  , loadKeyBindingConfig
-  )
+import           Config                  (KeyBindingConfig (..),
+                                          KeyBindingStyle (..),
+                                          defaultKeyBindingConfig,
+                                          loadKeyBindingConfig)
 
-import Event (handleEvent, loadSelectedFile)
+import           Event                   (handleEvent, loadSelectedFile)
 
-import Graphics.Vty.Attributes qualified as V
+import qualified Graphics.Vty.Attributes as V
 
-import Types
+import           Types
 
-import UI (drawUI)
+import           UI                      (drawUI)
 
-import Vty (buildVtyFromTty)
+import           Vty                     (buildVtyFromTty)
 
 app :: App AppState e Name
 app =

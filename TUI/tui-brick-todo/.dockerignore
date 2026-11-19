@@ -1,0 +1,6 @@
+.stack-work
+**/.stack-work
+graft
+dist
+*.db
+**/*.db

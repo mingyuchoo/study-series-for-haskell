@@ -1,11 +1,15 @@
-module Main (main) where
+module Main
+    ( main
+    ) where
 
-import Control.Monad.State.Strict (State, modify, runState, state)
-import Fzh.Application.Ports
-import Fzh.Application.Workflow
-import Fzh.Domain.Config
-import Fzh.Domain.Session
-import Test.Hspec
+import           Control.Monad.State.Strict (State, modify, runState, state)
+
+import           Fzh.Application.Ports
+import           Fzh.Application.Workflow
+import           Fzh.Domain.Config
+import           Fzh.Domain.Session
+
+import           Test.Hspec
 
 main :: IO ()
 main = hspec $ do

@@ -2,10 +2,11 @@
 
 module UI.TypesSpec (spec) where
 
-import DB qualified
 import Flow ((<|))
-import Lens.Micro ((%~), (&), (.~), (^.))
+import Lens.Micro ((&), (.~), (^.))
 import Test.Hspec
+import Todo.Domain.Model qualified as Domain
+import TodoStatus qualified as Status
 import UI.Types
 
 spec :: Spec
@@ -95,39 +96,21 @@ spec = do
       let changed = sampleTodo & todoStatus .~ "completed"
       changed ^. todoStatus `shouldBe` "completed"
 
-  describe "fromTodoRow" <| do
-    it "DB.TodoRow를 UI.Todo로 변환해야 함" <| do
-      let dbRow =
-            DB.TodoRow
-              1
-              "Action"
-              "registered"
-              "2024-01-01"
-              (Just "Sub")
-              (Just "Ind")
-              (Just "Dir")
-              Nothing
-          uiTodo = fromTodoRow dbRow
-      uiTodo ^. todoId `shouldBe` 1
-      uiTodo ^. todoAction `shouldBe` "Action"
-      uiTodo ^. todoStatus `shouldBe` "registered"
-      uiTodo ^. todoCreatedAt `shouldBe` "2024-01-01"
-      uiTodo ^. todoSubject `shouldBe` Just "Sub"
-      uiTodo ^. todoIndirectObject `shouldBe` Just "Ind"
-      uiTodo ^. todoDirectObject `shouldBe` Just "Dir"
-      uiTodo ^. todoStatusChangedAt `shouldBe` Nothing
-
-    it "완료된 TodoRow를 변환해야 함" <| do
-      let dbRow =
-            DB.TodoRow
-              2
-              "Done"
-              "completed"
-              "2024-01-01"
-              Nothing
-              Nothing
-              Nothing
-              (Just "2024-01-02")
-          uiTodo = fromTodoRow dbRow
-      uiTodo ^. todoStatus `shouldBe` "completed"
-      uiTodo ^. todoStatusChangedAt `shouldBe` Just "2024-01-02"
+  describe "fromDomainTodo" $ do
+    let fields =
+          either (error . show) id $
+            Domain.validateFields "Action" (Just "Sub") (Just "Ind") (Just "Dir")
+    it "projects domain fields into UI values" $ do
+      let value = fromDomainTodo $ Domain.Todo 1 fields Status.Registered "2024-01-01" Nothing
+      value ^. todoId `shouldBe` 1
+      value ^. todoAction `shouldBe` "Action"
+      value ^. todoStatus `shouldBe` "registered"
+      value ^. todoCreatedAt `shouldBe` "2024-01-01"
+      value ^. todoSubject `shouldBe` Just "Sub"
+      value ^. todoIndirectObject `shouldBe` Just "Ind"
+      value ^. todoDirectObject `shouldBe` Just "Dir"
+      value ^. todoStatusChangedAt `shouldBe` Nothing
+    it "projects completed status and confirmed timestamps" $ do
+      let value = fromDomainTodo $ Domain.Todo 2 fields Status.Completed "2024-01-01" (Just "2024-01-02")
+      value ^. todoStatus `shouldBe` "completed"
+      value ^. todoStatusChangedAt `shouldBe` Just "2024-01-02"

@@ -1,6 +1,6 @@
 # tto
 
-터미널 기반 할 일 관리 애플리케이션 (Brick + SQLite + Tagless Final 패턴)
+터미널 기반 할 일 관리 애플리케이션 (Brick + SQLite + ADT 상태 머신)
 
 ## How to create a project
 
@@ -181,26 +181,16 @@ python3 scripts/test_release.py -v
 
 ## 아키텍처
 
-### 모듈 구조
+### 워크스페이스 구조
 
-- **TodoStatus**: GADT 기반 타입 안전한 상태 머신 (`Registered → InProgress → Cancelled → Completed → Registered`)
-- **Effects**: Tagless Final 효과 대수 (`MonadTodoRepo`, `MonadConfig`, `MonadI18n`, `MonadTime`)
-- **App**: Tagless Final 해석기 (ReaderT + IO)
-- **TodoService**: 순수 비즈니스 로직 (입력 검증, 타입 안전한 상태 전이 디스패치)
-- **DB**: SQLite 데이터베이스 연산
-- **UI.Types**: UI 데이터 타입 및 렌즈
-- **UI.Draw**: 순수 렌더링 함수 (상태 헬퍼 함수로 중복 제거)
-- **UI.Events**: 이벤트 핸들러 (에러 피드백 메커니즘 포함)
-- **UI.Attributes**: 터미널 UI 속성 정의
-- **Config**: YAML 기반 키바인딩 설정
-- **I18n**: 다국어 지원 (한국어/영어)
+- `packages/domain/` (`tto-domain`): 검증된 Todo 필드와 ADT/GADT 상태 전이. `base`에만 의존합니다.
+- `packages/application/` (`tto-application`): 순수한 `State × Event → State + Command` 전이, 저장소 포트 및 결과 이벤트.
+- `packages/terminal/src/`: Brick 화면·이벤트 어댑터, SQLite 저장소, 설정·메시지 파일 로딩.
+- `apps/tto/Main.hs`: 설정과 DB 연결을 조립하는 실행 진입점.
 
-### 주요 설계 원칙
+조회·생성·편집·저장·삭제·상태 변경·오류 복구·종료를 ADT로 표현합니다. 실패한 저장은 입력을 보존하고, 저장과 확인 조회는 하나의 트랜잭션으로 처리합니다. 편집 대상은 안정적인 Todo ID로 추적합니다.
 
-- **타입 안전성**: GADT를 통한 컴파일 타임 상태 전이 검증, `AnyStatus` 패턴 매칭을 통한 런타임 디스패치
-- **효과 분리**: Tagless Final 패턴으로 순수 비즈니스 로직과 IO 분리
-- **에러 피드백**: DB 작업 실패 시 UI에 에러 메시지 표시 (조용한 실패 방지)
-- **입력 검증**: `createNewTodo`에서 빈 action 검증 (`Maybe TodoId` 반환)
+자세한 상태 전이와 패키지 의존 관계는 [아키텍처 문서](docs/ARCHITECTURE.md)를 참고하세요.
 
 ## 키바인딩 설정
 

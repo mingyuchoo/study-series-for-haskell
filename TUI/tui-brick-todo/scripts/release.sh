@@ -89,9 +89,9 @@ run_step() {
   "$@"
 }
 
-run_step 'Formatting' find app src test Setup.hs -type f -name '*.hs' \
+run_step 'Formatting' find apps packages test Setup.hs -type d -name .stack-work -prune -o -type f -name '*.hs' \
   -exec fourmolu --mode inplace {} +
-run_step 'Linting' hlint app src test Setup.hs
+run_step 'Linting' hlint apps packages test Setup.hs
 run_step 'Building' stack build --test --no-run-tests --ghc-options=-O2
 run_step 'Testing' stack test --ghc-options=-O2
 

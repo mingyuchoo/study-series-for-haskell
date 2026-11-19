@@ -1,10 +1,13 @@
-module Main (main) where
+module Main
+    ( main
+    ) where
 
-import Fzh.Domain.Config
-import Fzh.Domain.Discovery qualified as D
-import Fzh.Domain.Search qualified as S
-import Fzh.Domain.Session
-import Test.Hspec
+import           Fzh.Domain.Config
+import qualified Fzh.Domain.Discovery as D
+import qualified Fzh.Domain.Search    as S
+import           Fzh.Domain.Session
+
+import           Test.Hspec
 
 main :: IO ()
 main = hspec $ do
