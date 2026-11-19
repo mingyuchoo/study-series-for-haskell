@@ -28,6 +28,6 @@ prepareLayout st =
 
 viewerHelpText :: AppState -> T.Text
 viewerHelpText st
-  | stPendingCtrlX st = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
+  | stKeySequence st == ControlXPrefix = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
   | otherwise = translate (stLanguage st) "C-p/n 스크롤  C-v/M-v 페이지  M-</> 처음/끝  C-g/C-x k 닫기  C-x C-c 종료"
 

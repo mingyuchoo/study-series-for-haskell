@@ -1,100 +1,52 @@
 module Hfm.Application.Internal.Files
-  ( refreshAll, changeDir, enterSelected, openView, runFileOperation, deleteSelected, finish ) where
+  ( enterSelected, runFileOperation, deleteSelected ) where
 
-import           Control.Monad.Except            (ExceptT (..), runExceptT)
-import           Control.Monad.State.Strict      (get, modify)
+import qualified Data.Text               as T
 
-import qualified Data.ByteString                 as BS
-import qualified Data.Text                       as T
-import           Data.Text.Encoding              (decodeUtf8With)
-import           Data.Text.Encoding.Error        (lenientDecode)
-
-import           Hfm.Application.Internal.Action
+import           Hfm.Application.Machine (changeDir, openView)
 import           Hfm.Application.Program
 import           Hfm.Application.State
 import           Hfm.Application.Status
 import           Hfm.Domain.Entry
 import           Hfm.Domain.PathPolicy
 
-import           System.FilePath                 (takeDirectory, takeFileName,
-                                                  (</>))
+import           System.FilePath         (takeDirectory, takeFileName, (</>))
 
-refreshAll :: Action ()
-refreshAll = do
-  st <- get
-  attempt (runExceptT $ do
-    left <- ExceptT (request (ReadEntries (stShowHidden st) (panelPath (stLeft st))))
-    right <- ExceptT (request (ReadEntries (stShowHidden st) (panelPath (stRight st))))
-    pure (left, right)) $ \(left, right) ->
-      modify (\s -> s { stLeft = refreshPanel left Nothing (stLeft s)
-                      , stRight = refreshPanel right Nothing (stRight s) })
+enterSelected :: AppState -> Program (AppState, Lifecycle)
+enterSelected state = case selectedEntry state of
+  Nothing -> continue state
+  Just entry -> case entryKind entry of
+    Parent -> let current = panelPath (activePanel state)
+              in changeDir (takeDirectory current) (Just (takeFileName current)) state
+    Directory -> changeDir (entryPath entry) Nothing state
+    SymbolicLink -> let path = entryPath entry
+                    in Await (DirectoryExists path) (Working state (InspectingLink path))
+    RegularFile -> openView (entryPath entry) state
+    Special -> continue (state { stStatus = SpecialFileUnsupported })
+  where
+    entryPath entry = panelPath (activePanel state) </> entryName entry
 
-changeDir :: FilePath -> Maybe FilePath -> Action ()
-changeDir path preferred = do
-  st <- get
-  attempt (runExceptT $ do
-    canonical <- ExceptT (request (CanonicalizePath path))
-    entries <- ExceptT (request (ReadEntries (stShowHidden st) canonical))
-    pure (canonical, entries)) $ \(canonical, entries) ->
-      modify (\s ->
-        let old = activePanel s
-            panel = refreshPanel entries preferred (old { panelPath = canonical, panelSearch = "" })
-        in (replaceActivePanel panel s) { stStatus = CurrentDirectory canonical })
+runFileOperation :: Operation -> T.Text -> AppState -> Program (AppState, Lifecycle)
+runFileOperation Command _ state = continue state
+runFileOperation operation raw state
+  | not (validDestination input) || (operation `elem` [Mkdir, Rename] && not (validDirectoryName input)) =
+      continue (state { stStatus = InvalidDestination })
+  | otherwise = case operation of
+      Mkdir -> Await (MakeDirectory (requestedPath cwd input)) (Working state (CompletingMutation DirectoryCreated))
+      Copy -> transfer CopyTransfer
+      Move -> transfer MoveTransfer
+      Rename -> case selectedPath state of
+        Just source -> Await (MoveEntry source (cwd </> input)) (Working state (CompletingMutation Moved))
+        Nothing -> continue state
+  where
+    input = T.unpack (T.strip raw)
+    cwd = panelPath (activePanel state)
+    transfer kind = case selectedPath state of
+      Nothing -> continue state
+      Just source -> let target = requestedPath cwd input
+                     in Await (DirectoryExists target) (Working state (InspectingDestination kind source target))
 
-enterSelected :: Action ()
-enterSelected = do
-  st <- get
-  case selectedEntry st of
-    Nothing -> pure ()
-    Just entry -> case entryKind entry of
-      Parent -> let current = panelPath (activePanel st)
-                in changeDir (takeDirectory current) (Just (takeFileName current))
-      Directory -> changeDir (panelPath (activePanel st) </> entryName entry) Nothing
-      SymbolicLink -> do
-        let path = panelPath (activePanel st) </> entryName entry
-        attempt (request (DirectoryExists path)) $ \isDir -> if isDir then changeDir path Nothing else openView path
-      RegularFile -> openView (panelPath (activePanel st) </> entryName entry)
-      Special -> modify (\s -> s { stStatus = SpecialFileUnsupported })
-
-openView :: FilePath -> Action ()
-openView path = attempt (request (ReadPreview path)) $ \bytes ->
-  if BS.elem 0 bytes
-    then modify (\s -> s { stStatus = BinaryPreviewUnsupported })
-    else modify (\s -> s { stMode = ViewFile path (decodeUtf8With lenientDecode bytes) 0 })
-
-runFileOperation :: Operation -> T.Text -> Action ()
-runFileOperation Command _ = pure ()
-runFileOperation op raw = do
-  st <- get
-  let input = T.unpack (T.strip raw)
-      cwd = panelPath (activePanel st)
-  if not (validDestination input) || (op `elem` [Mkdir, Rename] && not (validDirectoryName input))
-    then modify (\s -> s { stStatus = InvalidDestination })
-    else case op of
-      Mkdir -> attempt (request (MakeDirectory (requestedPath cwd input))) $ \_ -> finish DirectoryCreated
-      Copy -> runTransfer CopyEntry Copied cwd input st
-      Move -> runTransfer MoveEntry Moved cwd input st
-      Rename -> case selectedPath st of
-        Just source -> attempt (request (MoveEntry source (cwd </> input))) $ \_ -> finish Moved
-        Nothing -> pure ()
-
-runTransfer :: (FilePath -> FilePath -> Request ()) -> Status -> FilePath -> FilePath -> AppState -> Action ()
-runTransfer operation message cwd input st = case selectedPath st of
-  Nothing -> pure ()
-  Just source -> attempt (runExceptT $ do
-    let requested = requestedPath cwd input
-    isDir <- ExceptT (request (DirectoryExists requested))
-    let target = destinationPath source requested isDir
-    ExceptT (request (operation source target))) $ \_ -> finish message
-
-finish :: Status -> Action ()
-finish message = do
-  modify (\s -> s { stMode = Browse, stStatus = message })
-  refreshAll
-
-deleteSelected :: Action ()
-deleteSelected = do
-  st <- get
-  case selectedPath st of
-    Nothing   -> modify (\s -> s { stMode = Browse })
-    Just path -> attempt (request (DeleteEntry path)) $ \_ -> finish Deleted
+deleteSelected :: AppState -> Program (AppState, Lifecycle)
+deleteSelected state = case selectedPath state of
+  Nothing -> continue (state { stMode = Browse })
+  Just path -> Await (DeleteEntry path) (Working state (CompletingMutation Deleted))

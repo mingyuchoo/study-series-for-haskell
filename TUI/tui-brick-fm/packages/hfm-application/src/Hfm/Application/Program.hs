@@ -3,18 +3,35 @@
 module Hfm.Application.Program
   ( Request (..)
   , Program (..)
+  , Phase (..)
+  , StartupContext (..)
+  , StartupStep (..)
+  , TaskStep (..)
+  , Transfer (..)
+  , ProcessKind (..)
+  , Lifecycle (..)
   , request
+  , continue
   ) where
 
-import           Control.Monad         ((>=>))
+import qualified Data.ByteString        as BS
+import qualified Data.Text              as T
 
-import qualified Data.ByteString       as BS
-import qualified Data.Text             as T
+import           Hfm.Application.Error  (FileError)
+import           Hfm.Application.State  (AppConfig, AppState)
+import           Hfm.Application.Status (Status)
+import           Hfm.Domain.Config      (Settings)
+import           Hfm.Domain.Entry       (Entry)
 
-import           Hfm.Application.Error (FileError)
-import           Hfm.Domain.Entry      (Entry)
+data Lifecycle = Continue | Quit
+     deriving (Eq, Show)
 
--- Each request fixes its response type; no IO action can be embedded in a plan.
+data Transfer = CopyTransfer | MoveTransfer
+     deriving (Eq, Show)
+
+data ProcessKind = EditorProcess | ShellProcess
+     deriving (Eq, Show)
+
 data Request a where ReadEntries :: Bool -> FilePath -> Request [Entry]
                      CanonicalizePath :: FilePath -> Request FilePath
                      DirectoryExists :: FilePath -> Request Bool
@@ -25,24 +42,35 @@ data Request a where ReadEntries :: Bool -> FilePath -> Request [Entry]
                      MakeDirectory :: FilePath -> Request ()
                      EditFile :: Maybe FilePath -> FilePath -> FilePath -> Request Int
                      RunCommand :: FilePath -> T.Text -> Request Int
+                     SaveSettings :: Settings -> Request ()
 
--- Continuations allow later requests to depend on earlier results, including failure.
-data Program a where Done :: a -> Program a
-                     Await :: Request b -> (Either FileError b -> Program a) -> Program a
+data StartupContext = StartupContext AppConfig (Int, Int)
 
-instance Functor Program where
-  fmap f (Done value)          = Done (f value)
-  fmap f (Await effect resume) = Await effect (fmap f . resume)
+data StartupStep response where ResolvingLeftPath :: StartupContext -> FilePath -> StartupStep FilePath
+                                ResolvingRightPath :: StartupContext -> FilePath -> StartupStep FilePath
+                                LoadingLeftEntries :: StartupContext -> FilePath -> FilePath -> StartupStep [Entry]
+                                LoadingRightEntries :: StartupContext -> FilePath -> [Entry] -> FilePath -> StartupStep [Entry]
 
-instance Applicative Program where
-  pure = Done
-  functions <*> values = do
-    f <- functions
-    fmap f values
+data TaskStep response where RefreshingLeftPanel :: TaskStep [Entry]
+                             RefreshingRightPanel :: [Entry] -> TaskStep [Entry]
+                             ResolvingDirectory :: Maybe FilePath -> TaskStep FilePath
+                             LoadingDirectory :: FilePath -> Maybe FilePath -> TaskStep [Entry]
+                             InspectingLink :: FilePath -> TaskStep Bool
+                             LoadingPreview :: FilePath -> TaskStep BS.ByteString
+                             InspectingDestination :: Transfer -> FilePath -> FilePath -> TaskStep Bool
+                             CompletingMutation :: Status -> TaskStep ()
+                             CompletingProcess :: ProcessKind -> TaskStep Int
+                             PersistingSettings :: AppState -> TaskStep ()
 
-instance Monad Program where
-  Done value >>= next          = next value
-  Await effect resume >>= next = Await effect (resume >=> next)
+data Phase response result where ReturningResponse :: Phase response (Either FileError response)
+                                 Starting :: StartupStep response -> Phase response (Either FileError AppState)
+                                 Working :: AppState -> TaskStep response -> Phase response (AppState, Lifecycle)
 
-request :: Request a -> Program (Either FileError a)
-request effect = Await effect Done
+data Program result where Done :: result -> Program result
+                          Await :: Request response -> Phase response result -> Program result
+
+request :: Request response -> Program (Either FileError response)
+request effect = Await effect ReturningResponse
+
+continue :: AppState -> Program (AppState, Lifecycle)
+continue state = Done (state, Continue)

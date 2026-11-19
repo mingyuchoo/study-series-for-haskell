@@ -48,7 +48,7 @@ renderThemePicker st choices = centerLayer $
     drawTheme selected (i, theme) = withAttr (attrName (if selected then "selected" else "active")) $
       txt (T.pack (show (i + 1)) <> " " <> (if theme == stTheme st then "* " else "  ") <> themeName theme)
     help
-      | stPendingCtrlX st = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
+      | stKeySequence st == ControlXPrefix = translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
       | otherwise = translate (stLanguage st) "↑/↓ C-p/n 이동  1-8 선택  RET 적용  Esc/C-g 취소"
 
 renderManager :: AppState -> Widget Name
@@ -66,7 +66,7 @@ renderManager st = vBox
 
 navigationHelp :: AppState -> T.Text
 navigationHelp st
-  | stPendingCtrlX st = if stMode st == Browse
+  | stKeySequence st == ControlXPrefix = if stMode st == Browse
       then translate (stLanguage st) "C-x: C-c 종료  o 패널  C-f 열기  k 닫기  C-g 취소"
       else translate (stLanguage st) "C-x: C-c 종료  k 닫기  C-g 명령 취소"
   | otherwise = case stMode st of

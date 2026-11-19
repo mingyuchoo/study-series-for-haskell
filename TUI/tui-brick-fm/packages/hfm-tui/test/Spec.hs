@@ -64,7 +64,7 @@ spec = do
                    (Prompt Command "echo 한글", "Command: "), (EditorPrompt "한글/editor.exe", "Editor: "), (ConfirmDelete, "Confirm delete: "),
                    (ViewFile "/tmp/한글.txt" "한글 내용" 0, "View: ")]
       mapM_ (\(mode, label) -> do
-        let st = base { stMode = mode, stInputCursor = 2, stPendingCtrlX = True }
+        let st = base { stMode = mode, stInputCursor = 2, stKeySequence = ControlXPrefix }
             changed = toggleLanguage st
             rendered = T.unlines (viewerRows changed)
         rendered `shouldSatisfy` T.isInfixOf label
@@ -72,7 +72,7 @@ spec = do
         rendered `shouldSatisfy` T.isInfixOf "Quit"
         stMode changed `shouldBe` mode
         stInputCursor changed `shouldBe` 2
-        stPendingCtrlX changed `shouldBe` True
+        stKeySequence changed `shouldBe` ControlXPrefix
         selectedEntry changed `shouldBe` selectedEntry st
         panelSearch (activePanel changed) `shouldBe` panelSearch (activePanel st)
         T.unlines (viewerRows (toggleLanguage changed)) `shouldBe` T.unlines (viewerRows st)) cases
@@ -132,13 +132,13 @@ spec = do
       let content = T.unlines ["LINE-" <> T.pack (show n) | n <- [0 :: Int .. 59]]
       mapM_ (\(size, prefixPending) -> do
         let st = (initialState "/tmp" [] "/tmp" [] defaultConfig size)
-                   { stMode = ViewFile "/tmp/test.txt" content 999, stPendingCtrlX = prefixPending }
+                   { stMode = ViewFile "/tmp/test.txt" content 999, stKeySequence = prefixPending }
             rows = viewerRows st
             footerStart = snd size - length (viewerHelpLines st)
         map T.strip (drop footerStart rows) `shouldBe` viewerHelpLines st
         rows !! (footerStart - 2) `shouldSatisfy` T.isInfixOf "LINE-59"
         rows !! (footerStart - 1) `shouldSatisfy` T.isPrefixOf "└")
-        [(size, prefixPending) | size <- [(40, 12), (60, 10), (80, 24), (120, 30)], prefixPending <- [False, True]]
+        [(size, prefixPending) | size <- [(40, 12), (60, 10), (80, 24), (120, 30)], prefixPending <- [DirectInput, ControlXPrefix]]
     it "빈 줄도 한 행을 차지해 파일 줄 위치를 보존한다" $ do
       let st = (initialState "/tmp" [] "/tmp" [] defaultConfig (40, 12))
                  { stMode = ViewFile "/tmp/test.txt" "first\n\nthird" 0 }

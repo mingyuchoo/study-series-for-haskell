@@ -18,12 +18,12 @@ library
       Hfm.Application.Effects.Ports
       Hfm.Application.Effects.Runtime
       Hfm.Application.Program
+      Hfm.Application.Machine
       Hfm.Application.Startup
       Hfm.Application.Status
       Hfm.Application.Workflow
       Hfm.Application.State
   other-modules:
-      Hfm.Application.Internal.Action
       Hfm.Application.Internal.Files
       Hfm.Application.Internal.Interaction
       Hfm.Application.Internal.Process
@@ -37,9 +37,7 @@ library
     , bytestring
     , filepath
     , hfm-domain
-    , mtl
     , text
-    , transformers
   default-language: GHC2024
   if os(darwin)
     ghc-options: -pgml ../../scripts/link-macos.sh
@@ -48,6 +46,7 @@ test-suite hfm-application-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      MachineSpec
       Paths_hfm_application
   autogen-modules:
       Paths_hfm_application
@@ -65,7 +64,6 @@ test-suite hfm-application-test
     , hspec
     , mtl
     , text
-    , transformers
     , vector
   default-language: GHC2024
   if os(darwin)

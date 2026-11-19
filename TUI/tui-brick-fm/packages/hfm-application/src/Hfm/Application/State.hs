@@ -10,6 +10,7 @@ module Hfm.Application.State
   , Side (..)
   , Panel (..)
   , Mode (..)
+  , KeySequence (..)
   , Operation (..)
   , defaultConfig
   , configWithKeyBinding
@@ -46,6 +47,8 @@ import           System.FilePath        ((</>))
 
 data Side = LeftSide | RightSide
      deriving (Eq, Show)
+data KeySequence = DirectInput | ControlXPrefix
+     deriving (Eq, Show)
 data Operation = Copy | Move | Rename | Mkdir | Command
      deriving (Eq, Show)
 data Mode = Browse
@@ -74,7 +77,7 @@ data AppState = AppState { stLeft             :: Panel
                          , stLanguage         :: Language
                          , stMode             :: Mode
                          , stInputCursor      :: Int
-                         , stPendingCtrlX     :: Bool
+                         , stKeySequence      :: KeySequence
                          , stShowHidden       :: Bool
                          , stStatus           :: Status
                          , stTerminalSize     :: (Int, Int)
@@ -109,7 +112,7 @@ initialState left leftEntries right rightEntries cfg size = AppState
   , stLanguage = settingsLanguage (configSettings cfg)
   , stMode = Browse
   , stInputCursor = 0
-  , stPendingCtrlX = False
+  , stKeySequence = DirectInput
   , stShowHidden = False
   , stStatus = Ready
   , stTerminalSize = size
@@ -117,14 +120,11 @@ initialState left leftEntries right rightEntries cfg size = AppState
   , stConfig = cfg
   }
 
--- Layout-dependent clamping is performed by the presentation adapter.
 toggleLanguage :: AppState -> AppState
 toggleLanguage st = st { stLanguage = case stLanguage st of
                           Korean  -> English
                           English -> Korean }
 
--- The picker is independent of the current file operation or viewer mode.
--- Canceling a preview never changes the committed theme.
 toggleThemePicker :: AppState -> AppState
 toggleThemePicker st = st { stThemePicker = case stThemePicker st of
   Just _  -> Nothing

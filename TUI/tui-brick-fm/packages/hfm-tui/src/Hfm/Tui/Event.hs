@@ -10,6 +10,7 @@ import           Hfm.Application.Effects.Ports   (FileSystem (..),
                                                   Processes (..))
 import           Hfm.Application.Effects.Runtime (handleInput)
 import           Hfm.Application.Error           (FileError)
+import           Hfm.Application.Program         (Lifecycle (Quit))
 import           Hfm.Application.State
 import           Hfm.Domain.Config               (Settings)
 import           Hfm.Tui.I18n                    (translate)
@@ -40,5 +41,5 @@ handleEvent files processes save (VtyEvent input) = do
         }
   (updated, quit) <- handleInput eventFiles eventProcesses (liftIO . save) (fromVty input) state
   put (prepareLayout updated)
-  when quit halt
+  when (quit == Quit) halt
 handleEvent _ _ _ _ = pure ()

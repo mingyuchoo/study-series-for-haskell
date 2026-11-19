@@ -35,8 +35,7 @@ main = do
   settingsResult <- loadSettings
   settings <- either (die . ("설정을 읽을 수 없습니다: " ++) . T.unpack . renderFileError Korean) pure settingsResult
   let config = bindings { configSettings = settings }
-  -- Validate directories before acquiring the terminal.
-  result <- runProgram ioFileSystem ioProcesses (planStartup leftArg rightArg config (0, 0))
+  result <- runProgram ioFileSystem ioProcesses saveSettings (planStartup leftArg rightArg config (0, 0))
   case result of
     Left err -> die ("디렉터리를 열 수 없습니다: " ++ T.unpack (renderFileError Korean err))
     Right state -> do

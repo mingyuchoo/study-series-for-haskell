@@ -3,16 +3,14 @@ module Hfm.Application.Internal.Interaction
   , searchEvent, promptEvent, editorPromptEvent, confirmEvent, viewEvent
   ) where
 
-import           Control.Monad                    (when)
-import           Control.Monad.State.Strict       (get, modify)
-
 import           Data.Maybe                       (isJust)
 import qualified Data.Text                        as T
 
-import           Hfm.Application.Internal.Action
 import           Hfm.Application.Internal.Files   (deleteSelected,
                                                    runFileOperation)
 import           Hfm.Application.Internal.Process (executeCommand)
+import           Hfm.Application.Machine          (persistSettings)
+import           Hfm.Application.Program
 import           Hfm.Application.State
 import           Hfm.Application.Status
 import           Hfm.Domain.Config                (Settings (..), validEditor)
@@ -21,104 +19,101 @@ import           Hfm.Domain.Entry
 import           Hfm.Domain.Input
 import           Hfm.Domain.Selection             (selectAt)
 
-cancelMode :: Action ()
-cancelMode = do
-  st <- get
-  case stThemePicker st of
-    Just _ -> modify (\s -> s { stThemePicker = Nothing })
-    Nothing -> do
-      when (stMode st == Search || stMode st == Browse) (setSearch "")
-      modify (\s -> s { stMode = Browse, stInputCursor = 0, stPendingCtrlX = False
-                       , stStatus = Cancelled })
+cancelMode :: AppState -> AppState
+cancelMode state = case stThemePicker state of
+  Just _ -> state { stThemePicker = Nothing }
+  Nothing -> let cleared = if stMode state == Search || stMode state == Browse
+                            then setSearch "" state else state
+             in cleared { stMode = Browse, stInputCursor = 0, stKeySequence = DirectInput
+                        , stStatus = Cancelled }
 
 moveBoundary :: Bool -> AppState -> AppState
-moveBoundary end st =
-  let panel = activePanel st
-  in replaceActivePanel (panel { panelEntries = selectAt (if end then -1 else 0) (panelEntries panel) }) st
+moveBoundary end state =
+  let panel = activePanel state
+  in replaceActivePanel (panel { panelEntries = selectAt (if end then -1 else 0) (panelEntries panel) }) state
 
-switchPanel :: Action ()
-switchPanel = modify (\s -> s { stActive = if stActive s == LeftSide then RightSide else LeftSide })
+switchPanel :: AppState -> AppState
+switchPanel state = state { stActive = case stActive state of
+  LeftSide  -> RightSide
+  RightSide -> LeftSide }
 
 movePage :: Bool -> AppState -> AppState
-movePage down st = iterate (moveSelection down) st !! max 1 (snd (stTerminalSize st) - 6)
+movePage down state = iterate (moveSelection down) state !! max 1 (snd (stTerminalSize state) - 6)
 
-startPrompt :: Operation -> Action ()
-startPrompt op = do
-  st <- get
-  when (maybe False ((/= Special) . entryKind) (selectedEntry st) && isJust (selectedPath st)) $ do
-    let other = if stActive st == LeftSide then stRight st else stLeft st
-    let value = T.pack (if op == Rename then maybe "" entryName (selectedEntry st) else panelPath other)
-    modify (\s -> s { stMode = Prompt op value, stInputCursor = T.length value })
+startPrompt :: Operation -> AppState -> AppState
+startPrompt operation state
+  | maybe False ((/= Special) . entryKind) (selectedEntry state) && isJust (selectedPath state) =
+      let other = case stActive state of
+            LeftSide  -> stRight state
+            RightSide -> stLeft state
+          value = T.pack (if operation == Rename then maybe "" entryName (selectedEntry state) else panelPath other)
+      in state { stMode = Prompt operation value, stInputCursor = T.length value }
+  | otherwise = state
 
-setSearch :: T.Text -> Action ()
-setSearch query = modify $ \s ->
-  let panel = activePanel s
+setSearch :: T.Text -> AppState -> AppState
+setSearch query state =
+  let panel = activePanel state
       updated = refreshPanel (panelAll panel) Nothing (panel { panelSearch = query })
-  in replaceActivePanel updated s
+  in replaceActivePanel updated state
 
-searchEvent :: Input -> Action ()
-searchEvent event = case event of
+searchEvent :: Input -> AppState -> AppState
+searchEvent event state = case event of
   KeyPress KEsc [] -> cancel
   KeyPress (KChar 'g') [MCtrl] -> cancel
-  KeyPress KEnter [] -> modify (\s -> s { stMode = Browse })
-  KeyPress KUp [] -> modify (moveSelection False)
-  KeyPress KDown [] -> modify (moveSelection True)
-  KeyPress (KChar 'v') [MCtrl] -> modify (movePage True)
-  KeyPress (KChar 'v') [MMeta] -> modify (movePage False)
-  KeyPress (KChar 'p') [MCtrl] -> modify (moveSelection False)
-  KeyPress (KChar 'n') [MCtrl] -> modify (moveSelection True)
-  KeyPress (KChar 's') [MCtrl] -> modify (moveSelection True)
-  KeyPress (KChar 'r') [MCtrl] -> modify (moveSelection False)
-  KeyPress KPageUp [] -> modify (movePage False)
-  KeyPress KPageDown [] -> modify (movePage True)
-  KeyPress (KChar '<') [MMeta] -> modify (moveBoundary False)
-  KeyPress (KChar '>') [MMeta] -> modify (moveBoundary True)
-  _ -> do
-    st <- get
-    case editText event (panelSearch (activePanel st)) (stInputCursor st) of
-      Just (value, cursor) -> setSearch value >> modify (\s -> s { stInputCursor = cursor })
-      Nothing -> pure ()
+  KeyPress KEnter [] -> state { stMode = Browse }
+  KeyPress KUp [] -> moveSelection False state
+  KeyPress KDown [] -> moveSelection True state
+  KeyPress (KChar 'v') [MCtrl] -> movePage True state
+  KeyPress (KChar 'v') [MMeta] -> movePage False state
+  KeyPress (KChar 'p') [MCtrl] -> moveSelection False state
+  KeyPress (KChar 'n') [MCtrl] -> moveSelection True state
+  KeyPress (KChar 's') [MCtrl] -> moveSelection True state
+  KeyPress (KChar 'r') [MCtrl] -> moveSelection False state
+  KeyPress KPageUp [] -> movePage False state
+  KeyPress KPageDown [] -> movePage True state
+  KeyPress (KChar '<') [MMeta] -> moveBoundary False state
+  KeyPress (KChar '>') [MMeta] -> moveBoundary True state
+  _ -> case editText event (panelSearch (activePanel state)) (stInputCursor state) of
+    Just (value, cursor) -> (setSearch value state) { stInputCursor = cursor }
+    Nothing              -> state
   where
-    cancel = setSearch "" >> modify (\s -> s { stMode = Browse, stInputCursor = 0 })
+    cancel = (setSearch "" state) { stMode = Browse, stInputCursor = 0 }
 
-promptEvent :: Operation -> T.Text -> Input -> Action ()
-promptEvent op value event = case event of
-  KeyPress KEsc [] -> modify (\s -> s { stMode = Browse })
-  KeyPress (KChar 'g') [MCtrl] -> modify (\s -> s { stMode = Browse })
-  KeyPress KEnter [] -> case op of
-    Command -> executeCommand value
-    _       -> runFileOperation op value
-  _ -> do
-    st <- get
-    case editText event value (stInputCursor st) of
-      Just (newValue, cursor) -> modify (\s -> s { stMode = Prompt op newValue, stInputCursor = cursor })
-      Nothing -> pure ()
+promptEvent :: Operation -> T.Text -> Input -> AppState -> Program (AppState, Lifecycle)
+promptEvent operation value event state = case event of
+  KeyPress KEsc [] -> continue (state { stMode = Browse })
+  KeyPress (KChar 'g') [MCtrl] -> continue (state { stMode = Browse })
+  KeyPress KEnter [] -> case operation of
+    Command -> executeCommand value state
+    _       -> runFileOperation operation value state
+  _ -> continue $ case editText event value (stInputCursor state) of
+    Just (newValue, cursor) -> state { stMode = Prompt operation newValue, stInputCursor = cursor }
+    Nothing -> state
 
-editorPromptEvent :: T.Text -> Input -> Action ()
-editorPromptEvent value event = case event of
-  KeyPress KEsc [] -> cancelMode
+editorPromptEvent :: T.Text -> Input -> AppState -> Program (AppState, Lifecycle)
+editorPromptEvent value event state = case event of
+  KeyPress KEsc [] -> continue (cancelMode state)
   KeyPress KEnter []
-    | not (validEditor value) -> modify (\s -> s { stStatus = InvalidEditor })
-    | otherwise -> modify $ \s ->
+    | not (validEditor value) -> continue (state { stStatus = InvalidEditor })
+    | otherwise ->
         let executable = T.strip value
-            settings = (currentSettings s)
+            settings = (currentSettings state)
               { settingsEditor = if T.null executable then Nothing else Just (T.unpack executable) }
-        in (applySettings settings s) { stMode = Browse, stInputCursor = 0, stStatus = SettingsSaved }
-  _ -> do
-    st <- get
-    case editText event value (stInputCursor st) of
-      Just (newValue, cursor) -> modify (\s -> s { stMode = EditorPrompt newValue, stInputCursor = cursor })
-      Nothing -> pure ()
+            updated = (applySettings settings state)
+              { stMode = Browse, stInputCursor = 0, stStatus = SettingsSaved }
+        in persistSettings state updated
+  _ -> continue $ case editText event value (stInputCursor state) of
+    Just (newValue, cursor) -> state { stMode = EditorPrompt newValue, stInputCursor = cursor }
+    Nothing -> state
 
-confirmEvent :: Input -> Action ()
-confirmEvent event = case event of
-  KeyPress (KChar 'y') [] -> deleteSelected
-  KeyPress (KChar 'Y') [] -> confirmEvent (KeyPress (KChar 'y') [])
-  KeyPress _ _ -> modify (\s -> s { stMode = Browse, stStatus = DeletionCancelled })
-  _ -> pure ()
+confirmEvent :: Input -> AppState -> Program (AppState, Lifecycle)
+confirmEvent event state = case event of
+  KeyPress (KChar key) [] | key `elem` ['y', 'Y'] -> deleteSelected state
+  KeyPress _ _ -> continue (state { stMode = Browse, stStatus = DeletionCancelled })
+  _ -> continue state
 
-viewEvent :: FilePath -> T.Text -> Int -> Input -> Action ()
-viewEvent path content offset event = case event of
+viewEvent :: FilePath -> T.Text -> Int -> Input -> AppState -> AppState
+viewEvent path content offset event state = case event of
   KeyPress KEsc []             -> close
   KeyPress (KChar 'g') [MCtrl] -> close
   KeyPress (KChar 'q') []      -> close
@@ -134,11 +129,9 @@ viewEvent path content offset event = case event of
   KeyPress (KChar '>') [MMeta] -> scrollTo (length (T.lines content))
   KeyPress KHome []            -> scrollTo 0
   KeyPress KEnd []             -> scrollTo (length (T.lines content))
-  _                            -> pure ()
+  _                            -> state
   where
-    close = modify (\s -> s { stMode = Browse })
-    scrollTo target = modify (\s -> s { stMode = ViewFile path content (clampViewerOffset s content target) })
+    close = state { stMode = Browse }
+    scrollTo target = state { stMode = ViewFile path content (clampViewerOffset state content target) }
     scroll step = scrollTo (offset + step)
-    scrollPage direction = do
-      st <- get
-      scroll (direction * max 1 (viewerContentHeight st))
+    scrollPage direction = scroll (direction * max 1 (viewerContentHeight state))

@@ -10,6 +10,7 @@ import qualified Data.Vector                     as Vec
 import           Hfm.Application.Effects.Ports
 import           Hfm.Application.Effects.Runtime
 import           Hfm.Application.Error
+import           Hfm.Application.Machine         (resume)
 import           Hfm.Application.Program
 import           Hfm.Application.Startup         (planStartup)
 import           Hfm.Application.State
@@ -24,6 +25,8 @@ import           Hfm.Domain.Theme                (themes)
 
 import           System.FilePath                 ((</>))
 import           System.Info                     (os)
+
+import qualified MachineSpec
 
 import           Test.Hspec                      hiding (after, before, pending)
 
@@ -61,14 +64,15 @@ memoryProcesses = Processes
   , runCommand = \cwd command -> record ("command " ++ cwd ++ " " ++ T.unpack command) 0
   }
 
-run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
+run :: FileSystem (State [String]) -> Input -> AppState -> ((AppState, Lifecycle), [String])
 run files = runWith files memoryProcesses
 
-runWith :: FileSystem (State [String]) -> Processes (State [String]) -> Input -> AppState -> ((AppState, Bool), [String])
+runWith :: FileSystem (State [String]) -> Processes (State [String]) -> Input -> AppState -> ((AppState, Lifecycle), [String])
 runWith files processes input state = runState (handleInput files processes (const (pure (Right ()))) input state) []
 
 spec :: Spec
 spec = do
+  MachineSpec.spec
   describe "Saved application settings" $ do
     it "restores the editor, language and theme at startup" $ do
       let settings = Settings (Just "nvim.exe") English Monokai
@@ -141,7 +145,7 @@ spec = do
         stInputCursor done `shouldBe` stInputCursor state
         stThemePicker done `shouldBe` stThemePicker state
         stStatus done `shouldBe` SettingsSaveFailed PermissionDenied
-        quit `shouldBe` False) states
+        quit `shouldBe` Continue) states
 
     it "cancels editor changes and rejects NUL or newline input without saving" $ do
       let save _ = error "Unexpected settings write"
@@ -168,7 +172,7 @@ spec = do
 
     it "runs a process request without accessing file ports" $ do
       let (result, calls) = runState
-            (runProgram (error "Unexpected file port access") memoryProcesses
+            (runProgram (error "Unexpected file port access") memoryProcesses (error "Unexpected settings port access")
               (request (RunCommand (testPath "left") "exit 0"))) []
       result `shouldBe` Right 0
       calls `shouldBe` ["command " ++ testPath "left" ++ " exit 0"]
@@ -252,14 +256,14 @@ spec = do
   describe "Use cases with memory ports" $ do
     it "toggles language in every mode without file or process requests" $ do
       mapM_ (\mode -> do
-        let st = initial { stMode = mode, stPendingCtrlX = True, stInputCursor = 2 }
+        let st = initial { stMode = mode, stKeySequence = ControlXPrefix, stInputCursor = 2 }
             ((updated, quit), calls) = run memory (KeyPress (KFun 2) []) st
         stLanguage updated `shouldBe` English
         stMode updated `shouldBe` mode
-        stPendingCtrlX updated `shouldBe` True
+        stKeySequence updated `shouldBe` ControlXPrefix
         stInputCursor updated `shouldBe` 2
         calls `shouldBe` []
-        quit `shouldBe` False)
+        quit `shouldBe` Continue)
         [Browse, Search, Prompt Copy "한글", Prompt Move "target", Prompt Mkdir "folder", EditorPrompt "nvim", ConfirmDelete, ViewFile "path" "text" 0]
 
     it "resolves and copies only after confirmation, then refreshes both panels" $ do
@@ -319,7 +323,7 @@ spec = do
       mapM_ (\mode -> do
         let ((pending, _), _) = run memory (KeyPress (KChar 'x') [MCtrl]) (initial { stMode = mode })
             ((_, quit), calls) = run memory (KeyPress (KChar 'c') [MCtrl]) pending
-        quit `shouldBe` True
+        quit `shouldBe` Quit
         calls `shouldBe` []) [Browse, Search, Prompt Mkdir "x", EditorPrompt "nvim", ConfirmDelete, ViewFile "p" "t" 0]
 
   describe "Theme picker without file or process requests" $ do
@@ -379,7 +383,7 @@ spec = do
           ((_, quit), calls) = run memory (KeyPress (KChar 'c') [MCtrl]) prefix
       stLanguage english `shouldBe` English
       stThemePicker english `shouldBe` stThemePicker opened
-      quit `shouldBe` True
+      quit `shouldBe` Quit
       calls `shouldBe` []
 
   describe "Panel state" $ do
@@ -392,30 +396,35 @@ spec = do
       fmap (entryName . snd) (selectedElement (panelEntries filtered)) `shouldBe` Just "beta"
 
   describe "Pure plans and response-dependent workflows" $ do
+    it "waits for persistence before committing a settings change" $ do
+      case planInput (KeyPress (KFun 2) []) initial of
+        Done _ -> expectationFailure "Settings changes must await persistence"
+        Await _ _ -> pure ()
+
     it "finishes a search edit without even needing a port implementation" $ do
       case planInput (KeyPress (KChar 'z') []) (initial { stMode = Search }) of
         Done (state, quit) -> do
           panelSearch (activePanel state) `shouldBe` "z"
-          quit `shouldBe` False
+          quit `shouldBe` Continue
         Await _ _ -> expectationFailure "Search requested a filesystem effect"
 
     it "uses the directory response to choose a transfer target and stops on failure" $ do
       let state = initial { stMode = Prompt Copy (T.pack (testPath "right")) }
       case planInput (KeyPress KEnter []) state of
-        Await (DirectoryExists path) resume -> do
+        Await (DirectoryExists path) phase -> do
           path `shouldBe` testPath "right"
-          case resume (Right True) of
+          case resume phase (Right True) of
             Await (CopyEntry source target) copied -> do
               source `shouldBe` testPath ("left" </> "file.txt")
               target `shouldBe` testPath ("right" </> "file.txt")
-              case copied (Left PermissionDenied) of
+              case resume copied (Left PermissionDenied) of
                 Done (failed, quit) -> do
                   stStatus failed `shouldBe` Failed PermissionDenied
                   stMode failed `shouldBe` stMode state
-                  quit `shouldBe` False
+                  quit `shouldBe` Continue
                 _ -> expectationFailure "Failed transfer requested another effect"
             _ -> expectationFailure "Expected a copy after resolving the directory"
-          case resume (Right False) of
+          case resume phase (Right False) of
             Await (CopyEntry _ target) _ -> target `shouldBe` testPath "right"
             _ -> expectationFailure "Expected a copy to the requested new filename"
         _ -> expectationFailure "Expected destination inspection before a transfer"
@@ -431,7 +440,7 @@ spec = do
 
     it "initializes through ports and uses canonical paths for listing" $ do
       let ports = memory { canonicalizePath = \path -> record ("resolve " ++ path) (testPath path) }
-          (result, calls) = runState (runProgram ports memoryProcesses (planStartup "left" "right" defaultConfig (80, 24))) []
+          (result, calls) = runState (runProgram ports memoryProcesses (const (pure (Right ()))) (planStartup "left" "right" defaultConfig (80, 24))) []
       calls `shouldBe` ["resolve left", "resolve right", "list " ++ testPath "left", "list " ++ testPath "right"]
       case result of
         Right state -> do
@@ -442,7 +451,7 @@ spec = do
 
     it "short-circuits startup without listing when path resolution fails" $ do
       let ports = memory { canonicalizePath = \path -> modify (++ ["resolve " ++ path]) >> pure (Left Missing) }
-          (result, calls) = runState (runProgram ports memoryProcesses (planStartup "left" "right" defaultConfig (80, 24))) []
+          (result, calls) = runState (runProgram ports memoryProcesses (const (pure (Right ()))) (planStartup "left" "right" defaultConfig (80, 24))) []
       calls `shouldBe` ["resolve left"]
       case result of
         Left err -> err `shouldBe` Missing
