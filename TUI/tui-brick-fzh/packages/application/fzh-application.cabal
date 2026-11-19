@@ -1,0 +1,45 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.39.6.
+--
+-- see: https://github.com/sol/hpack
+
+name:           fzh-application
+version:        0.1.0.0
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+
+library
+  exposed-modules:
+      Fzh.Application.Ports
+      Fzh.Application.Workflow
+  other-modules:
+      Paths_fzh_application
+  autogen-modules:
+      Paths_fzh_application
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.22.0.0 && <4.23
+    , fzh-domain
+  default-language: GHC2024
+
+test-suite application-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_fzh_application
+  autogen-modules:
+      Paths_fzh_application
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts
+  build-depends:
+      base >=4.22.0.0 && <4.23
+    , fzh-application
+    , fzh-domain
+    , hspec >=2.11.18 && <2.12
+    , mtl >=2.3.2 && <2.4
+  default-language: GHC2024

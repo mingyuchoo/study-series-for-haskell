@@ -1,0 +1,19 @@
+name: fzh-application
+version: 0.1.0.0
+license: BSD-3-Clause
+language: GHC2024
+dependencies:
+- base ^>= 4.22.0.0
+- fzh-domain
+ghc-options: -Wall
+library:
+  source-dirs: src
+tests:
+  application-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options: -threaded -rtsopts
+    dependencies:
+    - fzh-application
+    - hspec ^>= 2.11.18
+    - mtl ^>= 2.3.2

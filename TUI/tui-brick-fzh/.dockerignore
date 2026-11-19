@@ -1,0 +1,7 @@
+.git
+.stack-work
+**/.stack-work
+dist
+dist-newstyle
+**/dist-newstyle
+graft

@@ -4,6 +4,9 @@ compiler: ghc-9.14.1
 
 packages:
 - .
+- packages/domain
+- packages/application
+- packages/terminal
 
 extra-package-dbs: []
 extra-deps:

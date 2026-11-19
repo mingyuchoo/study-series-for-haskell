@@ -13,78 +13,22 @@ extra-source-files:
 - README.md
 - CHANGELOG.md
 
+language: GHC2024
+
 dependencies:
 - base ^>= 4.22.0.0
-- brick ^>= 3.0
-- containers ^>= 0.8.1
-- directory ^>= 1.3.11.0
-- filepath ^>= 1.5.5.0
-- flow ^>= 2.0.0.11
-- fuzzy ^>= 0.1.1.0
-- microlens ^>= 0.5.0.0
-- microlens-th ^>= 0.4.3.18
-- mtl ^>= 2.3.2
-- parallel ^>= 3.3.0.0
-- skylighting ^>= 0.15
-- skylighting-core ^>= 0.15
-- text ^>= 2.1.4
-- time ^>= 1.15
-- unix ^>= 2.8.8.0
-- vector ^>= 0.13.2.0
-- vty ^>= 6.6
-- vty-unix ^>= 0.4.0.0
-- yaml ^>= 0.11.11.2
-
-default-extensions:
-- DataKinds
-- DeriveGeneric
-- ExplicitForAll
-- GADTs
-- KindSignatures
-- StandaloneKindSignatures
-- OverloadedStrings
-- TemplateHaskell
-- TypeApplications
+- fzh-application
+- fzh-terminal
 
 ghc-options:
 - -Wall
 - -O2
-- -haddock
-
-language: GHC2024
-
-library:
-  source-dirs: src
-  exposed-modules:
-    - Lib
-    - Config
-    - Types
-    - Fuzzy
-    - Event
-    - UI
-    - Vty
-    - FileSearch
-    - SyntaxHighlight
 
 executables:
   fzh-exe:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs: apps/fzh
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies:
-    - fzh
-
-tests:
-  fzh-test:
-    main:                Spec.hs
-    source-dirs:         test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - fzh
-    - hspec ^>= 2.11.18

@@ -1,19 +1,12 @@
-ARG PROJECT_NAME=tui-brick-fzh
 FROM haskell:9.14.1-slim-bookworm
 WORKDIR /app
 
-ARG PROJECT_NAME
-COPY stack.yaml stack.yaml.lock package.yaml ${PROJECT_NAME}.cabal Setup.hs ./
+COPY stack.yaml stack.yaml.lock package.yaml fzh.cabal Setup.hs cabal.project ./
 COPY README.md CHANGELOG.md LICENSE ./
-COPY src/ src/
-COPY app/ app/
-COPY test/ test/
+COPY packages/ packages/
+COPY apps/ apps/
 
 RUN stack setup --no-docker && stack build --dependencies-only --no-docker
-
-ARG PROJECT_NAME
 RUN stack install --no-docker --local-bin-path /app/bin
 
-RUN cp /app/bin/${PROJECT_NAME}-exe /app/bin/app-exe
-
-CMD ["sh", "-c", "echo \"Starting app...\" && /app/bin/app-exe"]
+CMD ["/app/bin/fzh-exe"]

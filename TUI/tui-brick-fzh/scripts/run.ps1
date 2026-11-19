@@ -56,9 +56,13 @@ function Format-HaskellDirectory {
 function Format-HaskellFiles {
     Write-Host "Formatting Haskell files..."
 
-    Format-HaskellDirectory (Join-Path $RootDir "src") "src"
-    Format-HaskellDirectory (Join-Path $RootDir "app") "app"
-    Format-HaskellDirectory (Join-Path $RootDir "test") "test"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/domain/src") "domain"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/domain/test") "test"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/application/src") "application"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/application/test") "test"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/terminal/src") "terminal"
+    Format-HaskellDirectory (Join-Path $RootDir "packages/terminal/test") "test"
+    Format-HaskellDirectory (Join-Path $RootDir "apps") "apps"
 
     $rootFiles = @(Get-ChildItem -LiteralPath $RootDir -File -Filter "*.hs" -ErrorAction SilentlyContinue)
     foreach ($file in $rootFiles) {

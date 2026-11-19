@@ -1,0 +1,17 @@
+name: fzh-domain
+version: 0.1.0.0
+license: BSD-3-Clause
+language: GHC2024
+dependencies:
+- base ^>= 4.22.0.0
+ghc-options: -Wall
+library:
+  source-dirs: src
+tests:
+  domain-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options: -threaded -rtsopts
+    dependencies:
+    - fzh-domain
+    - hspec ^>= 2.11.18

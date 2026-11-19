@@ -23,7 +23,7 @@ setup: update-stack-yaml
 	stack test --only-dependencies
 
 format: setup
-	stylish-haskell --config .stylish-haskell.yaml -r -i ./**/*.hs
+	stylish-haskell --config .stylish-haskell.yaml -r -i packages apps
 
 build: setup
 	stack build --fast -j4 --ghc-options "-j16 +RTS -A256m -RTS"
@@ -41,7 +41,7 @@ watch-coverage: setup
 	stack test --coverage --fast --file-watch --watch-all --haddock
 
 ghcid: setup
-	ghcid --command "stack ghci test/Spec.hs"
+	ghcid --command "stack ghci fzh-terminal:test:fzh-test"
 
 run: build
 	time stack exec $(EXECUTABLE_NAME)

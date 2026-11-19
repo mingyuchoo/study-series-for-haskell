@@ -115,6 +115,8 @@ cat file-list.txt | fzh-exe
 | `Ctrl+w` / `Backspace` | 한 글자 삭제 |
 | `Enter` | 선택 및 종료 |
 
+터미널/Vty가 `Ctrl+j`를 `Enter`와 동일한 입력으로 해석하는 환경에서는 아래 이동에 `↓`를 사용하세요.
+
 ## 설정
 
 키바인딩 스타일을 변경하려면 설정 파일을 생성하세요:
@@ -177,7 +179,7 @@ stack test --fast --file-watch --watch-all
 stack test --coverage --fast --file-watch --watch-all --haddock
 
 # ghcid 사용
-ghcid --command "stack ghci test/Spec.hs"
+ghcid --command "stack ghci fzh-terminal:test:fzh-test"
 ```
 
 ### 코드 구조
@@ -186,18 +188,33 @@ ghcid --command "stack ghci test/Spec.hs"
 
 ```
 fzh/
-├── app/Main.hs          # 진입점
-├── src/
-│   ├── Lib.hs           # 앱 정의
-│   ├── Types.hs         # 타입 정의
-│   ├── Config.hs        # 설정 관리
-│   ├── Event.hs         # 이벤트 처리
-│   ├── Fuzzy.hs         # 퍼지 매칭
-│   ├── UI.hs            # UI 렌더링
-│   ├── Vty.hs           # 터미널 I/O
-│   └── FileSearch.hs    # 파일 검색
-└── test/Spec.hs         # 단위 테스트
+├── apps/fzh/Main.hs
+├── packages/
+│   ├── domain/
+│   │   ├── src/Fzh/Domain/
+│   │   └── test/Spec.hs
+│   ├── application/
+│   │   ├── src/Fzh/Application/
+│   │   └── test/Spec.hs
+│   └── terminal/
+│       ├── src/
+│       └── test/
+├── cabal.project
+├── package.yaml
+└── stack.yaml
 ```
+
+`fzh-domain`은 base만 사용하는 순수 검색·세션·디렉토리 탐색 상태 머신입니다.
+`fzh-application`은 입력 감지부터 결과 출력까지의 상태 전이와 효과 포트를 정의합니다.
+`fzh-terminal`은 Brick/Vty, YAML, 파일 시스템과 표준 입출력을 구현합니다.
+루트 `fzh` 패키지의 `apps/fzh/Main.hs`가 포트를 조립하여 `fzh-exe`를 실행합니다.
+상태 전이는 명령을 반환하고, 어댑터는 명령 실행 결과를 이벤트로 돌려줍니다.
+
+설정 파일이 없으면 기본 Emacs 키바인딩을 사용합니다. 설정 해석 실패나 파일 탐색 오류는
+stderr에 표시하고 기본 설정 적용 또는 나머지 경로 탐색을 계속합니다.
+디렉토리 심볼릭 링크는 순환 탐색 방지를 위해 건너뛰며, 파일 심볼릭 링크는 유지합니다.
+Enter와 종료 키는 상태에서 구분하며, 두 경우 모두 기존처럼 현재 선택을 stdout에 출력합니다.
+
 
 ## Makefile
 

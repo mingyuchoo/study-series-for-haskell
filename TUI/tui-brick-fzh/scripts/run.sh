@@ -32,9 +32,13 @@ format_directory() {
 format_haskell_files() {
   echo "Formatting Haskell files..."
 
-  format_directory "$ROOT_DIR/src" "src"
-  format_directory "$ROOT_DIR/app" "app"
-  format_directory "$ROOT_DIR/test" "test"
+  format_directory "$ROOT_DIR/packages/domain/src" "domain"
+  format_directory "$ROOT_DIR/packages/domain/test" "test"
+  format_directory "$ROOT_DIR/packages/application/src" "application"
+  format_directory "$ROOT_DIR/packages/application/test" "test"
+  format_directory "$ROOT_DIR/packages/terminal/src" "terminal"
+  format_directory "$ROOT_DIR/packages/terminal/test" "test"
+  format_directory "$ROOT_DIR/apps" "apps"
 
   while IFS= read -r -d '' file; do
     echo "Processing $file"
