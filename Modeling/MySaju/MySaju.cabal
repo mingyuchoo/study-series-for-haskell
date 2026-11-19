@@ -26,6 +26,18 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Saju.Context.InvestmentDecision
+      Saju.Context.ProfileDiagnosis
+      Saju.Context.SajuWorkflow
+      Saju.Context.WealthGrowth
+      Saju.Context.WealthPipeline
+      Saju.DCI.Roles
+      Saju.Domain.Core
+      Saju.Domain.Decision
+      Saju.Domain.Diagnosis
+      Saju.Domain.ValueFlow
+      Saju.Domain.WealthSystem
+      Saju.StateMachine.Core
       SajuModel
   other-modules:
       Paths_MySaju
