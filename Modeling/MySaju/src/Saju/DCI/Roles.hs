@@ -227,10 +227,8 @@ instance InvestmentArbiter RuleArbiter where
       rs -> Left rs
     where
       violations =
-        concat
-          [ [ExceedsMaxPositionSize positionSize maxPositionSize | positionSize > maxPositionSize]
-          , [ExceedsRiskTolerance downsideRisk minMarginSafety | downsideRisk > minMarginSafety]
-          ]
+        [ExceedsMaxPositionSize positionSize maxPositionSize | positionSize > maxPositionSize]
+          ++ [ExceedsRiskTolerance downsideRisk minMarginSafety | downsideRisk > minMarginSafety]
 
 -- ============================================================================
 -- 4. Wealth System Compounding Role (복리 자산 성장 엔진)

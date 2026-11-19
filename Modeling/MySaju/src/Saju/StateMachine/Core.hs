@@ -54,7 +54,7 @@ runCommands
   -> s
   -> [cmd]
   -> Either (ExecutionFailure s cmd err) (ExecutionTrace s evt)
-runCommands sm ctx initial cmds = go 1 initial [initial] [] cmds
+runCommands sm ctx initial = go 1 initial [initial] []
   where
     go _ current revStates revEvents [] =
       Right

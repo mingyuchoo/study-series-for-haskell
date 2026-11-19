@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Saju.Context.WealthPipeline
@@ -256,7 +257,7 @@ wealthPipelineMachine
 wealthPipelineMachine =
   StateMachine
     { machineStep = transitionPipeline
-    , isTerminal = \s -> case s of
+    , isTerminal = \case
         GovernanceEstablished _ -> True
         _ -> False
     }

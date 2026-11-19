@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Saju.Context.WealthGrowth
@@ -165,7 +166,7 @@ wealthGrowthMachine
 wealthGrowthMachine =
   StateMachine
     { machineStep = transitionGrowth
-    , isTerminal = \s -> case s of
+    , isTerminal = \case
         GrowthCompleted _ -> True
         _ -> False
     }

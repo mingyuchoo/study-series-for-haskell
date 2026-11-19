@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Saju.Context.SajuWorkflow
@@ -267,25 +268,25 @@ transitionWorkflow WorkflowContext {..} state cmd =
     ( DecisionEvaluatedState DecisionCompletedPayload {..}
       , RunWealthProjection initSys policy cycles
       ) ->
-      case runWealthGrowth policy initSys cycles of
-        Left failure ->
-          TransitionRejected state (GrowthSubMachineFailed (failureReason failure))
-        Right trace ->
-          case finalState trace of
-            GrowthCompleted summary ->
-              let report =
-                    SajuAnalysisReport
-                      { reportPerson = dcpPerson
-                      , reportDiagnosis = dcpDiagnosis
-                      , reportPipeline = dcpGovernanceStage
-                      , reportDecision = dcpDecisionOutcome
-                      , reportWealthGrowth = summary
-                      }
-               in Transitioned
-                    (WorkflowCompleted report)
-                    (map GrowthEvt (eventLog trace) ++ [WorkflowCompletedEvt report])
-            _ ->
-              TransitionRejected state (UnexpectedSubMachineTerminal SubGrowth)
+        case runWealthGrowth policy initSys cycles of
+          Left failure ->
+            TransitionRejected state (GrowthSubMachineFailed (failureReason failure))
+          Right trace ->
+            case finalState trace of
+              GrowthCompleted summary ->
+                let report =
+                      SajuAnalysisReport
+                        { reportPerson = dcpPerson
+                        , reportDiagnosis = dcpDiagnosis
+                        , reportPipeline = dcpGovernanceStage
+                        , reportDecision = dcpDecisionOutcome
+                        , reportWealthGrowth = summary
+                        }
+                 in Transitioned
+                      (WorkflowCompleted report)
+                      (map GrowthEvt (eventLog trace) ++ [WorkflowCompletedEvt report])
+              _ ->
+                TransitionRejected state (UnexpectedSubMachineTerminal SubGrowth)
     _ ->
       TransitionRejected state (InvalidWorkflowTransition (workflowStageOf state) cmd)
 
@@ -300,7 +301,7 @@ sajuWorkflowMachine
 sajuWorkflowMachine =
   StateMachine
     { machineStep = transitionWorkflow
-    , isTerminal = \s -> case s of
+    , isTerminal = \case
         WorkflowCompleted _ -> True
         _ -> False
     }

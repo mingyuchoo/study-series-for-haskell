@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Saju.Context.InvestmentDecision
@@ -191,7 +192,7 @@ investmentDecisionMachine
 investmentDecisionMachine =
   StateMachine
     { machineStep = transitionDecision
-    , isTerminal = \s -> case s of
+    , isTerminal = \case
         OpportunityApproved _ -> True
         OpportunityRejected _ -> True
         _ -> False

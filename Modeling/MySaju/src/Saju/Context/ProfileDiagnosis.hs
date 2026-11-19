@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Saju.Context.ProfileDiagnosis
@@ -137,7 +138,7 @@ diagnosisMachine
 diagnosisMachine =
   StateMachine
     { machineStep = transitionDiagnosis
-    , isTerminal = \s -> case s of
+    , isTerminal = \case
         DiagnosisCompleted _ -> True
         _ -> False
     }
