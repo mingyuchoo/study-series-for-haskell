@@ -1,35 +1,32 @@
 {-# LANGUAGE GADTs #-}
 
-module GitPuller.Application.Program (
-  Request (..),
-  Program (..),
-  await,
-  report,
-  concurrently,
-  exclusively,
-)
-where
+module GitPuller.Application.Program
+  ( Request (..)
+  , Program (..)
+  , await
+  , report
+  , concurrently
+  , exclusively
+  ) where
 
 import Control.Monad (ap, liftM, (>=>))
 import GitPuller.Application.Event (Event)
 import GitPuller.Domain.Discovery (Entry)
 import GitPuller.Domain.Repository (Inspection)
 
-data Request reply where
-  ListDirectory :: FilePath -> Request (Either String [Entry])
-  InspectRepository :: FilePath -> Request (Either String Inspection)
-  Pull :: FilePath -> Request (Either String ())
-  Report :: Event -> Request ()
+data Request reply where ListDirectory :: FilePath -> Request (Either String [Entry])
+                         InspectRepository :: FilePath -> Request (Either String Inspection)
+                         Pull :: FilePath -> Request (Either String ())
+                         Report :: Event -> Request ()
 
 deriving instance Eq (Request reply)
 
 deriving instance Show (Request reply)
 
-data Program result where
-  Finished :: result -> Program result
-  Await :: Request reply -> (reply -> Program result) -> Program result
-  Concurrently :: [Program item] -> ([item] -> Program result) -> Program result
-  Exclusively :: FilePath -> Program item -> (item -> Program result) -> Program result
+data Program result where Finished :: result -> Program result
+                          Await :: Request reply -> (reply -> Program result) -> Program result
+                          Concurrently :: [Program item] -> ([item] -> Program result) -> Program result
+                          Exclusively :: FilePath -> Program item -> (item -> Program result) -> Program result
 
 instance Functor Program where
   fmap = liftM

@@ -1,28 +1,27 @@
-module GitPuller.Infrastructure.GitOutput (
-  Layout (..),
-  Snapshot (..),
-  layoutArguments,
-  parseLayout,
-  snapshotArguments,
-  parseSnapshot,
-)
-where
+module GitPuller.Infrastructure.GitOutput
+  ( Layout (..)
+  , Snapshot (..)
+  , layoutArguments
+  , parseLayout
+  , snapshotArguments
+  , parseSnapshot
+  ) where
 
 import Data.List (intercalate, isPrefixOf)
 import GitPuller.Domain.Repository (Branch (..))
 
 data Layout = Layout
-  { toplevel :: FilePath
-  , gitDirectory :: FilePath
+  { toplevel        :: FilePath
+  , gitDirectory    :: FilePath
   , commonDirectory :: FilePath
-  , superproject :: FilePath
+  , superproject    :: FilePath
   }
   deriving (Eq, Show)
 
 data Snapshot = Snapshot
-  { branch :: Branch
+  { branch   :: Branch
   , tracking :: Bool
-  , changed :: Bool
+  , changed  :: Bool
   }
   deriving (Eq, Show)
 
@@ -44,7 +43,7 @@ layoutArguments =
 
 fields :: [String] -> [String]
 fields outputLines = case break (== fieldSeparator) outputLines of
-  (field, []) -> [intercalate "\n" field]
+  (field, [])            -> [intercalate "\n" field]
   (field, _ : remaining) -> intercalate "\n" field : fields remaining
 
 parseLayout :: String -> Maybe Layout
@@ -76,9 +75,9 @@ parseSnapshot text =
     , tracking = any ("# branch.ab " `isPrefixOf`) headers
     , changed = not (null changes)
     }
- where
-  (headers, changes) = span ("# " `isPrefixOf`) (lines text)
-  current
-    | "# branch.oid (initial)" `elem` headers = Unborn
-    | "# branch.head (detached)" `elem` headers = Detached
-    | otherwise = Attached
+  where
+    (headers, changes) = span ("# " `isPrefixOf`) (lines text)
+    current
+      | "# branch.oid (initial)" `elem` headers = Unborn
+      | "# branch.head (detached)" `elem` headers = Detached
+      | otherwise = Attached

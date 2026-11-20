@@ -1,8 +1,7 @@
-module GitPuller.Infrastructure.Failure (
-  reason,
-  reasonWithLocation,
-)
-where
+module GitPuller.Infrastructure.Failure
+  ( reason
+  , reasonWithLocation
+  ) where
 
 import Control.Exception (displayException)
 import GHC.IO.Exception (IOException (..))
@@ -14,4 +13,7 @@ reason failure
 
 reasonWithLocation :: IOException -> String
 reasonWithLocation failure =
-  maybe (reason failure) (\location -> location <> ": " <> reason failure) (ioe_filename failure)
+  maybe
+    (reason failure)
+    (\location -> location <> ": " <> reason failure)
+    (ioe_filename failure)

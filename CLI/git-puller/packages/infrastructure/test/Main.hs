@@ -1,28 +1,35 @@
-module Main (main) where
+module Main
+  ( main
+  ) where
 
-import Control.Concurrent.STM (
-  atomically,
-  check,
-  modifyTVar',
-  newTVarIO,
-  readTVar,
-  readTVarIO,
-  writeTVar,
- )
+import Control.Concurrent.STM
+  ( atomically
+  , check
+  , modifyTVar'
+  , newTVarIO
+  , readTVar
+  , readTVarIO
+  , writeTVar
+  )
 import Control.Monad (when)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.List (delete)
 import GitPuller.Application.Event (Event (..))
-import GitPuller.Application.Roles (
-  Cast (..),
-  Inspector (..),
-  Observer (..),
-  Surveyor (..),
-  Updater (..),
- )
+import GitPuller.Application.Roles
+  ( Cast (..)
+  , Inspector (..)
+  , Observer (..)
+  , Surveyor (..)
+  , Updater (..)
+  )
 import GitPuller.Domain.Discovery (Entry (..), EntryKind (..))
 import GitPuller.Domain.Outcome (Outcome (..), Status (..))
-import GitPuller.Domain.Repository (Branch (..), Inspection (..), Operation (..), State (State))
+import GitPuller.Domain.Repository
+  ( Branch (..)
+  , Inspection (..)
+  , Operation (..)
+  , State (State)
+  )
 import GitPuller.Domain.Update (Mode (..))
 import GitPuller.Infrastructure.BatchRunner qualified as BatchRunner
 import GitPuller.Infrastructure.Descriptors qualified as Descriptors
@@ -55,18 +62,18 @@ record history item = modifyIORef' history (item :)
 recorded :: IORef [item] -> IO [item]
 recorded history = reverse <$> readIORef history
 
-cast ::
-  (FilePath -> IO (Either String [Entry])) ->
-  (FilePath -> IO (Either String Inspection)) ->
-  (FilePath -> IO (Either String ())) ->
-  (Event -> IO ()) ->
-  Cast IO
+cast
+  :: (FilePath -> IO (Either String [Entry]))
+  -> (FilePath -> IO (Either String Inspection))
+  -> (FilePath -> IO (Either String ()))
+  -> (Event -> IO ())
+  -> Cast IO
 cast list inspect update observe =
   Cast
-    { surveyor = Surveyor{listDirectory = list}
-    , inspector = Inspector{inspectRepository = inspect}
-    , updater = Updater{pull = update}
-    , observer = Observer{notify = observe}
+    { surveyor = Surveyor {listDirectory = list}
+    , inspector = Inspector {inspectRepository = inspect}
+    , updater = Updater {pull = update}
+    , observer = Observer {notify = observe}
     }
 
 batchRunnerSpec :: Spec
@@ -106,14 +113,15 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
                      ]
   it "pulls eligible worktrees in path order and keeps going after a failure" $ do
     pulled <- newIORef []
-    let listing "/" = [Entry "/z" Directory, Entry "/a" Directory]
+    let listing "/"  = [Entry "/z" Directory, Entry "/a" Directory]
         listing "/a" = [Entry "/a/.git" Regular]
-        listing _ = [Entry "/z/.git" Directory]
+        listing _    = [Entry "/z/.git" Directory]
         ports =
           cast
             (pure . Right . listing)
             (const (pure (Right clean)))
-            (\location -> (if location == "/a" then Left "failed" else Right ()) <$ record pulled location)
+            ( \location -> (if location == "/a" then Left "failed" else Right ()) <$ record pulled location
+            )
             (const (pure ()))
     BatchRunner.run ports 1 Apply "/"
       `shouldReturn` [Outcome "/a" (Failed "failed"), Outcome "/z" Updated]
@@ -135,7 +143,7 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
         leave directory = atomically (modifyTVar' active (delete directory))
         idle = State Attached Idle True False
         inspection location = Standalone (commonDirectory location) idle
-        listing "/" = map (`Entry` Directory) ["/a", "/b", "/c", "/d"]
+        listing "/"      = map (`Entry` Directory) ["/a", "/b", "/c", "/d"]
         listing location = [Entry (location </> ".git") Directory]
         ports =
           cast
@@ -158,20 +166,23 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
 workerPoolSpec :: Spec
 workerPoolSpec = describe "WorkerPool.mapConcurrently" $ do
   it "keeps results in item order" $
-    WorkerPool.mapConcurrently 3 (pure . (* 2)) [1, 2, 3, 4 :: Int] `shouldReturn` [2, 4, 6, 8]
+    WorkerPool.mapConcurrently 3 (pure . (* 2)) [1, 2, 3, 4 :: Int]
+      `shouldReturn` [2, 4, 6, 8]
   it "rethrows a worker failure" $
-    WorkerPool.mapConcurrently 3 failOnTwo [1, 2, 3 :: Int] `shouldThrow` (== userError "broken")
- where
-  failOnTwo item
-    | item == 2 = ioError (userError "broken")
-    | otherwise = pure item
+    WorkerPool.mapConcurrently 3 failOnTwo [1, 2, 3 :: Int]
+      `shouldThrow` (== userError "broken")
+  where
+    failOnTwo item
+      | item == 2 = ioError (userError "broken")
+      | otherwise = pure item
 
 processSpec :: Spec
 processSpec = describe "Process.run" $ do
   let shell script = getEnvironment >>= Process.run "/bin/sh" ["-c", script]
   it "captures large output on both streams with an empty standard input" $ do
     completed <-
-      shell "if read -r line; then exit 9; fi; head -c 200000 /dev/zero; head -c 300000 /dev/zero >&2"
+      shell
+        "if read -r line; then exit 9; fi; head -c 200000 /dev/zero; head -c 300000 /dev/zero >&2"
     completed
       `shouldBe` Right
         (Process.CompletedProcess ExitSuccess (replicate 200000 '\0') (replicate 300000 '\0'))
@@ -208,10 +219,12 @@ gitOutputSpec = describe "GitOutput" $ do
     GitOutput.parseLayout (separated ["/a\n", "/a/.git\n", "/a/.git\n"])
       `shouldBe` Just (Layout "/a" "/a/.git" "/a/.git" "")
   it "reads the layout of a submodule" $
-    GitOutput.parseLayout (separated ["/a/m\n", "/a/.git/modules/m\n", "/a/.git/modules/m\n"] <> "/a\n")
+    GitOutput.parseLayout
+      (separated ["/a/m\n", "/a/.git/modules/m\n", "/a/.git/modules/m\n"] <> "/a\n")
       `shouldBe` Just (Layout "/a/m" "/a/.git/modules/m" "/a/.git/modules/m" "/a")
   it "keeps newlines that belong to a path" $
-    GitOutput.parseLayout (separated ["/with\nnewline\n", "/with\nnewline/.git\n", "/common\n\n"])
+    GitOutput.parseLayout
+      (separated ["/with\nnewline\n", "/with\nnewline/.git\n", "/common\n\n"])
       `shouldBe` Just (Layout "/with\nnewline" "/with\nnewline/.git" "/common\n" "")
   it "rejects output with an unexpected number of fields" $ do
     GitOutput.parseLayout "/a\n" `shouldBe` Nothing
@@ -225,7 +238,8 @@ gitOutputSpec = describe "GitOutput" $ do
       "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +? -?\n? x\n"
       `shouldBe` Snapshot Attached True True
   it "treats a configured upstream without a resolvable ref as untracked" $
-    GitOutput.parseSnapshot "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n"
+    GitOutput.parseSnapshot
+      "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n"
       `shouldBe` Snapshot Attached False False
   it "reads an unborn branch" $
     GitOutput.parseSnapshot "# branch.oid (initial)\n# branch.head main\n"

@@ -1,7 +1,6 @@
-module GitPuller.Application.Interaction.Survey (
-  survey,
-)
-where
+module GitPuller.Application.Interaction.Survey
+  ( survey
+  ) where
 
 import Control.Monad (replicateM_)
 import Data.Foldable (toList)

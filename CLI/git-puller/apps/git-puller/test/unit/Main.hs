@@ -1,4 +1,6 @@
-module Main (main) where
+module Main
+  ( main
+  ) where
 
 import GitPuller.Application.Event (Event (..))
 import GitPuller.Cli.Arguments (Command (..), Options (Options))
@@ -33,7 +35,8 @@ argumentsSpec = describe "Arguments.parse" $ do
   it "rejects repeated options" $ do
     Arguments.parse ["--dry-run", "--dry-run", "projects"] `shouldBe` Left "expected one path"
     Arguments.parse ["--verbose", "--verbose", "projects"] `shouldBe` Left "expected one path"
-    Arguments.parse ["--jobs", "2", "--jobs", "2", "projects"] `shouldBe` Left "expected one path"
+    Arguments.parse ["--jobs", "2", "--jobs", "2", "projects"]
+      `shouldBe` Left "expected one path"
   it "rejects missing, empty, extra and unknown arguments" $ do
     Arguments.parse [] `shouldBe` Left "expected one path"
     Arguments.parse [""] `shouldBe` Left "expected one path"
@@ -42,9 +45,12 @@ argumentsSpec = describe "Arguments.parse" $ do
     Arguments.parse ["--unknown"] `shouldBe` Left "expected one path"
     Arguments.parse ["--help", "projects"] `shouldBe` Left "expected one path"
   it "rejects job counts that are not positive integers" $ do
-    Arguments.parse ["--jobs", "0", "projects"] `shouldBe` Left "expected a positive job count"
-    Arguments.parse ["--jobs", "many", "projects"] `shouldBe` Left "expected a positive job count"
-    Arguments.parse ["--jobs", "-1", "projects"] `shouldBe` Left "expected a positive job count"
+    Arguments.parse ["--jobs", "0", "projects"]
+      `shouldBe` Left "expected a positive job count"
+    Arguments.parse ["--jobs", "many", "projects"]
+      `shouldBe` Left "expected a positive job count"
+    Arguments.parse ["--jobs", "-1", "projects"]
+      `shouldBe` Left "expected a positive job count"
     Arguments.parse ["--jobs", "99999999999999999999999", "projects"]
       `shouldBe` Left "expected a positive job count"
   it "reads the argument after the jobs flag as the count" $ do
@@ -58,16 +64,19 @@ renderSpec = describe "Render" $ do
   it "escapes quotes, backslashes and named control characters" $
     Render.quoted "a\"b\\c\a\b\t\n\v\f\r" `shouldBe` "\"a\\\"b\\\\c\\a\\b\\t\\n\\v\\f\\r\""
   it "escapes other control characters and line separators as hexadecimal" $
-    Render.quoted "\ESC\DEL\x9F\x2028\x2029" `shouldBe` "\"\\x1B;\\x7F;\\x9F;\\x2028;\\x2029;\""
+    Render.quoted "\ESC\DEL\x9F\x2028\x2029"
+      `shouldBe` "\"\\x1B;\\x7F;\\x9F;\\x2028;\\x2029;\""
   it "renders each outcome status" $ do
     Render.outcome False (Outcome "a" Updated) `shouldBe` "updated \"a\""
     Render.outcome False (Outcome "a" Planned) `shouldBe` "planned \"a\""
-    Render.outcome False (Outcome "a" (Skipped DetachedHead)) `shouldBe` "skipped \"a\" detached-head"
+    Render.outcome False (Outcome "a" (Skipped DetachedHead))
+      `shouldBe` "skipped \"a\" detached-head"
   it "quotes a failure diagnostic only when verbose" $ do
     Render.outcome False (Outcome "a" (Failed "line\n")) `shouldBe` "failed \"a\" line\n"
     Render.outcome True (Outcome "a" (Failed "line\n")) `shouldBe` "failed \"a\" \"line\\n\""
   it "summarizes outcome counts" $
-    Render.summary [Outcome "a" Updated, Outcome "b" (Failed "x"), Outcome "c" (Skipped Dirty)]
+    Render.summary
+      [Outcome "a" Updated, Outcome "b" (Failed "x"), Outcome "c" (Skipped Dirty)]
       `shouldBe` "Summary updated=1 planned=0 skipped=1 failed=1"
   it "draws a proportional progress bar" $ do
     Render.progress 0 0 `shouldBe` "[####################] 0/0 processed"

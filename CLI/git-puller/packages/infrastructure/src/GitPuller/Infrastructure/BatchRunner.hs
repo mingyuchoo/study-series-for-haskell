@@ -1,7 +1,6 @@
-module GitPuller.Infrastructure.BatchRunner (
-  run,
-)
-where
+module GitPuller.Infrastructure.BatchRunner
+  ( run
+  ) where
 
 import Control.Concurrent.MVar (newMVar, withMVar)
 import GitPuller.Application.Program (Program (..))
@@ -16,13 +15,14 @@ run :: Cast IO -> Int -> Mode -> FilePath -> IO [Outcome]
 run cast jobs mode root = do
   reporting <- newMVar ()
   exclusion <- Exclusion.new
-  let serialized = cast{observer = Observer (withMVar reporting . const . notify (observer cast))}
+  let serialized = cast {observer = Observer (withMVar reporting . const . notify (observer cast))}
       execute :: Int -> Program result -> IO result
       execute _ (Finished result) = pure result
       execute concurrency (Await request resume) =
         UpdateWorktrees.perform serialized request >>= execute concurrency . resume
       execute concurrency (Concurrently programs resume) =
-        WorkerPool.mapConcurrently concurrency (execute 1) programs >>= execute concurrency . resume
+        WorkerPool.mapConcurrently concurrency (execute 1) programs
+          >>= execute concurrency . resume
       execute concurrency (Exclusively resource program resume) =
         Exclusion.within exclusion resource (execute concurrency program)
           >>= execute concurrency . resume

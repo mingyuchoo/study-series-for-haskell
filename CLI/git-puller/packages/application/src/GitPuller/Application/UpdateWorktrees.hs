@@ -1,10 +1,9 @@
 {-# LANGUAGE GADTs #-}
 
-module GitPuller.Application.UpdateWorktrees (
-  start,
-  perform,
-)
-where
+module GitPuller.Application.UpdateWorktrees
+  ( start
+  , perform
+  ) where
 
 import Data.List (sortOn)
 import GitPuller.Application.Event (Event (..))
@@ -24,7 +23,7 @@ start mode root = do
 
 perform :: Cast effect -> Request reply -> effect reply
 perform cast request = case request of
-  ListDirectory location -> Roles.listDirectory (Roles.surveyor cast) location
+  ListDirectory location     -> Roles.listDirectory (Roles.surveyor cast) location
   InspectRepository location -> Roles.inspectRepository (Roles.inspector cast) location
-  Pull location -> Roles.pull (Roles.updater cast) location
-  Report event -> Roles.notify (Roles.observer cast) event
+  Pull location              -> Roles.pull (Roles.updater cast) location
+  Report event               -> Roles.notify (Roles.observer cast) event

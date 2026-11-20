@@ -22,7 +22,7 @@ cabal test all
 cabal run git-puller -- --help
 ```
 
-`bash scripts/run.sh [인수...]`는 fourmolu 포맷, hlint, 빌드, 테스트를 차례로 수행한 뒤 CLI를 실행합니다.
+`bash scripts/run.sh [인수...]`는 fourmolu·stylish-haskell 포맷, hlint, 빌드, 테스트를 차례로 수행한 뒤 CLI를 실행합니다.
 
 다른 구현과 출력을 비교하려면 `REFERENCE_GIT_PULLER`에 기준 실행 파일의 절대 경로를 지정합니다.
 

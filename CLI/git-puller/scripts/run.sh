@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export LC_ALL=C.UTF-8
+
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 if (( $# == 0 )); then
@@ -8,7 +10,7 @@ if (( $# == 0 )); then
 fi
 
 printf '%s\n' '==> Format'
-find packages apps -name '*.hs' -exec fourmolu --mode inplace {} +
+scripts/format.sh
 
 printf '%s\n' '==> Lint'
 hlint packages apps

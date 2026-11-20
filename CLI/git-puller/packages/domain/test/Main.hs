@@ -1,26 +1,28 @@
-module Main (main) where
+module Main
+  ( main
+  ) where
 
 import Data.Foldable (for_, toList)
 import Data.List.NonEmpty (NonEmpty (..))
-import GitPuller.Domain.Discovery (
-  Candidate (..),
-  Discovery (..),
-  Entry (..),
-  EntryKind (..),
-  Listing (..),
- )
+import GitPuller.Domain.Discovery
+  ( Candidate (..)
+  , Discovery (..)
+  , Entry (..)
+  , EntryKind (..)
+  , Listing (..)
+  )
 import GitPuller.Domain.Discovery qualified as Discovery
 import GitPuller.Domain.Outcome (Outcome (..), Status (..), Summary (..))
 import GitPuller.Domain.Outcome qualified as Outcome
-import GitPuller.Domain.Repository (
-  Branch (..),
-  Eligibility (..),
-  Inspection (..),
-  Operation (..),
-  SkipReason (..),
-  State (..),
-  classify,
- )
+import GitPuller.Domain.Repository
+  ( Branch (..)
+  , Eligibility (..)
+  , Inspection (..)
+  , Operation (..)
+  , SkipReason (..)
+  , State (..)
+  , classify
+  )
 import GitPuller.Domain.Update (Mode (..), Phase (..), Signal (..))
 import GitPuller.Domain.Update qualified as Update
 import Test.Hspec (Spec, describe, hspec, it, shouldBe)
@@ -33,7 +35,7 @@ main = hspec $ do
   updateSpec
 
 clean :: State
-clean = State{branch = Attached, operation = Idle, upstream = True, dirty = False}
+clean = State {branch = Attached, operation = Idle, upstream = True, dirty = False}
 
 repositorySpec :: Spec
 repositorySpec = describe "Repository.classify" $ do
@@ -56,10 +58,11 @@ outcomeSpec :: Spec
 outcomeSpec = describe "Outcome" $ do
   let outcomes = [Outcome "a" Planned, Outcome "b" (Failed "error")]
   it "counts outcomes by status" $
-    Outcome.summarize outcomes `shouldBe` Summary{updated = 0, planned = 1, skipped = 0, failed = 1}
+    Outcome.summarize outcomes
+      `shouldBe` Summary {updated = 0, planned = 1, skipped = 0, failed = 1}
   it "counts every status" $
     Outcome.summarize [Outcome "a" Updated, Outcome "b" (Skipped Dirty), Outcome "c" Updated]
-      `shouldBe` Summary{updated = 2, planned = 0, skipped = 1, failed = 0}
+      `shouldBe` Summary {updated = 2, planned = 0, skipped = 1, failed = 0}
   it "exits with 1 when any outcome failed" $
     Outcome.exitCode outcomes `shouldBe` 1
   it "exits with 0 without failures" $ do
@@ -76,13 +79,16 @@ updateSpec = describe "Update" $ do
   it "plans an eligible repository during a dry run" $
     Update.transition DryRun AwaitingInspection (inspected clean) `shouldBe` Settled Planned
   it "awaits a pull of an eligible repository under its common directory when applying" $
-    Update.transition Apply AwaitingInspection (inspected clean) `shouldBe` AwaitingPull "/a/.git"
+    Update.transition Apply AwaitingInspection (inspected clean)
+      `shouldBe` AwaitingPull "/a/.git"
   for_ [DryRun, Apply] $ \mode -> describe (show mode) $ do
     let transition = Update.transition mode
     it "skips an ineligible repository" $
-      transition AwaitingInspection (inspected clean{dirty = True}) `shouldBe` Settled (Skipped Dirty)
+      transition AwaitingInspection (inspected clean {dirty = True})
+        `shouldBe` Settled (Skipped Dirty)
     it "skips a submodule" $
-      transition AwaitingInspection (Inspected (Right Nested)) `shouldBe` Settled (Skipped Submodule)
+      transition AwaitingInspection (Inspected (Right Nested))
+        `shouldBe` Settled (Skipped Submodule)
     it "fails when inspection fails" $
       transition AwaitingInspection (Inspected (Left "inspection failed"))
         `shouldBe` Settled (Failed "inspection failed")
@@ -114,8 +120,10 @@ discoverySpec = describe "Discovery" $ do
   it "records the root as inaccessible when it cannot be listed" $
     rootListing (Left "blocked") `shouldBe` (Complete [Inaccessible "/root" "blocked"], 0)
   it "recognizes a directory or a file named .git as worktree metadata" $ do
-    rootListing (Right [Entry "/root/.git" Directory]) `shouldBe` (Complete [Worktree "/root"], 1)
-    rootListing (Right [Entry "/root/.git" Regular]) `shouldBe` (Complete [Worktree "/root"], 1)
+    rootListing (Right [Entry "/root/.git" Directory])
+      `shouldBe` (Complete [Worktree "/root"], 1)
+    rootListing (Right [Entry "/root/.git" Regular])
+      `shouldBe` (Complete [Worktree "/root"], 1)
   it "leaves a completed discovery unchanged" $
     Discovery.afterListings
       (Complete [Worktree "/root"])

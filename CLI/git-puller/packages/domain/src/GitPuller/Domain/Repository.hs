@@ -1,13 +1,12 @@
-module GitPuller.Domain.Repository (
-  Branch (..),
-  Operation (..),
-  State (..),
-  SkipReason (..),
-  Eligibility (..),
-  Inspection (..),
-  classify,
-)
-where
+module GitPuller.Domain.Repository
+  ( Branch (..)
+  , Operation (..)
+  , State (..)
+  , SkipReason (..)
+  , Eligibility (..)
+  , Inspection (..)
+  , classify
+  ) where
 
 data Branch = Unborn | Detached | Attached
   deriving (Eq, Show)
@@ -16,27 +15,22 @@ data Operation = Idle | Merge | Rebase
   deriving (Eq, Show)
 
 data State = State
-  { branch :: Branch
+  { branch    :: Branch
   , operation :: Operation
-  , upstream :: Bool
-  , dirty :: Bool
+  , upstream  :: Bool
+  , dirty     :: Bool
   }
   deriving (Eq, Show)
 
-data SkipReason
-  = UnbornBranch
-  | MergeInProgress
-  | RebaseInProgress
-  | DetachedHead
-  | NoUpstream
-  | Dirty
-  | Submodule
+data SkipReason = UnbornBranch | MergeInProgress | RebaseInProgress | DetachedHead | NoUpstream | Dirty | Submodule
   deriving (Eq, Show)
 
-data Eligibility = Eligible | Ineligible SkipReason
+data Eligibility = Eligible
+                 | Ineligible SkipReason
   deriving (Eq, Show)
 
-data Inspection = Standalone FilePath State | Nested
+data Inspection = Standalone FilePath State
+                | Nested
   deriving (Eq, Show)
 
 classify :: State -> Eligibility

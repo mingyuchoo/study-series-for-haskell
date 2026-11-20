@@ -79,7 +79,7 @@ main() (
         ;;
     esac
     architecture=$(uname -m)
-    require_commands tar install cabal ghc
+    require_commands tar install cabal ghc fourmolu stylish-haskell
     if [[ $mode == installers ]]; then
         if [[ $platform == linux ]]; then
             require_commands dpkg dpkg-deb dpkg-shlibdeps rpmbuild
@@ -97,6 +97,11 @@ main() (
         printf 'Expected GHC 9.10.3, got %s\n' "$compiler" >&2
         return 2
     fi
+
+    printf '==> Format\n'
+    scripts/format.sh
+
+    printf '\n==> Build\n'
     cabal build -O2 exe:git-puller
 
     printf '\n==> Bundle\n'

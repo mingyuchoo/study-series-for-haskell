@@ -1,16 +1,18 @@
-module Main (main) where
+module Main
+  ( main
+  ) where
 
 import Control.Monad (unless, when)
 import Data.Foldable (traverse_)
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
 import GitPuller.Application.Event (Event)
-import GitPuller.Application.Roles (
-  Cast (..),
-  Inspector (..),
-  Observer (..),
-  Surveyor (..),
-  Updater (..),
- )
+import GitPuller.Application.Roles
+  ( Cast (..)
+  , Inspector (..)
+  , Observer (..)
+  , Surveyor (..)
+  , Updater (..)
+  )
 import GitPuller.Cli.Arguments (Command (..), Options (..))
 import GitPuller.Cli.Arguments qualified as Arguments
 import GitPuller.Cli.Progress (Output (..), Progress)
@@ -30,12 +32,13 @@ import System.Exit (ExitCode (..), exitWith)
 import System.IO (hPutStrLn, stderr)
 
 display :: Terminal -> Output -> IO ()
-display terminal (Line text) = writeLine terminal text
+display terminal (Line text)   = writeLine terminal text
 display terminal (Status text) = writeProgress terminal text
 
 reporter :: Bool -> Terminal -> IORef Progress -> Event -> IO ()
 reporter isVerbose terminal state event =
-  atomicModifyIORef' state (Progress.observe isVerbose event) >>= traverse_ (display terminal)
+  atomicModifyIORef' state (Progress.observe isVerbose event)
+    >>= traverse_ (display terminal)
 
 startupError :: String -> IO ExitCode
 startupError diagnostic = ExitFailure 2 <$ hPutStrLn stderr diagnostic
@@ -43,14 +46,14 @@ startupError diagnostic = ExitFailure 2 <$ hPutStrLn stderr diagnostic
 runBatch :: Options -> FilePath -> (Event -> IO ()) -> IO [Outcome]
 runBatch options root reportEvent =
   BatchRunner.run cast (jobs options) (mode options) root
- where
-  cast =
-    Cast
-      { surveyor = Surveyor{listDirectory = Filesystem.listDirectory}
-      , inspector = Inspector{inspectRepository = Git.inspectRepository}
-      , updater = Updater{pull = Git.pull}
-      , observer = Observer{notify = reportEvent}
-      }
+  where
+    cast =
+      Cast
+        { surveyor = Surveyor {listDirectory = Filesystem.listDirectory}
+        , inspector = Inspector {inspectRepository = Git.inspectRepository}
+        , updater = Updater {pull = Git.pull}
+        , observer = Observer {notify = reportEvent}
+        }
 
 update :: Options -> FilePath -> IO ExitCode
 update options root = do
@@ -65,7 +68,10 @@ update options root = do
   when (null outcomes) (putStrLn "No Git worktrees found.")
   putStrLn (Render.summary outcomes)
   pure
-    (if Outcome.exitCode outcomes == 0 then ExitSuccess else ExitFailure (Outcome.exitCode outcomes))
+    ( if Outcome.exitCode outcomes == 0
+        then ExitSuccess
+        else ExitFailure (Outcome.exitCode outcomes)
+    )
 
 run :: Options -> IO ExitCode
 run options = do
@@ -77,12 +83,12 @@ run options = do
       available <- Git.check
       case available of
         Left diagnostic -> startupError ("Cannot run Git. " <> diagnostic)
-        Right () -> update options root
+        Right ()        -> update options root
 
 execute :: [String] -> IO ExitCode
 execute arguments = case Arguments.parse arguments of
-  Left diagnostic -> startupError (diagnostic <> "\n" <> Arguments.usage)
-  Right Help -> ExitSuccess <$ putStrLn Arguments.usage
+  Left diagnostic     -> startupError (diagnostic <> "\n" <> Arguments.usage)
+  Right Help          -> ExitSuccess <$ putStrLn Arguments.usage
   Right (Run options) -> run options
 
 main :: IO ()
