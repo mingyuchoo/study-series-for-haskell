@@ -1,0 +1,48 @@
+cabal-version: 3.0
+name: git-puller-infrastructure
+version: 0.2.0
+synopsis: Git, filesystem, process and terminal adapters for git-puller
+maintainer: mingyuchoo
+build-type: Simple
+
+common shared
+  default-language: GHC2021
+  ghc-options: -Wall -Wcompat
+
+library
+  import: shared
+  hs-source-dirs: src
+  exposed-modules:
+    GitPuller.Infrastructure.BatchRunner
+    GitPuller.Infrastructure.Encoding
+    GitPuller.Infrastructure.Filesystem
+    GitPuller.Infrastructure.Git
+    GitPuller.Infrastructure.Process
+    GitPuller.Infrastructure.Terminal
+    GitPuller.Infrastructure.WorkerPool
+  other-modules:
+    GitPuller.Infrastructure.Failure
+  build-depends:
+    base >=4.20 && <5,
+    directory >=1.3 && <1.4,
+    filepath >=1.4 && <1.6,
+    git-puller-application,
+    git-puller-domain,
+    process >=1.6 && <1.7,
+    transformers >=0.5 && <0.7,
+    unix >=2.7 && <2.9
+
+test-suite infrastructure-test
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  ghc-options: -threaded
+  build-depends:
+    base,
+    filepath,
+    git-puller-application,
+    git-puller-domain,
+    git-puller-infrastructure,
+    hspec >=2.10 && <3,
+    stm >=2.5 && <2.6

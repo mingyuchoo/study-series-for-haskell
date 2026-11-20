@@ -1,0 +1,36 @@
+cabal-version: 3.0
+name: git-puller-application
+version: 0.2.0
+synopsis: Batch update workflow and ports for git-puller
+maintainer: mingyuchoo
+build-type: Simple
+
+common shared
+  default-language: GHC2021
+  ghc-options: -Wall -Wcompat
+
+library
+  import: shared
+  hs-source-dirs: src
+  exposed-modules:
+    GitPuller.Application.Batch
+    GitPuller.Application.Ports
+  other-modules:
+    GitPuller.Application.Discovery
+  build-depends:
+    base >=4.20 && <5,
+    filepath >=1.4 && <1.6,
+    git-puller-domain
+
+test-suite application-test
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends:
+    base,
+    filepath,
+    git-puller-application,
+    git-puller-domain,
+    hspec >=2.10 && <3,
+    mtl >=2.2 && <2.4

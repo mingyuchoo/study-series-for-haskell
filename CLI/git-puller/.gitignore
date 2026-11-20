@@ -1,0 +1,10 @@
+/dist-newstyle/
+/dist/
+
+git-puller-[0-9]*-linux-*.tar.gz
+git-puller-[0-9]*-macos-*.tar.gz
+git-puller_[0-9]*_*.deb
+git-puller-[0-9]*.rpm
+git-puller-[0-9]*-macos-*.pkg
+git-puller-[0-9]*-windows-wsl-*.zip
+git-puller-[0-9]*-windows-wsl-*-setup.exe

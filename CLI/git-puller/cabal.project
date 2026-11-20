@@ -1,0 +1,7 @@
+packages:
+  packages/domain
+  packages/application
+  packages/infrastructure
+  apps/git-puller
+
+tests: True

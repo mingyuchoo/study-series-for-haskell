@@ -1,0 +1,57 @@
+cabal-version: 3.0
+name: git-puller
+version: 0.2.0
+synopsis: Fast-forward Git worktrees under a directory
+maintainer: mingyuchoo
+build-type: Simple
+extra-source-files:
+  test/cli.sh
+  test/installed.sh
+
+common shared
+  default-language: GHC2021
+  ghc-options: -Wall -Wcompat
+
+library cli
+  import: shared
+  hs-source-dirs: src
+  exposed-modules:
+    GitPuller.Cli.Arguments
+    GitPuller.Cli.Render
+  build-depends:
+    base >=4.20 && <5,
+    git-puller-domain
+
+executable git-puller
+  import: shared
+  hs-source-dirs: app
+  main-is: Main.hs
+  ghc-options: -threaded
+  build-depends:
+    base,
+    git-puller:cli,
+    git-puller-application,
+    git-puller-domain,
+    git-puller-infrastructure
+
+test-suite cli-unit-test
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test/unit
+  main-is: Main.hs
+  build-depends:
+    base,
+    git-puller:cli,
+    git-puller-domain,
+    hspec >=2.10 && <3
+
+test-suite cli-acceptance-test
+  import: shared
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test/acceptance
+  main-is: Main.hs
+  build-tool-depends: git-puller:git-puller
+  build-depends:
+    base,
+    directory >=1.3 && <1.4,
+    process >=1.6 && <1.7
