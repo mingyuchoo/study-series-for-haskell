@@ -2,14 +2,24 @@ module Main (main) where
 
 import Control.Monad (unless, when)
 import Data.Foldable (traverse_)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
-import GitPuller.Application.Ports (Event (..), Ports (..))
+import Data.IORef (IORef, atomicModifyIORef', newIORef)
+import GitPuller.Application.Event (Event)
+import GitPuller.Application.Roles (
+  Cast (..),
+  Inspector (..),
+  Observer (..),
+  Surveyor (..),
+  Updater (..),
+ )
 import GitPuller.Cli.Arguments (Command (..), Options (..))
 import GitPuller.Cli.Arguments qualified as Arguments
+import GitPuller.Cli.Progress (Output (..), Progress)
+import GitPuller.Cli.Progress qualified as Progress
 import GitPuller.Cli.Render qualified as Render
 import GitPuller.Domain.Outcome (Outcome)
 import GitPuller.Domain.Outcome qualified as Outcome
 import GitPuller.Infrastructure.BatchRunner qualified as BatchRunner
+import GitPuller.Infrastructure.Descriptors qualified as Descriptors
 import GitPuller.Infrastructure.Encoding qualified as Encoding
 import GitPuller.Infrastructure.Filesystem qualified as Filesystem
 import GitPuller.Infrastructure.Git qualified as Git
@@ -19,47 +29,27 @@ import System.Environment (getArgs)
 import System.Exit (ExitCode (..), exitWith)
 import System.IO (hPutStrLn, stderr)
 
-data Progress = Progress
-  { discovered :: Int
-  , completed :: Int
-  , total :: Int
-  }
+display :: Terminal -> Output -> IO ()
+display terminal (Line text) = writeLine terminal text
+display terminal (Status text) = writeProgress terminal text
 
 reporter :: Bool -> Terminal -> IORef Progress -> Event -> IO ()
-reporter isVerbose terminal state event = case event of
-  Scanning -> scan
-  Discovered -> advance (\current -> current{discovered = discovered current + 1}) >> scan
-  Processing count -> advance (\current -> current{total = count}) >> processed
-  Inspecting location -> narrate ("Inspecting " <> Render.quoted location)
-  Pulling location -> narrate ("Pulling " <> Render.quoted location)
-  Processed result -> do
-    narrate (Render.outcome isVerbose result)
-    advance (\current -> current{completed = completed current + 1})
-    processed
- where
-  advance = modifyIORef' state
-  narrate text = when isVerbose (writeLine terminal text)
-  scan = do
-    current <- readIORef state
-    writeProgress terminal ("Scanning: " <> show (discovered current) <> " repositories found")
-  processed = do
-    current <- readIORef state
-    writeProgress terminal (Render.progress (completed current) (total current))
+reporter isVerbose terminal state event =
+  atomicModifyIORef' state (Progress.observe isVerbose event) >>= traverse_ (display terminal)
 
 startupError :: String -> IO ExitCode
 startupError diagnostic = ExitFailure 2 <$ hPutStrLn stderr diagnostic
 
 runBatch :: Options -> FilePath -> (Event -> IO ()) -> IO [Outcome]
 runBatch options root reportEvent =
-  BatchRunner.run ports (jobs options) (mode options) root
+  BatchRunner.run cast (jobs options) (mode options) root
  where
-  ports =
-    Ports
-      { listDirectory = Filesystem.listDirectory
-      , inspectRepository = Git.inspectRepository
-      , locateCommonDirectory = Git.locateCommonDirectory
-      , pull = Git.pull
-      , report = reportEvent
+  cast =
+    Cast
+      { surveyor = Surveyor{listDirectory = Filesystem.listDirectory}
+      , inspector = Inspector{inspectRepository = Git.inspectRepository}
+      , updater = Updater{pull = Git.pull}
+      , observer = Observer{notify = reportEvent}
       }
 
 update :: Options -> FilePath -> IO ExitCode
@@ -68,7 +58,7 @@ update options root = do
   outcomes <-
     if interactive || verbose options
       then Terminal.withProgress interactive $ \terminal -> do
-        state <- newIORef (Progress 0 0 0)
+        state <- newIORef Progress.initial
         runBatch options root (reporter (verbose options) terminal state)
       else runBatch options root (const (pure ()))
   unless (verbose options) (traverse_ (putStrLn . Render.outcome False) outcomes)
@@ -79,6 +69,7 @@ update options root = do
 
 run :: Options -> IO ExitCode
 run options = do
+  Descriptors.limitTo (Descriptors.budget (jobs options))
   normalized <- Filesystem.normalizeRoot (path options)
   case normalized of
     Left diagnostic -> startupError (Render.quoted (path options) <> " " <> diagnostic)

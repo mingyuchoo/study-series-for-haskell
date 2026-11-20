@@ -1,7 +1,10 @@
 module Main (main) where
 
+import GitPuller.Application.Event (Event (..))
 import GitPuller.Cli.Arguments (Command (..), Options (Options))
 import GitPuller.Cli.Arguments qualified as Arguments
+import GitPuller.Cli.Progress (Output (..), Progress (..))
+import GitPuller.Cli.Progress qualified as Progress
 import GitPuller.Cli.Render qualified as Render
 import GitPuller.Domain.Outcome (Outcome (..), Status (..))
 import GitPuller.Domain.Repository (SkipReason (..))
@@ -12,6 +15,7 @@ main :: IO ()
 main = hspec $ do
   argumentsSpec
   renderSpec
+  progressSpec
 
 argumentsSpec :: Spec
 argumentsSpec = describe "Arguments.parse" $ do
@@ -69,3 +73,28 @@ renderSpec = describe "Render" $ do
     Render.progress 0 0 `shouldBe` "[####################] 0/0 processed"
     Render.progress 1 4 `shouldBe` "[#####---------------] 1/4 processed"
     Render.progress 5 5 `shouldBe` "[####################] 5/5 processed"
+
+progressSpec :: Spec
+progressSpec = describe "Progress.observe" $ do
+  let planned = Outcome "a" Planned
+  it "counts discovered repositories while surveying" $ do
+    Progress.observe False Scanning Progress.initial
+      `shouldBe` (Surveying 0, [Status "Scanning: 0 repositories found"])
+    Progress.observe False Discovered (Surveying 1)
+      `shouldBe` (Surveying 2, [Status "Scanning: 2 repositories found"])
+  it "starts working through the announced number of repositories" $
+    Progress.observe False (Processing 4) (Surveying 4)
+      `shouldBe` (Working 0 4, [Status "[--------------------] 0/4 processed"])
+  it "advances the bar for each processed repository" $
+    Progress.observe False (Processed planned) (Working 1 4)
+      `shouldBe` (Working 2 4, [Status "[##########----------] 2/4 processed"])
+  it "narrates steps and outcomes only when verbose" $ do
+    Progress.observe False (Inspecting "a") (Working 0 1) `shouldBe` (Working 0 1, [])
+    Progress.observe True (Inspecting "a") (Working 0 1)
+      `shouldBe` (Working 0 1, [Line "Inspecting \"a\""])
+    Progress.observe True (Pulling "a") (Working 0 1)
+      `shouldBe` (Working 0 1, [Line "Pulling \"a\""])
+    Progress.observe True (Processed planned) (Working 0 1)
+      `shouldBe` ( Working 1 1
+                 , [Line "planned \"a\"", Status "[####################] 1/1 processed"]
+                 )

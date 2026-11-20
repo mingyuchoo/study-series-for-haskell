@@ -14,16 +14,20 @@ library
   hs-source-dirs: src
   exposed-modules:
     GitPuller.Infrastructure.BatchRunner
+    GitPuller.Infrastructure.Descriptors
     GitPuller.Infrastructure.Encoding
     GitPuller.Infrastructure.Filesystem
     GitPuller.Infrastructure.Git
+    GitPuller.Infrastructure.GitOutput
     GitPuller.Infrastructure.Process
     GitPuller.Infrastructure.Terminal
     GitPuller.Infrastructure.WorkerPool
   other-modules:
+    GitPuller.Infrastructure.Exclusion
     GitPuller.Infrastructure.Failure
   build-depends:
     base >=4.20 && <5,
+    containers >=0.6 && <0.9,
     directory >=1.3 && <1.4,
     filepath >=1.4 && <1.6,
     git-puller-application,

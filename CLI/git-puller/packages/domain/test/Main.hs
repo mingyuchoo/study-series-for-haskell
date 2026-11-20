@@ -1,9 +1,17 @@
 module Main (main) where
 
-import Data.Foldable (for_)
+import Data.Foldable (for_, toList)
+import Data.List.NonEmpty (NonEmpty (..))
+import GitPuller.Domain.Discovery (
+  Candidate (..),
+  Discovery (..),
+  Entry (..),
+  EntryKind (..),
+  Listing (..),
+ )
+import GitPuller.Domain.Discovery qualified as Discovery
 import GitPuller.Domain.Outcome (Outcome (..), Status (..), Summary (..))
 import GitPuller.Domain.Outcome qualified as Outcome
-import GitPuller.Domain.PullPlan qualified as PullPlan
 import GitPuller.Domain.Repository (
   Branch (..),
   Eligibility (..),
@@ -13,16 +21,16 @@ import GitPuller.Domain.Repository (
   State (..),
   classify,
  )
-import GitPuller.Domain.Update (Decision (..), Mode (..))
+import GitPuller.Domain.Update (Mode (..), Phase (..), Signal (..))
 import GitPuller.Domain.Update qualified as Update
 import Test.Hspec (Spec, describe, hspec, it, shouldBe)
 
 main :: IO ()
 main = hspec $ do
   repositorySpec
+  discoverySpec
   outcomeSpec
   updateSpec
-  pullPlanSpec
 
 clean :: State
 clean = State{branch = Attached, operation = Idle, upstream = True, dirty = False}
@@ -60,33 +68,79 @@ outcomeSpec = describe "Outcome" $ do
 
 updateSpec :: Spec
 updateSpec = describe "Update" $ do
-  let inspect mode = Update.afterInspection mode . Right . Standalone
+  let inspected = Inspected . Right . Standalone "/a/.git"
+  it "begins a worktree awaiting inspection" $
+    Update.begin (Worktree "/a") `shouldBe` AwaitingInspection
+  it "begins an inaccessible directory as settled with its failure" $
+    Update.begin (Inaccessible "/a" "blocked") `shouldBe` Settled (Failed "blocked")
   it "plans an eligible repository during a dry run" $
-    inspect DryRun clean `shouldBe` Complete Planned
-  it "pulls an eligible repository when applying" $
-    inspect Apply clean `shouldBe` Pull
+    Update.transition DryRun AwaitingInspection (inspected clean) `shouldBe` Settled Planned
+  it "awaits a pull of an eligible repository under its common directory when applying" $
+    Update.transition Apply AwaitingInspection (inspected clean) `shouldBe` AwaitingPull "/a/.git"
   for_ [DryRun, Apply] $ \mode -> describe (show mode) $ do
+    let transition = Update.transition mode
     it "skips an ineligible repository" $
-      inspect mode clean{dirty = True} `shouldBe` Complete (Skipped Dirty)
+      transition AwaitingInspection (inspected clean{dirty = True}) `shouldBe` Settled (Skipped Dirty)
     it "skips a submodule" $
-      Update.afterInspection mode (Right Nested) `shouldBe` Complete (Skipped Submodule)
+      transition AwaitingInspection (Inspected (Right Nested)) `shouldBe` Settled (Skipped Submodule)
     it "fails when inspection fails" $
-      Update.afterInspection mode (Left "inspection failed")
-        `shouldBe` Complete (Failed "inspection failed")
-  it "marks a successful pull as updated" $
-    Update.afterPull (Right ()) `shouldBe` Updated
-  it "marks a failed pull as failed" $
-    Update.afterPull (Left "pull failed") `shouldBe` Failed "pull failed"
+      transition AwaitingInspection (Inspected (Left "inspection failed"))
+        `shouldBe` Settled (Failed "inspection failed")
+    it "marks a successful pull as updated" $
+      transition (AwaitingPull "/a/.git") (Pulled (Right ())) `shouldBe` Settled Updated
+    it "marks a failed pull as failed" $
+      transition (AwaitingPull "/a/.git") (Pulled (Left "pull failed"))
+        `shouldBe` Settled (Failed "pull failed")
+    it "ignores a signal the current phase does not await" $ do
+      transition AwaitingInspection (Pulled (Right ())) `shouldBe` AwaitingInspection
+      transition (AwaitingPull "/a/.git") (inspected clean) `shouldBe` AwaitingPull "/a/.git"
+      transition (Settled Planned) (Pulled (Left "late")) `shouldBe` Settled Planned
 
-pullPlanSpec :: Spec
-pullPlanSpec = describe "PullPlan.serialGroups" $ do
-  it "yields no groups without requests" $
-    PullPlan.serialGroups [] `shouldBe` []
-  it "groups worktrees sharing a common directory in request order" $
-    PullPlan.serialGroups
-      [ PullPlan.Request "/a" "/shared"
-      , PullPlan.Request "/b" "/other"
-      , PullPlan.Request "/c" "/shared"
-      , PullPlan.Request "/d" "/single"
-      ]
-      `shouldBe` [["/b"], ["/a", "/c"], ["/d"]]
+discoverySpec :: Spec
+discoverySpec = describe "Discovery" $ do
+  let rootListing = Discovery.afterListings (Discovery.start "/root") . pure . Listing "/root"
+      listed listing directory = Listing directory (listing directory)
+      explore listing discovery = case discovery of
+        Complete found -> (found, [], 0 :: Int)
+        Exploring directories _ ->
+          let wave = toList directories
+              (next, discovered) = Discovery.afterListings discovery (map (listed listing) wave)
+              (found, waves, total) = explore listing next
+           in (found, wave : waves, discovered + total)
+  it "starts by exploring the root" $
+    Discovery.start "/root" `shouldBe` Exploring ("/root" :| []) []
+  it "completes without candidates when the root holds no worktree" $
+    rootListing (Right [Entry "/root/file" Regular]) `shouldBe` (Complete [], 0)
+  it "records the root as inaccessible when it cannot be listed" $
+    rootListing (Left "blocked") `shouldBe` (Complete [Inaccessible "/root" "blocked"], 0)
+  it "recognizes a directory or a file named .git as worktree metadata" $ do
+    rootListing (Right [Entry "/root/.git" Directory]) `shouldBe` (Complete [Worktree "/root"], 1)
+    rootListing (Right [Entry "/root/.git" Regular]) `shouldBe` (Complete [Worktree "/root"], 1)
+  it "leaves a completed discovery unchanged" $
+    Discovery.afterListings
+      (Complete [Worktree "/root"])
+      [Listing "/root" (Right [Entry "/root/.git" Directory])]
+      `shouldBe` (Complete [Worktree "/root"], 0)
+  it "explores every directory of a level in one wave and yields candidates in path order" $ do
+    let listing "/root" =
+          Right
+            [ Entry "/root/z" Directory
+            , Entry "/root/link" Other
+            , Entry "/root/gone" Unavailable
+            , Entry "/root/a" Directory
+            , Entry "/root/.git" Directory
+            ]
+        listing "/root/a" = Left "blocked"
+        listing "/root/z" = Right [Entry "/root/z/.git" Regular, Entry "/root/z/deep" Directory]
+        listing directory = Right [Entry (directory <> "/.git") Regular]
+    explore listing (Discovery.start "/root")
+      `shouldBe` (
+                   [ Worktree "/root"
+                   , Inaccessible "/root/a" "blocked"
+                   , Inaccessible "/root/gone" "cannot inspect path"
+                   , Worktree "/root/z"
+                   , Worktree "/root/z/deep"
+                   ]
+                 , [["/root"], ["/root/a", "/root/z"], ["/root/z/deep"]]
+                 , 3
+                 )

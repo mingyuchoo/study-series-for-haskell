@@ -36,7 +36,7 @@ data SkipReason
 data Eligibility = Eligible | Ineligible SkipReason
   deriving (Eq, Show)
 
-data Inspection = Standalone State | Nested
+data Inspection = Standalone FilePath State | Nested
   deriving (Eq, Show)
 
 classify :: State -> Eligibility

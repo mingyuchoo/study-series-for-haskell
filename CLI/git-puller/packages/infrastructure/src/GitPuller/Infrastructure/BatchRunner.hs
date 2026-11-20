@@ -1,31 +1,29 @@
-{-# LANGUAGE GADTs #-}
-
 module GitPuller.Infrastructure.BatchRunner (
   run,
 )
 where
 
 import Control.Concurrent.MVar (newMVar, withMVar)
-import GitPuller.Application.Batch (Program (..), Request (..))
-import GitPuller.Application.Batch qualified as Batch
-import GitPuller.Application.Ports (Ports)
-import GitPuller.Application.Ports qualified as Ports
+import GitPuller.Application.Program (Program (..))
+import GitPuller.Application.Roles (Cast (..), Observer (..))
+import GitPuller.Application.UpdateWorktrees qualified as UpdateWorktrees
 import GitPuller.Domain.Outcome (Outcome)
 import GitPuller.Domain.Update (Mode)
+import GitPuller.Infrastructure.Exclusion qualified as Exclusion
 import GitPuller.Infrastructure.WorkerPool qualified as WorkerPool
 
-run :: Ports IO -> Int -> Mode -> FilePath -> IO [Outcome]
-run ports jobs mode root = do
+run :: Cast IO -> Int -> Mode -> FilePath -> IO [Outcome]
+run cast jobs mode root = do
   reporting <- newMVar ()
-  let perform :: Request reply -> IO reply
-      perform (ListDirectory location) = Ports.listDirectory ports location
-      perform (InspectRepository location) = Ports.inspectRepository ports location
-      perform (LocateCommonDirectory location) = Ports.locateCommonDirectory ports location
-      perform (Pull location) = Ports.pull ports location
-      perform (Report event) = withMVar reporting (const (Ports.report ports event))
+  exclusion <- Exclusion.new
+  let serialized = cast{observer = Observer (withMVar reporting . const . notify (observer cast))}
       execute :: Int -> Program result -> IO result
       execute _ (Finished result) = pure result
-      execute concurrency (Await request resume) = perform request >>= execute concurrency . resume
+      execute concurrency (Await request resume) =
+        UpdateWorktrees.perform serialized request >>= execute concurrency . resume
       execute concurrency (Concurrently programs resume) =
         WorkerPool.mapConcurrently concurrency (execute 1) programs >>= execute concurrency . resume
-  execute jobs (Batch.start mode root)
+      execute concurrency (Exclusively resource program resume) =
+        Exclusion.within exclusion resource (execute concurrency program)
+          >>= execute concurrency . resume
+  execute jobs (UpdateWorktrees.start mode root)

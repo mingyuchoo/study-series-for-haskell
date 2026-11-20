@@ -1,7 +1,7 @@
 cabal-version: 3.0
 name: git-puller-application
 version: 0.2.0
-synopsis: Batch update workflow and ports for git-puller
+synopsis: Update use case, interactions and roles for git-puller
 maintainer: mingyuchoo
 build-type: Simple
 
@@ -13,13 +13,15 @@ library
   import: shared
   hs-source-dirs: src
   exposed-modules:
-    GitPuller.Application.Batch
-    GitPuller.Application.Ports
+    GitPuller.Application.Event
+    GitPuller.Application.Program
+    GitPuller.Application.Roles
+    GitPuller.Application.UpdateWorktrees
   other-modules:
-    GitPuller.Application.Discovery
+    GitPuller.Application.Interaction.Survey
+    GitPuller.Application.Interaction.Update
   build-depends:
     base >=4.20 && <5,
-    filepath >=1.4 && <1.6,
     git-puller-domain
 
 test-suite application-test
@@ -29,7 +31,7 @@ test-suite application-test
   main-is: Main.hs
   build-depends:
     base,
-    filepath,
+    filepath >=1.4 && <1.6,
     git-puller-application,
     git-puller-domain,
     hspec >=2.10 && <3,

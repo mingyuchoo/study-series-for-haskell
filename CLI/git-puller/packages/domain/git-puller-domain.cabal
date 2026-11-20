@@ -1,7 +1,7 @@
 cabal-version: 3.0
 name: git-puller-domain
 version: 0.2.0
-synopsis: Repository eligibility rules and outcome aggregation for git-puller
+synopsis: Worktree discovery, update state machine and outcome aggregation for git-puller
 maintainer: mingyuchoo
 build-type: Simple
 
@@ -13,13 +13,13 @@ library
   import: shared
   hs-source-dirs: src
   exposed-modules:
+    GitPuller.Domain.Discovery
     GitPuller.Domain.Outcome
-    GitPuller.Domain.PullPlan
     GitPuller.Domain.Repository
     GitPuller.Domain.Update
   build-depends:
     base >=4.20 && <5,
-    containers >=0.6 && <0.9
+    filepath >=1.4 && <1.6
 
 test-suite domain-test
   import: shared

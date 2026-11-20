@@ -1,11 +1,13 @@
 module GitPuller.Domain.Update (
   Mode (..),
-  Decision (..),
-  afterInspection,
-  afterPull,
+  Phase (..),
+  Signal (..),
+  begin,
+  transition,
 )
 where
 
+import GitPuller.Domain.Discovery (Candidate (..))
 import GitPuller.Domain.Outcome (Status (..))
 import GitPuller.Domain.Repository (
   Eligibility (..),
@@ -17,17 +19,32 @@ import GitPuller.Domain.Repository (
 data Mode = DryRun | Apply
   deriving (Eq, Show)
 
-data Decision = Complete Status | Pull
+data Phase
+  = AwaitingInspection
+  | AwaitingPull FilePath
+  | Settled Status
   deriving (Eq, Show)
 
-afterInspection :: Mode -> Either String Inspection -> Decision
-afterInspection _ (Left diagnostic) = Complete (Failed diagnostic)
-afterInspection _ (Right Nested) = Complete (Skipped Submodule)
-afterInspection mode (Right (Standalone state)) =
-  case (classify state, mode) of
-    (Ineligible reason, _) -> Complete (Skipped reason)
-    (Eligible, DryRun) -> Complete Planned
-    (Eligible, Apply) -> Pull
+data Signal
+  = Inspected (Either String Inspection)
+  | Pulled (Either String ())
+  deriving (Eq, Show)
 
-afterPull :: Either String () -> Status
-afterPull = either Failed (const Updated)
+begin :: Candidate -> Phase
+begin (Worktree _) = AwaitingInspection
+begin (Inaccessible _ diagnostic) = Settled (Failed diagnostic)
+
+transition :: Mode -> Phase -> Signal -> Phase
+transition mode AwaitingInspection (Inspected inspection) = afterInspection mode inspection
+transition _ (AwaitingPull _) (Pulled result) =
+  Settled (either Failed (const Updated) result)
+transition _ phase _ = phase
+
+afterInspection :: Mode -> Either String Inspection -> Phase
+afterInspection _ (Left diagnostic) = Settled (Failed diagnostic)
+afterInspection _ (Right Nested) = Settled (Skipped Submodule)
+afterInspection mode (Right (Standalone commonDirectory state)) =
+  case (classify state, mode) of
+    (Ineligible reason, _) -> Settled (Skipped reason)
+    (Eligible, DryRun) -> Settled Planned
+    (Eligible, Apply) -> AwaitingPull commonDirectory

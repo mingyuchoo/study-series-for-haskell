@@ -17,16 +17,18 @@ library cli
   hs-source-dirs: src
   exposed-modules:
     GitPuller.Cli.Arguments
+    GitPuller.Cli.Progress
     GitPuller.Cli.Render
   build-depends:
     base >=4.20 && <5,
+    git-puller-application,
     git-puller-domain
 
 executable git-puller
   import: shared
   hs-source-dirs: app
   main-is: Main.hs
-  ghc-options: -threaded
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     base,
     git-puller:cli,
@@ -42,6 +44,7 @@ test-suite cli-unit-test
   build-depends:
     base,
     git-puller:cli,
+    git-puller-application,
     git-puller-domain,
     hspec >=2.10 && <3
 

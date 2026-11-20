@@ -12,12 +12,23 @@ import Control.Concurrent.STM (
 import Control.Monad (when)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.List (delete)
-import GitPuller.Application.Ports (Entry (..), EntryKind (..), Event (..), Ports (..))
+import GitPuller.Application.Event (Event (..))
+import GitPuller.Application.Roles (
+  Cast (..),
+  Inspector (..),
+  Observer (..),
+  Surveyor (..),
+  Updater (..),
+ )
+import GitPuller.Domain.Discovery (Entry (..), EntryKind (..))
 import GitPuller.Domain.Outcome (Outcome (..), Status (..))
-import GitPuller.Domain.Repository (Branch (..), Inspection (..), Operation (..), State (..))
+import GitPuller.Domain.Repository (Branch (..), Inspection (..), Operation (..), State (State))
 import GitPuller.Domain.Update (Mode (..))
 import GitPuller.Infrastructure.BatchRunner qualified as BatchRunner
+import GitPuller.Infrastructure.Descriptors qualified as Descriptors
 import GitPuller.Infrastructure.Git qualified as Git
+import GitPuller.Infrastructure.GitOutput (Layout (..), Snapshot (..))
+import GitPuller.Infrastructure.GitOutput qualified as GitOutput
 import GitPuller.Infrastructure.Process qualified as Process
 import GitPuller.Infrastructure.WorkerPool qualified as WorkerPool
 import System.Environment (getEnvironment)
@@ -31,15 +42,32 @@ main = hspec $ do
   workerPoolSpec
   processSpec
   gitEnvironmentSpec
+  gitOutputSpec
+  descriptorsSpec
 
 clean :: Inspection
-clean = Standalone State{branch = Attached, operation = Idle, upstream = True, dirty = False}
+clean =
+  Standalone "/shared" (State Attached Idle True False)
 
 record :: IORef [item] -> item -> IO ()
 record history item = modifyIORef' history (item :)
 
 recorded :: IORef [item] -> IO [item]
 recorded history = reverse <$> readIORef history
+
+cast ::
+  (FilePath -> IO (Either String [Entry])) ->
+  (FilePath -> IO (Either String Inspection)) ->
+  (FilePath -> IO (Either String ())) ->
+  (Event -> IO ()) ->
+  Cast IO
+cast list inspect update observe =
+  Cast
+    { surveyor = Surveyor{listDirectory = list}
+    , inspector = Inspector{inspectRepository = inspect}
+    , updater = Updater{pull = update}
+    , observer = Observer{notify = observe}
+    }
 
 batchRunnerSpec :: Spec
 batchRunnerSpec = describe "BatchRunner.run" $ do
@@ -58,13 +86,11 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
         listing "/bad" = Left "blocked"
         listing _ = Right [Entry "/.git" Other, Entry "/unused" Other]
         ports =
-          Ports
-            { listDirectory = pure . listing
-            , inspectRepository = \location -> Right clean <$ record inspected location
-            , locateCommonDirectory = pure . Right
-            , pull = \location -> Right () <$ record pulled location
-            , report = record events
-            }
+          cast
+            (pure . listing)
+            (\location -> Right clean <$ record inspected location)
+            (\location -> Right () <$ record pulled location)
+            (record events)
         planned = Outcome "/" Planned
         blocked = Outcome "/bad" (Failed "blocked")
     BatchRunner.run ports 1 DryRun "/" `shouldReturn` [planned, blocked]
@@ -84,14 +110,11 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
         listing "/a" = [Entry "/a/.git" Regular]
         listing _ = [Entry "/z/.git" Directory]
         ports =
-          Ports
-            { listDirectory = pure . Right . listing
-            , inspectRepository = const (pure (Right clean))
-            , locateCommonDirectory = pure . Right
-            , pull = \location ->
-                (if location == "/a" then Left "failed" else Right ()) <$ record pulled location
-            , report = const (pure ())
-            }
+          cast
+            (pure . Right . listing)
+            (const (pure (Right clean)))
+            (\location -> (if location == "/a" then Left "failed" else Right ()) <$ record pulled location)
+            (const (pure ()))
     BatchRunner.run ports 1 Apply "/"
       `shouldReturn` [Outcome "/a" (Failed "failed"), Outcome "/z" Updated]
     recorded pulled `shouldReturn` ["/a", "/z"]
@@ -110,19 +133,20 @@ batchRunnerSpec = describe "BatchRunner.run" $ do
             modifyTVar' arrived (+ 1)
           atomically (readTVar arrived >>= check . (>= 3))
         leave directory = atomically (modifyTVar' active (delete directory))
+        idle = State Attached Idle True False
+        inspection location = Standalone (commonDirectory location) idle
         listing "/" = map (`Entry` Directory) ["/a", "/b", "/c", "/d"]
         listing location = [Entry (location </> ".git") Directory]
         ports =
-          Ports
-            { listDirectory = pure . Right . listing
-            , inspectRepository = const (pure (Right clean))
-            , locateCommonDirectory = pure . Right . commonDirectory
-            , pull = \location -> do
+          cast
+            (pure . Right . listing)
+            (pure . Right . inspection)
+            ( \location -> do
                 enter (commonDirectory location)
                 leave (commonDirectory location)
                 pure (if location == "/c" then Left "failed" else Right ())
-            , report = const (pure ())
-            }
+            )
+            (const (pure ()))
     BatchRunner.run ports 4 Apply "/"
       `shouldReturn` [ Outcome "/a" Updated
                      , Outcome "/b" Updated
@@ -176,3 +200,46 @@ gitEnvironmentSpec =
                  , ("GIT_TERMINAL_PROMPT", "0")
                  , ("GIT_OPTIONAL_LOCKS", "0")
                  ]
+
+gitOutputSpec :: Spec
+gitOutputSpec = describe "GitOutput" $ do
+  let separated = concatMap (<> "--git-puller-field\n")
+  it "reads the layout of a standalone worktree with an empty superproject" $
+    GitOutput.parseLayout (separated ["/a\n", "/a/.git\n", "/a/.git\n"])
+      `shouldBe` Just (Layout "/a" "/a/.git" "/a/.git" "")
+  it "reads the layout of a submodule" $
+    GitOutput.parseLayout (separated ["/a/m\n", "/a/.git/modules/m\n", "/a/.git/modules/m\n"] <> "/a\n")
+      `shouldBe` Just (Layout "/a/m" "/a/.git/modules/m" "/a/.git/modules/m" "/a")
+  it "keeps newlines that belong to a path" $
+    GitOutput.parseLayout (separated ["/with\nnewline\n", "/with\nnewline/.git\n", "/common\n\n"])
+      `shouldBe` Just (Layout "/with\nnewline" "/with\nnewline/.git" "/common\n" "")
+  it "rejects output with an unexpected number of fields" $ do
+    GitOutput.parseLayout "/a\n" `shouldBe` Nothing
+    GitOutput.parseLayout (separated ["/a\n", "/a\n", "/a\n", "/a\n"]) `shouldBe` Nothing
+  it "reads a clean tracking branch" $
+    GitOutput.parseSnapshot
+      "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +0 -0\n"
+      `shouldBe` Snapshot Attached True False
+  it "reads changes after the branch headers" $
+    GitOutput.parseSnapshot
+      "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +? -?\n? x\n"
+      `shouldBe` Snapshot Attached True True
+  it "treats a configured upstream without a resolvable ref as untracked" $
+    GitOutput.parseSnapshot "# branch.oid 1a2b\n# branch.head main\n# branch.upstream origin/main\n"
+      `shouldBe` Snapshot Attached False False
+  it "reads an unborn branch" $
+    GitOutput.parseSnapshot "# branch.oid (initial)\n# branch.head main\n"
+      `shouldBe` Snapshot Unborn False False
+  it "reads a detached head" $
+    GitOutput.parseSnapshot "# branch.oid 1a2b\n# branch.head (detached)\n"
+      `shouldBe` Snapshot Detached False False
+
+descriptorsSpec :: Spec
+descriptorsSpec = describe "Descriptors.budget" $ do
+  it "keeps a conventional limit for ordinary job counts" $ do
+    Descriptors.budget 1 `shouldBe` 1024
+    Descriptors.budget 16 `shouldBe` 1024
+  it "grows with the job count so every concurrent child keeps its capture files" $
+    Descriptors.budget 1000 `shouldBe` 4064
+  it "does not overflow for the largest job count" $
+    Descriptors.budget maxBound `shouldBe` 64 + 4 * toInteger (maxBound :: Int)

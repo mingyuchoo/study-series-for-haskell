@@ -10,8 +10,8 @@ import Control.Exception (IOException, try)
 import Data.List (dropWhileEnd)
 import Foreign.C.Error (Errno (..), eNOENT, eNOTDIR)
 import GHC.IO.Exception (IOException (ioe_errno))
-import GitPuller.Application.Ports (Entry (..))
-import GitPuller.Application.Ports qualified as Ports
+import GitPuller.Domain.Discovery (Entry (..))
+import GitPuller.Domain.Discovery qualified as Discovery
 import GitPuller.Infrastructure.Failure qualified as Failure
 import System.Directory qualified as Directory
 import System.FilePath ((</>))
@@ -37,12 +37,12 @@ entry :: FilePath -> FilePath -> IO Entry
 entry parent name = Entry location . entryKind <$> pathKind location
  where
   location = parent </> name
-  entryKind Directory = Ports.Directory
-  entryKind Regular = Ports.Regular
-  entryKind Missing = Ports.Unavailable
-  entryKind Unavailable = Ports.Unavailable
-  entryKind Symlink = Ports.Other
-  entryKind Other = Ports.Other
+  entryKind Directory = Discovery.Directory
+  entryKind Regular = Discovery.Regular
+  entryKind Missing = Discovery.Unavailable
+  entryKind Unavailable = Discovery.Unavailable
+  entryKind Symlink = Discovery.Other
+  entryKind Other = Discovery.Other
 
 listDirectory :: FilePath -> IO (Either String [Entry])
 listDirectory location = do

@@ -30,7 +30,7 @@ data Flags = Flags
   }
 
 defaultJobs :: Int
-defaultJobs = 8
+defaultJobs = 16
 
 usage :: String
 usage = "Usage: git-puller [--dry-run] [--verbose] [--jobs <count>] <path> | git-puller --help"
