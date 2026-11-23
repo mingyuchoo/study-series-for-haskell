@@ -8,6 +8,7 @@ module Infrastructure.Database.SampleData
 import Application.UserService (UserService (..))
 
 import Control.Exception (catch)
+import Control.Monad (void)
 
 import Database.SQLite.Simple (SQLError)
 
@@ -26,5 +27,5 @@ insertSampleData userService = do
   putStrLn "샘플 데이터 생성 완료!"
   where
     createUserSafe name email password =
-      (createUser userService name email password >> return ())
+      void (createUser userService name email password)
         `catch` (\(_ :: SQLError) -> return ())

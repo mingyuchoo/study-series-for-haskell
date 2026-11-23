@@ -9,8 +9,8 @@ extra-deps:
 - hpack-0.38.1
 flags: {}
 
-11,1: docker:
-12:     enable: false
+docker:
+  enable: false
   image: "fpco/stack-build:lts"
   container-name: "postgresql-persist-init"
   auto-pull: true

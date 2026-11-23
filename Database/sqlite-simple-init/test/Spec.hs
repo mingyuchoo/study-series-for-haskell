@@ -3,25 +3,21 @@
 module Main
     where
 
-import           Control.Exception                      (SomeException, try)
-import           Control.Monad                           (when)
+import           Control.Monad                           (unless, when)
 import           Data.Maybe                              (isJust, isNothing)
-import           System.Directory                        (doesFileExist, removeFile)
-import           System.Exit                             (exitFailure, exitSuccess)
+import           System.Exit                             (exitFailure)
 import           Application.UserService                 (UserService (..))
 import           Domain.UserModel                        (User (..))
-import           Infrastructure.Repository.UserRepository (UserRepository (..), initDB)
-
--- | Clean up the database before running tests
+import           Database.SQLite.Simple                 (withConnection)
+import           Infrastructure.Database.Connection    (createTables)
+import           Infrastructure.Repository.UserRepository (UserRepository (..))
 import           System.IO (BufferMode (NoBuffering), hSetBuffering, stdout)
 
 -- |
 main :: IO ()
-main = do
-  hSetBuffering stdout NoBuffering
-    cleanupDB
-
-    conn <- initDB
+main = withConnection ":memory:" $ \conn -> do
+    hSetBuffering stdout NoBuffering
+    createTables conn
     let repo = UserRepository conn
 
     -- 1) Initially empty
@@ -75,7 +71,6 @@ main = do
     handleUserId (userId user1)
 
     putStrLn "All tests passed."
-    exitSuccess
 --------------------------------------------------------------------------------
 -- Minimal assertion helpers (avoid adding new test dependencies)
 
@@ -89,7 +84,7 @@ assertEq msg expected actual =
 
 assertBool :: String -> Bool -> IO ()
 assertBool msg cond =
-    when (not cond) $ do
+    unless cond $ do
         putStrLn ("ASSERTION FAILED: " <> msg)
         exitFailure
 
@@ -97,14 +92,3 @@ failTest :: String -> IO ()
 failTest msg = do
     putStrLn ("TEST FAILED: " <> msg)
     exitFailure
-
-cleanupDB :: IO ()
-cleanupDB = do
-    e <- try (do
-            exists <- doesFileExist "users.db"
-            when exists (removeFile "users.db")
-        ) :: IO (Either SomeException ())
-    let handleResult r
-          | Left _  <- r = return ()
-          | Right _ <- r = return ()
-    handleResult e

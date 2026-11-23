@@ -98,9 +98,8 @@ startWebServer userService =
               json <| object ["error" .= ("name, email and password are required" :: String)]
           | otherwise -> do
               result <-
-                ( liftIO <|
-                    (try (updateUser userService uid name email password) :: IO (Either SQLError Bool))
-                )
+                liftIO <|
+                  (try (updateUser userService uid name email password) :: IO (Either SQLError Bool))
               case result of
                 Right success | success -> do
                   userResult <-

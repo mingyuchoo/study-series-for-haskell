@@ -233,14 +233,16 @@ docker run -it --rm \
 
 ## 🔧 개발 도구
 
-### 코드 포맷팅
+### 포맷팅부터 서버 실행까지
+
+`fourmolu`, `stylish-haskell`, `hlint`, `stack`을 PATH에 추가하고 위의 PostgreSQL 실행 환경을 준비합니다. 스크립트는 Haskell 소스 파일을 제자리에서 포맷하고 HLint 결과를 출력한 뒤 빌드, 테스트, 서버 실행을 차례로 진행합니다. HLint 지적 사항이 있어도 빌드를 계속합니다.
 
 ```bash
-# stylish-haskell로 코드 포맷팅
-make format
+./scripts/run.sh
+```
 
-# 또는 직접 실행
-./format.sh
+```powershell
+pwsh -File ./scripts/run.ps1
 ```
 
 ### GHCID (빠른 피드백)
