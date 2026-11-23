@@ -1,7 +1,8 @@
-module Hfm.Application.Internal.Process (openEditor, executeCommand) where
+module Hfm.Application.Internal.Process (openEditor, executeCommand, resumeProcess) where
 
 import qualified Data.Text               as T
 
+import           Hfm.Application.Internal.PanelRefresh (finish)
 import           Hfm.Application.Program
 import           Hfm.Application.State
 import           Hfm.Application.Status
@@ -20,3 +21,10 @@ executeCommand raw state
   | T.null (T.strip raw) || T.any (== '\0') raw = continue (state { stStatus = InvalidCommand })
   | otherwise = Await (RunCommand (panelPath (activePanel state)) raw)
       (Working state (CompletingProcess ShellProcess))
+
+resumeProcess :: AppState -> ProcessKind -> Int -> Program (AppState, Lifecycle)
+resumeProcess state kind exitCode = finish status state
+  where
+    status = case kind of
+      EditorProcess -> EditorFinished exitCode
+      ShellProcess  -> CommandFinished exitCode

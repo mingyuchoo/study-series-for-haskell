@@ -28,6 +28,18 @@ flowchart TD
 
 화살표는 컴파일 의존성입니다. infrastructure와 tui는 서로 의존하지 않습니다. domain과 application에는 구체적 IO, Brick/Vty, YAML, POSIX나 실제 파일 시스템 접근이 없습니다. 요청과 포트 계약은 application이 소유합니다. 공유 코드는 패키지 모듈 이름으로 import합니다.
 
+## 도메인과 DCI
+
+파일 관리 도메인의 공통 어휘는 `Entry`·`EntryKind`, `Selection`, 경로 정책, `Settings`로 표현합니다. 이 타입과 정책은 `hfm-domain`에 두고, 패널과 사용자 세션의 상태는 `hfm-application`에서 관리합니다. 파일 시스템을 읽어야 알 수 있는 사실은 바깥 어댑터가 확인하여 요청의 응답으로 전달합니다.
+
+| DCI 관점 | 복사·이동에서의 구현 |
+|---|---|
+| Data | 양쪽 `Panel`의 경로·선택과 파일 `Entry` |
+| Context | `TransferContext`가 복사·이동 구분, 선택된 `SourceEntry`, 입력으로 해석된 `RequestedDestination`을 묶습니다. 원본과 요청 목적지는 별도 타입이며 활성 패널이 어느 쪽이든 같은 방식으로 역할을 배정합니다. |
+| Interaction | `Files`가 목적지 조회를 요청하고, 응답으로 최종 경로를 계산한 뒤 변경을 요청합니다. 변경 성공 후 `PanelRefresh`에 두 패널 갱신을 위임합니다. |
+
+예를 들어 왼쪽에서 `notes.txt`를 선택하고 오른쪽 디렉터리로 복사하면, 현재 선택이 `SourceEntry`, 오른쪽의 경로가 `RequestedDestination` 역할을 맡습니다. 목적지가 디렉터리라는 응답이 돌아오면 순수 경로 정책이 그 경로에 `notes.txt`를 붙입니다. 대기 단계가 역할을 보유하므로 응답을 처리할 때 다시 선택을 읽지 않습니다.
+
 ## ADT 상태 머신
 
 기존 화면 상태 `Mode`는 탐색, 검색, 작업 입력, 편집기 설정 입력, 삭제 확인, 파일 보기를 구분합니다. 테마 미리보기는 별도 `Maybe (Selection Theme)`로 보존하여 어느 화면에서도 열고 취소할 수 있습니다. `KeySequence = DirectInput | ControlXPrefix`는 접두 명령 상태, `Lifecycle = Continue | Quit`는 이벤트 처리 후 앱 실행 여부입니다.
@@ -49,7 +61,7 @@ resume :: Phase response result -> Either FileError response -> Program result
 
 `Program`에는 함수나 실행 가능한 액션을 저장하지 않습니다. `Await`는 타입이 일치하는 요청과 후속 단계 ADT를 저장합니다. `Request`와 `Phase`의 응답 타입이 연결되어 디렉터리 여부에 목록을 전달하거나 미리보기 결과에 종료 코드를 전달할 수 없습니다. `Machine.resume`이 성공·실패 응답을 받아 다음 요청 또는 완료 값을 만드는 순수 전이 함수입니다.
 
-`StartupStep`과 `TaskStep`에는 해당 단계에 필요한 데이터가 들어 있습니다. 예를 들어 두 번째 패널 갱신 단계는 첫 번째 목록을 보유하고, 설정 저장 단계는 복구할 이전 상태를 보유합니다. 상태 전이는 `StateT`, `ExceptT`, 후속 함수에 숨겨지지 않습니다. ADT는 메모리에서 검사 가능한 값이며 직렬화 형식은 정의하지 않습니다.
+`StartupStep`과 `TaskStep`에는 해당 단계에 필요한 데이터가 들어 있습니다. `TaskStep`은 탐색·파일 변경·패널 갱신의 응답 타입을 각각 `NavigationStep`, `FileStep`, `RefreshStep`으로 연결하고 프로세스·설정의 단일 응답 단계도 표현합니다. 예를 들어 두 번째 패널 갱신 단계는 첫 번째 목록을 보유하고, 설정 저장 단계는 복구할 이전 상태를 보유합니다. 상태 전이는 `StateT`, `ExceptT`, 후속 함수에 숨겨지지 않습니다. ADT는 메모리에서 검사 가능한 값이며 직렬화 형식은 정의하지 않습니다.
 
 | 작업 | 진행 단계 및 완료 조건 |
 |---|---|
@@ -58,6 +70,7 @@ resume :: Phase response result -> Either FileError response -> Program result
 | 심볼릭 링크 열기 | 디렉터리 여부 → 탐색 또는 미리보기 |
 | 미리보기 | 바이트 읽기 → 바이너리 거부 또는 UTF-8 텍스트 보기 |
 | 복사·이동 | 대상 디렉터리 여부 → 순수 대상 경로 계산 → 변경 → 두 패널 갱신 |
+| 숨김 표시 전환 | 후보 표시 옵션으로 양쪽 목록 읽기 → 옵션과 목록 함께 반영 |
 | 이름 변경·폴더 생성·삭제 | 입력 검증 또는 삭제 확인 → 변경 → 두 패널 갱신 |
 | 편집기·셸 실행 | 대상·입력 검증 → 프로세스 요청 → 종료 코드 상태 → 두 패널 갱신 |
 | 설정 변경 | 후보 설정 → 저장 요청 → 확정 또는 이전 설정·입력 복구 |
@@ -81,7 +94,7 @@ stateDiagram-v2
   Failed --> Done: 오류 상태와 기존 입력 보존
 ```
 
-파일 변경 실패 시 작업 입력과 패널을 유지하고 후속 갱신을 요청하지 않습니다. 두 패널 갱신은 두 읽기가 모두 성공해야 반영합니다. 이미 성공한 파일 변경은 갱신 실패로 취소되지 않으며 재실행하지 않습니다. 갱신 실패 상태는 파일 변경 완료 후의 탐색 모드와 이전 목록을 유지합니다.
+파일 변경 실패 시 작업 입력과 패널을 유지하고 후속 갱신을 요청하지 않습니다. 두 패널 갱신은 두 읽기가 모두 성공해야 반영합니다. 숨김 표시 전환 중 어느 한쪽이라도 읽기에 실패하면 이전 표시 옵션과 두 목록을 유지합니다. 이미 성공한 파일 변경은 갱신 실패로 취소되지 않으며 재실행하지 않습니다. 갱신 실패 상태는 파일 변경 완료 후의 탐색 모드와 이전 목록을 유지합니다.
 
 ## 순수 전이와 효과 실행의 경계
 
@@ -119,12 +132,15 @@ handleInput :: Monad m => FileSystem m -> Processes m
 |---|---|
 | `State` | 화면·키 시퀀스 상태, 패널·선택 갱신, 뷰어 범위 |
 | `Status`, `Error` | 표시 언어·OS와 무관한 결과와 오류 |
-| `Program` | Request, Program, Phase, StartupStep, TaskStep, Lifecycle ADT |
-| `Machine` | 응답에 따른 순수 전이, 탐색·미리보기·갱신·설정 저장 단계 생성 |
-| `Startup` | 시작 상태 머신 진입점 |
-| `Workflow` | 전역 키·접두 명령·모드 분기, 탐색·테마 이벤트 |
-| `Internal.Files` | 파일 선택과 입력 정책을 검증하고 파일 작업 단계 생성 |
-| `Internal.Process` | 편집 대상·명령 입력 검증 후 프로세스 단계 생성 |
+| `Program` | 효과 요청, 진행 단계, 응답 타입을 연결하는 ADT와 전송 역할 타입 |
+| `Machine` | 응답을 해당 유스케이스의 순수 전이에 전달하고 공통 작업 실패 처리 |
+| `Startup` | 초기 디렉터리 및 목록을 읽는 시작 단계 생성과 전이 |
+| `Workflow` | 전역 키·접두 명령·모드에 맞는 상호작용 선택 |
+| `Internal.Files` | 파일 작업 프롬프트, 참여 역할 배정, 파일 변경 단계 생성과 전이 |
+| `Internal.Navigation` | 디렉터리 탐색·링크 판별·미리보기 단계 생성과 전이 |
+| `Internal.PanelRefresh` | 두 패널 목록 읽기 및 목록과 숨김 표시 옵션을 함께 반영 |
+| `Internal.Process` | 편집 대상·명령 검증, 프로세스 요청과 완료 처리 |
+| `Internal.Settings` | 테마 선택, 편집기 설정 확정, 저장 성공·실패 전이 |
 | `Internal.Interaction` | 검색·입력 편집, 선택 이동, 취소·삭제 확인·보기 제어 |
 | `Effects.Ports` | `FileSystem m`, `Processes m` 계약 |
 | `Effects.Runtime` | 요청 실행과 입력 진입점 연결 |
@@ -155,6 +171,6 @@ stack exec hfm-test-keybindings -- "$(stack path --local-install-root)/bin/hfm"
 - infrastructure 테스트는 임시 디렉터리의 실제 파일 작업과 설정 직렬화를 검증합니다.
 - tui 테스트는 번역·레이아웃·테마·구문 강조를, PTY 검증은 실제 실행 파일의 키·파일 변경·프로세스 실행·설정 복원을 검증합니다.
 
-새 작업은 `Request`와 응답 타입에 맞춘 `TaskStep`을 정의하고 `Machine.resumeTask`에 성공 전이를 추가합니다. 일반 실패는 기존 상태를 유지하는 공통 전이를 사용합니다. 별도 복원이 필요하면 명시적인 실패 전이를 정의합니다. 실제 구현은 외부 어댑터에 두고 `Runtime`에서 포트에 연결합니다. 새 키는 순수 입력 처리에서 이 단계를 생성합니다.
+새 작업은 `Request`와 응답 타입에 맞춘 진행 단계를 정의하고, 해당 유스케이스 모듈에 순수 전이를 추가합니다. 새 유스케이스를 추가하면 `Machine.resume`에서 응답을 해당 전이로 전달합니다. 일반 실패는 기존 상태를 유지하는 공통 전이를 사용합니다. 별도 복원이 필요하면 명시적인 실패 전이를 정의합니다. 실제 구현은 외부 어댑터에 두고 `Runtime`에서 포트에 연결합니다. 새 키는 순수 입력 처리에서 이 단계를 생성합니다.
 
-기존 호출자를 이전할 때 `Await`의 두 번째 값은 함수가 아닌 `Phase`이므로 `resume phase response`로 진행합니다. `Program`의 Functor/Applicative/Monad 인스턴스는 제거했습니다. `runProgram`에는 설정 저장 함수를 추가하고, 반환된 종료 값은 `Bool` 대신 `Lifecycle`, `stPendingCtrlX`는 `stKeySequence`를 사용합니다. 사용자 실행 명령과 키 바인딩은 유지합니다.
+`planInput`, `planStartup`, `resume`, `runProgram`의 호출 방식은 유지됩니다. 진행 단계 생성자를 직접 패턴 매칭하는 코드는 `Navigating`, `ChangingFiles`, `Refreshing` 아래에서 해당 단계를 매칭합니다.

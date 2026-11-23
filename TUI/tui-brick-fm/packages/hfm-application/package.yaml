@@ -34,7 +34,10 @@ library:
   other-modules:
   - Hfm.Application.Internal.Files
   - Hfm.Application.Internal.Interaction
+  - Hfm.Application.Internal.Navigation
+  - Hfm.Application.Internal.PanelRefresh
   - Hfm.Application.Internal.Process
+  - Hfm.Application.Internal.Settings
 tests:
   hfm-application-test:
     main: Spec.hs

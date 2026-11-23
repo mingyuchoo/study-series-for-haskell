@@ -179,6 +179,25 @@ spec = do
         _ -> expectationFailure "Expected a file preview request"
 
   describe "File mutation and refresh boundaries" $ do
+    it "commits hidden visibility together with both refreshed panels" $ do
+      let leftEntries = [Entry ".left" RegularFile 1]
+          rightEntries = [Entry ".right" RegularFile 1]
+          checkFailed state = do
+            checkFailedRefresh state
+            stShowHidden state `shouldBe` False
+      case planInput (KeyPress (KChar 'o') [MMeta]) initial of
+        Await (ReadEntries True "left") leftPhase -> do
+          expectState (resume leftPhase (Left PermissionDenied)) checkFailed
+          case resume leftPhase (Right leftEntries) of
+            Await (ReadEntries True "right") rightPhase -> do
+              expectState (resume rightPhase (Left PermissionDenied)) checkFailed
+              expectState (resume rightPhase (Right rightEntries)) $ \state -> do
+                stShowHidden state `shouldBe` True
+                panelAll (stLeft state) `shouldBe` leftEntries
+                panelAll (stRight state) `shouldBe` rightEntries
+            _ -> expectationFailure "Expected hidden entries from the right panel"
+        _ -> expectationFailure "Expected hidden entries from the left panel"
+
     it "retains inputs and stops after any first mutation or process failure" $ do
       let cases = [(enter, initial { stMode = Prompt Rename "new" }),
                    (enter, initial { stMode = Prompt Mkdir "new" }),

@@ -1,21 +1,18 @@
 module Hfm.Application.Internal.Interaction
-  ( cancelMode, moveBoundary, switchPanel, movePage, startPrompt
+  ( cancelMode, moveBoundary, switchPanel, movePage
   , searchEvent, promptEvent, editorPromptEvent, confirmEvent, viewEvent
   ) where
 
-import           Data.Maybe                       (isJust)
 import qualified Data.Text                        as T
 
 import           Hfm.Application.Internal.Files   (deleteSelected,
                                                    runFileOperation)
 import           Hfm.Application.Internal.Process (executeCommand)
-import           Hfm.Application.Machine          (persistSettings)
+import           Hfm.Application.Internal.Settings (confirmEditor)
 import           Hfm.Application.Program
 import           Hfm.Application.State
 import           Hfm.Application.Status
-import           Hfm.Domain.Config                (Settings (..), validEditor)
 import           Hfm.Domain.Editor                (editText)
-import           Hfm.Domain.Entry
 import           Hfm.Domain.Input
 import           Hfm.Domain.Selection             (selectAt)
 
@@ -39,16 +36,6 @@ switchPanel state = state { stActive = case stActive state of
 
 movePage :: Bool -> AppState -> AppState
 movePage down state = iterate (moveSelection down) state !! max 1 (snd (stTerminalSize state) - 6)
-
-startPrompt :: Operation -> AppState -> AppState
-startPrompt operation state
-  | maybe False ((/= Special) . entryKind) (selectedEntry state) && isJust (selectedPath state) =
-      let other = case stActive state of
-            LeftSide  -> stRight state
-            RightSide -> stLeft state
-          value = T.pack (if operation == Rename then maybe "" entryName (selectedEntry state) else panelPath other)
-      in state { stMode = Prompt operation value, stInputCursor = T.length value }
-  | otherwise = state
 
 setSearch :: T.Text -> AppState -> AppState
 setSearch query state =
@@ -93,15 +80,7 @@ promptEvent operation value event state = case event of
 editorPromptEvent :: T.Text -> Input -> AppState -> Program (AppState, Lifecycle)
 editorPromptEvent value event state = case event of
   KeyPress KEsc [] -> continue (cancelMode state)
-  KeyPress KEnter []
-    | not (validEditor value) -> continue (state { stStatus = InvalidEditor })
-    | otherwise ->
-        let executable = T.strip value
-            settings = (currentSettings state)
-              { settingsEditor = if T.null executable then Nothing else Just (T.unpack executable) }
-            updated = (applySettings settings state)
-              { stMode = Browse, stInputCursor = 0, stStatus = SettingsSaved }
-        in persistSettings state updated
+  KeyPress KEnter [] -> confirmEditor value state
   _ -> continue $ case editText event value (stInputCursor state) of
     Just (newValue, cursor) -> state { stMode = EditorPrompt newValue, stInputCursor = cursor }
     Nothing -> state

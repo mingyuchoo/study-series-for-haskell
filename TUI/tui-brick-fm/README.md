@@ -1,161 +1,112 @@
-# hfm 터미널 파일 관리자
+# hfm
 
-Brick으로 만든 두 패널 터미널 파일 관리자입니다. Midnight Commander처럼 좌우 디렉터리를 나란히 보며 탐색하고 파일을 복사하거나 이동할 수 있습니다.
+hfm은 Haskell과 Brick으로 만든 두 패널 터미널 파일 관리자입니다. 두 디렉터리를 나란히 탐색하고, 반대편 패널을 기본 대상으로 파일을 복사하거나 이동할 수 있습니다. Emacs/Dired 키로 조작하며 텍스트 미리보기, 외부 편집기, 셸 명령 실행을 지원합니다.
 
-## 실행
+## 빠른 시작
+
+[Stack](https://docs.haskellstack.org/)을 설치한 뒤 이 디렉터리에서 대화형 터미널로 실행합니다. 프로젝트는 `stack.yaml`의 LTS 스냅샷으로 빌드합니다.
+
+```bash
+stack run hfm
+stack run hfm -- "$HOME" /tmp
+```
+
+인자가 없으면 양쪽 패널이 현재 디렉터리에서 시작합니다. 경로 하나를 주면 왼쪽 패널에 적용하고, 두 개를 주면 왼쪽과 오른쪽에 차례대로 적용합니다.
+
+Windows에서는 PowerShell에서 같은 Stack 명령을 실행하거나 프로젝트의 실행 스크립트를 사용합니다.
+
+```powershell
+.\scripts\run.ps1 run "C:\Users" "C:\Windows\Temp"
+```
+
+Linux와 macOS에서는 `./scripts/run.sh run`을 사용할 수 있습니다. 두 스크립트는 전달한 상대 경로를 호출 위치 기준으로 해석합니다. 경로를 생략하면 프로젝트 디렉터리에서 시작합니다.
+
+## 기본 키
+
+`C-`는 Ctrl, `M-`는 터미널의 Meta(주로 Alt), `RET`는 Enter입니다. `C-x o`처럼 키가 두 개면 순서대로 누릅니다.
+
+| 키 | 동작 |
+| --- | --- |
+| `C-x o` | 활성 패널 전환 |
+| `C-p` / `C-n`, ↑ / ↓ | 이전 / 다음 항목 또는 미리보기 한 줄 스크롤 |
+| `M-v` / `C-v`, PgUp / PgDn | 이전 / 다음 페이지 |
+| `M-<` / `M->`, Home / End | 탐색 목록 또는 미리보기의 처음 / 끝 |
+| `RET`, `f`, `C-x C-f` | 디렉터리 열기 또는 파일 미리보기 |
+| `^` | 상위 디렉터리로 이동 |
+| `C-s` / `C-r` | 이름 검색 시작 또는 검색 중 다음 / 이전 결과로 이동 |
+| `v` | 선택한 파일 미리보기 |
+| `e` | 외부 편집기로 파일 열기 또는 디렉터리 이름 변경 |
+| `C` / `R` | 복사 / 이동. 기본 대상은 반대편 패널의 디렉터리 |
+| `r` / `+` | 이름 변경 / 디렉터리 생성 |
+| `D` | 삭제 확인. `y` 또는 `Y`로 삭제 |
+| `!` / `M-!` | 활성 패널 디렉터리에서 셸 명령 실행 |
+| `M-o` / `g` | 숨김 항목 표시 전환 / 양쪽 패널 새로고침 |
+| `F2` / `F3` / `F4` | 한국어·영어 전환 / 테마 선택 / 편집기 설정 |
+| `C-g` / `C-x k` | 현재 입력 취소 또는 검색·미리보기 닫기 |
+| `C-x C-c` | 종료 |
+
+검색은 활성 패널에서 대소문자를 구분하지 않는 이름 부분 일치 필터입니다. `RET`로 필터를 유지한 채 탐색으로 돌아가고, `C-g`로 필터를 해제합니다. 입력란에서 `C-a` / `C-e`로 처음과 끝으로 이동하고, `C-a C-k`로 전체 입력을 지울 수 있습니다.
+
+텍스트 미리보기는 파일 앞부분 64 KiB를 읽고 최대 100줄을 표시합니다. 인식 가능한 소스 파일에는 구문 강조를 적용하며, `q` 또는 Esc로 탐색 화면에 돌아갑니다.
+
+복사와 이동은 기존 대상을 덮어쓰지 않습니다. 이동은 같은 파일 시스템에서 지원합니다. 디렉터리 삭제는 하위 항목을 포함해 즉시 이루어집니다. 심볼릭 링크를 복사하거나 삭제하면 링크 자체를 처리합니다. Windows에서 링크를 복사하려면 개발자 모드 또는 심볼릭 링크 생성 권한이 필요합니다.
+
+## 설정과 외부 도구
+
+- **언어**는 `F2`로 한국어와 영어를 전환합니다. 기본값은 한국어입니다.
+- **테마**는 `F3` 키로 메뉴를 열고, 방향키나 `1`~`8`로 미리 본 뒤 `RET`로 적용합니다. 기본값은 Dark입니다.
+- **편집기**는 탐색 화면에서 `F4`를 눌러 실행 파일 이름 또는 전체 경로를 입력하고 `RET`로 저장합니다. 저장된 편집기, `VISUAL`, `EDITOR`, 운영체제 기본값 순으로 선택합니다. 기본값은 Windows에서 `notepad.exe`, Linux와 macOS에서 `vi`입니다. 설정값에는 실행 파일만 입력합니다. 빈 값으로 저장하면 환경 변수와 기본값의 선택 순서를 따릅니다.
+- **셸 명령**은 `!`로 입력창을 열고 `RET`로 실행합니다. Windows에서는 PowerShell, Linux와 macOS에서는 시스템 셸을 사용합니다. 명령 종료 후 Enter를 누르면 양쪽 패널을 새로고침하고 탐색 화면으로 돌아갑니다.
+
+편집기·언어·테마 선택은 `settings.yaml`에 저장됩니다. 기본 위치는 Linux와 macOS에서 `~/.config/hfm/settings.yaml`, Windows에서 `%APPDATA%\hfm\settings.yaml`입니다. Linux와 macOS에서는 `XDG_CONFIG_HOME`을 지정하면 그 아래의 `hfm/settings.yaml`을 사용합니다.
+
+```yaml
+editor: nvim
+language: ko
+theme: dark
+```
+
+`editor`에는 `null`도 사용할 수 있습니다. 언어 값은 `ko`, `en`이고, 테마 값은 `light`, `dark`, `monokai`, `solarizedlight`, `solarizeddark`, `tomorrownightblue`, `gruvboxdark`, `gruvboxlight`입니다. 기존 `keybindings.yaml`의 `vim`이나 `vi` 값도 Emacs 키로 해석됩니다.
+
+## 개발과 테스트
 
 ```bash
 stack build
-stack run hfm
-stack run hfm -- /path/to/left /path/to/right
-
-# 같은 실행을 scripts에서
-./scripts/run.sh run /path/to/left /path/to/right
-```
-
-Windows 11에서는 Windows용 Stack/GHC를 설치한 뒤 PowerShell에서 직접 실행합니다. WSL이나 Bash는 필요하지 않습니다.
-
-```powershell
-.\scripts\run.ps1                  # 포맷팅, 린팅, 빌드, 테스트 후 실행
-.\scripts\run.ps1 run C:\Users C:\Temp
-.\scripts\run.ps1 format
-.\scripts\run.ps1 lint
-.\scripts\run.ps1 build
-.\scripts\run.ps1 test
-.\scripts\run.ps1 all              # 기본 동작과 동일
-.\scripts\run.ps1 clean
-```
-
-파일 관리자에 시작 디렉터리를 전달하지 않으면 양쪽 패널 모두 현재 디렉터리에서 시작합니다. 스크립트는 프로젝트 루트에서 Stack을 실행하므로 시작 경로를 생략하면 프로젝트 루트가 시작 위치입니다. 인자 하나만 주면 왼쪽 패널만 해당 경로에서 시작합니다. 스크립트에 전달한 상대 경로는 호출한 위치를 기준으로 해석합니다. 실행에는 대화형 터미널이 필요하며, Windows는 네이티브 콘솔을, Unix는 `/dev/tty`를 사용합니다. Windows에서 심볼릭 링크 복사에는 개발자 모드 또는 링크 생성 권한이 필요합니다.
-
-두 스크립트는 `format`, `lint`, `build`, `test`, `run`, `all`, `clean`, `help` 명령을 지원합니다. 명령을 생략하면 `all`을 실행합니다. `format`은 `apps/`와 `packages/`의 소스·테스트 디렉터리에 있는 Haskell 파일을 `.stylish-haskell.yaml` 설정으로 수정하며, 빌드 캐시는 제외합니다. `lint`는 같은 파일들을 HLint로 검사합니다. `test`는 Haskell 아키텍처 검사 실행 파일과 검사기 회귀 테스트를 포함한 `stack test`를 실행합니다. `all`은 포맷팅 → 린팅 → 빌드 → 테스트 → 실행 순서로 진행합니다. 필요한 도구가 없으면 포맷팅 전에 중단하며, 실행 중 실패한 단계의 종료 코드를 반환하고 이후 단계는 실행하지 않습니다. 기존 코드에 HLint 지적이 있으면 먼저 해결해야 전체 과정이 실행됩니다.
-
-Stack과 GHC 외에 `stylish-haskell`, `hlint`를 PATH에 설치해야 합니다. 포맷터와 린터는 `stack install stylish-haskell hlint`로 설치할 수 있습니다. Nix 개발 셸에는 이 도구들이 포함되어 있습니다. 아키텍처 검사와 회귀 테스트는 Haskell과 셸로 실행하며 별도 인터프리터 설치가 필요하지 않습니다.
-
-```bash
-./scripts/run.sh                  # 전체 과정
-./scripts/run.sh format
-./scripts/run.sh lint
-./scripts/run.sh test
-./scripts/run.sh all /path/to/left /path/to/right
-./scripts/run.sh help
-```
-
-## 키
-
-모든 화면에서 Emacs 방식의 키를 사용합니다. `C-`는 Ctrl, `M-`는 Meta(터미널의 Alt/Option), `RET`는 Enter입니다. 파일 작업은 Emacs Dired의 문자 명령을 따릅니다.
-
-| 키 | 동작 |
-|---|---|
-| `C-x o` | 활성 패널 전환 (탐색 화면) |
-| `C-p` / `C-n` (`↑` / `↓`) | 이전 / 다음 항목, 보기 화면에서는 한 줄 스크롤 |
-| `C-v` / `M-v` (`PgDn` / `PgUp`) | 다음 / 이전 페이지 (화면 높이 기준) |
-| `M-<` / `M->` | 목록 또는 보기의 처음 / 끝 |
-| `RET`, `f`, `C-x C-f` | 선택한 디렉터리 열기 또는 파일 보기 |
-| `^` | 상위 디렉터리 |
-| `C-s` / `C-r` | 현재 패널 이름 검색 시작, 검색 중 다음 / 이전 결과 이동 |
-| `v` | 파일 보기 (최대 64 KiB) |
-| `e` | 선택한 파일을 외부 편집기로 편집. 디렉터리를 선택하면 이름 변경 |
-| `C` | 복사. 기본 대상은 반대 패널 디렉터리 |
-| `R` | 이동 또는 이름 변경. 기본 대상은 반대 패널 디렉터리 |
-| `r` | 파일·디렉터리 이름 변경. 현재 이름으로 입력 시작 |
-| `+` | 디렉터리 만들기 |
-| `D` | 선택 항목 삭제 확인. `y`/`Y`로 실행, 다른 키로 취소 |
-| `!` / `M-!` | 현재 활성 패널 디렉터리에서 셸 명령 실행 |
-| `M-o` | 숨김 파일 표시 전환 (hfm 확장 명령) |
-| `g` | 두 패널 새로고침 |
-| `F2` | 한국어/영어 메뉴 전환 |
-| `F3` | 테마 선택 메뉴 열기·닫기 |
-| `F4` | 탐색 화면에서 편집기 설정 입력·저장 |
-| `C-x C-c` | 모든 화면에서 종료 |
-| `C-g` | 검색 해제, 입력·삭제 취소, 파일 보기 닫기, 접두 명령 취소 |
-| `C-x k` | 현재 검색·입력·보기 닫기 |
-
-검색과 경로 입력에서는 `C-a`/`C-e`로 처음/끝, `C-b`/`C-f`로 한 글자, `M-b`/`M-f`로 한 단어씩 커서를 옮깁니다. `C-h`/Backspace와 `C-d`/Delete는 커서 앞/뒤 글자를 지우고, `C-k`는 커서부터 끝까지 지웁니다. `M-Backspace`와 `M-d`는 앞/뒤 단어를 지웁니다. 기존 `C-w`도 앞 단어 삭제의 별칭으로 사용할 수 있습니다. 전체 입력은 `C-a C-k`로 지웁니다. `C-u`로 입력을 비우는 기존 동작은 제거했습니다.
-
-검색 중 `RET`로 검색을 적용하고 탐색으로 돌아갑니다. `C-g`로 검색을 해제할 수 있습니다. 검색은 이름 부분 일치 필터이며 Emacs의 본문 증분 검색과는 다릅니다. 파일 보기에서는 `C-g`, `C-x k`, `q` 또는 Esc로 돌아갑니다. 검색·경로 입력에서도 Esc로 취소할 수 있습니다. 방향키와 Home/End는 대응하는 이동 키의 별칭입니다. Meta 입력은 Vty의 Meta와 Alt 이벤트를 모두 처리합니다.
-
-설정 파일 `~/.config/hfm/keybindings.yaml`은 계속 읽지만 모든 스타일 값은 Emacs로 통일됩니다. 기존 `binding_style: vim`/`vi` 설정에서도 Emacs 키가 동작합니다. 탐색 화면의 Vim `j/k/h/l`, `/` 검색, `Tab` 패널 전환, `.` 숨김 전환, `q` 종료, Backspace 상위 이동은 제거했습니다.
-
-복사와 이동은 기존 파일을 덮어쓰지 않으며, 디렉터리를 자기 내부로 복사하거나 이동하지 않습니다. 심볼릭 링크는 링크 자체를 복사하고, 삭제할 때도 링크 자체를 지웁니다. 이동은 같은 파일 시스템 내에서 지원합니다.
-
-## 편집과 명령 실행
-
-탐색 화면에서 `F4`를 누르면 편집기 설정 입력창이 열립니다. `nvim.exe` 같은 PATH에 있는 실행 파일 이름 또는 `C:\Tools\Neovim\bin\nvim.exe` 같은 전체 경로를 입력하고 `RET`로 저장합니다. 공백이 있는 경로도 따옴표 없이 입력합니다. `C-a C-k`로 입력을 비우고 저장하면 환경 변수와 기본 편집기를 사용하는 설정으로 돌아갑니다. Esc·`C-g`로 취소할 수 있고, 입력 편집에는 기존 Emacs 키를 사용합니다. 실행 인자는 지원하지 않으므로 `code --wait`처럼 입력하지 마세요.
-
-`e`는 앱에 저장한 편집기, `VISUAL`, `EDITOR` 순으로 편집기를 선택합니다. 모두 비어 있으면 Windows에서는 `notepad.exe`, Linux/macOS에서는 `vi`를 사용합니다. 환경 변수에도 인자 없이 실행 파일 이름 또는 전체 경로를 넣습니다. 공백·한글이 들어간 파일 경로도 하나의 인자로 전달합니다. 편집기에서 저장하고 종료하면 두 패널을 새로고칩니다. 파일 보기의 64 KiB 제한은 편집에 적용되지 않습니다. 디렉터리 편집은 `r` 또는 `e`로 이름을 변경하고, `RET`로 열어 내부 파일을 편집하는 방식입니다.
-
-`!` 또는 `M-!`로 명령을 입력하고 `RET`로 실행합니다. Windows는 PowerShell(`powershell.exe -NoProfile`), Linux/macOS는 `/bin/sh`를 사용합니다. 실행 위치는 활성 패널 디렉터리이며 표준 입력·출력·오류를 터미널에서 직접 사용합니다. 명령이 끝나면 출력 확인 후 Enter로 파일 관리자로 돌아갑니다. 편집기와 명령의 종료 코드를 상태줄에 표시하며, 복귀 시 양쪽 파일 목록을 새로고칩니다. `C-g` 또는 Esc로 실행 전 입력을 취소할 수 있습니다. 명령마다 새 셸을 실행하므로 `cd`와 환경 변수 변경은 다음 명령이나 패널에 유지되지 않습니다.
-
-삭제는 확인 후 하위 디렉터리와 파일까지 삭제하며 휴지통으로 이동하지 않습니다. 직접 입력한 셸 명령에는 파일 관리자의 덮어쓰기 방지 정책이 적용되지 않습니다.
-
-## 메뉴 언어 전환
-
-기본 메뉴 언어는 한국어입니다. `F2`를 누르면 한국어 ↔ 영어로 즉시 전환하며, 상단에 현재 언어와 전환 키를 표시합니다. 탐색, 검색, 복사·이동·폴더 생성 입력, 삭제 확인, 파일 보기와 `C-x` 접두 명령 대기 중에도 사용할 수 있습니다.
-
-메뉴, 단축키 안내, 상태 메시지가 함께 전환됩니다. 검색어와 입력 경로, 파일명, 파일 내용, 선택 항목은 유지됩니다. 언어 선택은 즉시 저장되며 다음 실행에도 복원됩니다. macOS에서 F2가 시스템 기능 키로 설정되어 있다면 `fn+F2`를 사용하세요.
-
-## 테마 선택
-
-`F3`로 테마 메뉴를 엽니다. `↑`/`↓` 또는 `C-p`/`C-n`으로 이동하거나 `1`~`8`으로 선택하면 화면 색상을 즉시 미리 볼 수 있습니다. `RET`로 적용하고, Esc·`C-g`·`F3`로 취소하면 기존 테마로 돌아갑니다. 메뉴의 `*`는 적용된 테마이며, 선택한 항목은 색상으로 강조합니다.
-
-지원 테마는 **Light, Dark, Monokai, Solarized Light, Solarized Dark, Tomorrow Night Blue, Gruvbox Dark, Gruvbox Light**입니다. Gruvbox Dark는 `7`, Gruvbox Light는 `8`로 선택합니다. 기본값은 Dark이며 `RET`로 적용한 선택은 저장되어 다음 실행에도 복원됩니다. 미리보기와 취소는 저장하지 않습니다. 파일 목록·선택 강조·입력줄·상태줄·파일 보기·테마 메뉴에 같은 팔레트를 적용합니다. 검색, 파일 작업 입력, 삭제 확인과 파일 보기 중에도 열 수 있으며 기존 입력과 선택을 보존합니다. 테마 메뉴 안에서도 `F2`로 언어를 바꾸고 `C-x C-c`로 종료할 수 있습니다. macOS 시스템 기능 키 설정에 따라 `fn+F3`를 사용하세요.
-
-## 설정 저장
-
-편집기·언어·테마는 기존 `keybindings.yaml`과 같은 설정 디렉터리의 `settings.yaml`에 자동 저장합니다. 기본 경로는 Windows에서 `%APPDATA%\hfm\settings.yaml`, Linux/macOS에서 `~/.config/hfm/settings.yaml`입니다. `XDG_CONFIG_HOME`이 지정되어 있으면 그 아래 `hfm/settings.yaml`을 사용합니다. 기존 키 바인딩 파일은 변경하지 않습니다.
-
-```yaml
-editor: nvim.exe
-language: en
-theme: monokai
-```
-
-편집기 기본값은 `null`, 언어는 `ko` 또는 `en`, 테마 식별자는 `light`, `dark`, `monokai`, `solarizedlight`, `solarizeddark`, `tomorrownightblue`, `gruvboxdark`, `gruvboxlight`입니다. 설정 파일이 없으면 기본값으로 시작합니다. 잘못된 YAML·언어·테마는 시작 오류로 표시하고 원본 파일을 보존하므로 해당 파일을 수정한 뒤 다시 실행하세요. 저장은 임시 파일을 완성한 후 교체하며, 실패하면 상태줄에 오류를 표시하고 이전 설정과 입력창·테마 메뉴를 유지합니다.
-
-색상은 [VS Code 기본 테마 소스](https://github.com/microsoft/vscode/tree/main/extensions)와 [Gruvbox 원본 팔레트](https://github.com/morhetz/gruvbox/blob/master/colors/gruvbox.vim)를 바탕으로 터미널 UI에 맞춰 구성했습니다. Light/Dark는 Visual Studio 기본 테마 기준이며, Gruvbox는 기본 대비(medium) 기준입니다. RGB를 사용하며, 256색 터미널에서는 Vty가 지원 색상으로 변환합니다. VS Code의 투명도 색상은 터미널에서 표시 가능한 불투명 색상으로 바꿨습니다.
-
-## 배포 스크립트
-
-`./scripts/release.sh deb` 또는 `./scripts/release.sh rpm`으로 Linux 패키지를 만듭니다. `auto`는 Linux에서 두 패키지를 모두 만들고 macOS에서는 DMG를 만듭니다. 생성물은 `dist/release/`에 저장하며 `./scripts/release.sh clean`으로 지울 수 있습니다.
-
-Windows에서는 [NSIS 3](https://nsis.sourceforge.io/Download)을 설치하고 PowerShell 스크립트를 사용합니다. `makensis.exe`는 PATH 또는 NSIS의 기본 설치 위치에서 찾습니다.
-
-```powershell
-.\scripts\release.ps1              # auto: NSIS 설치 파일 생성
-.\scripts\release.ps1 nsis
-.\scripts\release.ps1 clean        # dist/release와 dist/build-bin 삭제
-```
-
-`apps/hfm/package.yaml`의 버전으로 `dist/release/hfm-0.1.0.0-windows-setup.exe`를 만듭니다. 설치 파일은 현재 사용자의 `%LOCALAPPDATA%\Programs\hfm`에 `hfm.exe`, README와 LICENSE를 설치하고 시작 메뉴 및 앱 제거 항목을 등록합니다. 관리자 권한이나 PATH 변경은 필요하지 않습니다. PowerShell 스크립트는 `.sh` 파일을 호출하지 않으며, Linux/macOS 패키지는 해당 OS에서 `release.sh`로 만듭니다.
-
-## 개발
-
-```bash
 stack test
 stack run hfm-check-architecture
-stack test hfm-dev-tools
 bash scripts/test-run-scripts.sh
+```
+
+Linux와 macOS에서는 빌드 후 아래 명령으로 실제 키 입력을 가상 터미널(PTY)에서 검증할 수 있습니다. 이 검증에는 `stty`가 필요합니다.
+
+```bash
 stack exec hfm-test-keybindings -- "$(stack path --local-install-root)/bin/hfm"
 ```
 
-PowerShell 스크립트의 독립 회귀 검사는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 실행합니다. Windows PowerShell에서는 `powershell -NoProfile -File scripts/test-powershell.ps1`도 사용할 수 있습니다. 실제 빌드 도구를 대체한 임시 프로젝트에서 한글·공백·대괄호 경로, 포맷팅·린팅 대상, 명령 순서, 종료 코드와 도구 누락을 검사합니다. Windows에서는 NSIS 호출과 정리 범위도 검사합니다. `test-run-scripts.sh`는 Bash 실행 스크립트의 회귀 검사와 실제 포맷터가 설치된 환경의 설정 검사를 수행합니다. `hfm-test-keybindings`는 Unix PTY 테스트 실행 파일이며 Windows에서는 빌드하지 않습니다. 먼저 `stack build`로 파일 관리자와 테스트 실행 파일을 빌드하세요. PTY 테스트에는 Unix의 `stty` 명령이 필요합니다.
+`scripts/run.sh`와 `scripts/run.ps1`은 `format`, `lint`, `build`, `test`, `run`, `all`, `clean`, `help`를 지원합니다. 인자 없이 실행하면 포맷팅, 린트, 빌드, 테스트, 실행을 순서대로 수행합니다. 포맷팅은 `stylish-haskell`로 소스를 수정하고, 린트는 `hlint`를 사용합니다. 각 단계에서 사용하는 도구를 `PATH`에 추가하세요. Bash 스크립트는 x86 계열에서만 HLint를 실행합니다. PowerShell 스크립트 자체는 `pwsh -NoProfile -File scripts/test-powershell.ps1`로 검증할 수 있습니다.
 
-macOS 빌드는 `scripts/link-macos.sh`를 통해 GHC 런타임의 중복 링커 옵션(`-U`와 `dynamic_lookup`, 반복된 `-lm`)을 정리합니다. 다른 링커 진단은 그대로 전달합니다.
+| 경로 | 역할 |
+| --- | --- |
+| `apps/hfm/` | 실행 진입점과 의존성 조립 |
+| `packages/hfm-domain/` | 파일 항목, 경로 정책, 선택, 입력 편집 등 순수 모델 |
+| `packages/hfm-application/` | 순수 상태 전이, 실행 계획, I/O 포트와 실행기 |
+| `packages/hfm-infrastructure/` | 파일 시스템, 프로세스, 설정의 I/O 구현 |
+| `packages/hfm-tui/` | Brick/Vty 입력과 렌더링, 번역, 테마, 구문 강조 |
+| `packages/hfm-dev-tools/` | 아키텍처 검사와 Unix PTY 검증 |
 
-## 워크스페이스 구조
+워크스페이스는 `stack.yaml`과 `cabal.project`에 정의되어 있습니다. 빌드 설정을 변경할 때는 각 패키지의 `package.yaml`을 수정하고 `stack build`로 `.cabal` 파일을 갱신합니다. 계층별 책임과 상태 전이는 [아키텍처 문서](docs/ARCHITECTURE.md)를 참고하세요.
 
-순수 모델과 정책, 유스케이스, 부수효과 어댑터, TUI를 독립 Haskell 패키지로 나눈 모노레포입니다. `stack.yaml`과 `cabal.project`에서 전체 패키지를 관리합니다.
+## 배포 패키지 만들기
 
-```text
-apps/hfm/                     # 실행 파일과 의존성 조립
-packages/hfm-domain/          # 순수 타입·선택·입력 편집·정책
-packages/hfm-application/     # 순수 상태·실행 계획, Effects의 포트·실행기
-packages/hfm-infrastructure/  # 파일 시스템·프로세스·설정의 실제 IO 구현
-packages/hfm-tui/             # Brick/Vty·렌더링·한국어/영어 표시
-packages/hfm-dev-tools/       # 순수 아키텍처 규칙·파일 읽기 어댑터·Unix PTY 검사
-```
+| 운영체제 | 명령 | 패키징 도구 |
+| --- | --- | --- |
+| Linux | `./scripts/release.sh deb` | `fpm`, `dpkg-deb` |
+| Linux | `./scripts/release.sh rpm` | `fpm`, `rpmbuild`, `rpm` |
+| macOS | `./scripts/release.sh dmg` | `hdiutil` |
+| Windows | `.\scripts\release.ps1 nsis` | NSIS |
 
-내부 계층은 Brick/Vty와 실제 I/O에 의존하지 않습니다. application의 `planInput`·`planStartup`은 순수한 `Program` 실행 계획을 만들고, `Effects.Runtime.runProgram`이 주입받은 `FileSystem m`과 `Processes m` 포트로 이를 실행합니다. 순수 모듈은 `Effects`를 import하지 않으며 오류도 독립된 순수 타입입니다. `Main`에서 파일·프로세스 IO 구현을 각각 연결하고, TUI는 프로세스 실행에 필요한 터미널 중단·복귀를 담당합니다. 테스트에서는 실행 계획을 직접 검사하거나 두 포트의 메모리 구현을 따로 주입합니다. 경로 검증·대상 이름 계산은 domain, 상태 메시지의 한국어/영어 표시는 tui가 담당합니다. 의존성 방향과 순수 코드·부수효과 경계, 계층별 테스트·확장 방법 및 Haskell 인터페이스 변경은 [아키텍처 문서](docs/ARCHITECTURE.md)에 설명되어 있습니다.
+패키지는 `dist/release/`에 생성됩니다.
 
-각 패키지의 `package.yaml`이 빌드 설정의 원본입니다. 수정 후 `stack build`로 `.cabal`을 갱신합니다. `stack test hfm-domain` 또는 `stack test hfm-application`처럼 특정 패키지만 테스트할 수도 있습니다.
+## 라이선스
+
+[BSD 3-Clause](LICENSE)

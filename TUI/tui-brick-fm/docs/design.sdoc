@@ -1,0 +1,262 @@
+[DOCUMENT]
+TITLE: hfm 소프트웨어 설계
+
+[TEXT]
+STATEMENT: >>>
+이 문서는 현행 hfm 구현의 패키지 경계, 상태 전이, 외부 효과와 검증 방법을 설명한다. Parent 관계는 설계가 충족하는 요구사항을, File 관계는 워크스페이스 루트 기준의 구현 파일을 가리킨다. 두 문서는 docs 디렉터리를 함께 내보내면 상호 참조를 확인할 수 있다.
+<<<
+
+[[SECTION]]
+TITLE: 아키텍처와 상태 모델
+
+[REQUIREMENT]
+UID: HFM-DES-PACKAGES
+TITLE: 패키지 의존 방향과 조립
+STATEMENT: >>>
+hfm-domain은 엔트리, 선택, 설정 타입과 순수 정책을 소유한다. hfm-application은 domain에 의존하며 세션 상태와 유스케이스, 요청 및 포트 계약을 소유한다. hfm-infrastructure와 hfm-tui는 두 내부 패키지에 의존하며 서로를 참조하지 않는다. 실행 앱의 Main은 설정을 읽고 파일 시스템, 프로세스, 설정 저장 구현을 주입한 뒤 Brick 이벤트 루프를 시작한다. hfm-dev-tools는 제품 패키지와 독립적으로 아키텍처 검사와 PTY 검증을 제공한다. Stack과 Cabal은 같은 패키지를 등록한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-BOUNDARIES
+- TYPE: File
+  VALUE: apps/hfm/app/Main.hs
+- TYPE: File
+  VALUE: stack.yaml
+- TYPE: File
+  VALUE: cabal.project
+
+[REQUIREMENT]
+UID: HFM-DES-PROGRAM
+TITLE: 요청과 응답을 연결하는 순수 상태 머신
+STATEMENT: >>>
+planStartup과 planInput은 Program 값을 생성한다. Done은 결과를, Await는 같은 응답 타입으로 연결된 Request와 Phase를 보관한다. Phase는 시작 단계, 실행 중인 작업 단계 또는 단일 응답 반환을 표현한다. Machine.resume은 응답을 해당 단계에 전달해 다음 Program을 계산한다. 공통 작업 실패는 기존 상태에 오류를 기록하며, 시작과 설정 저장은 각자의 실패 전이를 사용한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-BOUNDARIES
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Program.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Machine.hs
+
+[REQUIREMENT]
+UID: HFM-DES-EFFECTS
+TITLE: 효과 실행과 화면 이벤트 연결
+STATEMENT: >>>
+Tui.Input은 Vty 이벤트를 domain의 Input으로 변환한다. Workflow.planInput이 순수 계획을 만들면 Effects.Runtime.runProgram이 각 요청을 FileSystem m, Processes m 또는 설정 저장 함수로 실행하고 Either FileError 응답을 resume에 전달한다. Done의 AppState와 Lifecycle은 Brick의 계속 실행 또는 종료에 반영된다. Infrastructure.Ports는 실제 파일 및 프로세스 함수를 주입 가능한 레코드로 제공하고 IOException을 FileError로 변환한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-BOUNDARIES
+- TYPE: Parent
+  VALUE: HFM-REQ-TERMINAL
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Effects/Ports.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Effects/Runtime.hs
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/Ports.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/Event.hs
+
+[REQUIREMENT]
+UID: HFM-DES-INPUT
+TITLE: 화면 모드와 접두 명령 상태
+STATEMENT: >>>
+AppState는 각 Panel의 경로, 원본 목록, 검색어, 선택과 활성 방향을 보유한다. Mode는 탐색, 검색, 파일 작업 입력, 편집기 설정 입력, 삭제 확인, 미리보기를 표현한다. KeySequence는 DirectInput과 ControlXPrefix를 구분한다. Workflow는 전역 키와 접두 명령을 먼저 처리하고, 이후 테마 선택 또는 화면 모드의 전이로 전달한다. Interaction은 선택과 검색을 갱신하고 Domain.Editor는 입력 텍스트와 커서를 갱신한다. 실시간 이름 필터는 로드된 목록에 적용한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-PANELS
+- TYPE: Parent
+  VALUE: HFM-REQ-SEARCH
+- TYPE: Parent
+  VALUE: HFM-REQ-KEYS
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/State.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Workflow.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Interaction.hs
+- TYPE: File
+  VALUE: packages/hfm-domain/src/Hfm/Domain/Editor.hs
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: 파일 시스템 워크플로
+
+[REQUIREMENT]
+UID: HFM-DES-NAVIGATION
+TITLE: 시작 및 탐색 단계
+STATEMENT: >>>
+Startup은 왼쪽 경로 정규화, 오른쪽 경로 정규화, 왼쪽 목록, 오른쪽 목록 순으로 요청하고 모든 응답이 성공하면 초기 상태를 만든다. Navigation은 경로 정규화와 목록 읽기가 성공한 뒤 활성 패널을 갱신하고 해당 패널의 검색을 비운다. 상위 이동 단계는 떠난 디렉터리 이름을 선택 후보로 넘긴다. 링크 열기는 대상이 디렉터리인지 확인해 탐색 또는 미리보기로 분기한다. 목록의 숨김 필터와 정렬은 Domain.Entry 정책을 적용한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-STARTUP
+- TYPE: Parent
+  VALUE: HFM-REQ-PANELS
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Startup.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Navigation.hs
+- TYPE: File
+  VALUE: packages/hfm-domain/src/Hfm/Domain/Entry.hs
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/FileSystem.hs
+
+[REQUIREMENT]
+UID: HFM-DES-MUTATION
+TITLE: 파일 작업의 대상 결정과 실행
+STATEMENT: >>>
+Internal.Files는 입력을 검증한다. 복사와 이동은 TransferContext에 작업 종류, SourceEntry, RequestedDestination을 보관하고 DirectoryExists를 요청한다. 응답을 받으면 Domain.PathPolicy로 최종 경로를 계산한 뒤 CopyEntry 또는 MoveEntry를 요청한다. 이름 변경은 같은 디렉터리의 MoveEntry로, 생성과 확정된 삭제는 각각 MakeDirectory와 DeleteEntry로 실행한다. 변경 성공 응답 후에만 PanelRefresh.finish로 진입한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-TRANSFER
+- TYPE: Parent
+  VALUE: HFM-REQ-RENAME-MKDIR
+- TYPE: Parent
+  VALUE: HFM-REQ-DELETE
+- TYPE: Parent
+  VALUE: HFM-REQ-OPERATION-RESULT
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Files.hs
+- TYPE: File
+  VALUE: packages/hfm-domain/src/Hfm/Domain/PathPolicy.hs
+
+[REQUIREMENT]
+UID: HFM-DES-FILESYSTEM
+TITLE: OS 어댑터의 경로 검사와 재귀 작업
+STATEMENT: >>>
+Infrastructure.FileSystem은 변경 전에 대상 점유와 부모 경로를 확인한다. 복사 또는 이동할 실제 디렉터리의 정규화된 경로와 대상 부모 경로를 비교해 자기 내부 변경을 막는다. 복사는 엔트리 종류에 맞춰 재귀 복사, 링크 생성 또는 일반 파일 복사를 수행하고 중간 실패 시 생성된 대상의 정리를 시도한다. 이동은 renamePath로 실행한다. 삭제는 링크 자체를 제거하고 실제 디렉터리에만 재귀 진입한다. 경로 검사와 실제 변경 사이에 다른 프로세스가 파일 시스템을 바꿀 수 있다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-TRANSFER
+- TYPE: Parent
+  VALUE: HFM-REQ-DELETE
+- TYPE: Parent
+  VALUE: HFM-REQ-FILE-GUARDS
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/FileSystem.hs
+
+[REQUIREMENT]
+UID: HFM-DES-REFRESH
+TITLE: 양쪽 목록을 함께 반영하는 갱신
+STATEMENT: >>>
+PanelRefresh는 후보 숨김 옵션으로 왼쪽 목록을 읽고, 그 결과를 RefreshingRightPanel에 보관한 채 오른쪽 목록을 읽는다. 양쪽 응답이 성공하면 두 패널과 표시 옵션을 함께 갱신한다. 실패하면 해당 단계가 보존한 상태에 오류를 기록한다. 변경이 이미 끝난 경우 그 상태는 탐색 모드와 이전 목록을 보유하며, 재실행할 파일 변경 요청을 포함하지 않는다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-REFRESH
+- TYPE: Parent
+  VALUE: HFM-REQ-OPERATION-RESULT
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/PanelRefresh.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Machine.hs
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: 화면 표시, 프로세스, 설정
+
+[REQUIREMENT]
+UID: HFM-DES-VIEWER
+TITLE: 미리보기 읽기와 렌더링
+STATEMENT: >>>
+파일 포트의 ReadPreview는 최대 65536바이트를 읽는다. Navigation은 NUL 바이트 검사와 유연한 UTF-8 디코딩을 거쳐 ViewFile 상태를 만든다. Tui.SyntaxHighlight는 100줄로 제한하고 확장자로 Skylighting 구문을 선택한다. 구문을 찾지 못하거나 토큰화에 실패하면 줄 번호가 붙은 일반 텍스트를 렌더링한다. Tui.Layout은 터미널의 문자 셀과 내용 영역 높이를 계산하며, application은 그 높이를 사용해 스크롤 범위를 제한한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-PREVIEW
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/Ports.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Navigation.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/SyntaxHighlight.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/Layout.hs
+
+[REQUIREMENT]
+UID: HFM-DES-PROCESS
+TITLE: 외부 프로세스 포트와 터미널 복원
+STATEMENT: >>>
+Internal.Process는 대상 또는 입력을 검사한 뒤 EditFile 또는 RunCommand 요청에 활성 패널 경로를 넣는다. Infrastructure.Process는 편집기를 proc로 실행해 파일 경로를 단일 인자로 넘기고, 명령은 Windows의 powershell.exe 또는 Unix의 System.Process.shell에 전달한다. 프로세스 레코드의 cwd를 지정해 앱의 작업 디렉터리를 유지한다. Tui.Event는 프로세스 포트를 suspendAndResume'으로 감싸고 셸 명령 후 사용자의 반환 입력을 기다린다. 종료 코드 응답을 받으면 상태를 기록하고 두 목록을 다시 읽는다. Unix TUI는 /dev/tty를 열며 Windows TUI는 Vty의 Windows 백엔드를 사용한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-EDITOR
+- TYPE: Parent
+  VALUE: HFM-REQ-SHELL
+- TYPE: Parent
+  VALUE: HFM-REQ-TERMINAL
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Process.hs
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/Process.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/Event.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/Terminal.hs
+
+[REQUIREMENT]
+UID: HFM-DES-PRESENTATION
+TITLE: 번역과 테마의 표시 경계
+STATEMENT: >>>
+application은 화면 문자열 대신 Status와 FileError를 반환한다. Tui.I18n은 현재 Language에 따라 상태와 오류를 렌더링하며, 변수로 받은 경로와 시스템 오류 상세를 보존한다. 테마 선택은 AppState의 별도 Selection Theme에 임시로 유지한다. Tui.Theme은 미리보기 중인 선택 또는 확정 테마로 Brick 속성 맵을 구성한다. 테마의 순서와 식별자는 Domain.Theme이 정의한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-LANGUAGE
+- TYPE: Parent
+  VALUE: HFM-REQ-THEME
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Status.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Settings.hs
+- TYPE: File
+  VALUE: packages/hfm-domain/src/Hfm/Domain/Theme.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/I18n.hs
+- TYPE: File
+  VALUE: packages/hfm-tui/src/Hfm/Tui/Theme.hs
+
+[REQUIREMENT]
+UID: HFM-DES-SETTINGS
+TITLE: 설정의 저장 전이와 YAML 어댑터
+STATEMENT: >>>
+Settings는 선택적 편집기 경로, 언어, 테마를 보유한다. Internal.Settings는 변경 후보와 이전 AppState를 함께 저장 단계에 전달한다. SaveSettings 성공 후 후보를 확정하고, 실패하면 이전 상태에 저장 오류를 표시한다. 명시적으로 편집기를 확정하면 값이 같아도 저장하며, 현재 테마를 다시 선택하면 저장 요청 없이 메뉴를 닫는다. Infrastructure.Config는 플랫폼 설정 디렉터리의 hfm/settings.yaml을 읽고 editor, language, theme을 검증한다. 저장은 같은 디렉터리의 임시 파일을 완전히 쓴 뒤 이름 변경으로 교체한다.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: HFM-REQ-EDITOR-SETTING
+- TYPE: Parent
+  VALUE: HFM-REQ-PREFERENCES
+- TYPE: Parent
+  VALUE: HFM-REQ-LANGUAGE
+- TYPE: Parent
+  VALUE: HFM-REQ-THEME
+- TYPE: File
+  VALUE: packages/hfm-domain/src/Hfm/Domain/Config.hs
+- TYPE: File
+  VALUE: packages/hfm-application/src/Hfm/Application/Internal/Settings.hs
+- TYPE: File
+  VALUE: packages/hfm-infrastructure/src/Hfm/Infrastructure/Config.hs
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: 검증 방법
+
+[TEXT]
+STATEMENT: >>>
+stack test로 순수 정책, 요청과 응답 순서, 메모리 포트, 실제 파일 작업 및 렌더링 테스트를 실행한다. MachineSpec은 각 요청 단계의 실패, 설정 복구, 갱신 실패 후 파일 변경 미재실행을 검증한다. infrastructure 테스트는 임시 디렉터리에서 재귀 작업, 링크, 설정과 편집기 프로세스를 검증한다. tui 테스트는 화면 크기, 테마, 번역 및 구문 강조를 검증한다.
+
+stack run hfm-check-architecture로 Stack과 Cabal의 패키지 등록 일치, 계층의 의존 방향과 순수 코드의 포트 실행 여부를 검사한다. Unix에서는 hfm-test-keybindings가 실제 바이너리를 가상 터미널 안에서 실행해 키 입력과 외부 프로세스 복귀 경로를 확인한다.
+<<<
+
+[[/SECTION]]

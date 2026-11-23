@@ -4,9 +4,11 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPORARY="$(mktemp -d "${TMPDIR:-/tmp}/hfm scripts 한글.XXXXXX")"
 trap 'rm -rf -- "$TEMPORARY"' EXIT
+TEMPORARY="$(cd -- "$TEMPORARY" && pwd -P)"
 export HFM_TEST_ROOT="$TEMPORARY/project [workspace]"
 export HFM_TEST_LOG="$TEMPORARY/calls"
 export HFM_TEST_FAIL=''
+export HFM_TEST_ARCH=x86_64
 CALLER="$TEMPORARY/caller"
 BIN="$TEMPORARY/bin"
 SCRATCH="$TEMPORARY/temporary files"
@@ -29,6 +31,12 @@ esac
 TOOL
 chmod +x "$BIN/tool"
 for tool in stack stylish-haskell hlint; do ln -s tool "$BIN/$tool"; done
+cat > "$BIN/uname" <<'UNAME'
+#!/bin/sh
+[ "$1" = -m ] || exit 1
+printf '%s\n' "$HFM_TEST_ARCH"
+UNAME
+chmod +x "$BIN/uname"
 
 fail() {
   printf '%s\n' "$*" >&2
@@ -122,7 +130,31 @@ invoke all
 [ "$STATUS" -ne 0 ] || fail 'Missing linter was accepted'
 expect_count 0
 [[ "$(cat "$TEMPORARY/output")" == *hlint* ]] || fail 'Missing tool was not named'
+
+export HFM_TEST_ARCH=arm64
+invoke lint
+expect_status 0
+expect_count 0
+for command in '' all; do
+  if [ -n "$command" ]; then invoke "$command"; else invoke; fi
+  expect_status 0
+  {
+    record stylish-haskell --config .stylish-haskell.yaml -i "${SOURCES[@]}"
+    record stack build
+    record stack run hfm-check-architecture
+    record stack test
+    record stack run hfm --
+  } > "$TEMPORARY/expected"
+  cmp -s "$TEMPORARY/expected" "$HFM_TEST_LOG" || fail 'Non-x86 pipeline must skip only HLint'
+done
 ln -s tool "$BIN/hlint"
+invoke lint
+expect_status 0
+expect_count 0
+invoke all
+expect_status 0
+cmp -s "$TEMPORARY/expected" "$HFM_TEST_LOG" || fail 'Non-x86 pipeline ran the installed HLint'
+export HFM_TEST_ARCH=x86_64
 
 printf '#!/bin/sh\nexit 9\n' > "$BIN/find"
 chmod +x "$BIN/find"

@@ -7,7 +7,13 @@ module Hfm.Application.Program
   , StartupContext (..)
   , StartupStep (..)
   , TaskStep (..)
+  , NavigationStep (..)
+  , FileStep (..)
+  , RefreshStep (..)
   , Transfer (..)
+  , TransferContext (..)
+  , SourceEntry (..)
+  , RequestedDestination (..)
   , ProcessKind (..)
   , Lifecycle (..)
   , request
@@ -28,6 +34,12 @@ data Lifecycle = Continue | Quit
 
 data Transfer = CopyTransfer | MoveTransfer
      deriving (Eq, Show)
+
+newtype SourceEntry = SourceEntry FilePath
+
+newtype RequestedDestination = RequestedDestination FilePath
+
+data TransferContext = TransferContext Transfer SourceEntry RequestedDestination
 
 data ProcessKind = EditorProcess | ShellProcess
      deriving (Eq, Show)
@@ -51,16 +63,26 @@ data StartupStep response where ResolvingLeftPath :: StartupContext -> FilePath 
                                 LoadingLeftEntries :: StartupContext -> FilePath -> FilePath -> StartupStep [Entry]
                                 LoadingRightEntries :: StartupContext -> FilePath -> [Entry] -> FilePath -> StartupStep [Entry]
 
-data TaskStep response where RefreshingLeftPanel :: TaskStep [Entry]
-                             RefreshingRightPanel :: [Entry] -> TaskStep [Entry]
-                             ResolvingDirectory :: Maybe FilePath -> TaskStep FilePath
-                             LoadingDirectory :: FilePath -> Maybe FilePath -> TaskStep [Entry]
-                             InspectingLink :: FilePath -> TaskStep Bool
-                             LoadingPreview :: FilePath -> TaskStep BS.ByteString
-                             InspectingDestination :: Transfer -> FilePath -> FilePath -> TaskStep Bool
-                             CompletingMutation :: Status -> TaskStep ()
-                             CompletingProcess :: ProcessKind -> TaskStep Int
-                             PersistingSettings :: AppState -> TaskStep ()
+data NavigationStep response where
+  ResolvingDirectory :: Maybe FilePath -> NavigationStep FilePath
+  LoadingDirectory :: FilePath -> Maybe FilePath -> NavigationStep [Entry]
+  InspectingLink :: FilePath -> NavigationStep Bool
+  LoadingPreview :: FilePath -> NavigationStep BS.ByteString
+
+data FileStep response where
+  InspectingDestination :: TransferContext -> FileStep Bool
+  CompletingMutation :: Status -> FileStep ()
+
+data RefreshStep response where
+  RefreshingLeftPanel :: RefreshStep [Entry]
+  RefreshingRightPanel :: [Entry] -> RefreshStep [Entry]
+
+data TaskStep response where
+  Navigating :: NavigationStep response -> TaskStep response
+  ChangingFiles :: FileStep response -> TaskStep response
+  Refreshing :: Bool -> RefreshStep response -> TaskStep response
+  CompletingProcess :: ProcessKind -> TaskStep Int
+  PersistingSettings :: AppState -> TaskStep ()
 
 data Phase response result where ReturningResponse :: Phase response (Either FileError response)
                                  Starting :: StartupStep response -> Phase response (Either FileError AppState)

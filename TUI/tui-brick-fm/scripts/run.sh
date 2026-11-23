@@ -10,7 +10,7 @@ usage() {
 Usage: scripts/run.sh [format|lint|build|test|run|all|clean|help] [LEFT_DIR] [RIGHT_DIR]
 
   format Format workspace Haskell sources with stylish-haskell
-  lint   Check workspace Haskell sources with HLint
+  lint   Check workspace Haskell sources with HLint on x86
   build  Build hfm
   test   Check architecture and run the test suite
   run    Build and open the file manager
@@ -18,8 +18,8 @@ Usage: scripts/run.sh [format|lint|build|test|run|all|clean|help] [LEFT_DIR] [RI
   clean  Remove Stack build artifacts
 
 Directory arguments are accepted by run and all. A controlling terminal is required.
-Required tools: stylish-haskell (format), hlint (lint), Stack (build/test/run/clean).
-The all command requires every tool.
+Required tools: stylish-haskell (format/all), Stack (build/test/run/clean/all),
+and hlint (lint/all on x86).
 USAGE
 }
 
@@ -91,15 +91,31 @@ for directory in "$@"; do
   STARTING_DIRECTORIES+=("$(cd -- "$directory" && pwd -P)")
 done
 
+RUN_HLINT=false
+if [ "$COMMAND" = lint ] || [ "$COMMAND" = all ]; then
+  CPU_ARCH="$(uname -m)"
+  case "$CPU_ARCH" in
+    x86|x86_64|amd64|i[3-6]86) RUN_HLINT=true ;;
+  esac
+fi
+
 case "$COMMAND" in
   format) require_tool stylish-haskell ;;
-  lint) require_tool hlint ;;
+  lint)
+    if [ "$RUN_HLINT" = false ]; then
+      echo "Skipping HLint on $CPU_ARCH."
+      exit 0
+    fi
+    require_tool hlint
+    ;;
   build|run|clean) require_tool stack ;;
   test) require_tool stack ;;
   all)
-    for tool in stylish-haskell hlint stack; do
-      require_tool "$tool"
-    done
+    require_tool stylish-haskell
+    if [ "$RUN_HLINT" = true ]; then
+      require_tool hlint
+    fi
+    require_tool stack
     ;;
 esac
 
@@ -111,7 +127,7 @@ fi
 if [ "$COMMAND" = format ] || [ "$COMMAND" = all ]; then
   stylish-haskell --config .stylish-haskell.yaml -i "${SOURCE_FILES[@]}"
 fi
-if [ "$COMMAND" = lint ] || [ "$COMMAND" = all ]; then
+if [ "$RUN_HLINT" = true ]; then
   hlint "${SOURCE_FILES[@]}"
 fi
 if [ "$COMMAND" = build ] || [ "$COMMAND" = all ]; then
