@@ -1,26 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd -- "$project_root"
 
-cd "$PROJECT_ROOT"
+for tool in fourmolu hlint stack; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    printf 'Required command not found in PATH: %s\n' "$tool" >&2
+    exit 127
+  fi
+done
 
-if ! command -v stack >/dev/null 2>&1; then
-  echo "error: stack is required but was not found in PATH" >&2
-  exit 1
-fi
-
-RUN_ARGS=("$@")
 if [ "$#" -eq 0 ]; then
-  RUN_ARGS=(-o output.svg -w 400)
+  set -- -o output.svg -w 400
 fi
 
-echo "==> Building DiagramsDemo03"
+shopt -s nullglob
+source_files=(./*.hs)
+while IFS= read -r -d '' source_file; do
+  source_files+=("$source_file")
+done < <(find app src test -type f -name '*.hs' -print0)
+
+printf '\n[1/5] Formatting Haskell sources\n'
+fourmolu --mode inplace --config fourmolu.yaml "${source_files[@]}"
+
+printf '\n[2/5] Linting Haskell sources\n'
+hlint "${source_files[@]}"
+
+printf '\n[3/5] Building DiagramsDemo03\n'
 stack build
 
-echo "==> Testing DiagramsDemo03"
+printf '\n[4/5] Testing DiagramsDemo03\n'
 stack test
 
-echo "==> Running DiagramsDemo03"
-stack run -- "${RUN_ARGS[@]}"
+printf '\n[5/5] Running DiagramsDemo03\n'
+exec stack run DiagramsDemo03-exe -- "$@"

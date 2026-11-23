@@ -1,6 +1,5 @@
 .PHONY: test coverage install update-stack-yaml
 
-# Extract project name from directory path
 PROJECT_NAME := $(shell basename $(CURDIR))
 
 all: clean setup build test run
@@ -49,14 +48,12 @@ release: setup
 	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS" --docker
 
 docker-build: release
-	# 멀티스테이지 Dockerfile 사용 (docker/Dockerfile)
 	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
 
 docker-build-multi: 
 	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
 
 docker-run: docker-build
-	# 앱 포트 8000 노출 및 데이터 볼륨 마운트
 	mkdir -p ./data
 	docker run -it --rm \
 	  --name $(PROJECT_NAME)-app \

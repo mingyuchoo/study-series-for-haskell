@@ -37,7 +37,6 @@ import qualified Database.Persist.TH                as PTH
 import           Domain.Entities.User
 import           Domain.Repositories.UserRepository
 
--- Define the database schema
 PTH.share
   [PTH.mkPersist PTH.sqlSettings, PTH.mkMigrate "migrateAll"]
   [PTH.persistLowerCase|
@@ -50,13 +49,11 @@ PTH.share
     deriving Show Read Eq
 |]
 
--- Infrastructure types
 type PGInfo = ConnectionString
 
 localConnString :: PGInfo
 localConnString = "host=127.0.0.1 port=5432 user=postgres dbname=postgres password=postgres"
 
--- Database operations
 runAction :: PGInfo -> SqlPersistT (LoggingT IO) a -> IO a
 runAction connectionString action =
   runStdoutLoggingT $ filterLogger logFilter $ withPostgresqlConn connectionString $ \backend ->
@@ -72,20 +69,16 @@ logFilter _ (LevelOther _) = False
 migrateDB :: PGInfo -> IO ()
 migrateDB connString = runAction connString (runMigration migrateAll)
 
--- Repository implementation monad
 newtype PostgreSQLUserRepository a = PostgreSQLUserRepository (ReaderT PGInfo IO a)
      deriving (Applicative, Functor, Monad, MonadIO)
 
--- Run the repository
 runPostgreSQLUserRepository :: PGInfo -> PostgreSQLUserRepository a -> IO a
 runPostgreSQLUserRepository pgInfo (PostgreSQLUserRepository action) = runReaderT action pgInfo
 
--- Domain to DB conversion
 domainUserToDB :: User -> DBUser
 domainUserToDB (User _ (UserName name) (UserEmail email) (UserAge age) (UserOccupation occupation)) =
   DBUser name email age occupation
 
--- DB to Domain conversion
 dbUserToDomain :: Int64 -> DBUser -> User
 dbUserToDomain uid dbUser =
   User
@@ -96,11 +89,9 @@ dbUserToDomain uid dbUser =
     , userOccupation = UserOccupation (dBUserOccupation dbUser)
     }
 
--- Entity to Domain conversion
 entityToDomain :: Entity DBUser -> User
 entityToDomain (Entity key dbUser) = dbUserToDomain (fromSqlKey key) dbUser
 
--- Repository implementation
 instance UserRepository PostgreSQLUserRepository where
   findUserById (UserId uid) = PostgreSQLUserRepository $ do
     pgInfo <- ask

@@ -31,28 +31,20 @@ test/Spec.hs  -- HSpec 기반 테스트 (IO 출력 검증 포함)
 ## 빌드 및 실행
 
 ```bash
-# 프로젝트 생성
 stack new <project-name> mingyuchoo/new-template
 
-# 빌드
 stack build
 
-# 빌드 (워치 모드)
 stack build --fast --file-watch --ghc-options "-j4 +RTS -A128m -n2m -RTS"
 
-# 실행
 stack run
 
-# 테스트
 stack test
 
-# 테스트 (워치 모드)
 stack test --fast --file-watch --watch-all
 
-# 테스트 (커버리지 포함)
 stack test --coverage --fast --file-watch --watch-all --haddock
 
-# ghcid로 테스트
 ghcid --command "stack ghci test/Spec.hs"
 ```
 
@@ -114,11 +106,9 @@ runApp (인터프리터가 IO로 해석)
 `silently` 패키지의 `capture_`를 사용하여 IO 출력을 캡처하고 검증합니다.
 
 ```haskell
--- 전체 프로그램 출력 검증
 output <- capture_ someFunc
 output `shouldContain` "[FreeLog] Starting Free Monad app..."
 
--- 개별 DSL 명령어 검증
 output <- capture_ $ runApp (logMsg "hello")
 output `shouldContain` "[FreeLog] hello"
 ```

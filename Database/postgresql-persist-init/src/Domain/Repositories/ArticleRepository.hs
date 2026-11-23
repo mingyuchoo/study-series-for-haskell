@@ -7,7 +7,6 @@ module Domain.Repositories.ArticleRepository
 import           Domain.Entities.Article
 import           Domain.Entities.User    (User, UserId)
 
--- Repository interface (port) - defines what we need, not how
 class (Monad m) => ArticleRepository m where
   findArticleById :: ArticleId -> m (Maybe Article)
   findArticlesByAuthor :: UserId -> m [Article]

@@ -78,11 +78,9 @@ PostgreSQL과 Haskell을 사용한 헥사고날 아키텍처(Hexagonal Architect
 #### 1. 의존성 설치 및 빌드
 
 ```bash
-# 의존성 설치 및 프로젝트 빌드
 make setup
 make build
 
-# 또는 직접 Stack 명령어 사용
 stack setup
 stack build
 ```
@@ -92,7 +90,6 @@ stack build
 로컬에서 PostgreSQL을 실행하거나 Docker로 실행:
 
 ```bash
-# Docker로 PostgreSQL만 실행
 docker run -d \
   --name postgres-dev \
   -e POSTGRES_USER=postgres \
@@ -115,10 +112,8 @@ export DB_PASSWORD=postgres
 #### 4. 애플리케이션 실행
 
 ```bash
-# Makefile 사용
 make run
 
-# 또는 Stack 직접 사용
 stack exec postgresql-simple-init-exe
 ```
 
@@ -129,13 +124,10 @@ stack exec postgresql-simple-init-exe
 전체 스택(PostgreSQL + 애플리케이션)을 Docker Compose로 실행:
 
 ```bash
-# 서비스 시작
 make docker-compose-up
 
-# 로그 확인
 make docker-compose-logs
 
-# 서비스 중지 및 볼륨 삭제
 make docker-compose-down
 ```
 
@@ -189,13 +181,10 @@ make docker-compose-down
 ## 🧪 테스트
 
 ```bash
-# 테스트 실행
 make test
 
-# 커버리지 포함 테스트
 make coverage
 
-# 파일 변경 감지 자동 테스트
 make watch-test
 ```
 
@@ -204,10 +193,8 @@ make watch-test
 ### Docker 이미지 빌드
 
 ```bash
-# 멀티스테이지 빌드로 이미지 생성
 make docker-build
 
-# 또는 직접 빌드
 docker build --build-arg PROJECT_NAME=postgresql-simple-init \
   -t postgresql-simple-init:latest \
   -f docker/Dockerfile .
@@ -216,10 +203,8 @@ docker build --build-arg PROJECT_NAME=postgresql-simple-init \
 ### Docker 컨테이너 실행
 
 ```bash
-# 단독 실행 (PostgreSQL 별도 필요)
 make docker-run
 
-# 또는 직접 실행
 docker run -it --rm \
   --name postgresql-simple-init-app \
   -p 8000:8000 \
@@ -248,7 +233,6 @@ pwsh -File ./scripts/run.ps1
 ### GHCID (빠른 피드백)
 
 ```bash
-# 파일 변경 시 자동 재컴파일
 make ghcid
 ```
 
@@ -257,14 +241,12 @@ make ghcid
 ### 로컬 설치
 
 ```bash
-# 실행 파일을 ~/.local/bin에 설치
 make install
 ```
 
 ### 릴리즈 빌드
 
 ```bash
-# 최적화된 릴리즈 빌드
 make release
 ```
 

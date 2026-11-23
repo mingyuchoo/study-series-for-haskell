@@ -1,4 +1,3 @@
-# default.nix
 let
   pkgs = import <nixpkgs> {};
   compilerVersion = "ghc963";

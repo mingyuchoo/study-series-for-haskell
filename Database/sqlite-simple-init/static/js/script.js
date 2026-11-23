@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
     const userForm = document.getElementById('userForm');
     const userId = document.getElementById('userId');
     const nameInput = document.getElementById('name');
@@ -9,14 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelBtn = document.getElementById('cancelBtn');
     const usersTableBody = document.getElementById('usersTableBody');
 
-    // Load all users when the page loads
     loadUsers();
 
-    // Event listeners
     userForm.addEventListener('submit', saveUser);
     cancelBtn.addEventListener('click', resetForm);
 
-    // Function to load all users
     function loadUsers() {
         fetch('/users')
             .then(response => response.json())
@@ -37,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     usersTableBody.appendChild(row);
                 });
 
-                // Add event listeners to action buttons
                 document.querySelectorAll('.view-btn').forEach(btn => {
                     btn.addEventListener('click', () => viewUser(btn.dataset.id));
                 });
@@ -51,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error loading users:', error));
     }
 
-    // Function to view a user
     function viewUser(id) {
         fetch(`/users/${id}`)
             .then(response => {
@@ -66,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error viewing user:', error));
     }
 
-    // Function to edit a user
     function editUser(id) {
         fetch(`/users/${id}`)
             .then(response => {
@@ -85,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => console.error('Error editing user:', error));
     }
 
-    // Function to save/update a user
     function saveUser(event) {
         event.preventDefault();
         
@@ -99,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/users/${id}` : '/users';
 
-        // Convert user object to URL-encoded form data
         const formData = new URLSearchParams();
         Object.keys(user).forEach(key => formData.append(key, user[key]));
 
@@ -127,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to delete a user
     function deleteUser(id) {
         if (confirm('Are you sure you want to delete this user?')) {
             fetch(`/users/${id}`, {
@@ -144,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to reset the form
     function resetForm() {
         userId.value = '';
         userForm.reset();

@@ -19,7 +19,6 @@ import           Domain.Entities.User (UserId)
 
 import           GHC.Generics         (Generic)
 
--- Domain types
 newtype ArticleId = ArticleId Int64
      deriving (Eq, Generic, Show)
 newtype ArticleTitle = ArticleTitle Text
@@ -27,7 +26,6 @@ newtype ArticleTitle = ArticleTitle Text
 newtype ArticleBody = ArticleBody Text
      deriving (Eq, Generic, Show)
 
--- Core domain entity
 data Article = Article { articleId            :: Maybe ArticleId
                        , articleTitle         :: ArticleTitle
                        , articleBody          :: ArticleBody
@@ -36,7 +34,6 @@ data Article = Article { articleId            :: Maybe ArticleId
                        }
      deriving (Eq, Generic, Show)
 
--- Smart constructor with validation
 mkArticle :: Text -> Text -> UTCTime -> UserId -> Either Text Article
 mkArticle title body publishedTime authorId
   | T.null title = Left "Title cannot be empty"
@@ -51,7 +48,6 @@ mkArticle title body publishedTime authorId
           , articleAuthorId = authorId
           }
 
--- Domain validation
 validateArticle :: Article -> Either Text Article
 validateArticle article@(Article _ (ArticleTitle title) (ArticleBody body) _ _)
   | T.null title = Left "Title cannot be empty"

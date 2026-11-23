@@ -6,7 +6,6 @@ module Domain.Repositories.UserRepository
 
 import           Domain.Entities.User
 
--- Repository interface (port) - defines what we need, not how
 class (Monad m) => UserRepository m where
   findUserById :: UserId -> m (Maybe User)
   findAllUsers :: m [User]

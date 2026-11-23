@@ -18,7 +18,6 @@ import qualified Data.Text    as T
 
 import           GHC.Generics (Generic)
 
--- Domain types with validation
 newtype UserId = UserId Int64
      deriving (Eq, Generic, Read, Show)
 newtype UserEmail = UserEmail Text
@@ -30,7 +29,6 @@ newtype UserAge = UserAge Int
 newtype UserOccupation = UserOccupation Text
      deriving (Eq, Generic, Read, Show)
 
--- Core domain entity
 data User = User { userId         :: Maybe UserId
                  , userName       :: UserName
                  , userEmail      :: UserEmail
@@ -39,7 +37,6 @@ data User = User { userId         :: Maybe UserId
                  }
      deriving (Eq, Generic, Read, Show)
 
--- Smart constructor with validation
 mkUser :: Text -> Text -> Int -> Text -> Either Text User
 mkUser name email age occupation
   | T.null name = Left "Name cannot be empty"
@@ -57,7 +54,6 @@ mkUser name email age occupation
           , userOccupation = UserOccupation occupation
           }
 
--- Domain validation
 validateUser :: User -> Either Text User
 validateUser user@(User _ (UserName name) (UserEmail email) (UserAge age) (UserOccupation occupation))
   | T.null name = Left "Name cannot be empty"

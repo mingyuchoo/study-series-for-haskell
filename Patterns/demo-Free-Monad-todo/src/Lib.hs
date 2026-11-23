@@ -1,27 +1,28 @@
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( someFunc
-    ) where
+  ( someFunc
+  ) where
 
-import           Control.Monad.Free
+import Control.Monad.Free
 
-import           Data.IORef
-import           Data.Text          (Text)
+import Data.IORef
+import Data.Text (Text)
 
-import           GHC.Generics       (Generic)
+import GHC.Generics (Generic)
 
-data Todo = Todo { todoId :: Int
-                 , title  :: Text
-                 }
-     deriving (Generic, Show)
+data Todo = Todo
+  { todoId :: Int
+  , title :: Text
+  }
+  deriving (Generic, Show)
 
-data TodoF next where AddTodo :: Text -> (Todo -> next) -> TodoF next
-                      ListTodos :: ([Todo] -> next) -> TodoF next
+data TodoF next where
+  AddTodo :: Text -> (Todo -> next) -> TodoF next
+  ListTodos :: ([Todo] -> next) -> TodoF next
 
 instance Functor TodoF where
   fmap f (AddTodo t next) = AddTodo t (f . next)

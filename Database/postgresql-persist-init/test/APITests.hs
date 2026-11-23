@@ -39,15 +39,12 @@ main = do
   hspec $ do
     describe "Basic server functionality" $ do
       it "Server should start successfully" $ do
-        -- Simple test to verify server startup
         True `shouldBe` True
       it "Database connection should be available" $ do
-        -- Simple test to verify database setup
         True `shouldBe` True
   killThread tid
   return ()
 
--- Test data for future use
 testUser :: User
 testUser =
   User

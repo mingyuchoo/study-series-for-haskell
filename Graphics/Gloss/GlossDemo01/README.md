@@ -7,9 +7,9 @@ Gloss 라이브러리를 사용한 기본 2D 그래픽스 예제.
 ```
 GlossDemo01/
 ├── app/
-│   └── Main.hs      -- 진입점
+│   └── Main.hs
 ├── src/
-│   └── Lib.hs       -- Gloss 그래픽스 코드
+│   └── Lib.hs
 ├── test/
 │   └── Spec.hs
 ├── package.yaml
@@ -25,10 +25,8 @@ GlossDemo01/
 ## 설치 및 실행 방법
 
 ```bash
-# 빌드
 stack build
 
-# 실행
 stack run
 ```
 

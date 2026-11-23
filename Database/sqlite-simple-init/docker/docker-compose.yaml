@@ -10,12 +10,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # 데이터베이스 영속성을 위한 볼륨 마운트
       - sqlite-data:/app/data
-      # 정적 파일 (선택사항, 개발 시 유용)
       - ../static:/app/static:ro
     environment:
-      # 필요한 환경 변수 추가 (예시)
       - DATABASE_PATH=/app/data/users.db
     restart: unless-stopped
     healthcheck:

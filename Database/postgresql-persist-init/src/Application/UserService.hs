@@ -28,14 +28,12 @@ import           UseCases.User.ListUsers
 import           UseCases.User.UpdateUser                 (updateUserUseCase,
                                                            updateUserWithCacheUseCase)
 
--- Application service without cache
 newtype BasicUserService repo a = BasicUserService (ReaderT repo IO a)
      deriving (Applicative, Functor, Monad, MonadIO)
 
 runBasicUserService :: repo -> BasicUserService repo a -> IO a
 runBasicUserService repo (BasicUserService action) = runReaderT action repo
 
--- Application service with cache
 data CacheConfig repo cache = CacheConfig repo cache
 
 newtype CachedUserService repo cache a = CachedUserService (ReaderT (CacheConfig repo cache) IO a)
@@ -44,7 +42,6 @@ newtype CachedUserService repo cache a = CachedUserService (ReaderT (CacheConfig
 runCachedUserService :: repo -> cache -> CachedUserService repo cache a -> IO a
 runCachedUserService repo cache (CachedUserService action) = runReaderT action (CacheConfig repo cache)
 
--- Basic service implementation
 instance (UserRepository (BasicUserService repo)) => UserController (BasicUserService repo) where
   handleGetUser uid = do
     result <- getUser (GetUserRequest (UserId uid))
@@ -76,7 +73,6 @@ instance (UserRepository (BasicUserService repo)) => UserController (BasicUserSe
       Left err -> Left err
       Right _  -> Right ()
 
--- Cached service implementation
 instance
   ( UserRepository (CachedUserService repo cache)
   , CacheService (CachedUserService repo cache)

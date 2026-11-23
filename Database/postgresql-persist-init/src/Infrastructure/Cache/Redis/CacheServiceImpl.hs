@@ -22,38 +22,31 @@ import           Database.Redis
 import           Domain.Entities.User
 import           Domain.Services.CacheService
 
--- Infrastructure types
 type RedisInfo = ConnectInfo
 
 localRedisInfo :: RedisInfo
 localRedisInfo = defaultConnectInfo
 
--- Cache service implementation monad
 newtype RedisCacheService a = RedisCacheService (ReaderT RedisInfo IO a)
      deriving (Applicative, Functor, Monad, MonadIO)
 
--- Run the cache service
 runRedisCacheService :: RedisInfo -> RedisCacheService a -> IO a
 runRedisCacheService redisInfo (RedisCacheService action) = runReaderT action redisInfo
 
--- Helper functions for Redis operations
 runRedisAction :: RedisInfo -> Redis a -> IO a
 runRedisAction redisInfo action = do
   connection <- connect redisInfo
   runRedis connection action
 
--- Serialize user for caching (simple show/read for now)
 serializeUser :: User -> ByteString
 serializeUser user = pack $ show user
 
--- Deserialize user from cache
 deserializeUser :: Int64 -> ByteString -> Maybe User
 deserializeUser uid userString =
   case reads (unpack userString) of
     [(user, "")] -> Just user {userId = Just (UserId uid)}
     _            -> Nothing
 
--- Cache service implementation
 instance CacheService RedisCacheService where
   cacheUser (UserId uid) user = RedisCacheService $ do
     redisInfo <- ask

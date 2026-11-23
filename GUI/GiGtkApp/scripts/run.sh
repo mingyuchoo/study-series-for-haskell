@@ -1,99 +1,90 @@
 #!/usr/bin/env bash
-#
-# Build, test, and run the GiGtkApp GTK application.
-#
-# Usage:
-#   scripts/run.sh            Build, test, then run (default)
-#   scripts/run.sh build      Build the library and executable only
-#   scripts/run.sh test       Run the test suite only
-#   scripts/run.sh run        Run the application only
-#   scripts/run.sh all        Build, test, then run
-#   scripts/run.sh -h|--help  Show this help
-
 set -euo pipefail
 
-STACK="${STACK:-stack}"
-PACKAGE="GiGtkApp"
-EXECUTABLE="GiGtkApp-exe"
-PKG_CONFIG_PACKAGES=(gobject-introspection-1.0 gtk4)
-
-# Run from the project root regardless of where the script is invoked from.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-cd "$PROJECT_ROOT"
-
-info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
-err()  { printf '\033[1;31mError:\033[0m %s\n' "$*" >&2; }
-
 usage() {
-  sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  printf 'Usage: %s [all|format|lint|build|test|run]\n' "${0##*/}"
+  printf 'Default: format, lint, build, test, then run.\n'
 }
 
-check_system_deps() {
-  if ! command -v pkg-config >/dev/null 2>&1; then
-    err "pkg-config not found; cannot verify GTK system dependencies."
-    exit 1
-  fi
-  local missing=0 package
-  for package in "${PKG_CONFIG_PACKAGES[@]}"; do
-    if ! pkg-config --exists "$package"; then
-      err "Missing pkg-config package: $package"
-      missing=1
-    fi
-  done
-  if [ "$missing" -ne 0 ]; then
-    cat >&2 <<'EOF'
-
-Install GTK/GObject Introspection development packages first:
-  Ubuntu/Debian: sudo apt-get install libgirepository1.0-dev libgtk-4-dev
-  Fedora:        sudo dnf install gobject-introspection-devel gtk4-devel
-  macOS:         brew install gtk4 gobject-introspection
-EOF
-    exit 1
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    printf 'Required command not found in PATH: %s\n' "$1" >&2
+    exit 127
   fi
 }
 
-do_build() {
-  info "Building $PACKAGE"
-  "$STACK" build --fast
+format_sources() {
+  printf '\n==> Formatting Haskell sources\n'
+  fourmolu --mode inplace --config fourmolu.yaml "${source_files[@]}"
+  stylish-haskell -c .stylish-haskell.yaml -i "${source_files[@]}"
 }
 
-do_test() {
-  info "Running tests"
-  "$STACK" test --fast
+lint_sources() {
+  printf '\n==> Linting Haskell sources\n'
+  hlint "${source_files[@]}"
 }
 
-do_run() {
-  info "Running $EXECUTABLE"
-  "$STACK" run "$EXECUTABLE"
+build_app() {
+  printf '\n==> Building GiGtkApp\n'
+  "$stack_command" build --fast
 }
 
-main() {
-  local cmd="${1:-all}"
-  case "$cmd" in
-    -h|--help|help)
-      usage
-      return 0
-      ;;
-  esac
+test_app() {
+  printf '\n==> Testing GiGtkApp\n'
+  "$stack_command" test --fast
+}
 
-  check_system_deps
+run_app() {
+  printf '\n==> Running GiGtkApp-exe\n'
+  exec "$stack_command" run GiGtkApp-exe
+}
 
-  case "$cmd" in
-    build) do_build ;;
-    test)  do_test ;;
-    run)   do_run ;;
-    all)
-      do_build
-      do_test
-      do_run
-      ;;
-    *)
-      err "Unknown command: $cmd"
-      usage >&2
+action="${1-all}"
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+case "$action" in
+  -h|--help|help) usage; exit 0 ;;
+  all|format|lint|build|test|run) ;;
+  *) usage >&2; exit 2 ;;
+esac
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+stack_command="${STACK:-stack}"
+
+case "$action" in
+  all|format|lint)
+    shopt -s nullglob
+    source_files=(./*.hs)
+    while IFS= read -r -d '' source_file; do
+      source_files+=("$source_file")
+    done < <(find app src test -type f -name '*.hs' -print0)
+    ;;
+esac
+
+case "$action" in
+  all|format) require_command fourmolu; require_command stylish-haskell ;;
+esac
+case "$action" in
+  all|lint) require_command hlint ;;
+esac
+case "$action" in
+  all|build|test|run)
+    require_command "$stack_command"
+    require_command pkg-config
+    if ! pkg-config --exists --print-errors gobject-introspection-1.0 gtk4; then
+      printf 'GTK 4 and GObject Introspection development packages are required.\n' >&2
       exit 1
-      ;;
-  esac
-}
+    fi
+    ;;
+esac
 
-main "$@"
+case "$action" in
+  all) format_sources; lint_sources; build_app; test_app; run_app ;;
+  format) format_sources ;;
+  lint) lint_sources ;;
+  build) build_app ;;
+  test) test_app ;;
+  run) run_app ;;
+esac

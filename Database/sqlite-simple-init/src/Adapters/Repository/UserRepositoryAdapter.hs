@@ -15,16 +15,12 @@ import Domain.UserModel (User (..))
 
 import Flow ((<|))
 
--- | SQLite 저장소 어댑터
 newtype UserRepositoryAdapter = UserRepositoryAdapter Connection
 
--- | 어댑터 생성자
 createUserRepositoryAdapter :: Connection -> UserRepositoryAdapter
 createUserRepositoryAdapter = UserRepositoryAdapter
 
--- | UserService 인터페이스 구현
 instance UserService UserRepositoryAdapter where
-  -- \| 새 사용자 생성
   createUser (UserRepositoryAdapter conn) name email password = do
     now <- getCurrentTime
     let user = User Nothing name email password now now
@@ -35,11 +31,9 @@ instance UserService UserRepositoryAdapter where
     rowId <- lastInsertRowId conn
     return <| user {userId = Just (fromIntegral rowId)}
 
-  -- \| 모든 사용자 조회
   getAllUsers (UserRepositoryAdapter conn) =
     query_ conn "SELECT id, name, email, password, created_at, updated_at FROM users"
 
-  -- \| ID로 사용자 조회
   getUserById (UserRepositoryAdapter conn) uid = do
     users <-
       query
@@ -50,7 +44,6 @@ instance UserService UserRepositoryAdapter where
       [user] -> Just user
       _      -> Nothing
 
-  -- \| 사용자 정보 업데이트
   updateUser (UserRepositoryAdapter conn) uid name email password = do
     now <- getCurrentTime
     executeNamed
@@ -62,13 +55,11 @@ instance UserService UserRepositoryAdapter where
       , ":updated" := now
       , ":uid" := uid
       ]
-    -- 업데이트된 사용자 확인
     maybeUser <- getUserById (UserRepositoryAdapter conn) uid
     case maybeUser of
       Just _  -> return True
       Nothing -> return False
 
-  -- \| 사용자 삭제
   deleteUser (UserRepositoryAdapter conn) uid = do
     executeNamed conn "DELETE FROM users WHERE id = :uid" [":uid" := uid]
     return True

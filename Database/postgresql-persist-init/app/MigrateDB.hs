@@ -19,5 +19,5 @@ main = do
     choose :: [String] -> IO ()
     choose [] = migrateDB localConnString
     choose (a : _)
-      | a == "esq" = migrateDB localConnString -- Using same migration for now
+      | a == "esq" = migrateDB localConnString
       | otherwise = migrateDB localConnString

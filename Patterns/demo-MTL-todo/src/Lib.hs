@@ -1,33 +1,27 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-  ( someFunc,
+  ( someFunc
   )
 where
 
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Text (Text)
+import GHC.Generics (Generic)
 
 data Todo = Todo
-  { todoId :: Int,
-    title :: Text
+  { todoId :: Int
+  , title :: Text
   }
-  deriving (Show)
+  deriving (Generic, Show)
 
-import           GHC.Generics         (Generic)
+newtype App a = App {unApp :: StateT [Todo] IO a}
+  deriving (Applicative, Functor, Monad, MonadIO, MonadState [Todo])
 
-data Todo = Todo { todoId :: Int
-                 , title  :: Text
-                 }
-     deriving (Generic, Show)
-
-newtype App a = App { unApp :: StateT [Todo] IO a }
-     deriving (Applicative, Functor, Monad, MonadIO, MonadState [Todo])
-
-class Monad m => MonadTodo m where
+class (Monad m) => MonadTodo m where
   addTodo :: Text -> m Todo
   listTodos :: m [Todo]
 

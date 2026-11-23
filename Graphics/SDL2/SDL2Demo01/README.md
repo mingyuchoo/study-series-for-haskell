@@ -25,15 +25,10 @@ SDL2Demo01/
 
 ## 설치 및 실행 방법
 
+SDL2 시스템 라이브러리가 필요합니다. Ubuntu에서는 `sudo apt-get install libsdl2-dev`, macOS에서는 `brew install sdl2`로 설치합니다.
+
 ```bash
-# SDL2 시스템 라이브러리 설치 필요
-# Ubuntu: sudo apt-get install libsdl2-dev
-# macOS: brew install sdl2
-
-# 빌드
 stack build
-
-# 실행
 stack run
 ```
 

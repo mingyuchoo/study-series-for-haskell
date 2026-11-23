@@ -22,7 +22,6 @@ import           GHC.Generics             (Generic)
 import qualified UseCases.User.CreateUser as UC
 import qualified UseCases.User.UpdateUser as UU
 
--- Response DTOs
 data UserResponseDTO = UserResponseDTO { userId         :: Int64
                                        , userName       :: Text
                                        , userEmail      :: Text
@@ -50,7 +49,6 @@ instance FromJSON UserResponseDTO where
       <*> o .: "age"
       <*> o .: "occupation"
 
--- Request DTOs
 data CreateUserRequestDTO = CreateUserRequestDTO { crName       :: Text
                                                  , crEmail      :: Text
                                                  , crAge        :: Int
@@ -111,7 +109,6 @@ instance FromJSON UpdateUserRequestDTO where
       <*> o .:? "age"
       <*> o .:? "occupation"
 
--- Conversion functions
 userToResponseDTO :: User -> UserResponseDTO
 userToResponseDTO ( User
                       (Just (UserId uid))

@@ -46,6 +46,8 @@ ghc-options:
 
 library:
   source-dirs: src
+  default-extensions:
+    - ImportQualifiedPost
   exposed-modules:
     - Lib
     - Domain.Entity.Url

@@ -4,7 +4,6 @@ module Lib
 
 import Graphics.Gloss
 
--- 애니메이션 예제
 someFunc :: IO ()
 someFunc = animate window white frame
   where

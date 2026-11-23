@@ -25,10 +25,8 @@ GlossDemo02/
 ## 설치 및 실행 방법
 
 ```bash
-# 빌드
 stack build
 
-# 실행
 stack run
 ```
 

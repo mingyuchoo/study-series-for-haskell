@@ -3,7 +3,6 @@ module Infrastructure.Config.AppConfig
   , defaultConfig
   ) where
 
--- | 애플리케이션 설정
 data AppConfig = AppConfig
   { appPort             :: Int
   , appDatabasePath     :: String
@@ -11,7 +10,6 @@ data AppConfig = AppConfig
   }
   deriving (Show)
 
--- | 기본 설정
 defaultConfig :: AppConfig
 defaultConfig =
   AppConfig

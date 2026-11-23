@@ -1,6 +1,5 @@
 .PHONY: all clean setup format build test coverage watch-test watch-coverage ghcid run run-cache run-esq migrate migrate-esq release docker-build docker-build-multi docker-run docker-run-multi docker-up docker-up-all docker-down docker-logs docker-build-app docker-restart-app docker-compose-up docker-compose-down docker-compose-logs install update-stack-yaml wait-for
 
-# Extract project name from directory path
 PROJECT_NAME := $(shell basename $(CURDIR))
 
 all: clean setup build test run
@@ -43,18 +42,14 @@ ghcid: setup
 	ghcid --command "stack ghci test/APITests.hs"
 
 run: setup
-	# Run basic server
 	time stack exec run-server
 
-# Run server variants
 run-cache: setup
-	# Requires redis-server running
 	stack exec run-server -- cache
 
 run-esq: setup
 	stack exec run-server -- esq
 
-# Database migrations
 migrate: setup
 	stack exec migrate-db
 
@@ -65,14 +60,12 @@ release: setup
 	stack build -j4 --ghc-options "-j16 +RTS -A256m -RTS" --docker
 
 docker-build: release
-	# 멀티스테이지 Dockerfile 사용 (docker/Dockerfile)
 	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
 
 docker-build-multi: 
 	docker build --build-arg PROJECT_NAME=$(PROJECT_NAME) -t $(PROJECT_NAME):latest -f docker/Dockerfile .
 
 docker-run: docker-build
-	# 앱 포트 8000 노출 및 데이터 볼륨 마운트
 	mkdir -p ./data
 	docker run -it --rm \
 	  --name $(PROJECT_NAME)-app \
@@ -83,7 +76,6 @@ docker-run: docker-build
 docker-run-multi: docker-build-multi
 	docker run -it --rm -p 8000:8000 $(PROJECT_NAME):latest
 
-# Docker services management (matches README documentation)
 docker-up:
 	docker compose -f docker/docker-compose.yaml up postgres redis -d
 
@@ -102,14 +94,12 @@ docker-build-app:
 docker-restart-app:
 	docker compose -f docker/docker-compose.yaml restart app
 
-# Legacy aliases for backward compatibility
 docker-compose-up: docker-up-all
 
 docker-compose-down: docker-down
 
 docker-compose-logs: docker-logs
 
-# Wait for services to be ready
 wait-for:
 	@echo "Waiting for services to be ready..."
 	@timeout 15 bash -c 'until docker compose -f docker/docker-compose.yaml exec postgres pg_isready -U postgres; do sleep 1; done' || true

@@ -35,7 +35,6 @@ import           Network.Wai.Handler.Warp                                 (run)
 import           Servant.API
 import           Servant.Server
 
--- Full API definition
 type FullAPI =
   Get '[JSON] [Text]
     :<|> UserAPI
@@ -43,7 +42,6 @@ type FullAPI =
 fullAPI :: Proxy FullAPI
 fullAPI = Proxy
 
--- Root handler
 rootHandler :: Handler [Text]
 rootHandler =
   return
@@ -56,7 +54,6 @@ rootHandler =
     , "DELETE /users/{id}"
     ]
 
--- Basic server implementation
 basicServer :: Server FullAPI
 basicServer = rootHandler :<|> basicUserAPI
   where
@@ -83,16 +80,13 @@ basicServer = rootHandler :<|> basicUserAPI
     createUserHandler :: CreateUserRequestDTO -> Handler CreateUserResponseDTO
     createUserHandler req = do
       result <- liftIO $ runPostgreSQLUserRepository localConnString $ do
-        -- Check if user already exists
         existingUser <- findUserByEmail (DU.UserEmail $ crEmail req)
         case existingUser of
           Just _ -> return $ Left "User with this email already exists"
           Nothing -> do
-            -- Create and validate user
             case DU.mkUser (crName req) (crEmail req) (crAge req) (crOccupation req) of
               Left err -> return $ Left err
               Right user -> do
-                -- Save user
                 userId <- saveUser user
                 return $ Right $ CreateUserResponseDTO (let DU.UserId uid = userId in uid)
       case result of
@@ -107,12 +101,10 @@ basicServer = rootHandler :<|> basicUserAPI
     updateUserHandler :: Int64 -> UpdateUserRequestDTO -> Handler NoContent
     updateUserHandler uid req = do
       result <- liftIO $ runPostgreSQLUserRepository localConnString $ do
-        -- Get existing user
         maybeUser <- findUserById (DU.UserId uid)
         case maybeUser of
           Nothing -> return $ Left "User not found"
           Just existingUser -> do
-            -- Update fields
             let updatedUser = updateUserFields existingUser req
             success <- updateUser (DU.UserId uid) updatedUser
             return $ if success then Right () else Left "Update failed"
@@ -121,7 +113,7 @@ basicServer = rootHandler :<|> basicUserAPI
         Right _  -> return NoContent
 
     patchUserHandler :: Int64 -> UpdateUserRequestDTO -> Handler NoContent
-    patchUserHandler = updateUserHandler -- Same implementation for now
+    patchUserHandler = updateUserHandler
     deleteUserHandler :: Int64 -> Handler NoContent
     deleteUserHandler uid = do
       result <- liftIO $ runPostgreSQLUserRepository localConnString $ do
@@ -143,11 +135,9 @@ basicServer = rootHandler :<|> basicUserAPI
     fromString :: String -> LBS.ByteString
     fromString = LBS.pack . map (fromIntegral . ord)
 
--- Cached server implementation (simplified for now)
 cachedServer :: Server FullAPI
 cachedServer = basicServer
 
--- Server runners
 runBasicServer :: IO ()
 runBasicServer = do
   putStrLn "Starting Basic Server on port 8000..."
@@ -161,5 +151,4 @@ runCachedServer = do
 runEsqueletoServer :: IO ()
 runEsqueletoServer = do
   putStrLn "Starting Esqueleto Server on port 8000..."
-  -- TODO: Implement Esqueleto version
   run 8000 (serve fullAPI basicServer)

@@ -1,6 +1,3 @@
--- {-# OPTIONS_GHC -F -pgmF doctest-discover #-}
--- {-# OPTIONS_GHC -F -pgmF hspec-discover   #-}
-
 import Lib
 import System.IO.Silently (capture_)
 import Test.Hspec

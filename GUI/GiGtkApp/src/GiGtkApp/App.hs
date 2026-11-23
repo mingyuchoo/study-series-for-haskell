@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedLabels  #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module GiGtkApp.App
   ( runApp

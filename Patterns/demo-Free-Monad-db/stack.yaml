@@ -1,4 +1,3 @@
-# https://www.stackage.org/lts-24.20
 resolver: lts-24.40
 
 packages:
@@ -9,14 +8,3 @@ extra-deps: []
 flags: {}
 
 notify-if-nix-on-path: false
-#nix:
-#  enable: true
-#  pure: true
-#  packages:
-#  - zlib
-#  - glpk
-#  - pcre
-#  #shell-file: shell.nix
-#  nix-shell-options: []
-#  path: []
-#  add-gc-roots: false

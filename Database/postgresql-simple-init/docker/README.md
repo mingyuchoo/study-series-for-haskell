@@ -69,13 +69,12 @@ docker compose -f docker/docker-compose.yaml up --build
 ## 테스트 (엔드포인트)
 
 ```bash
-# 컨테이너 실행 후
 curl "http://localhost:8000/health"
-curl "http://localhost:8000/users"                # 목록
-curl "http://localhost:8000/users/detail?id=1"   # 상세
-curl -X POST "http://localhost:8000/users?id=2&name=Alice"  # 생성
-curl -X PUT  "http://localhost:8000/users?id=2&name=Alice2" # 수정
-curl -X DELETE "http://localhost:8000/users?id=2"           # 삭제
+curl "http://localhost:8000/users"
+curl "http://localhost:8000/users/detail?id=1"
+curl -X POST "http://localhost:8000/users?id=2&name=Alice"
+curl -X PUT  "http://localhost:8000/users?id=2&name=Alice2"
+curl -X DELETE "http://localhost:8000/users?id=2"
 ```
 
 PowerShell:
@@ -84,5 +83,4 @@ PowerShell:
 irm "http://localhost:8000/health"
 irm "http://localhost:8000/users"
 irm "http://localhost:8000/users/detail?id=1"
-# POST/PUT/DELETE는 Invoke-WebRequest 사용 권장
 ```

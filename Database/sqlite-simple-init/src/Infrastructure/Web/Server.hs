@@ -22,45 +22,36 @@ import Network.Wai.Middleware.Cors
 
 import Web.Scotty
 
--- | Web server implementation
 startServer :: (UserService a) => a -> IO ()
 startServer userService =
   scotty 8000 <| do
-    -- \| Enable CORS
     middleware simpleCors
 
-    -- \| Serve static files
     get "/favicon.ico" <| do
       setHeader "Content-Type" "image/x-icon"
       file "static/favicon.ico"
 
-    -- \| Serve CSS files
     get "/css/:filename" <| do
       filename <- pathParam "filename"
       setHeader "Content-Type" "text/css"
       file ("static/css/" <> filename)
 
-    -- \| Serve JavaScript files
     get "/js/:filename" <| do
       filename <- pathParam "filename"
       setHeader "Content-Type" "application/javascript"
       file ("static/js/" <> filename)
 
-    -- \| Serve HTML files
     get "/index.html" <| do
       setHeader "Content-Type" "text/html"
       file "static/index.html"
 
-    -- \| Redirect root to index.html
     get "/" <| do
       redirect "/index.html"
 
-    -- \| Get all users
     get "/users" <| do
       users <- liftIO <| getAllUsers userService
       json users
 
-    -- \| Get user by ID
     get "/users/:id" <| do
       uid <- pathParam "id"
       maybeUser <- liftIO <| getUserById userService uid
@@ -68,7 +59,6 @@ startServer userService =
         Just user -> json user
         Nothing   -> status status404
 
-    -- \| Create new user
     post "/users" <| do
       name <- formParam "name"
       email <- formParam "email"
@@ -92,7 +82,6 @@ startServer userService =
                   status status500
                   json <| object ["error" .= (show e :: String)]
 
-    -- \| Update user
     put "/users/:id" <| do
       uid <- pathParam "id"
       name <- formParam "name"
@@ -133,7 +122,6 @@ startServer userService =
                   status status500
                   json <| object ["error" .= (show e :: String)]
 
-    -- \| Delete user
     delete "/users/:id" <| do
       uid <- pathParam "id"
       result <- liftIO <| try <| deleteUser userService uid

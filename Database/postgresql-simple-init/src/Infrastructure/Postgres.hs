@@ -11,8 +11,6 @@ import System.Environment (lookupEnv)
 
 import Text.Read (readMaybe)
 
--- | 환경변수에서 접속정보 로드
--- DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 loadConnectInfoFromEnv :: IO ConnectInfo
 loadConnectInfoFromEnv = do
   mHost <- lookupEnv "DB_HOST"

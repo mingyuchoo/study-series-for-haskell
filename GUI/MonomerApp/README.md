@@ -17,22 +17,32 @@ git clone https://github.com/fjvallarino/MonomerApp.git <your-app-name>
 
 ## Prerequisites
 
+### macOS
+
 ```bash
-# For macOS
 brew install pkg-config
 brew install glfw3 pkg-config
 brew install sdl2
 brew install glew
+```
 
-# For Ubuntu
+### Ubuntu
+
+```bash
 sudo apt-get install pkg-config libsdl2-dev libglew-dev
+```
 
-# For Fedora
+### Fedora
+
+```bash
 sudo dnf install gcc-c++
 sudo dnf install SDL2-devel
 sudo dnf install glew-devel
+```
 
-# For Windows 11
+### Windows 11
+
+```bash
 stack setup
 stack exec -- pacman -S msys2-keyring
 stack exec -- pacman -S mingw-w64-x86_64-pkg-config

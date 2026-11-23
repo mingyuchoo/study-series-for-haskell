@@ -22,7 +22,6 @@ import           Interface.Web.DTOs.UserDTO
 import           Servant.API
 import           Servant.Server
 
--- API definition
 type UserAPI =
   "users" :> Capture "userid" Int64 :> Get '[JSON] UserResponseDTO
     :<|> "users" :> ReqBody '[JSON] CreateUserRequestDTO :> Post '[JSON] CreateUserResponseDTO
@@ -34,7 +33,6 @@ type UserAPI =
       :> PatchNoContent
     :<|> "users" :> Capture "userid" Int64 :> DeleteNoContent
 
--- Controller interface
 class (Monad m) => UserController m where
   handleGetUser :: Int64 -> m (Either Text UserResponseDTO)
   handleCreateUser :: CreateUserRequestDTO -> m (Either Text CreateUserResponseDTO)
@@ -42,7 +40,6 @@ class (Monad m) => UserController m where
   handleUpdateUser :: Int64 -> UpdateUserRequestDTO -> m (Either Text ())
   handleDeleteUser :: Int64 -> m (Either Text ())
 
--- Server implementation
 userServer :: (UserController Handler) => ServerT UserAPI Handler
 userServer =
   getUserHandler
@@ -52,7 +49,6 @@ userServer =
     :<|> patchUserHandler
     :<|> deleteUserHandler
 
--- Handler implementations
 getUserHandler :: (UserController Handler) => Int64 -> Handler UserResponseDTO
 getUserHandler uid = do
   result <- handleGetUser uid
@@ -98,6 +94,5 @@ deleteUserHandler uid = do
     Left err -> throwError $ err404 {errBody = fromString $ T.unpack err}
     Right _  -> return NoContent
 
--- Helper function
 fromString :: String -> LBS.ByteString
 fromString = LBS.pack . map (fromIntegral . ord)

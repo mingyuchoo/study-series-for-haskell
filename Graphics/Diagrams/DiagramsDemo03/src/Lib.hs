@@ -6,10 +6,10 @@ import Diagrams.Backend.SVG.CmdLine
 import Diagrams.Prelude
 
 someFunc :: IO ()
-someFunc = mainWith pattern
+someFunc = mainWith demoDiagram
 
-pattern :: Diagram B
-pattern =
+demoDiagram :: Diagram B
+demoDiagram =
   hcat
     [ circle 1
     , square 1

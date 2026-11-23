@@ -22,14 +22,11 @@ import Network.Wai.Middleware.Cors
 
 import Web.Scotty
 
--- | 웹 서버 시작
 startWebServer :: (UserService a) => a -> IO ()
 startWebServer userService =
   scotty 8000 <| do
-    -- CORS 활성화
     middleware simpleCors
 
-    -- 정적 파일 제공
     get "/favicon.ico" <| do
       setHeader "Content-Type" "image/x-icon"
       file "static/favicon.ico"
@@ -51,7 +48,6 @@ startWebServer userService =
     get "/" <| do
       redirect "/index.html"
 
-    -- API 엔드포인트
     get "/users" <| do
       users <- liftIO <| getAllUsers userService
       json users

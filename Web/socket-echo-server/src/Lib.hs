@@ -2,13 +2,13 @@ module Lib
   ( someFunc
   ) where
 
+import Control.Exception (bracket)
 import Network.Socket
 
 import System.IO
 
 someFunc :: IO ()
-someFunc = do
-  sock <- socket AF_INET Stream 0
+someFunc = bracket (socket AF_INET Stream 0) close $ \sock -> do
   setSocketOption sock ReuseAddr 1
   bind sock (SockAddrInet 8000 0)
   listen sock 2

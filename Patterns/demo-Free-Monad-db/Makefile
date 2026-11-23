@@ -1,6 +1,5 @@
 .PHONY: test coverage install update-stack-yaml
 
-# Extract project name from directory path
 PROJECT_NAME := $(shell basename $(CURDIR))
 
 all: clean setup build test run

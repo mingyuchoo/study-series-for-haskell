@@ -12,12 +12,10 @@ import Control.Monad (void)
 
 import Database.SQLite.Simple (SQLError)
 
--- | 샘플 데이터 삽입
 insertSampleData :: (UserService a) => a -> IO ()
 insertSampleData userService = do
   putStrLn "샘플 데이터를 생성합니다..."
 
-  -- 샘플 사용자 생성 (이메일 중복 에러는 무시)
   _ <- createUserSafe "홍길동" "hong@example.com" "password123"
   _ <- createUserSafe "김철수" "kim@example.com" "password456"
   _ <- createUserSafe "이영희" "lee@example.com" "password789"
